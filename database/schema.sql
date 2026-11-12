@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 CREATE TABLE IF NOT EXISTS `invitations` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `email` VARCHAR(191) NOT NULL,
-  `role` ENUM('editor', 'viewer') NOT NULL DEFAULT 'viewer',
+  `role` ENUM('admin', 'editor', 'viewer') NOT NULL DEFAULT 'viewer',
   `invited_by` INT UNSIGNED DEFAULT NULL,
   `notes` VARCHAR(255) DEFAULT NULL COMMENT 'Заметка кого пригласили (например: внук Серика)',
   `status` ENUM('pending', 'accepted', 'revoked') NOT NULL DEFAULT 'pending',

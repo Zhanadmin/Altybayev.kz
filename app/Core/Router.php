@@ -101,7 +101,28 @@ class Router
                     }
                 }
 
-                $this->executeHandler($route['handler'], $request, $params);
+                try {
+                    $this->executeHandler($route['handler'], $request, $params);
+                } catch (\Throwable $e) {
+                    Logger::error("Unhandled error on {$method} {$uri}: " . $e->getMessage(), $e);
+                    if ($request->isAjax() || str_starts_with($uri, '/api/')) {
+                        Response::json([
+                            'status' => 'error',
+                            'error' => 'Серверде қате орын алды / Внутренняя ошибка сервера',
+                            'message' => Config::isDebug() ? $e->getMessage() : 'Жүйелік қате. storage/logs/error.log файлын қараңыз.',
+                        ], 500);
+                        return;
+                    }
+                    http_response_code(500);
+                    echo "<div style='font-family:sans-serif;padding:30px;max-width:700px;margin:40px auto;border:1px solid #f5c6cb;border-radius:8px;background:#f8d7da;color:#721c24;'>";
+                    echo "<h2>500 - Сервер қатесі / Ошибка сервера</h2>";
+                    echo "<p>" . htmlspecialchars(Config::isDebug() ? $e->getMessage() : 'Жүйеде қате орын алды. Қате журналына жазылды.') . "</p>";
+                    if (Config::isDebug()) {
+                        echo "<pre style='background:#fff;padding:15px;overflow:auto;border-radius:4px;'>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
+                    }
+                    echo "</div>";
+                    return;
+                }
                 return;
             }
         }

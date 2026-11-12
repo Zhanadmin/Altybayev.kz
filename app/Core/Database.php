@@ -31,7 +31,8 @@ class Database
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset} COLLATE utf8mb4_unicode_ci"
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset} COLLATE utf8mb4_unicode_ci",
+                PDO::MYSQL_ATTR_MULTI_STATEMENTS => true,
             ];
 
             try {
@@ -45,6 +46,22 @@ class Database
         }
 
         return self::$connection;
+    }
+
+    /**
+     * Алиас для getConnection()
+     */
+    public static function getInstance(): PDO
+    {
+        return self::getConnection();
+    }
+
+    /**
+     * Сброс подключения (для тестов и повторной инициализации)
+     */
+    public static function resetConnection(): void
+    {
+        self::$connection = null;
     }
 
     /**

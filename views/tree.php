@@ -250,6 +250,84 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             color: #fef08a;
         }
 
+        .btn-tool.active {
+            background: rgba(212, 175, 55, 0.35);
+            border-color: #d4af37;
+            color: #fef08a;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+        }
+
+        /* БОС КҮЙ (EMPTY STATE) — ДЕРЕКТЕР БОЛМАҒАНДА */
+        .tree-empty-state {
+            position: absolute;
+            left: 1700px;
+            top: 450px;
+            width: 620px;
+            max-width: 90vw;
+            background: rgba(15, 23, 42, 0.96);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            padding: 38px 32px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.85);
+            color: #f8fafc;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        .tree-empty-state .empty-icon {
+            font-size: 54px;
+            margin-bottom: 14px;
+        }
+        .tree-empty-state h2 {
+            color: #fef08a;
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .tree-empty-state p {
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .empty-actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .btn-empty-action {
+            padding: 11px 22px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-empty-action.btn-import {
+            background: linear-gradient(135deg, #d4af37, #b45309);
+            color: #0f172a;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        .btn-empty-action.btn-import:hover {
+            background: linear-gradient(135deg, #fef08a, #d4af37);
+            transform: translateY(-2px);
+        }
+        .btn-empty-action.btn-demo {
+            background: rgba(255,255,255,0.08);
+            color: #fef08a;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+        }
+        .btn-empty-action.btn-demo:hover {
+            background: rgba(212, 175, 55, 0.25);
+            transform: translateY(-2px);
+        }
+
         /* ========================================================
            КАНВАС ЖӘНЕ КЕҢІСТІК (VIEWPORT & WORLD)
            ======================================================== */
@@ -1267,6 +1345,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </div>
 
             <!-- Батырмалар -->
+            <button class="btn-tool" id="btnToggleDemo" onclick="toggleDemoMode()" title="Демонстрациялық режимді қосу/өшіру">
+                <span id="demoIcon">🌟</span>
+                <span id="demoLabel" data-i18n="btn_demo_mode">Демо</span>
+            </button>
+
             <button class="btn-tool" onclick="flyToSelf()" title="Өз карточкаңызға бару">
                 <span>🎯</span>
                 <span data-i18n="btn_you_are_here">Сіз осындасыз</span>
@@ -1623,6 +1706,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 married_in_tag: "Жағалбайлы қызы ↗",
                 you_are_here_badge: "★ Сіз осындасыз",
                 selected_badge: "Таңдалған адам",
+                btn_demo_mode: "Демо",
+                btn_demo_active: "🌟 Демо",
+                empty_tree_title: "Деректер жоқ — GEDCOM импорттаңыз",
+                empty_tree_desc: "Деректер қорында әлі тұлғалар жоқ. MyHeritage жүйесінен GEDCOM файлын импорттаңыз немесе танысу үшін демонстрациялық режимді көріңіз.",
+                btn_import_gedcom: "📥 GEDCOM импорттау",
+                btn_view_demo: "🌟 Демо-режимді көру",
+                btn_return_real: "🌳 Негізгі базаға оралу",
             },
             ru: {
                 back_to_portal: "Главная страница",
@@ -1682,6 +1772,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 married_in_tag: "Дочь Жагалбайлы ↗",
                 you_are_here_badge: "★ Вы здесь",
                 selected_badge: "Выбранный человек",
+                btn_demo_mode: "Демо",
+                btn_demo_active: "🌟 Демо",
+                empty_tree_title: "Данных нет — импортируйте GEDCOM",
+                empty_tree_desc: "В базе данных пока нет персон. Импортируйте файл GEDCOM из MyHeritage или включите демонстрационный режим для ознакомления.",
+                btn_import_gedcom: "📥 Импортировать GEDCOM",
+                btn_view_demo: "🌟 Включить демо-режим",
+                btn_return_real: "🌳 Вернуться к реальной базе",
             }
         };
 
@@ -1719,23 +1816,77 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         // ========================================================
         // ДЕРЕКТЕРДІ СЕРВЕРДЕН ЖҮКТЕУ ЖӘНЕ БАСТАУ
         // ========================================================
-        async function initTree() {
+        let isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
+
+        function updateDemoButtonState() {
+            const btn = document.getElementById('btnToggleDemo');
+            const lbl = document.getElementById('demoLabel');
+            const icon = document.getElementById('demoIcon');
+            if (!btn) return;
+
+            const isDemoActive = isDemoMode || (treeData && treeData.is_demo);
+            if (isDemoActive) {
+                btn.classList.add('active');
+                if (lbl) lbl.innerText = i18n[currentLang].btn_demo_active;
+                if (icon) icon.innerText = '🌟';
+                btn.title = currentLang === 'ru' ? 'Включен демо-режим. Нажмите для возврата к базе.' : 'Демо-режим қосулы. Базаға оралу үшін басыңыз.';
+            } else {
+                btn.classList.remove('active');
+                if (lbl) lbl.innerText = i18n[currentLang].btn_demo_mode;
+                if (icon) icon.innerText = '🌟';
+                btn.title = currentLang === 'ru' ? 'Включить демо-режим' : 'Демонстрациялық режимді қосу';
+            }
+        }
+
+        function toggleDemoMode(forceState) {
+            if (forceState !== undefined) {
+                isDemoMode = !!forceState;
+            } else {
+                isDemoMode = !isDemoMode;
+            }
+            const url = new URL(window.location);
+            if (isDemoMode) {
+                url.searchParams.set('demo', '1');
+            } else {
+                url.searchParams.delete('demo');
+            }
+            window.history.replaceState({}, '', url);
+            initTree(isDemoMode);
+        }
+
+        async function initTree(forceDemo) {
+            if (forceDemo !== undefined) {
+                isDemoMode = !!forceDemo;
+            }
             setLanguage(currentLang);
             initEvents();
 
             try {
-                const res = await fetch('/api/tree');
+                const url = isDemoMode ? '/api/tree?demo=1' : '/api/tree';
+                const res = await fetch(url);
                 const data = await res.json();
                 treeData = data;
                 activeKinships = data.initial_kinships || {};
 
+                updateDemoButtonState();
                 renderEditingView();
                 renderForestView();
 
-                // Жандосқа бағыттау
-                flyToPerson(selectedPersonId || userPersonId);
+                if (treeData.is_empty || !treeData.persons || treeData.persons.length === 0) {
+                    // Центрируем камеру на карточке пустого состояния
+                    posX = (viewport.clientWidth / 2) - 2000 * scale;
+                    posY = (viewport.clientHeight / 2) - 600 * scale;
+                    updateTransform();
+                } else {
+                    const targetId = selectedPersonId || userPersonId || (treeData.persons[0] ? treeData.persons[0].id : 1);
+                    flyToPerson(targetId);
+                }
             } catch (err) {
                 console.error("Деректерді жүктеу қатесі:", err);
+                treeData = { is_empty: true, error: err.message, persons: [], marriages: [], clans: [] };
+                updateDemoButtonState();
+                renderEditingView();
+                renderForestView();
             }
         }
 
@@ -1753,14 +1904,18 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 viewEditing.style.display = 'block';
                 viewForest.style.display = 'none';
                 renderConnectionsEditing();
-                flyToPerson(selectedPersonId || userPersonId);
+                if (treeData && treeData.persons && treeData.persons.length > 0) {
+                    flyToPerson(selectedPersonId || userPersonId || treeData.persons[0].id);
+                }
             } else {
                 btnForest.classList.add('active');
                 btnEditing.classList.remove('active');
                 viewEditing.style.display = 'none';
                 viewForest.style.display = 'block';
                 // Шежіре-Орман ашылғанда бірден жоғарғы кронаға (тірілерге) барады!
-                flyToCrown();
+                if (treeData && treeData.persons && treeData.persons.length > 0) {
+                    flyToCrown();
+                }
             }
         }
 
@@ -1770,7 +1925,32 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         function renderEditingView() {
             const container = document.getElementById('editingCardsContainer');
             container.innerHTML = '';
-            if (!treeData || !treeData.persons) return;
+            const svg = document.getElementById('svgConnections');
+            if (svg) svg.innerHTML = '';
+
+            if (!treeData || !treeData.persons || treeData.persons.length === 0) {
+                const emptyCard = document.createElement('div');
+                emptyCard.className = 'tree-empty-state';
+                const isErr = treeData && treeData.status === 'error';
+                const title = isErr 
+                    ? (currentLang === 'ru' ? 'Ошибка базы данных' : 'Мәліметтер қоры қатесі')
+                    : i18n[currentLang].empty_tree_title;
+                const desc = isErr
+                    ? (treeData.message || '')
+                    : i18n[currentLang].empty_tree_desc;
+
+                emptyCard.innerHTML = `
+                    <div class="empty-icon">${isErr ? '⚠️' : '🌳'}</div>
+                    <h2>${title}</h2>
+                    <p>${desc}</p>
+                    <div class="empty-actions">
+                        <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].btn_import_gedcom}</a>
+                        <button type="button" onclick="toggleDemoMode(true)" class="btn-empty-action btn-demo">${i18n[currentLang].btn_view_demo}</button>
+                    </div>
+                `;
+                container.appendChild(emptyCard);
+                return;
+            }
 
             // Иерархиялық орналасу картасы (буындар бойынша)
             const layoutMap = {
@@ -1914,7 +2094,29 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         function renderForestView() {
             const container = document.getElementById('forestTreesContainer');
             container.innerHTML = '';
-            if (!treeData) return;
+            if (!treeData || !treeData.persons || treeData.persons.length === 0) {
+                const emptyCard = document.createElement('div');
+                emptyCard.className = 'tree-empty-state';
+                const isErr = treeData && treeData.status === 'error';
+                const title = isErr 
+                    ? (currentLang === 'ru' ? 'Ошибка базы данных' : 'Мәліметтер қоры қатесі')
+                    : i18n[currentLang].empty_tree_title;
+                const desc = isErr
+                    ? (treeData.message || '')
+                    : i18n[currentLang].empty_tree_desc;
+
+                emptyCard.innerHTML = `
+                    <div class="empty-icon">${isErr ? '⚠️' : '🌲'}</div>
+                    <h2>${title}</h2>
+                    <p>${desc}</p>
+                    <div class="empty-actions">
+                        <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].btn_import_gedcom}</a>
+                        <button type="button" onclick="toggleDemoMode(true)" class="btn-empty-action btn-demo">${i18n[currentLang].btn_view_demo}</button>
+                    </div>
+                `;
+                container.appendChild(emptyCard);
+                return;
+            }
 
             // 1. ОРТАЛЫҚ БАСТЫ АҒАШ: КЕРЕЙ — АЛТЫБАЕВТАР ӘУЛЕТІ
             const mainStand = document.createElement('div');
@@ -2126,11 +2328,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
         // БАРЛЫҚ КАРТОЧКАЛАРДЫҢ ТУЫСТЫҚ АТАУЛАРЫН ТАҢДАЛҒАН ТҰЛҒАҒА ҚАТЫСТЫ ҚАЙТА ЕСЕПТЕУ
         async function updateAllKinshipBadges(baseId) {
-            if (!treeData || !treeData.persons) return;
+            if (!treeData || !treeData.persons || treeData.persons.length === 0) return;
 
             // Серверден барлық туыстықты бірден сұрау (кэштей отырып)
             try {
-                const res = await fetch(`/api/kinship-all?base_id=${baseId}`);
+                const res = await fetch(`/api/kinship-all?base_id=${baseId}` + (isDemoMode ? '&demo=1' : ''));
                 const data = await res.json();
                 if (data && data.kinships) {
                     activeKinships = data.kinships;
@@ -2290,7 +2492,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 }
 
                 try {
-                    const res = await fetch(`/api/tree/search?q=${encodeURIComponent(q)}`);
+                    const res = await fetch(`/api/tree/search?q=${encodeURIComponent(q)}` + (isDemoMode ? '&demo=1' : ''));
                     const data = await res.json();
                     if (data && data.results && data.results.length > 0) {
                         searchDropdown.innerHTML = '';

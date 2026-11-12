@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\Config;
 use App\Core\Database;
+use App\Core\Logger;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\KinshipService;
@@ -13,7 +15,7 @@ use PDO;
 
 /**
  * Контроллер двух видов генеалогического древа:
- * 1. MyHeritage (жұмыс режимі, отец Жандоса привык)
+ * 1. Өңдеу (жұмыс режимі, отец Жандоса привык)
  * 2. Шежіре-Орман / Лес (живые деревья, крона с живыми наверху, корень Керей внизу, цветы-девочки)
  */
 class TreeController
@@ -31,10 +33,10 @@ class TreeController
     public function index(Request $request): void
     {
         $user = Auth::user();
-        $userPersonId = $user['person_id'] ?? null;
+        $isDemo = (bool)$request->get('demo', 0);
 
-        // Если у пользователя нет жесткой привязки, по умолчанию ассоциируем с ключевой персоной (Жандос)
-        if (!$userPersonId) {
+        $userPersonId = $user['person_id'] ?? null;
+        if (!$userPersonId && $isDemo) {
             $userPersonId = 7; // Жандос Алтыбаев в демонстрационной структуре
         }
 
@@ -44,46 +46,76 @@ class TreeController
         Response::view('tree', [
             'user' => $user,
             'userPersonId' => $userPersonId,
+            'isDemo' => $isDemo,
             'kinshipTerms' => $allTerms,
             'conceptArtUrl' => $conceptArtUrl,
         ]);
     }
 
     /**
-     * Получить активный датасет: из базы данных (если есть записи), либо эталонный демонстрационный
+     * Получить датасет: реальные данные из БД либо демонстрационный набор
+     * При пустой базе возвращает пустые массивы без падения с 500
      */
-    protected function getActiveDataset(): array
+    public function getDataset(bool $forceDemo = false): array
     {
-        $db = Database::getInstance();
+        if ($forceDemo) {
+            $demo = $this->getDemoDataset();
+            $demo['is_demo'] = true;
+            $demo['error'] = null;
+            return $demo;
+        }
+
         $persons = [];
         $marriages = [];
         $clans = [];
 
         try {
+            $db = Database::getConnection();
+
+            // Проверяем существование таблицы persons
+            $stmtP = $db->query("SHOW TABLES LIKE 'persons'");
+            if ($stmtP->rowCount() === 0) {
+                return [
+                    'clans' => [],
+                    'persons' => [],
+                    'marriages' => [],
+                    'is_demo' => false,
+                    'error' => null,
+                ];
+            }
+
             $stmt = $db->query("SELECT * FROM `persons` WHERE `is_deleted` = 0 ORDER BY `id` ASC");
             $persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmtM = $db->query("SELECT * FROM `marriages` ORDER BY `id` ASC");
-            $marriages = $stmtM->fetchAll(PDO::FETCH_ASSOC);
+            $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
+            if ($stmtM->rowCount() > 0) {
+                $stmtMarriages = $db->query("SELECT * FROM `marriages` ORDER BY `id` ASC");
+                $marriages = $stmtMarriages->fetchAll(PDO::FETCH_ASSOC);
+            }
 
             $stmtC = $db->query("SHOW TABLES LIKE 'clans'");
             if ($stmtC->rowCount() > 0) {
                 $stmtClans = $db->query("SELECT * FROM `clans` ORDER BY `id` ASC");
                 $clans = $stmtClans->fetchAll(PDO::FETCH_ASSOC);
             }
+
+            return [
+                'clans' => $clans,
+                'persons' => $persons,
+                'marriages' => $marriages,
+                'is_demo' => false,
+                'error' => null,
+            ];
         } catch (\Throwable $e) {
-            // В случае отсутствия записей или процесса настройки — используем эталонный набор
+            Logger::error("Ошибка запроса к базе данных в TreeController: " . $e->getMessage(), $e);
+            return [
+                'clans' => [],
+                'persons' => [],
+                'marriages' => [],
+                'is_demo' => false,
+                'error' => Config::isDebug() ? $e->getMessage() : 'Деректер қорына қосылу немесе сұрау сәтсіз аяқталды.',
+            ];
         }
-
-        if (empty($persons)) {
-            return $this->getDemoDataset();
-        }
-
-        return [
-            'clans' => $clans,
-            'persons' => $persons,
-            'marriages' => $marriages,
-        ];
     }
 
     /**
@@ -91,12 +123,56 @@ class TreeController
      */
     public function apiTreeData(Request $request): void
     {
-        $dataset = $this->getActiveDataset();
+        $isDemo = (bool)$request->get('demo', 0);
+        $dataset = $this->getDataset($isDemo);
+
+        if (!empty($dataset['error'])) {
+            Response::json([
+                'status' => 'error',
+                'is_empty' => true,
+                'is_demo' => false,
+                'error' => 'Мәліметтер қорының қатесі / Ошибка базы данных',
+                'message' => $dataset['error'],
+                'clans' => [],
+                'persons' => [],
+                'marriages' => [],
+                'user_person_id' => null,
+                'initial_kinships' => (object)[],
+            ], 200);
+            return;
+        }
+
         $persons = $dataset['persons'];
         $marriages = $dataset['marriages'];
         $clans = $dataset['clans'];
+        $isDemoActual = $dataset['is_demo'] ?? false;
 
-        $userPersonId = (int)(Auth::user()['person_id'] ?? 7);
+        // При пустой базе отдаем чистое пустое состояние с подсказкой (без демо-данных)
+        if (empty($persons)) {
+            Response::json([
+                'status' => 'success',
+                'is_empty' => true,
+                'is_demo' => false,
+                'message' => 'Деректер жоқ — GEDCOM импорттаңыз / Данных нет — импортируйте GEDCOM',
+                'clans' => $clans,
+                'persons' => [],
+                'marriages' => [],
+                'user_person_id' => null,
+                'initial_kinships' => (object)[],
+            ], 200);
+            return;
+        }
+
+        $user = Auth::user();
+        $userPersonId = null;
+        if (!empty($user['person_id'])) {
+            $userPersonId = (int)$user['person_id'];
+        } elseif ($isDemoActual) {
+            $userPersonId = 7; // Жандос Алтыбаев в демо
+        } else {
+            // Ищем привязку к первой персоне
+            $userPersonId = (int)$persons[0]['id'];
+        }
 
         // Защита приватных данных (Требование 4): закрытые контакты отдавать только администратору
         $isAdmin = Auth::isAdmin();
@@ -111,10 +187,15 @@ class TreeController
         unset($p);
 
         // Расчёт степеней родства относительно вошедшего пользователя по умолчанию
-        $initialKinships = $this->kinshipService->calculateAllKinships($userPersonId, $persons, $marriages);
+        $initialKinships = [];
+        if ($userPersonId) {
+            $initialKinships = $this->kinshipService->calculateAllKinships($userPersonId, $persons, $marriages);
+        }
 
         Response::json([
             'status' => 'success',
+            'is_empty' => false,
+            'is_demo' => $isDemoActual,
             'clans' => $clans,
             'persons' => $persons,
             'marriages' => $marriages,
@@ -128,14 +209,25 @@ class TreeController
      */
     public function apiKinshipAll(Request $request): void
     {
-        $baseId = (int)$request->get('base_id', 0);
-        if (!$baseId) {
-            $baseId = (int)(Auth::user()['person_id'] ?? 7);
-        }
-
-        $dataset = $this->getActiveDataset();
+        $isDemo = (bool)$request->get('demo', 0);
+        $dataset = $this->getDataset($isDemo);
         $persons = $dataset['persons'];
         $marriages = $dataset['marriages'];
+
+        if (empty($persons)) {
+            Response::json([
+                'status' => 'success',
+                'base_id' => 0,
+                'kinships' => (object)[],
+            ]);
+            return;
+        }
+
+        $baseId = (int)$request->get('base_id', 0);
+        if (!$baseId) {
+            $user = Auth::user();
+            $baseId = !empty($user['person_id']) ? (int)$user['person_id'] : (int)$persons[0]['id'];
+        }
 
         $kinships = $this->kinshipService->calculateAllKinships($baseId, $persons, $marriages);
 
@@ -159,7 +251,8 @@ class TreeController
             return;
         }
 
-        $dataset = $this->getActiveDataset();
+        $isDemo = (bool)$request->get('demo', 0);
+        $dataset = $this->getDataset($isDemo);
         $personsById = array_column($dataset['persons'], null, 'id');
 
         $target = $personsById[$targetId] ?? null;
@@ -193,7 +286,8 @@ class TreeController
             return;
         }
 
-        $dataset = $this->getActiveDataset();
+        $isDemo = (bool)$request->get('demo', 0);
+        $dataset = $this->getDataset($isDemo);
         $allData = $dataset['persons'];
         $results = [];
 

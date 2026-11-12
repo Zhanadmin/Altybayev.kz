@@ -67,6 +67,15 @@ class Config
     }
 
     /**
+     * Установить значение конфигурации (в рантайме)
+     */
+    public static function set(string $key, mixed $value): void
+    {
+        self::$settings[$key] = $value;
+        $_ENV[$key] = $value;
+    }
+
+    /**
      * Проверка режима отладки
      */
     public static function isDebug(): bool

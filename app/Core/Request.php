@@ -62,6 +62,11 @@ class Request
         return $this->get[$key] ?? $default;
     }
 
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->query($key, $default);
+    }
+
     public function post(string $key, mixed $default = null): mixed
     {
         return $this->post[$key] ?? $default;

@@ -369,12 +369,28 @@ $roleInfo = $roleLabels[$userRole] ?? ['kk' => $userRole, 'ru' => $userRole, 'cl
                 </div>
             </div>
 
+            <!-- Баннер быстрого перехода к интерактивному древу -->
+            <div class="card" style="grid-column: 1 / -1; background: linear-gradient(135deg, #0d1b2a, #1b263b); border: 2px solid #d4af37; color: #fff;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h3 style="color: #fef08a; font-size: 20px; margin-bottom: 6px;">🌳 Шежіре ағашы (Интерактивті екі түрлі режим)</h3>
+                        <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">
+                            <strong>1. MyHeritage жұмыс түрі</strong> — әкеңізге дағдылы карточкалар, жылдам қосу (+Әке, +Ана, +Жұбай, +Ұл, +Қыз).<br>
+                            <strong>2. Шежіре-Орман түрі</strong> — кронадағы тірілер жоғарыда, түп ата Керей тамырда, қыздар-гүлдер және қазақтың туыстық атаулары.
+                        </p>
+                    </div>
+                    <a href="/tree" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #d4af37, #b45309); color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);">
+                        Древоны ашу / Открыть древо ➔
+                    </a>
+                </div>
+            </div>
+
             <div class="card" style="grid-column: 1 / -1;">
                 <h3>Модульдер жоспары / План модулей</h3>
                 <ul class="feature-list">
                     <li class="feature-item">
-                        <span>🌳 <strong>Шежіре ағашы / Генеалогическое древо</strong> (Интерактивті D3.js графикасы)</span>
-                        <span class="badge-dev">Әзірленуде / В разработке</span>
+                        <span>🌳 <strong>Шежіре ағашы / Генеалогическое древо</strong> (MyHeritage режимі + Шежіре-Орман, туыстық атаулар)</span>
+                        <a href="/tree" class="badge-dev" style="background:#10b981; color:#fff; text-decoration:none;">Қарау / Открыть ➔</a>
                     </li>
                     <li class="feature-item">
                         <span>📜 <strong>Жеті ата / Семь предков</strong> (Әкелер желісі бойынша шежірені қарау)</span>

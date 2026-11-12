@@ -39,18 +39,20 @@ class TreeController
         }
 
         $allTerms = $this->kinshipService->getAllTerms();
+        $conceptArtUrl = '/assets/img/shezhire_living_forest_concept.jpg';
 
         Response::view('tree', [
             'user' => $user,
             'userPersonId' => $userPersonId,
             'kinshipTerms' => $allTerms,
+            'conceptArtUrl' => $conceptArtUrl,
         ]);
     }
 
     /**
-     * API: Получение полного набора данных древа (персоны, связи, рода)
+     * Получить активный датасет: из базы данных (если есть записи), либо эталонный демонстрационный
      */
-    public function apiTreeData(Request $request): void
+    protected function getActiveDataset(): array
     {
         $db = Database::getInstance();
         $persons = [];
@@ -58,14 +60,12 @@ class TreeController
         $clans = [];
 
         try {
-            // Пробуем получить данные из БД
             $stmt = $db->query("SELECT * FROM `persons` WHERE `is_deleted` = 0 ORDER BY `id` ASC");
             $persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $stmtM = $db->query("SELECT * FROM `marriages` ORDER BY `id` ASC");
             $marriages = $stmtM->fetchAll(PDO::FETCH_ASSOC);
 
-            // Рода (если таблица уже создана миграцией)
             $stmtC = $db->query("SHOW TABLES LIKE 'clans'");
             if ($stmtC->rowCount() > 0) {
                 $stmtClans = $db->query("SELECT * FROM `clans` ORDER BY `id` ASC");
@@ -75,13 +75,28 @@ class TreeController
             // В случае отсутствия записей или процесса настройки — используем эталонный набор
         }
 
-        // Если в БД еще нет персон — отдаем богатый демонстрационный набор шежіре Керей -> Алтыбаевтар
         if (empty($persons)) {
-            $demo = $this->getDemoDataset();
-            $persons = $demo['persons'];
-            $marriages = $demo['marriages'];
-            $clans = $demo['clans'];
+            return $this->getDemoDataset();
         }
+
+        return [
+            'clans' => $clans,
+            'persons' => $persons,
+            'marriages' => $marriages,
+        ];
+    }
+
+    /**
+     * API: Получение полного набора данных древа (персоны, связи, рода)
+     */
+    public function apiTreeData(Request $request): void
+    {
+        $dataset = $this->getActiveDataset();
+        $persons = $dataset['persons'];
+        $marriages = $dataset['marriages'];
+        $clans = $dataset['clans'];
+
+        $userPersonId = (int)(Auth::user()['person_id'] ?? 7);
 
         // Защита приватных данных (Требование 4): закрытые контакты отдавать только администратору
         $isAdmin = Auth::isAdmin();
@@ -95,12 +110,39 @@ class TreeController
         }
         unset($p);
 
+        // Расчёт степеней родства относительно вошедшего пользователя по умолчанию
+        $initialKinships = $this->kinshipService->calculateAllKinships($userPersonId, $persons, $marriages);
+
         Response::json([
             'status' => 'success',
             'clans' => $clans,
             'persons' => $persons,
             'marriages' => $marriages,
-            'user_person_id' => Auth::user()['person_id'] ?? 7,
+            'user_person_id' => $userPersonId,
+            'initial_kinships' => $initialKinships,
+        ]);
+    }
+
+    /**
+     * API: Массовый расчет родства для всех персон древа относительно выбранной (base_id)
+     */
+    public function apiKinshipAll(Request $request): void
+    {
+        $baseId = (int)$request->get('base_id', 0);
+        if (!$baseId) {
+            $baseId = (int)(Auth::user()['person_id'] ?? 7);
+        }
+
+        $dataset = $this->getActiveDataset();
+        $persons = $dataset['persons'];
+        $marriages = $dataset['marriages'];
+
+        $kinships = $this->kinshipService->calculateAllKinships($baseId, $persons, $marriages);
+
+        Response::json([
+            'status' => 'success',
+            'base_id' => $baseId,
+            'kinships' => $kinships,
         ]);
     }
 
@@ -117,8 +159,8 @@ class TreeController
             return;
         }
 
-        $allData = $this->getDemoDataset()['persons'];
-        $personsById = array_column($allData, null, 'id');
+        $dataset = $this->getActiveDataset();
+        $personsById = array_column($dataset['persons'], null, 'id');
 
         $target = $personsById[$targetId] ?? null;
         $base = $personsById[$baseId] ?? null;
@@ -128,8 +170,8 @@ class TreeController
             return;
         }
 
-        $kinship = $this->kinshipService->determineKinship($target, $base);
-        $phrase = $this->kinshipService->formatUserKinshipPhrase($target, $base);
+        $kinship = $this->kinshipService->determineKinship($target, $base, 'auto', $personsById, $dataset['marriages']);
+        $phrase = $this->kinshipService->formatUserKinshipPhrase($target, $base, $personsById, $dataset['marriages']);
 
         Response::json([
             'status' => 'success',
@@ -151,7 +193,8 @@ class TreeController
             return;
         }
 
-        $allData = $this->getDemoDataset()['persons'];
+        $dataset = $this->getActiveDataset();
+        $allData = $dataset['persons'];
         $results = [];
 
         foreach ($allData as $p) {

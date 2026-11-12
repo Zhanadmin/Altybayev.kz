@@ -375,8 +375,8 @@ $roleInfo = $roleLabels[$userRole] ?? ['kk' => $userRole, 'ru' => $userRole, 'cl
                     <div>
                         <h3 style="color: #fef08a; font-size: 20px; margin-bottom: 6px;">🌳 Шежіре ағашы (Интерактивті екі түрлі режим)</h3>
                         <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">
-                            <strong>1. MyHeritage жұмыс түрі</strong> — әкеңізге дағдылы карточкалар, жылдам қосу (+Әке, +Ана, +Жұбай, +Ұл, +Қыз).<br>
-                            <strong>2. Шежіре-Орман түрі</strong> — кронадағы тірілер жоғарыда, түп ата Керей тамырда, қыздар-гүлдер және қазақтың туыстық атаулары.
+                            <strong>1. «Өңдеу» жұмыс түрі</strong> — отбасылық дәстүрлі карточкалар, жылдам қосу (+Әке, +Ана, +Жұбай, +Ұл, +Қыз) және туыстықты бірден есептеу.<br>
+                            <strong>2. «Шежіре-Орман» көркем түрі</strong> — кронадағы тірілер жоғарыда, түп ата Керей тамырда, қыздар-гүлдер және қазақтың туыстық атаулары.
                         </p>
                     </div>
                     <a href="/tree" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #d4af37, #b45309); color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);">
@@ -389,7 +389,7 @@ $roleInfo = $roleLabels[$userRole] ?? ['kk' => $userRole, 'ru' => $userRole, 'cl
                 <h3>Модульдер жоспары / План модулей</h3>
                 <ul class="feature-list">
                     <li class="feature-item">
-                        <span>🌳 <strong>Шежіре ағашы / Генеалогическое древо</strong> (MyHeritage режимі + Шежіре-Орман, туыстық атаулар)</span>
+                        <span>🌳 <strong>Шежіре ағашы / Генеалогическое древо</strong> («Өңдеу» режимі + «Шежіре-Орман», туыстық атаулар)</span>
                         <a href="/tree" class="badge-dev" style="background:#10b981; color:#fff; text-decoration:none;">Қарау / Открыть ➔</a>
                     </li>
                     <li class="feature-item">
@@ -402,7 +402,7 @@ $roleInfo = $roleLabels[$userRole] ?? ['kk' => $userRole, 'ru' => $userRole, 'cl
                     </li>
                     <?php if ($userRole === 'admin'): ?>
                     <li class="feature-item" style="background:#fefce8; border:1px solid #fef08a;">
-                        <span>📥 <strong>GEDCOM импорты (MyHeritage)</strong> — шежірені алдын ала көру, XSS-тазалау, жабық контактілер және базаға енгізу</span>
+                        <span>📥 <strong>GEDCOM импорты</strong> — шежірені алдын ала көру, XSS-тазалау, жабық контактілер және базаға енгізу</span>
                         <a href="/admin/import" class="badge-dev" style="background:#d97706; color:#fff; text-decoration:none;">Басқару / Открыть ➔</a>
                     </li>
                     <li class="feature-item">

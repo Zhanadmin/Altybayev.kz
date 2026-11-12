@@ -26,6 +26,7 @@ $router->get('/auth/google/callback', 'App\Controllers\AuthController@handleGoog
 $router->get('/api/me', 'App\Controllers\AuthController@currentUser');
 $router->get('/api/tree', 'App\Controllers\TreeController@apiTreeData', ['auth']);
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);
+$router->get('/api/kinship-all', 'App\Controllers\TreeController@apiKinshipAll', ['auth']);
 $router->get('/api/tree/search', 'App\Controllers\TreeController@apiSearch', ['auth']);
 
 // 5. Админ-панель: Импорт GEDCOM из MyHeritage и управление откатами (TASK-005)

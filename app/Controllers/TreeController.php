@@ -15,9 +15,7 @@ use App\Services\TreeLayoutService;
 use PDO;
 
 /**
- * Контроллер двух видов генеалогического древа:
- * 1. Өңдеу (жұмыс режимі, отец Жандоса привык)
- * 2. Шежіре-Орман / Лес (живые деревья, крона с живыми наверху, корень Керей внизу, цветы-девочки)
+ * Бас контроллер: 3 түрі (Өңдеу, Шежіре-Орман, Тізім), шынайы өңдеу және туыстық жүйесі
  */
 class TreeController
 {
@@ -36,11 +34,16 @@ class TreeController
     public function index(Request $request): void
     {
         $user = Auth::user();
-        $isDemo = (bool)$request->get('demo', 0);
 
-        $userPersonId = $user['person_id'] ?? null;
-        if (!$userPersonId && $isDemo) {
-            $userPersonId = 7; // Жандос Алтыбаев в демонстрационной структуре
+        // Поиск или связка персоны Жандоса
+        $userPersonId = null;
+        if (!empty($user['person_id'])) {
+            $userPersonId = (int)$user['person_id'];
+        } else {
+            $userPersonId = $this->resolveZhandosPersonId();
+            if ($user && $userPersonId) {
+                $this->saveUserPersonId((int)$user['id'], $userPersonId);
+            }
         }
 
         $allTerms = $this->kinshipService->getAllTerms();
@@ -49,53 +52,37 @@ class TreeController
         Response::view('tree', [
             'user' => $user,
             'userPersonId' => $userPersonId,
-            'isDemo' => $isDemo,
+            'canEdit' => Auth::canEdit(),
+            'isAdmin' => Auth::isAdmin(),
             'kinshipTerms' => $allTerms,
             'conceptArtUrl' => $conceptArtUrl,
         ]);
     }
 
     /**
-     * Получить датасет: реальные данные из БД либо демонстрационный набор
-     * При пустой базе возвращает пустые массивы без падения с 500
+     * Получить реальный датасет из базы данных (без демо-данных)
      */
-    public function getDataset(bool $forceDemo = false): array
+    public function getDataset(): array
     {
-        if ($forceDemo) {
-            $demo = $this->getDemoDataset();
-            $demo['is_demo'] = true;
-            $demo['error'] = null;
-            return $demo;
-        }
-
-        $persons = [];
-        $marriages = [];
-        $clans = [];
-
         try {
             $db = Database::getConnection();
 
-            // Проверяем существование таблицы persons
             $stmtP = $db->query("SHOW TABLES LIKE 'persons'");
             if ($stmtP->rowCount() === 0) {
-                return [
-                    'clans' => [],
-                    'persons' => [],
-                    'marriages' => [],
-                    'is_demo' => false,
-                    'error' => null,
-                ];
+                return ['clans' => [], 'persons' => [], 'marriages' => [], 'error' => null];
             }
 
             $stmt = $db->query("SELECT * FROM `persons` WHERE `is_deleted` = 0 ORDER BY `id` ASC");
             $persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+            $marriages = [];
             $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
             if ($stmtM->rowCount() > 0) {
                 $stmtMarriages = $db->query("SELECT * FROM `marriages` ORDER BY `id` ASC");
                 $marriages = $stmtMarriages->fetchAll(PDO::FETCH_ASSOC);
             }
 
+            $clans = [];
             $stmtC = $db->query("SHOW TABLES LIKE 'clans'");
             if ($stmtC->rowCount() > 0) {
                 $stmtClans = $db->query("SELECT * FROM `clans` ORDER BY `id` ASC");
@@ -106,7 +93,6 @@ class TreeController
                 'clans' => $clans,
                 'persons' => $persons,
                 'marriages' => $marriages,
-                'is_demo' => false,
                 'error' => null,
             ];
         } catch (\Throwable $e) {
@@ -115,25 +101,22 @@ class TreeController
                 'clans' => [],
                 'persons' => [],
                 'marriages' => [],
-                'is_demo' => false,
-                'error' => Config::isDebug() ? $e->getMessage() : 'Деректер қорына қосылу немесе сұрау сәтсіз аяқталды.',
+                'error' => Config::isDebug() ? $e->getMessage() : 'Деректер қорына қосылу сәтсіз аяқталды.',
             ];
         }
     }
 
     /**
-     * API: Получение полного набора данных древа (персоны, связи, рода)
+     * API: Получение полного набора данных древа
      */
     public function apiTreeData(Request $request): void
     {
-        $isDemo = (bool)$request->get('demo', 0);
-        $dataset = $this->getDataset($isDemo);
+        $dataset = $this->getDataset();
 
         if (!empty($dataset['error'])) {
             Response::json([
                 'status' => 'error',
                 'is_empty' => true,
-                'is_demo' => false,
                 'error' => 'Мәліметтер қорының қатесі / Ошибка базы данных',
                 'message' => $dataset['error'],
                 'clans' => [],
@@ -148,14 +131,11 @@ class TreeController
         $persons = $dataset['persons'];
         $marriages = $dataset['marriages'];
         $clans = $dataset['clans'];
-        $isDemoActual = $dataset['is_demo'] ?? false;
 
-        // При пустой базе отдаем чистое пустое состояние с подсказкой (без демо-данных)
         if (empty($persons)) {
             Response::json([
                 'status' => 'success',
                 'is_empty' => true,
-                'is_demo' => false,
                 'message' => 'Деректер жоқ — GEDCOM импорттаңыз / Данных нет — импортируйте GEDCOM',
                 'clans' => $clans,
                 'persons' => [],
@@ -167,35 +147,12 @@ class TreeController
         }
 
         $user = Auth::user();
-        $userPersonId = null;
-        if (!empty($user['person_id'])) {
-            $userPersonId = (int)$user['person_id'];
-        } elseif ($isDemoActual) {
-            $userPersonId = 7; // Жандос Алтыбаев в демо
-        } else {
-            // Ищем привязку к Жандосу по имени / GEDCOM ID
-            foreach ($persons as $p) {
-                if (mb_stripos($p['first_name'] ?? '', 'Жандос') !== false || ($p['gedcom_id'] ?? '') === '@I6@') {
-                    $userPersonId = (int)$p['id'];
-                    break;
-                }
-            }
-            if (!$userPersonId) {
-                $userPersonId = (int)$persons[0]['id'];
-            }
-
-            // Если пользователь авторизован, автоматически сохраняем привязку в БД и сессии
-            if ($user && empty($user['person_id']) && $userPersonId) {
-                try {
-                    $db = Database::getConnection();
-                    $uStmt = $db->prepare("UPDATE `users` SET `person_id` = ? WHERE `id` = ?");
-                    $uStmt->execute([$userPersonId, $user['id']]);
-                    $_SESSION['user']['person_id'] = $userPersonId;
-                } catch (\Throwable $e) {}
-            }
+        $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : $this->resolveZhandosPersonId();
+        if ($user && empty($user['person_id']) && $userPersonId) {
+            $this->saveUserPersonId((int)$user['id'], $userPersonId);
         }
 
-        // Защита приватных данных (Требование 4): закрытые контакты отдавать только администратору
+        // Защита закрытых контактов
         $isAdmin = Auth::isAdmin();
         foreach ($persons as &$p) {
             if (isset($p['private_contacts']) && is_string($p['private_contacts'])) {
@@ -210,7 +167,7 @@ class TreeController
         // Режим раскладки: по умолчанию окрестность ('focal') или полное древо ('full')
         $layoutMode = (string)$request->get('mode', 'focal');
         $reqFocalId = (int)$request->get('focal_id', 0);
-        $activeFocalId = $reqFocalId ?: $userPersonId;
+        $activeFocalId = $reqFocalId ?: ($userPersonId ?: (int)$persons[0]['id']);
         $expandedStr = trim((string)$request->get('expanded', ''));
         $expandedIds = $expandedStr !== '' ? array_map('intval', explode(',', $expandedStr)) : [];
 
@@ -222,16 +179,15 @@ class TreeController
             $expandedIds
         );
 
-        // Расчёт степеней родства относительно вошедшего пользователя по умолчанию
+        // Расчёт степеней родства относительно фокальной персоны
         $initialKinships = [];
-        if ($userPersonId) {
-            $initialKinships = $this->kinshipService->calculateAllKinships($userPersonId, $persons, $marriages);
+        if ($activeFocalId) {
+            $initialKinships = $this->kinshipService->calculateAllKinships($activeFocalId, $persons, $marriages);
         }
 
         Response::json([
             'status' => 'success',
             'is_empty' => false,
-            'is_demo' => $isDemoActual,
             'clans' => $clans,
             'persons' => $persons,
             'marriages' => $marriages,
@@ -248,8 +204,7 @@ class TreeController
      */
     public function apiTreeLayout(Request $request): void
     {
-        $isDemo = (bool)$request->get('demo', 0);
-        $dataset = $this->getDataset($isDemo);
+        $dataset = $this->getDataset();
 
         if (!empty($dataset['error']) || empty($dataset['persons'])) {
             Response::json(['status' => 'error', 'nodes' => [], 'edges' => []]);
@@ -257,8 +212,8 @@ class TreeController
         }
 
         $user = Auth::user();
-        $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : null;
-        $focalId = (int)$request->get('focal_id', 0) ?: $userPersonId;
+        $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : $this->resolveZhandosPersonId();
+        $focalId = (int)$request->get('focal_id', 0) ?: ($userPersonId ?: (int)$dataset['persons'][0]['id']);
         $mode = (string)$request->get('mode', 'focal');
         $expandedStr = trim((string)$request->get('expanded', ''));
         $expandedIds = $expandedStr !== '' ? array_map('intval', explode(',', $expandedStr)) : [];
@@ -275,6 +230,627 @@ class TreeController
             'status' => 'success',
             'layout' => $layout,
         ]);
+    }
+
+    /**
+     * API: Табличный вид «Тізім / Список» со всеми фильтрами и поиском (Вид 3)
+     */
+    public function apiTreeList(Request $request): void
+    {
+        $dataset = $this->getDataset();
+        $persons = $dataset['persons'];
+        $marriages = $dataset['marriages'];
+        $clans = $dataset['clans'];
+
+        if (empty($persons)) {
+            Response::json(['results' => [], 'total' => 0]);
+            return;
+        }
+
+        $personsById = array_column($persons, null, 'id');
+        $clansById = array_column($clans, null, 'id');
+
+        $q = mb_strtolower(trim((string)$request->get('q', '')));
+        $clanFilter = (int)$request->get('clan_id', 0);
+        $genderFilter = trim((string)$request->get('gender', ''));
+        $statusFilter = trim((string)$request->get('status', '')); // 'living' or 'deceased'
+        $sort = trim((string)$request->get('sort', 'name_asc'));
+
+        // Карта супругов для отображения
+        $spousesMap = [];
+        foreach ($marriages as $m) {
+            $h = (int)($m['husband_id'] ?? 0);
+            $w = (int)($m['wife_id'] ?? 0);
+            if ($h && $w) {
+                $spousesMap[$h][] = [
+                    'id' => $w,
+                    'name' => trim(($personsById[$w]['last_name'] ?? '') . ' ' . ($personsById[$w]['first_name'] ?? '')),
+                    'status' => $m['status'] ?? ($m['is_current'] ? 'married' : 'divorced'),
+                    'years' => trim(($m['start_date'] ?? $m['marriage_date'] ?? '') . ' ' . ($m['end_date'] ?? $m['divorce_date'] ?? '')),
+                ];
+                $spousesMap[$w][] = [
+                    'id' => $h,
+                    'name' => trim(($personsById[$h]['last_name'] ?? '') . ' ' . ($personsById[$h]['first_name'] ?? '')),
+                    'status' => $m['status'] ?? ($m['is_current'] ? 'married' : 'divorced'),
+                    'years' => trim(($m['start_date'] ?? $m['marriage_date'] ?? '') . ' ' . ($m['end_date'] ?? $m['divorce_date'] ?? '')),
+                ];
+            }
+        }
+
+        $filtered = [];
+        foreach ($persons as $p) {
+            $pId = (int)$p['id'];
+            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? ''));
+
+            // Фильтр по поисковому запросу
+            if ($q !== '') {
+                $match = mb_stripos($fullName, $q) !== false
+                    || mb_stripos($p['clan_ru'] ?? '', $q) !== false
+                    || mb_stripos($p['birth_place'] ?? '', $q) !== false
+                    || mb_stripos($p['maiden_name'] ?? '', $q) !== false;
+                if (!$match) continue;
+            }
+
+            // Фильтр по ру
+            if ($clanFilter > 0 && (int)($p['clan_id'] ?? 0) !== $clanFilter) {
+                continue;
+            }
+
+            // Фильтр по полу
+            if ($genderFilter !== '' && $genderFilter !== 'all' && $p['gender'] !== $genderFilter) {
+                continue;
+            }
+
+            // Фильтр по статусу (живые / ушедшие)
+            $isDeceased = !empty($p['is_deceased']);
+            if ($statusFilter === 'living' && $isDeceased) continue;
+            if ($statusFilter === 'deceased' && !$isDeceased) continue;
+
+            // Родители
+            $father = !empty($p['father_id']) ? ($personsById[$p['father_id']] ?? null) : null;
+            $mother = !empty($p['mother_id']) ? ($personsById[$p['mother_id']] ?? null) : null;
+
+            // Годы: живые — только год рождения (никаких «жив»!), ушедшие — годы жизни с золотой иконкой ✨
+            $yearsDisplay = '';
+            if ($isDeceased) {
+                $yearsDisplay = ($p['birth_year'] ?: '—') . ' — ' . ($p['death_year'] ?: '†');
+            } else {
+                $yearsDisplay = $p['birth_year'] ?: '—';
+            }
+
+            $filtered[] = [
+                'id' => $pId,
+                'first_name' => $p['first_name'],
+                'last_name' => $p['last_name'],
+                'maiden_name' => $p['maiden_name'] ?? null,
+                'middle_name' => $p['middle_name'] ?? null,
+                'full_name' => $fullName,
+                'gender' => $p['gender'],
+                'birth_year' => $p['birth_year'],
+                'death_year' => $p['death_year'],
+                'years_display' => $yearsDisplay,
+                'is_deceased' => $isDeceased ? 1 : 0,
+                'birth_place' => $p['birth_place'],
+                'clan_ru' => $p['clan_ru'] ?: 'белгісіз',
+                'clan_id' => $p['clan_id'],
+                'father_id' => $p['father_id'],
+                'father_name' => $father ? trim(($father['last_name'] ?? '') . ' ' . $father['first_name']) : null,
+                'mother_id' => $p['mother_id'],
+                'mother_name' => $mother ? trim(($mother['last_name'] ?? '') . ' ' . $mother['first_name']) : null,
+                'spouses' => $spousesMap[$pId] ?? [],
+                'avatar_path' => $p['avatar_path'] ?? null,
+            ];
+        }
+
+        // Сортировка
+        usort($filtered, function ($a, $b) use ($sort) {
+            switch ($sort) {
+                case 'name_desc':
+                    return strcmp($b['full_name'], $a['full_name']);
+                case 'birth_year_asc':
+                    return ((int)$a['birth_year']) <=> ((int)$b['birth_year']);
+                case 'birth_year_desc':
+                    return ((int)$b['birth_year']) <=> ((int)$a['birth_year']);
+                case 'name_asc':
+                default:
+                    return strcmp($a['full_name'], $b['full_name']);
+            }
+        });
+
+        Response::json([
+            'status' => 'success',
+            'total' => count($filtered),
+            'results' => $filtered,
+        ]);
+    }
+
+    /**
+     * API: Получить полные данные персоны для модального окна просмотра и редактирования
+     */
+    public function apiPersonGet(Request $request): void
+    {
+        $id = (int)$request->get('id', 0);
+        if (!$id) {
+            Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT * FROM `persons` WHERE `id` = ? AND `is_deleted` = 0");
+            $stmt->execute([$id]);
+            $person = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$person) {
+                Response::json(['error' => 'Тұлға табылмады / Персона не найдена'], 404);
+                return;
+            }
+
+            // Получаем родителей
+            $father = null;
+            if (!empty($person['father_id'])) {
+                $fStmt = $db->prepare("SELECT id, first_name, last_name, birth_year FROM persons WHERE id = ?");
+                $fStmt->execute([$person['father_id']]);
+                $father = $fStmt->fetch(PDO::FETCH_ASSOC);
+            }
+
+            $mother = null;
+            if (!empty($person['mother_id'])) {
+                $mStmt = $db->prepare("SELECT id, first_name, last_name, birth_year FROM persons WHERE id = ?");
+                $mStmt->execute([$person['mother_id']]);
+                $mother = $mStmt->fetch(PDO::FETCH_ASSOC);
+            }
+
+            // Получаем супругов
+            $spStmt = $db->prepare("
+                SELECT m.*, p.first_name, p.last_name, p.birth_year, p.gender 
+                FROM marriages m
+                JOIN persons p ON (p.id = IF(m.husband_id = ?, m.wife_id, m.husband_id))
+                WHERE (m.husband_id = ? OR m.wife_id = ?)
+            ");
+            $spStmt->execute([$id, $id, $id]);
+            $spouses = $spStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Получаем детей
+            $cStmt = $db->prepare("SELECT id, first_name, last_name, birth_year, gender FROM persons WHERE (father_id = ? OR mother_id = ?) AND is_deleted = 0 ORDER BY birth_year ASC");
+            $cStmt->execute([$id, $id]);
+            $children = $cStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Аудит-логи правок персоны
+            $aStmt = $db->prepare("SELECT * FROM audit_logs WHERE entity_table = 'persons' AND entity_id = ? ORDER BY id DESC LIMIT 10");
+            $aStmt->execute([$id]);
+            $auditLogs = $aStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            Response::json([
+                'status' => 'success',
+                'person' => $person,
+                'father' => $father,
+                'mother' => $mother,
+                'spouses' => $spouses,
+                'children' => $children,
+                'audit_logs' => $auditLogs,
+                'can_edit' => Auth::canEdit(),
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: Сохранение изменений персоны (Реальное редактирование в БД с фиксацией в audit_logs)
+     */
+    public function apiPersonUpdate(Request $request): void
+    {
+        if (!Auth::canEdit()) {
+            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав на редактирование (только просмотр)'], 403);
+            return;
+        }
+
+        $id = (int)$request->get('id', 0);
+        if (!$id) {
+            Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+
+        $firstName = trim((string)$request->get('first_name', ''));
+        if ($firstName === '') {
+            Response::json(['error' => 'Аты (имя) толтырылуы тиіс / Имя обязательно для заполнения'], 422);
+            return;
+        }
+
+        try {
+            $db = Database::getConnection();
+
+            // Читаем старые данные для истории аудита
+            $stmtOld = $db->prepare("SELECT * FROM `persons` WHERE `id` = ?");
+            $stmtOld->execute([$id]);
+            $oldPerson = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
+            if (!$oldPerson) {
+                Response::json(['error' => 'Персона не найдена'], 404);
+                return;
+            }
+
+            $lastName = trim((string)$request->get('last_name', '')) ?: null;
+            $maidenName = trim((string)$request->get('maiden_name', '')) ?: null;
+            $middleName = trim((string)$request->get('middle_name', '')) ?: null;
+            $gender = trim((string)$request->get('gender', 'M'));
+            $birthDate = trim((string)$request->get('birth_date', '')) ?: null;
+            $birthYear = trim((string)$request->get('birth_year', '')) ?: null;
+            $birthPlace = trim((string)$request->get('birth_place', '')) ?: null;
+
+            // Обработка статуса смерти: у живых дата смерти пустая, у ушедших заполняется дата/год
+            $deathDate = trim((string)$request->get('death_date', '')) ?: null;
+            $deathYear = trim((string)$request->get('death_year', '')) ?: null;
+            $deathPlace = trim((string)$request->get('death_place', '')) ?: null;
+            $isDeceasedInput = (int)$request->get('is_deceased', 0);
+
+            $isDeceased = ($deathDate !== null || $deathYear !== null || $isDeceasedInput === 1) ? 1 : 0;
+            if (!$isDeceased) {
+                $deathDate = null;
+                $deathYear = null;
+                $deathPlace = null;
+            }
+
+            $clanRu = trim((string)$request->get('clan_ru', '')) ?: null;
+            $clanId = (int)$request->get('clan_id', 0) ?: null;
+            $biography = trim((string)$request->get('biography', '')) ?: null;
+
+            $updateStmt = $db->prepare("
+                UPDATE `persons` SET
+                    `first_name` = ?,
+                    `last_name` = ?,
+                    `maiden_name` = ?,
+                    `middle_name` = ?,
+                    `gender` = ?,
+                    `birth_date` = ?,
+                    `birth_year` = ?,
+                    `birth_place` = ?,
+                    `is_deceased` = ?,
+                    `death_date` = ?,
+                    `death_year` = ?,
+                    `death_place` = ?,
+                    `clan_id` = ?,
+                    `clan_ru` = ?,
+                    `biography` = ?,
+                    `updated_at` = NOW()
+                WHERE `id` = ?
+            ");
+
+            $updateStmt->execute([
+                $firstName,
+                $lastName,
+                $maidenName,
+                $middleName,
+                $gender,
+                $birthDate,
+                $birthYear,
+                $birthPlace,
+                $isDeceased,
+                $deathDate,
+                $deathYear,
+                $deathPlace,
+                $clanId,
+                $clanRu,
+                $biography,
+                $id
+            ]);
+
+            // Получаем новые значения
+            $stmtNew = $db->prepare("SELECT * FROM `persons` WHERE `id` = ?");
+            $stmtNew->execute([$id]);
+            $newPerson = $stmtNew->fetch(PDO::FETCH_ASSOC);
+
+            // Запись в аудит-лог
+            $user = Auth::user();
+            $this->recordAuditLog(
+                'UPDATE',
+                'persons',
+                $id,
+                "Тұлға деректері өзгертілді / Обновлены данные персоны: {$firstName} {$lastName}",
+                $oldPerson,
+                $newPerson,
+                $user
+            );
+
+            Response::json([
+                'status' => 'success',
+                'message' => 'Өзгерістер сәтті сақталды / Изменения успешно сохранены!',
+                'person' => $newPerson,
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: Быстрое добавление родственника (+Ұл, +Қыз, +Әке, +Ана, +Жұбай, +Бауыр)
+     */
+    public function apiPersonCreateRelative(Request $request): void
+    {
+        if (!Auth::canEdit()) {
+            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав на редактирование'], 403);
+            return;
+        }
+
+        $targetId = (int)$request->get('target_id', 0);
+        $relationType = trim((string)$request->get('relation_type', ''));
+
+        if (!$targetId || !$relationType) {
+            Response::json(['error' => 'target_id and relation_type are required'], 400);
+            return;
+        }
+
+        $firstName = trim((string)$request->get('first_name', ''));
+        if ($firstName === '') {
+            Response::json(['error' => 'Аты (имя) толтырылуы тиіс / Имя обязательно'], 422);
+            return;
+        }
+
+        try {
+            $db = Database::getConnection();
+
+            $stmtTarget = $db->prepare("SELECT * FROM `persons` WHERE `id` = ?");
+            $stmtTarget->execute([$targetId]);
+            $target = $stmtTarget->fetch(PDO::FETCH_ASSOC);
+
+            if (!$target) {
+                Response::json(['error' => 'Мақсатты тұлға табылмады / Целевая персона не найдена'], 404);
+                return;
+            }
+
+            $lastName = trim((string)$request->get('last_name', '')) ?: $target['last_name'];
+            $maidenName = trim((string)$request->get('maiden_name', '')) ?: null;
+            $middleName = trim((string)$request->get('middle_name', '')) ?: null;
+            $birthYear = trim((string)$request->get('birth_year', '')) ?: null;
+            $birthPlace = trim((string)$request->get('birth_place', '')) ?: $target['birth_place'];
+            $isDeceased = (int)$request->get('is_deceased', 0);
+            $deathYear = trim((string)$request->get('death_year', '')) ?: null;
+
+            $fatherId = null;
+            $motherId = null;
+            $gender = 'M';
+            $clanId = $target['clan_id'];
+            $clanRu = $target['clan_ru'];
+
+            switch ($relationType) {
+                case 'son':
+                case 'daughter':
+                    $gender = ($relationType === 'daughter') ? 'F' : 'M';
+                    if ($target['gender'] === 'M') {
+                        $fatherId = $targetId;
+                        // Ищем супругу для связки матери
+                        $spStmt = $db->prepare("SELECT wife_id FROM marriages WHERE husband_id = ? AND is_current = 1 LIMIT 1");
+                        $spStmt->execute([$targetId]);
+                        $motherId = $spStmt->fetchColumn() ?: null;
+                    } else {
+                        $motherId = $targetId;
+                        $spStmt = $db->prepare("SELECT husband_id FROM marriages WHERE wife_id = ? AND is_current = 1 LIMIT 1");
+                        $spStmt->execute([$targetId]);
+                        $fatherId = $spStmt->fetchColumn() ?: null;
+                        if ($fatherId) {
+                            $fRow = $db->query("SELECT clan_id, clan_ru FROM persons WHERE id = {$fatherId}")->fetch(PDO::FETCH_ASSOC);
+                            if ($fRow) {
+                                $clanId = $fRow['clan_id'];
+                                $clanRu = $fRow['clan_ru'];
+                            }
+                        }
+                    }
+                    break;
+
+                case 'father':
+                    $gender = 'M';
+                    break;
+
+                case 'mother':
+                    $gender = 'F';
+                    $clanRu = 'белгісіз';
+                    $clanId = null;
+                    break;
+
+                case 'spouse':
+                    $gender = ($target['gender'] === 'M') ? 'F' : 'M';
+                    if ($gender === 'F') {
+                        $clanRu = 'белгісіз';
+                        $clanId = null;
+                    }
+                    break;
+
+                case 'sibling':
+                    $gender = trim((string)$request->get('gender', 'M'));
+                    $fatherId = $target['father_id'];
+                    $motherId = $target['mother_id'];
+                    break;
+            }
+
+            // Вставка новой персоны
+            $user = Auth::user();
+            $userId = $user['id'] ?? null;
+
+            $insertStmt = $db->prepare("
+                INSERT INTO `persons` (
+                    `first_name`, `last_name`, `maiden_name`, `middle_name`,
+                    `gender`, `father_id`, `mother_id`,
+                    `birth_year`, `birth_place`, `is_deceased`, `death_year`,
+                    `clan_id`, `clan_ru`, `created_by`, `created_at`
+                ) VALUES (
+                    ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, NOW()
+                )
+            ");
+
+            $insertStmt->execute([
+                $firstName,
+                $lastName,
+                $maidenName,
+                $middleName,
+                $gender,
+                $fatherId,
+                $motherId,
+                $birthYear,
+                $birthPlace,
+                $isDeceased,
+                $deathYear,
+                $clanId,
+                $clanRu,
+                $userId
+            ]);
+
+            $newPersonId = (int)$db->lastInsertId();
+
+            // Дополнительные связи
+            if ($relationType === 'father') {
+                $db->prepare("UPDATE `persons` SET `father_id` = ? WHERE `id` = ?")->execute([$newPersonId, $targetId]);
+            } elseif ($relationType === 'mother') {
+                $db->prepare("UPDATE `persons` SET `mother_id` = ? WHERE `id` = ?")->execute([$newPersonId, $targetId]);
+            } elseif ($relationType === 'spouse') {
+                $husbandId = ($target['gender'] === 'M') ? $targetId : $newPersonId;
+                $wifeId = ($target['gender'] === 'M') ? $newPersonId : $targetId;
+                $marrStmt = $db->prepare("INSERT INTO `marriages` (`husband_id`, `wife_id`, `is_current`, `status`, `created_at`) VALUES (?, ?, 1, 'married', NOW())");
+                $marrStmt->execute([$husbandId, $wifeId]);
+            }
+
+            // Аудит-лог
+            $newRow = $db->query("SELECT * FROM persons WHERE id = {$newPersonId}")->fetch(PDO::FETCH_ASSOC);
+            $this->recordAuditLog(
+                'CREATE',
+                'persons',
+                $newPersonId,
+                "Жаңа туыс қосылды / Добавлен новый родственник ({$relationType}): {$firstName} {$lastName}",
+                null,
+                $newRow,
+                $user
+            );
+
+            Response::json([
+                'status' => 'success',
+                'message' => 'Туыс сәтті қосылды / Родственник успешно добавлен!',
+                'new_person_id' => $newPersonId,
+                'person' => $newRow,
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: Мягкое удаление персоны (Soft-delete, только Администратор)
+     */
+    public function apiPersonDelete(Request $request): void
+    {
+        if (!Auth::isAdmin()) {
+            Response::json(['error' => 'Жою тек әкімшіге рұқсат етілген / Удаление разрешено только администратору'], 403);
+            return;
+        }
+
+        $id = (int)$request->get('id', 0);
+        if (!$id) {
+            Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $stmtOld = $db->prepare("SELECT * FROM persons WHERE id = ?");
+            $stmtOld->execute([$id]);
+            $oldPerson = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
+            if (!$oldPerson) {
+                Response::json(['error' => 'Персона не найдена'], 404);
+                return;
+            }
+
+            $stmt = $db->prepare("UPDATE `persons` SET `is_deleted` = 1, `updated_at` = NOW() WHERE `id` = ?");
+            $stmt->execute([$id]);
+
+            $user = Auth::user();
+            $this->recordAuditLog(
+                'DELETE',
+                'persons',
+                $id,
+                "Тұлға жойылды (soft-delete): {$oldPerson['first_name']} {$oldPerson['last_name']}",
+                $oldPerson,
+                ['is_deleted' => 1],
+                $user
+            );
+
+            Response::json([
+                'status' => 'success',
+                'message' => 'Тұлға сәтті жойылды / Персона успешно удалена'
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: Редактирование брака / развода
+     */
+    public function apiMarriageUpdate(Request $request): void
+    {
+        if (!Auth::canEdit()) {
+            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав'], 403);
+            return;
+        }
+
+        $id = (int)$request->get('id', 0);
+        if (!$id) {
+            Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+
+        $status = trim((string)$request->get('status', 'married'));
+        $startDate = trim((string)$request->get('start_date', '')) ?: null;
+        $endDate = trim((string)$request->get('end_date', '')) ?: null;
+        $notes = trim((string)$request->get('notes', '')) ?: null;
+        $isCurrent = ($status === 'divorced' || $status === 'widowed' || $endDate !== null) ? 0 : 1;
+
+        try {
+            $db = Database::getConnection();
+            $stmtOld = $db->prepare("SELECT * FROM marriages WHERE id = ?");
+            $stmtOld->execute([$id]);
+            $oldM = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
+            $stmt = $db->prepare("
+                UPDATE `marriages` SET
+                    `status` = ?,
+                    `start_date` = ?,
+                    `marriage_date` = ?,
+                    `end_date` = ?,
+                    `divorce_date` = ?,
+                    `is_current` = ?,
+                    `notes` = ?
+                WHERE `id` = ?
+            ");
+
+            $stmt->execute([
+                $status,
+                $startDate,
+                $startDate,
+                $endDate,
+                $endDate,
+                $isCurrent,
+                $notes,
+                $id
+            ]);
+
+            $user = Auth::user();
+            $this->recordAuditLog(
+                'UPDATE',
+                'marriages',
+                $id,
+                "Брак мәліметтері өзгертілді / Обновлены данные брака (статус: {$status})",
+                $oldM,
+                ['status' => $status, 'start_date' => $startDate, 'end_date' => $endDate, 'is_current' => $isCurrent],
+                $user
+            );
+
+            Response::json(['status' => 'success', 'message' => 'Неке деректері сақталды / Данные брака сохранены']);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -295,10 +871,7 @@ class TreeController
         }
 
         try {
-            $db = Database::getConnection();
-            $stmt = $db->prepare("UPDATE `users` SET `person_id` = ? WHERE `id` = ?");
-            $stmt->execute([$personId, $user['id']]);
-            $_SESSION['user']['person_id'] = $personId;
+            $this->saveUserPersonId((int)$user['id'], $personId);
 
             Response::json([
                 'status' => 'success',
@@ -311,28 +884,23 @@ class TreeController
     }
 
     /**
-     * API: Массовый расчет родства для всех персон древа относительно выбранной (base_id)
+     * API: Массовый расчет родства
      */
     public function apiKinshipAll(Request $request): void
     {
-        $isDemo = (bool)$request->get('demo', 0);
-        $dataset = $this->getDataset($isDemo);
+        $dataset = $this->getDataset();
         $persons = $dataset['persons'];
         $marriages = $dataset['marriages'];
 
         if (empty($persons)) {
-            Response::json([
-                'status' => 'success',
-                'base_id' => 0,
-                'kinships' => (object)[],
-            ]);
+            Response::json(['status' => 'success', 'base_id' => 0, 'kinships' => (object)[]]);
             return;
         }
 
         $baseId = (int)$request->get('base_id', 0);
         if (!$baseId) {
             $user = Auth::user();
-            $baseId = !empty($user['person_id']) ? (int)$user['person_id'] : (int)$persons[0]['id'];
+            $baseId = !empty($user['person_id']) ? (int)$user['person_id'] : $this->resolveZhandosPersonId();
         }
 
         $kinships = $this->kinshipService->calculateAllKinships($baseId, $persons, $marriages);
@@ -357,8 +925,7 @@ class TreeController
             return;
         }
 
-        $isDemo = (bool)$request->get('demo', 0);
-        $dataset = $this->getDataset($isDemo);
+        $dataset = $this->getDataset();
         $personsById = array_column($dataset['persons'], null, 'id');
 
         $target = $personsById[$targetId] ?? null;
@@ -392,19 +959,23 @@ class TreeController
             return;
         }
 
-        $isDemo = (bool)$request->get('demo', 0);
-        $dataset = $this->getDataset($isDemo);
+        $dataset = $this->getDataset();
         $allData = $dataset['persons'];
         $results = [];
 
         foreach ($allData as $p) {
             $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? ''));
             if (mb_stripos($fullName, $q) !== false || mb_stripos($p['clan_ru'] ?? '', $q) !== false) {
+                // Живые — только год рождения! Ушедшие — годы жизни
+                $years = $p['is_deceased'] 
+                    ? (($p['birth_year'] ?: '—') . ' — ' . ($p['death_year'] ?: '†'))
+                    : ($p['birth_year'] ?: '—');
+
                 $results[] = [
                     'id' => $p['id'],
                     'name' => $fullName,
-                    'years' => ($p['birth_year'] ?? '') . ($p['death_year'] ? ' — ' . $p['death_year'] : ($p['is_deceased'] ? '' : ' (тірі)')),
-                    'clan' => $p['clan_ru'] ?? 'Керей',
+                    'years' => $years,
+                    'clan' => $p['clan_ru'] ?? 'белгісіз',
                     'gender' => $p['gender'],
                     'avatar' => $p['avatar_path'] ?? null,
                 ];
@@ -415,280 +986,73 @@ class TreeController
     }
 
     /**
-     * Эталонный набор шежіре Керей -> Алтыбаевтар (схема для рабочего вида и леса)
+     * Определение ID персоны Жандоса в БД
      */
-    protected function getDemoDataset(): array
+    protected function resolveZhandosPersonId(): int
     {
-        $clans = [
-            [
-                'id' => 1,
-                'name' => 'Керей',
-                'zhuz' => 'middle',
-                'tamga' => 'Ашамай (X)',
-                'uran' => 'Ошыбай!',
-                'tree_color' => '#1b4332',
-                'root_ancestor_name' => 'Керей баба',
-                'description' => 'Негізгі діңгек: Керей бабадан Алтыбайға дейінгі тікелей ата-баба желісі.',
-            ],
-            [
-                'id' => 2,
-                'name' => 'Жағалбайлы',
-                'zhuz' => 'junior',
-                'tamga' => 'Балға (T)',
-                'uran' => 'Малатау!',
-                'tree_color' => '#8b2635',
-                'root_ancestor_name' => 'Жағалбайлы',
-                'description' => 'Кіші жүз. Біздің әулетке келін болып түскен аяулы аналарымыздың руы.',
-            ],
-            [
-                'id' => 3,
-                'name' => 'Қоңырат',
-                'zhuz' => 'middle',
-                'tamga' => 'Босаға (П)',
-                'uran' => 'Алатау!',
-                'tree_color' => '#2b580c',
-                'root_ancestor_name' => 'Қоңырат',
-                'description' => 'Орта жүз. Алтыбаевтар әулетінің қыздары ұзатылып барған құрметті құдалар руы.',
-            ],
-        ];
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT id FROM persons WHERE gedcom_id = '@I6@' OR (first_name LIKE '%Жандос%' AND last_name LIKE '%Алтыбаев%') LIMIT 1");
+            $id = $stmt->fetchColumn();
+            return $id ? (int)$id : 6;
+        } catch (\Throwable $e) {
+            return 6;
+        }
+    }
 
-        // Иерархия:
-        // 1: Керей (корень, внизу)
-        // 2: Самай баба (вертикальный ствол)
-        // 3: Алтыбай баба (негізгі діңгек аяқталып, бұтақтар тарайтын тұлға)
-        // 4: Сейітқали Алтыбаев (үлкен ұлы)
-        // 5: Бибінұр (Сейітқалидың жұбайы, Жағалбайлы қызы)
-        // 6: Қасым Алтыбаев (Жандостың әкесі, бас редактор)
-        // 7: Жандос Алтыбаев («Сіз осындасыз», жүйе әкімшісі)
-        // 8: Әлия Алтыбаева (Жандостың жұбайы, Жағалбайлы қызы)
-        // 9: Айнұр Алтыбаева (Жандостың қарындасы — тұрмысқа шыққан, Қоңыратқа келін)
-        // 10: Арнұр Алтыбаев (Жандостың ұлы, крона басындағы жас өркен)
-        // 11: Медина Алтыбаева (Жандостың қызы, кронадағы нәзік гүл)
-        // 12: Дәулет (Қоңырат күйеу бала — Айнұрдың жұбайы)
-        $persons = [
-            [
-                'id' => 1,
-                'clan_id' => 1,
-                'first_name' => 'Керей',
-                'last_name' => 'Баба',
-                'middle_name' => '',
-                'gender' => 'M',
-                'father_id' => null,
-                'mother_id' => null,
-                'birth_year' => 'ок. 1380',
-                'birth_place' => 'Қазақ даласы',
-                'is_deceased' => 1,
-                'death_year' => 'ок. 1450',
-                'clan_ru' => 'Орта жүз, Керей',
-                'is_founder' => 1,
-                'is_trunk' => 1,
-                'biography' => 'Керей хандығы мен руының түп негізі. Ағаштың ең түпкі тамырында (корень) орналасқан қасиетті баба.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 2,
-                'clan_id' => 1,
-                'first_name' => 'Самай',
-                'last_name' => 'Би',
-                'middle_name' => 'Керейұлы',
-                'gender' => 'M',
-                'father_id' => 1,
-                'mother_id' => null,
-                'birth_year' => 'ок. 1620',
-                'birth_place' => 'Ертіс бойы',
-                'is_deceased' => 1,
-                'death_year' => 'ок. 1690',
-                'clan_ru' => 'Орта жүз, Керей',
-                'is_trunk' => 1,
-                'biography' => 'Керейден Алтыбайға дейінгі тікелей көтерілетін біртұтас биік діңгектегі (высокий ствол) тарихи тұлға.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 3,
-                'clan_id' => 1,
-                'first_name' => 'Алтыбай',
-                'last_name' => 'Баба',
-                'middle_name' => 'Самайұлы',
-                'gender' => 'M',
-                'father_id' => 2,
-                'mother_id' => null,
-                'birth_year' => 'ок. 1795',
-                'birth_place' => 'Шығыс Қазақстан, Зайсан өңірі',
-                'is_deceased' => 1,
-                'death_year' => 'ок. 1870',
-                'clan_ru' => 'Орта жүз, Керей',
-                'is_trunk' => 1,
-                'biography' => 'Әулетіміздің атын иеленген ұлы бабамыз. Осы кісіден кейін шежіре діңгегі тармақталып, бұтақтар (ветки) жан-жаққа жайылады.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 4,
-                'clan_id' => 1,
-                'first_name' => 'Сейітқали',
-                'last_name' => 'Алтыбаев',
-                'middle_name' => 'Алтыбайұлы',
-                'gender' => 'M',
-                'father_id' => 3,
-                'mother_id' => null,
-                'birth_year' => '1898',
-                'birth_place' => 'Зайсан',
-                'is_deceased' => 1,
-                'death_year' => '1972',
-                'clan_ru' => 'Орта жүз, Керей',
-                'biography' => 'Елге сыйлы ақсақал, шежіреші, шаңырақ тірегі.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 5,
-                'clan_id' => 2,
-                'first_name' => 'Бибінұр',
-                'last_name' => 'Алтыбаева',
-                'maiden_name' => 'Сейітқызы',
-                'gender' => 'F',
-                'father_id' => null,
-                'mother_id' => null,
-                'birth_year' => '1904',
-                'birth_place' => 'Ақтөбе өңірі',
-                'is_deceased' => 1,
-                'death_year' => '1984',
-                'clan_ru' => 'Кіші жүз, Жағалбайлы',
-                'biography' => 'Жағалбайлы руынан келген берекелі анамыз. Күйеуі Сейітқалидің жанындағы гүл түрінде бейнеленеді.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 6,
-                'clan_id' => 1,
-                'first_name' => 'Қасым',
-                'last_name' => 'Алтыбаев',
-                'middle_name' => 'Сейітқалиұлы',
-                'gender' => 'M',
-                'father_id' => 4,
-                'mother_id' => 5,
-                'birth_year' => '1955',
-                'birth_place' => 'Алматы',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Орта жүз, Керей',
-                'is_father_editor' => 1,
-                'biography' => 'Жандостың әкесі, шежіренің басты сақтаушысы әрі редакторы. MyHeritage жүйесіне әбден дағдыланған.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 7,
-                'clan_id' => 1,
-                'first_name' => 'Жандос',
-                'last_name' => 'Алтыбаев',
-                'middle_name' => 'Қасымұлы',
-                'gender' => 'M',
-                'father_id' => 6,
-                'mother_id' => null,
-                'birth_year' => '1985',
-                'birth_place' => 'Алматы',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Орта жүз, Керей',
-                'is_self' => 1,
-                'biography' => 'Жүйе әкімшісі. Древо ашылғанда «Сіз осындасыз» белгісімен алтын реңкпен жарқырап көрінеді.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 8,
-                'clan_id' => 2,
-                'first_name' => 'Әлия',
-                'last_name' => 'Алтыбаева',
-                'maiden_name' => 'Нұрланқызы',
-                'gender' => 'F',
-                'father_id' => null,
-                'mother_id' => null,
-                'birth_year' => '1987',
-                'birth_place' => 'Астана',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Кіші жүз, Жағалбайлы',
-                'biography' => 'Жандостың өмірлік жары. Жағалбайлы қызы — күйеуінің бұтағындағы гүл, басса Жағалбайлы ағашына ауысады.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 9,
-                'clan_id' => 1,
-                'out_married_clan_id' => 3,
-                'first_name' => 'Айнұр',
-                'last_name' => 'Төлегенова',
-                'maiden_name' => 'Алтыбаева',
-                'gender' => 'F',
-                'father_id' => 6,
-                'mother_id' => null,
-                'birth_year' => '1989',
-                'birth_place' => 'Алматы',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Орта жүз, Керей (Қоңыратқа келін)',
-                'biography' => 'Қасымның қызы, Жандостың қарындасы. Қоңырат руына келін болып түскен. Туған ағашында нәзік із қалып, күйеуінің ағашына гүл болып ауысқан.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 10,
-                'clan_id' => 1,
-                'first_name' => 'Арнұр',
-                'last_name' => 'Алтыбаев',
-                'middle_name' => 'Жандосұлы',
-                'gender' => 'M',
-                'father_id' => 7,
-                'mother_id' => 8,
-                'birth_year' => '2014',
-                'birth_place' => 'Алматы',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Орта жүз, Керей',
-                'biography' => 'Жандос пен Әлияның ұлы. Кронаның ең жоғарғы қабатындағы жас жапырақ/өркен.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 11,
-                'clan_id' => 1,
-                'first_name' => 'Медина',
-                'last_name' => 'Алтыбаева',
-                'middle_name' => 'Жандосқызы',
-                'gender' => 'F',
-                'father_id' => 7,
-                'mother_id' => 8,
-                'birth_year' => '2019',
-                'birth_place' => 'Алматы',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Орта жүз, Керей',
-                'biography' => 'Жандостың кішкентай қызы. Әкесінің бұтағындағы жаңа гүлдеген нәзік бүршік-гүл.',
-                'avatar_path' => null,
-            ],
-            [
-                'id' => 12,
-                'clan_id' => 3,
-                'first_name' => 'Дәулет',
-                'last_name' => 'Төлегенов',
-                'middle_name' => 'Ерланұлы',
-                'gender' => 'M',
-                'father_id' => null,
-                'mother_id' => null,
-                'birth_year' => '1987',
-                'birth_place' => 'Шымкент',
-                'is_deceased' => 0,
-                'death_year' => null,
-                'clan_ru' => 'Орта жүз, Қоңырат',
-                'biography' => 'Айнұрдың жұбайы, Қоңырат азаматы. Шежіре-Ормандағы көрші Қоңырат ағашының өкілі.',
-                'avatar_path' => null,
-            ],
-        ];
+    /**
+     * Сохранение привязки в таблице users и сессии
+     */
+    protected function saveUserPersonId(int $userId, int $personId): void
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("UPDATE `users` SET `person_id` = ? WHERE `id` = ?");
+            $stmt->execute([$personId, $userId]);
+            $_SESSION['user']['person_id'] = $personId;
+        } catch (\Throwable $e) {
+            Logger::error("Не удалось связать пользователя: " . $e->getMessage());
+        }
+    }
 
-        $marriages = [
-            ['id' => 1, 'husband_id' => 4, 'wife_id' => 5, 'notes' => 'Сейітқали & Бибінұр'],
-            ['id' => 2, 'husband_id' => 7, 'wife_id' => 8, 'notes' => 'Жандос & Әлия'],
-            ['id' => 3, 'husband_id' => 12, 'wife_id' => 9, 'notes' => 'Дәулет & Айнұр (Қоңыратқа келін)'],
-        ];
-
-        return [
-            'clans' => $clans,
-            'persons' => $persons,
-            'marriages' => $marriages,
-        ];
+    /**
+     * Запись действия в журнал аудита (audit_logs)
+     */
+    protected function recordAuditLog(
+        string $action,
+        string $entityTable,
+        int $entityId,
+        string $summary,
+        mixed $oldValues,
+        mixed $newValues,
+        ?array $user
+    ): void {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO `audit_logs` (
+                    `user_id`, `user_name`, `user_email`, `action`,
+                    `entity_table`, `entity_id`, `summary`,
+                    `old_values`, `new_values`, `created_at`
+                ) VALUES (
+                    ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, NOW()
+                )
+            ");
+            $stmt->execute([
+                $user['id'] ?? null,
+                $user['name'] ?? 'Система',
+                $user['email'] ?? 'system@altybayev.kz',
+                $action,
+                $entityTable,
+                $entityId,
+                $summary,
+                $oldValues ? json_encode($oldValues, JSON_UNESCAPED_UNICODE) : null,
+                $newValues ? json_encode($newValues, JSON_UNESCAPED_UNICODE) : null,
+            ]);
+        } catch (\Throwable $e) {
+            Logger::error("Ошибка записи audit_logs: " . $e->getMessage());
+        }
     }
 }

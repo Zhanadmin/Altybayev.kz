@@ -60,6 +60,14 @@ class Auth
     }
 
     /**
+     * Проверка права на редактирование (admin немесе editor)
+     */
+    public static function canEdit(): bool
+    {
+        return self::isEditor();
+    }
+
+    /**
      * Проверка роли Зрителя (любой авторизованный)
      */
     public static function isViewer(): bool
@@ -78,6 +86,7 @@ class Auth
             'name'       => $user['name'],
             'avatar_url' => $user['avatar_url'] ?? null,
             'role'       => $user['role'] ?? 'viewer',
+            'person_id'  => !empty($user['person_id']) ? (int)$user['person_id'] : null,
         ]);
     }
 

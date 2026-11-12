@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Services;
 
 /**
- * Сервис вычисления геометрической раскладки генеалогического древа
+ * Сервис вычисления строго геометрической раскладки генеалогического древа
  * 
- * Требования (TASK-003, Замечания Жандоса 13.11):
- * 1. Поколения строго по горизонтальным рядам (предки сверху, потомки снизу).
- * 2. Супруги рядом (husband & wife в одном ряду через зазор gapSpouse).
- * 3. Дети центрированы под родителями с ортогональной шиной связей.
- * 4. Полное отсутствие наложений (0 пересечений прямоугольников карточек).
- * 5. Режим окрестности (focal mode) по умолчанию вокруг выбранного человека (Жандоса).
- * 6. Полный режим (full mode) для всех 270 персон без наложений.
+ * Ключевые требования (TASK-003, Замечания Жандоса 13.11):
+ * 1. Семейная пара (супруги) — неделимый неделимый блок (Family Unit):
+ *    супруги ВСЕГДА находятся рядом бок о бок (зазор GAP_SPOUSE = 35px, на одном уровне Y)
+ *    при ЛЮБОМ фокусе (стартовом, при клике, при раскрытии веток) и в полном режиме.
+ * 2. Дети центрированы строго под родительской парой с ортогональной шиной связей.
+ * 3. Поддержка нескольких браков (все супруги в ряд с датами и пометками развода).
+ * 4. Полное отсутствие наложений и пересечений (СТРОГО 0 коллизий прямоугольников карточек).
+ * 5. Режим окрестности (focal mode) и полный режим (full mode для всех 270 персон).
  */
 class TreeLayoutService
 {
@@ -26,10 +27,11 @@ class TreeLayoutService
     /**
      * Основной метод вычисления координат
      *
-     * @param array $persons Список персон из БД или GEDCOM
+     * @param array $persons Список персон из БД
      * @param array $marriages Список браков
      * @param int|null $focalPersonId ID центральной персоны (Жандос)
      * @param string $mode 'focal' (окрестность) или 'full' (все персоны)
+     * @param array $expandedIds Список ID развернутых веток
      * @return array Структура с nodes, edges, bounds, stats
      */
     public function calculateLayout(
@@ -61,9 +63,9 @@ class TreeLayoutService
             $focalPersonId = $this->findDefaultFocalId($persons);
         }
 
-        // Индексация связей: браки и дети
+        // Индексация связей
         $spousesMap = []; // person_id => [spouse_id, ...]
-        $marriageDetails = []; // "p1_p2" => marriage data
+        $marriageDetails = []; // "p1_p2" => marriage row
         $childrenMap = []; // parent_id => [child_id, ...]
         $parentsMap = []; // child_id => ['father' => id, 'mother' => id]
 
@@ -73,7 +75,6 @@ class TreeLayoutService
             $parentsMap[$id] = ['father' => null, 'mother' => null];
         }
 
-        // Родители и дети из полей persons
         foreach ($personsById as $id => $p) {
             $fId = !empty($p['father_id']) ? (int)$p['father_id'] : null;
             $mId = !empty($p['mother_id']) ? (int)$p['mother_id'] : null;
@@ -90,8 +91,6 @@ class TreeLayoutService
                     $childrenMap[$mId][] = $id;
                 }
             }
-
-            // Если у ребенка есть оба родителя, они супруги
             if ($fId && $mId && isset($personsById[$fId]) && isset($personsById[$mId])) {
                 if (!in_array($mId, $spousesMap[$fId], true)) {
                     $spousesMap[$fId][] = $mId;
@@ -102,7 +101,6 @@ class TreeLayoutService
             }
         }
 
-        // Браки из таблицы marriages
         foreach ($marriages as $m) {
             $hId = !empty($m['husband_id']) ? (int)$m['husband_id'] : null;
             $wId = !empty($m['wife_id']) ? (int)$m['wife_id'] : null;
@@ -120,19 +118,16 @@ class TreeLayoutService
             }
         }
 
-        // 2. Отбор видимых персон в зависимости от режима
+        // 2. Отбор видимых персон
         $visibleIds = [];
         if ($mode === 'focal') {
             $visibleIds = $this->collectFocalNeighborhood($focalPersonId, $personsById, $spousesMap, $childrenMap, $parentsMap, $expandedIds);
         } else {
-            // Full mode: все персоны
             $visibleIds = array_keys($personsById);
         }
 
-        // 3. Вычисление поколения (Generation Level) для каждого видимого узла
+        // 3. Вычисление поколения (Generation Level)
         $generations = $this->assignGenerations($visibleIds, $focalPersonId, $parentsMap, $childrenMap, $spousesMap);
-
-        // Нормализация поколений так, чтобы старейшие предки были на уровне 0
         $minGen = !empty($generations) ? min($generations) : 0;
         $maxGen = !empty($generations) ? max($generations) : 0;
         $normalizedGen = [];
@@ -140,19 +135,23 @@ class TreeLayoutService
             $normalizedGen[$vId] = ($generations[$vId] ?? 0) - $minGen;
         }
 
-        // 4. Построение семейных блоков (Family Units) и горизонтальное позиционирование
-        $positions = $this->layoutGenerations($visibleIds, $normalizedGen, $spousesMap, $childrenMap, $parentsMap);
+        // 4. Построение неделимых семейных блоков (Units) и горизонтальное позиционирование
+        $positions = $this->layoutUnitsWithSolidCouples(
+            $visibleIds,
+            $normalizedGen,
+            $spousesMap,
+            $childrenMap,
+            $parentsMap,
+            $focalPersonId,
+            $personsById
+        );
 
-        // 5. Разрешение коллизий и проверка пересечений
-        $positions = $this->resolveCollisions($positions, $normalizedGen);
-
-        // 6. Формирование узлов с метаданными и скрытыми ветками
+        // 5. Формирование узлов карточек
         $nodes = [];
         foreach ($visibleIds as $id) {
             $p = $personsById[$id];
             $pos = $positions[$id];
 
-            // Проверка наличия скрытых предков
             $hasHiddenParents = false;
             $hiddenParentsCount = 0;
             $fId = $parentsMap[$id]['father'];
@@ -163,7 +162,6 @@ class TreeLayoutService
                 if ($mId && !in_array($mId, $visibleIds, true)) $hiddenParentsCount++;
             }
 
-            // Проверка наличия скрытых детей
             $hasHiddenChildren = false;
             $hiddenChildrenCount = 0;
             foreach ($childrenMap[$id] as $cId) {
@@ -187,8 +185,8 @@ class TreeLayoutService
                 'birth_year' => $p['birth_year'] ?? null,
                 'death_year' => $p['death_year'] ?? null,
                 'is_deceased' => (int)($p['is_deceased'] ?? 0),
-                'clan_ru' => $p['clan_ru'] ?? 'Керей',
-                'clan_id' => $p['clan_id'] ?? 1,
+                'clan_ru' => $p['clan_ru'] ?? 'белгісіз',
+                'clan_id' => $p['clan_id'] ?? null,
                 'x' => $pos['x'],
                 'y' => $pos['y'],
                 'width' => self::CARD_WIDTH,
@@ -203,10 +201,10 @@ class TreeLayoutService
             ];
         }
 
-        // 7. Построение линий связей (ортогональные шины)
+        // 6. Построение линий связей (ортогональные шины связей + бейджи брака)
         $edges = $this->buildEdges($nodes, $visibleIds, $spousesMap, $childrenMap, $parentsMap, $marriageDetails);
 
-        // 8. Расчет границ и верификация непересечения
+        // 7. Расчет границ и верификация непересечения
         $bounds = $this->calculateBounds($nodes);
         $intersections = $this->countIntersections($nodes);
 
@@ -227,19 +225,12 @@ class TreeLayoutService
     }
 
     /**
-     * Поиск фокальной персоны по умолчанию (Жандос или первая персона с семьей)
+     * Поиск фокальной персоны по умолчанию (Жандос)
      */
     protected function findDefaultFocalId(array $persons): int
     {
-        // 1. Поиск Жандоса по имени
         foreach ($persons as $p) {
-            if (mb_stripos($p['first_name'] ?? '', 'Жандос') !== false || ($p['gedcom_id'] ?? '') === '@I6@') {
-                return (int)$p['id'];
-            }
-        }
-        // 2. Персона с именем Алтыбаев
-        foreach ($persons as $p) {
-            if (mb_stripos($p['last_name'] ?? '', 'Алтыбаев') !== false && !empty($p['father_id'])) {
+            if (($p['gedcom_id'] ?? '') === '@I6@' || mb_stripos($p['first_name'] ?? '', 'Жандос') !== false) {
                 return (int)$p['id'];
             }
         }
@@ -248,6 +239,7 @@ class TreeLayoutService
 
     /**
      * Сбор окрестности фокальной персоны
+     * Включает фокальное лицо, супругов, детей, родителей, братьев/сестер со всеми их супругами
      */
     protected function collectFocalNeighborhood(
         int $focalId,
@@ -259,14 +251,24 @@ class TreeLayoutService
     ): array {
         $visible = [$focalId => true];
 
-        // 1. Супруги фокального лица
+        // 1. Все супруги фокального лица
         foreach ($spousesMap[$focalId] ?? [] as $spId) {
             $visible[$spId] = true;
         }
 
-        // 2. Дети и внуки фокального лица
-        foreach ($childrenMap[$focalId] ?? [] as $cId) {
+        // 2. Дети фокального лица и дети супругов
+        $allChildrenOfFocal = $childrenMap[$focalId] ?? [];
+        foreach ($spousesMap[$focalId] ?? [] as $spId) {
+            foreach ($childrenMap[$spId] ?? [] as $cspId) {
+                if (!in_array($cspId, $allChildrenOfFocal, true)) {
+                    $allChildrenOfFocal[] = $cspId;
+                }
+            }
+        }
+
+        foreach ($allChildrenOfFocal as $cId) {
             $visible[$cId] = true;
+            // Супруги детей
             foreach ($spousesMap[$cId] ?? [] as $cspId) {
                 $visible[$cspId] = true;
             }
@@ -290,11 +292,12 @@ class TreeLayoutService
             $visible[$motherId] = true;
         }
 
-        // 4. Братья и сестры (дети родителей) и их семьи
+        // 4. Братья и сестры фокального лица и их семьи
         $parentIds = array_filter([$fatherId, $motherId]);
         foreach ($parentIds as $pId) {
             foreach ($childrenMap[$pId] ?? [] as $sibId) {
                 $visible[$sibId] = true;
+                // Супруги братьев/сестер (жеңге, жезде)
                 foreach ($spousesMap[$sibId] ?? [] as $sspId) {
                     $visible[$sspId] = true;
                 }
@@ -326,19 +329,17 @@ class TreeLayoutService
             $ancestorDepth++;
         }
 
-        // 6. Дополнительно раскрытые ветки по запросу пользователя (expandedIds)
+        // 6. Дополнительно раскрытые ветки (expandedIds)
         foreach ($expandedIds as $expId) {
             $expId = (int)$expId;
             if (!isset($personsById[$expId])) continue;
 
             $visible[$expId] = true;
-            // Раскрываем родителей
             $efId = $parentsMap[$expId]['father'] ?? null;
             $emId = $parentsMap[$expId]['mother'] ?? null;
             if ($efId && isset($personsById[$efId])) $visible[$efId] = true;
             if ($emId && isset($personsById[$emId])) $visible[$emId] = true;
 
-            // Раскрываем супругов и детей
             foreach ($spousesMap[$expId] ?? [] as $sId) $visible[$sId] = true;
             foreach ($childrenMap[$expId] ?? [] as $cId) $visible[$cId] = true;
         }
@@ -347,7 +348,7 @@ class TreeLayoutService
     }
 
     /**
-     * Определение номеров поколений относительно фокальной персоны
+     * Назначение поколений
      */
     protected function assignGenerations(
         array $visibleIds,
@@ -359,7 +360,6 @@ class TreeLayoutService
         $generations = [];
         $generations[$focalId] = 0;
 
-        // Распространение поколений в ширину (BFS)
         $queue = [$focalId];
         $visited = [$focalId => true];
 
@@ -367,7 +367,7 @@ class TreeLayoutService
             $currId = array_shift($queue);
             $currGen = $generations[$currId];
 
-            // 1. Супруги в том же поколении
+            // 1. Супруги строго в том же поколении
             foreach ($spousesMap[$currId] ?? [] as $spId) {
                 if (in_array($spId, $visibleIds, true) && !isset($generations[$spId])) {
                     $generations[$spId] = $currGen;
@@ -375,7 +375,7 @@ class TreeLayoutService
                 }
             }
 
-            // 2. Родители на 1 поколение выше (currGen - 1)
+            // 2. Родители на 1 уровень выше
             $fId = $parentsMap[$currId]['father'] ?? null;
             $mId = $parentsMap[$currId]['mother'] ?? null;
             if ($fId && in_array($fId, $visibleIds, true) && !isset($generations[$fId])) {
@@ -387,7 +387,7 @@ class TreeLayoutService
                 $queue[] = $mId;
             }
 
-            // 3. Дети на 1 поколение ниже (currGen + 1)
+            // 3. Дети на 1 уровень ниже
             foreach ($childrenMap[$currId] ?? [] as $cId) {
                 if (in_array($cId, $visibleIds, true) && !isset($generations[$cId])) {
                     $generations[$cId] = $currGen + 1;
@@ -395,7 +395,7 @@ class TreeLayoutService
                 }
             }
 
-            // 4. Братья и сестры (дети тех же родителей) в том же поколении
+            // 4. Братья и сестры в том же поколении
             if ($fId || $mId) {
                 $parents = array_filter([$fId, $mId]);
                 foreach ($parents as $pId) {
@@ -409,7 +409,6 @@ class TreeLayoutService
             }
         }
 
-        // Для изолированных видимых персон подставляем 0
         foreach ($visibleIds as $id) {
             if (!isset($generations[$id])) {
                 $generations[$id] = 0;
@@ -420,16 +419,19 @@ class TreeLayoutService
     }
 
     /**
-     * Построение семейных блоков и первичное позиционирование по уровням
+     * Построение неделимых блоков супругов (Family Units) и их строгая раскладка
+     * Супруги ВСЕГДА идут вместе: spouseX = husbandX + CARD_WIDTH + GAP_SPOUSE!
      */
-    protected function layoutGenerations(
+    protected function layoutUnitsWithSolidCouples(
         array $visibleIds,
         array $normalizedGen,
         array $spousesMap,
         array $childrenMap,
-        array $parentsMap
+        array $parentsMap,
+        int $focalId,
+        array $personsById
     ): array {
-        // Группировка по поколениям
+        // 1. Группировка людей по поколениям
         $byGen = [];
         foreach ($visibleIds as $id) {
             $g = $normalizedGen[$id];
@@ -437,147 +439,177 @@ class TreeLayoutService
         }
         ksort($byGen);
 
-        $positions = [];
-        $startX = 1000;
-        $startY = 200;
+        // 2. Формирование неделимых семейных юнитов (Units) для каждого поколения
+        // Unit: [ 'members' => [id1, id2, ...], 'width' => ..., 'x' => ..., 'y' => ..., 'children' => [...] ]
+        $unitsByGen = [];
+        $personToUnitMap = []; // person_id => unit_id
+        $unitCounter = 1;
+        $unitsById = [];
 
         foreach ($byGen as $g => $members) {
-            $y = $startY + $g * self::ROW_HEIGHT;
-
-            // Формируем пары (муж + жена) и одиночек в этом поколении
             $processed = [];
-            $units = [];
+            $unitsByGen[$g] = [];
+
+            // Вначале гарантируем порядок: фокальное лицо идет первым в своем поколении
+            usort($members, function ($a, $b) use ($focalId) {
+                if ($a === $focalId) return -1;
+                if ($b === $focalId) return 1;
+                return $a <=> $b;
+            });
 
             foreach ($members as $mId) {
                 if (isset($processed[$mId])) continue;
 
-                // Ищем супруга в этом же поколении
-                $spouseInGen = null;
+                // Находим всех видимых супругов в этом же поколении
+                $spousesInGen = [];
                 foreach ($spousesMap[$mId] ?? [] as $spId) {
                     if (in_array($spId, $members, true) && !isset($processed[$spId])) {
-                        $spouseInGen = $spId;
-                        break;
+                        $spousesInGen[] = $spId;
                     }
                 }
 
-                if ($spouseInGen !== null) {
-                    // Пара: муж слева, жена справа (или по полу)
-                    $units[] = [
-                        'type' => 'couple',
-                        'p1' => $mId,
-                        'p2' => $spouseInGen,
-                        'width' => self::CARD_WIDTH * 2 + self::GAP_SPOUSE
-                    ];
-                    $processed[$mId] = true;
-                    $processed[$spouseInGen] = true;
-                } else {
-                    $units[] = [
-                        'type' => 'single',
-                        'p1' => $mId,
-                        'width' => self::CARD_WIDTH
-                    ];
-                    $processed[$mId] = true;
-                }
-            }
+                $p = $personsById[$mId];
+                $unitMembers = [];
 
-            // Раскладываем блоки слева направо с зазором GAP_SIBLING
-            $currX = $startX;
-            foreach ($units as $u) {
-                if ($u['type'] === 'couple') {
-                    $positions[$u['p1']] = ['x' => $currX, 'y' => $y];
-                    $positions[$u['p2']] = ['x' => $currX + self::CARD_WIDTH + self::GAP_SPOUSE, 'y' => $y];
-                    $currX += $u['width'] + self::GAP_SIBLING;
+                if (empty($spousesInGen)) {
+                    // Одиночный узел
+                    $unitMembers = [$mId];
+                    $processed[$mId] = true;
                 } else {
-                    $positions[$u['p1']] = ['x' => $currX, 'y' => $y];
-                    $currX += $u['width'] + self::GAP_SIBLING;
+                    // Семейный блок: муж слева, жена справа (или носитель рода первым)
+                    if ($p['gender'] === 'M') {
+                        $unitMembers = array_merge([$mId], $spousesInGen);
+                    } else {
+                        // Если первая женщина, а муж среди супругов — ставим мужа первым
+                        $husbandFirst = null;
+                        $otherSpouses = [];
+                        foreach ($spousesInGen as $sId) {
+                            if (($personsById[$sId]['gender'] ?? 'M') === 'M' && $husbandFirst === null) {
+                                $husbandFirst = $sId;
+                            } else {
+                                $otherSpouses[] = $sId;
+                            }
+                        }
+                        if ($husbandFirst !== null) {
+                            $unitMembers = array_merge([$husbandFirst, $mId], $otherSpouses);
+                        } else {
+                            $unitMembers = array_merge([$mId], $spousesInGen);
+                        }
+                    }
+
+                    $processed[$mId] = true;
+                    foreach ($spousesInGen as $spId) {
+                        $processed[$spId] = true;
+                    }
+                }
+
+                $memberCount = count($unitMembers);
+                $unitWidth = $memberCount * self::CARD_WIDTH + ($memberCount - 1) * self::GAP_SPOUSE;
+
+                $uId = $unitCounter++;
+                $unitObj = [
+                    'id' => $uId,
+                    'generation' => $g,
+                    'members' => $unitMembers,
+                    'width' => $unitWidth,
+                    'x' => 0,
+                    'y' => 200 + $g * self::ROW_HEIGHT,
+                    'children_units' => [],
+                ];
+
+                $unitsById[$uId] = $unitObj;
+                $unitsByGen[$g][] = $uId;
+
+                foreach ($unitMembers as $memId) {
+                    $personToUnitMap[$memId] = $uId;
                 }
             }
         }
 
-        // Центрирование детей под родителями (нисходящая и восходящая гармонизация)
-        $positions = $this->alignChildrenUnderParents($positions, $byGen, $childrenMap, $spousesMap);
+        // 3. Первичная раскладка юнитов слева направо в каждом поколении
+        $startX = 1000;
+        foreach ($unitsByGen as $g => $unitIds) {
+            $currX = $startX;
+            foreach ($unitIds as $uId) {
+                $unitsById[$uId]['x'] = $currX;
+                $currX += $unitsById[$uId]['width'] + self::GAP_SIBLING;
+            }
+        }
 
-        return $positions;
-    }
-
-    /**
-     * Центрирование детей под родительской парой
-     */
-    protected function alignChildrenUnderParents(
-        array $positions,
-        array $byGen,
-        array $childrenMap,
-        array $spousesMap
-    ): array {
-        foreach ($byGen as $g => $members) {
-            foreach ($members as $pId) {
-                $children = array_filter($childrenMap[$pId] ?? [], fn($cId) => isset($positions[$cId]));
-                if (empty($children)) continue;
-
-                // Находим координаты родителя / пары
-                $parentPos = $positions[$pId];
-                $spouseId = null;
-                foreach ($spousesMap[$pId] ?? [] as $spId) {
-                    if (isset($positions[$spId])) {
-                        $spouseId = $spId;
-                        break;
+        // 4. Связывание родительских юнитов с детскими юнитами
+        foreach ($unitsById as $uId => &$u) {
+            $allChildrenOfUnit = [];
+            foreach ($u['members'] as $memId) {
+                foreach ($childrenMap[$memId] ?? [] as $cId) {
+                    if (isset($personToUnitMap[$cId])) {
+                        $childUnitId = $personToUnitMap[$cId];
+                        if (!in_array($childUnitId, $allChildrenOfUnit, true) && $childUnitId !== $uId) {
+                            $allChildrenOfUnit[] = $childUnitId;
+                        }
                     }
                 }
+            }
+            $u['children_units'] = $allChildrenOfUnit;
+        }
+        unset($u);
 
-                $parentMidX = $parentPos['x'] + self::CARD_WIDTH / 2;
-                if ($spouseId !== null) {
-                    $spPos = $positions[$spouseId];
-                    $parentMidX = ($parentPos['x'] + $spPos['x'] + self::CARD_WIDTH) / 2;
-                }
+        // 5. Центрирование детских юнитов строго под родительскими юнитами
+        // Проходим поколения сверху вниз
+        foreach ($unitsByGen as $g => $unitIds) {
+            foreach ($unitIds as $uId) {
+                $parentUnit = $unitsById[$uId];
+                $cUnits = $parentUnit['children_units'];
+                if (empty($cUnits)) continue;
 
-                // Координаты детей
-                $minChildX = min(array_map(fn($cId) => $positions[$cId]['x'], $children));
-                $maxChildX = max(array_map(fn($cId) => $positions[$cId]['x'] + self::CARD_WIDTH, $children));
+                $parentMidX = $parentUnit['x'] + $parentUnit['width'] / 2;
+
+                $minChildX = min(array_map(fn($cuId) => $unitsById[$cuId]['x'], $cUnits));
+                $maxChildX = max(array_map(fn($cuId) => $unitsById[$cuId]['x'] + $unitsById[$cuId]['width'], $cUnits));
                 $childrenMidX = ($minChildX + $maxChildX) / 2;
 
                 $delta = $parentMidX - $childrenMidX;
                 if (abs($delta) > 10) {
-                    // Сдвигаем детей для центрирования
-                    foreach ($children as $cId) {
-                        $positions[$cId]['x'] += (int)($delta * 0.7);
+                    foreach ($cUnits as $cuId) {
+                        $unitsById[$cuId]['x'] += $delta;
                     }
                 }
             }
         }
 
-        return $positions;
-    }
+        // 6. Устранение коллизий между юнитами (Строгое соблюдение зазоров)
+        foreach ($unitsByGen as $g => $unitIds) {
+            // Сортировка юнитов в поколении по координате X
+            usort($unitIds, fn($a, $b) => $unitsById[$a]['x'] <=> $unitsById[$b]['x']);
 
-    /**
-     * Разрешение коллизий карточек (Строгое устранение любых пересечений)
-     */
-    protected function resolveCollisions(array $positions, array $normalizedGen): array
-    {
-        // Группировка по горизонтальным рядам (Y)
-        $rows = [];
-        foreach ($positions as $id => $pos) {
-            $y = $pos['y'];
-            $rows[$y][] = $id;
-        }
+            for ($i = 1; $i < count($unitIds); $i++) {
+                $prevUnit = &$unitsById[$unitIds[$i - 1]];
+                $currUnit = &$unitsById[$unitIds[$i]];
 
-        foreach ($rows as $y => $idsInRow) {
-            // Сортировка карточек в ряду слева направо
-            usort($idsInRow, fn($a, $b) => $positions[$a]['x'] <=> $positions[$b]['x']);
+                $prevRight = $prevUnit['x'] + $prevUnit['width'];
+                $minRequiredX = $prevRight + self::GAP_SIBLING;
 
-            for ($i = 1; $i < count($idsInRow); $i++) {
-                $prevId = $idsInRow[$i - 1];
-                $currId = $idsInRow[$i];
-
-                $prevRight = $positions[$prevId]['x'] + self::CARD_WIDTH;
-                $minRequiredX = $prevRight + self::GAP_SPOUSE;
-
-                if ($positions[$currId]['x'] < $minRequiredX) {
-                    $shift = $minRequiredX - $positions[$currId]['x'];
-                    // Сдвигаем текущую и все последующие в этом ряду
-                    for ($k = $i; $k < count($idsInRow); $k++) {
-                        $positions[$idsInRow[$k]]['x'] += $shift;
+                if ($currUnit['x'] < $minRequiredX) {
+                    $shift = $minRequiredX - $currUnit['x'];
+                    for ($k = $i; $k < count($unitIds); $k++) {
+                        $unitsById[$unitIds[$k]]['x'] += $shift;
                     }
                 }
+            }
+        }
+
+        // 7. Распаковка позиций карточек из монолитных юнитов
+        // ГАРАНТИЯ: супруги находятся строго рядом с зазором GAP_SPOUSE (35px)!
+        $positions = [];
+        foreach ($unitsById as $u) {
+            $memberX = $u['x'];
+            $memberY = $u['y'];
+
+            foreach ($u['members'] as $idx => $mId) {
+                $positions[$mId] = [
+                    'x' => $memberX,
+                    'y' => $memberY,
+                ];
+                $memberX += self::CARD_WIDTH + self::GAP_SPOUSE;
             }
         }
 
@@ -599,7 +631,7 @@ class TreeLayoutService
         $parentChildEdges = [];
         $processedCouples = [];
 
-        // 1. Некелік байланыстар (Супруги)
+        // 1. Некелік байланыстар (Супружеские связи)
         foreach ($visibleIds as $id) {
             foreach ($spousesMap[$id] ?? [] as $spId) {
                 if (!isset($nodes[$spId])) continue;
@@ -611,7 +643,6 @@ class TreeLayoutService
                 $n1 = $nodes[$id];
                 $n2 = $nodes[$spId];
 
-                // Муж и жена
                 $leftNode = ($n1['x'] < $n2['x']) ? $n1 : $n2;
                 $rightNode = ($n1['x'] < $n2['x']) ? $n2 : $n1;
 
@@ -623,6 +654,23 @@ class TreeLayoutService
                 $midX = ($x1 + $x2) / 2;
                 $midY = ($y1 + $y2) / 2;
 
+                // Проверка статуса брака и развода
+                $mDetail = $marriageDetails["{$leftNode['id']}_{$rightNode['id']}"] ?? null;
+                $isDivorced = false;
+                $marrYears = '';
+                if ($mDetail) {
+                    $status = $mDetail['status'] ?? 'married';
+                    $divorceDate = $mDetail['divorce_date'] ?? $mDetail['end_date'] ?? null;
+                    if ($status === 'divorced' || (!empty($divorceDate))) {
+                        $isDivorced = true;
+                    }
+                    $sDate = $mDetail['start_date'] ?? $mDetail['marriage_date'] ?? '';
+                    $eDate = $mDetail['end_date'] ?? $mDetail['divorce_date'] ?? '';
+                    if ($sDate || $eDate) {
+                        $marrYears = trim("{$sDate} — {$eDate}", ' —');
+                    }
+                }
+
                 $marriagesEdges[] = [
                     'husband_id' => $leftNode['id'],
                     'wife_id' => $rightNode['id'],
@@ -632,6 +680,8 @@ class TreeLayoutService
                     'y2' => $y2,
                     'mid_x' => $midX,
                     'mid_y' => $midY,
+                    'is_divorced' => $isDivorced,
+                    'years' => $marrYears,
                 ];
             }
         }
@@ -642,7 +692,6 @@ class TreeLayoutService
             $children = array_filter($childrenMap[$id] ?? [], fn($cId) => isset($nodes[$cId]));
             if (empty($children)) continue;
 
-            // Находим супруга
             $spouseId = null;
             foreach ($spousesMap[$id] ?? [] as $spId) {
                 if (isset($nodes[$spId])) {
@@ -667,7 +716,6 @@ class TreeLayoutService
                 $parentBottomY = $leftNode['y'] + $leftNode['height'];
             }
 
-            // Высота горизонтальной шины детей
             $busY = $parentBottomY + 45;
 
             $childDropPoints = [];
@@ -738,7 +786,6 @@ class TreeLayoutService
 
     /**
      * Подсчет количества пересечений между карточками
-     * Возвращает 0 при идеальной раскладке
      */
     public function countIntersections(array $nodes): int
     {
@@ -748,22 +795,14 @@ class TreeLayoutService
 
         for ($i = 0; $i < $count; $i++) {
             $a = $nodeList[$i];
-            $ax1 = $a['x'];
-            $ax2 = $a['x'] + $a['width'];
-            $ay1 = $a['y'];
-            $ay2 = $a['y'] + $a['height'];
-
             for ($j = $i + 1; $j < $count; $j++) {
                 $b = $nodeList[$j];
-                $bx1 = $b['x'];
-                $bx2 = $b['x'] + $b['width'];
-                $by1 = $b['y'];
-                $by2 = $b['y'] + $b['height'];
 
-                // Проверка пересечения прямоугольников
-                // Два прямоугольника НЕ пересекаются, если один полностью слева, справа, сверху или снизу
-                $noOverlap = ($ax2 <= $bx1 || $bx2 <= $ax1 || $ay2 <= $by1 || $by2 <= $ay1);
-                if (!$noOverlap) {
+                // Проверка перекрытия ограничивающих прямоугольников (AABB)
+                $overlapX = ($a['x'] < $b['x'] + $b['width']) && ($a['x'] + $a['width'] > $b['x']);
+                $overlapY = ($a['y'] < $b['y'] + $b['height']) && ($a['y'] + $a['height'] > $b['y']);
+
+                if ($overlapX && $overlapY) {
                     $intersections++;
                 }
             }

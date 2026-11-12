@@ -1584,6 +1584,176 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         </div>
     </aside>
 
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ: ТҰЛҒАНЫ ТОЛЫҚ ӨҢДЕУ ЖӘНЕ АУДИТ-ЛОГТАР -->
+    <div class="modal-overlay" id="editPersonModal">
+        <div class="modal-card" style="width:720px; max-width:95vw;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modalEditTitle">Тұлға деректерін өңдеу</h3>
+                    <div style="font-size:12px; color:#94a3b8;" id="modalEditSubtitle">Барлық түзетулер жүйеде тіркеліп, деректер қорында сақталады</div>
+                </div>
+                <button class="close-panel-btn" onclick="closeEditPersonModal()">✕</button>
+            </div>
+            <form id="editPersonForm" onsubmit="handleSavePersonEdit(event)">
+                <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+                    <input type="hidden" id="editPersonId" value="">
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label data-i18n="form_first_name">Аты *</label>
+                            <input type="text" class="form-input" id="editFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="form_last_name">Тегі (Фамилия)</label>
+                            <input type="text" class="form-input" id="editLastName">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label data-i18n="form_middle_name">Әкесінің аты</label>
+                            <input type="text" class="form-input" id="editMiddleName">
+                        </div>
+                        <div class="form-group" id="editMaidenNameGroup">
+                            <label data-i18n="form_maiden_name">Қыз кезіндегі тегі (Девичья)</label>
+                            <input type="text" class="form-input" id="editMaidenName">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label data-i18n="form_gender">Жынысы *</label>
+                            <select class="form-select" id="editGender" required>
+                                <option value="M" data-i18n="gender_male">Ер азамат</option>
+                                <option value="F" data-i18n="gender_female">Әйел адам</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Руы (Шежіре желісі)</label>
+                            <input type="text" class="form-input" id="editClanRu" placeholder="Мысалы: Керей, Жағалбайлы, Қоңырат...">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label data-i18n="form_birth_year">Туған жылы</label>
+                            <input type="text" class="form-input" id="editBirthYear" placeholder="Мысалы: 1985">
+                        </div>
+                        <div class="form-group">
+                            <label>Туған нақты күні (КК.АА.ЖЖЖЖ)</label>
+                            <input type="text" class="form-input" id="editBirthDate" placeholder="Мысалы: 12.05.1985">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="form_birth_place">Туған жері</label>
+                        <input type="text" class="form-input" id="editBirthPlace" placeholder="Мысалы: ШҚО, Үржар ауданы">
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid #334155; margin:12px 0;">
+                        <label class="checkbox-label" style="margin-bottom:8px;">
+                            <input type="checkbox" id="editIsDeceased" onchange="toggleEditDeathInputs()">
+                            <span data-i18n="form_is_deceased_checkbox">Қайтыс болған / Ушёл из жизни</span>
+                        </label>
+
+                        <div id="editDeathSection" style="display:none; margin-top:10px;">
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label data-i18n="form_death_year">Қайтыс болған жылы</label>
+                                    <input type="text" class="form-input" id="editDeathYear" placeholder="Мысалы: 1972">
+                                </div>
+                                <div class="form-group">
+                                    <label>Қайтыс болған күні</label>
+                                    <input type="text" class="form-input" id="editDeathDate" placeholder="Мысалы: 15.08.1972">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Дүниеден өткен жері</label>
+                                <input type="text" class="form-input" id="editDeathPlace" placeholder="Мысалы: Алматы қ.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="form_biography">Өмірбаяны мен естеліктер</label>
+                        <textarea class="form-textarea" id="editBiography" rows="3" placeholder="Өмірбаяны, естеліктері, еңбек жолы..."></textarea>
+                    </div>
+
+                    <!-- Аудит-лог тарихы -->
+                    <div class="audit-log-section" id="editAuditSection">
+                        <div class="audit-log-title">📜 Өзгерістер тарихы (Audit Log)</div>
+                        <div id="editAuditLogContainer">
+                            <span style="color:#94a3b8; font-size:12px;">Жүктелуде...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <button type="button" class="btn-modal-cancel" id="btnDeletePerson" onclick="handleDeleteCurrentPerson()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; display:none;">
+                            🗑️ Жою / Удалить
+                        </button>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn-modal-cancel" onclick="closeEditPersonModal()" data-i18n="btn_cancel">Болдырмау</button>
+                        <button type="submit" class="btn-modal-submit" data-i18n="btn_save">Сақтау</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ: НЕКЕ ЖӘНЕ АЖЫРАСУ ДЕРЕКТЕРІН ӨҢДЕУ -->
+    <div class="modal-overlay" id="marriageModal">
+        <div class="modal-card" style="width:520px;">
+            <div class="modal-header">
+                <div>
+                    <h3>💍 Некелік одақ мәліметтері</h3>
+                    <div style="font-size:12px; color:#94a3b8;" id="marriageModalSubtitle">Супружеский союз / Развод</div>
+                </div>
+                <button class="close-panel-btn" onclick="closeMarriageModal()">✕</button>
+            </div>
+            <form id="marriageForm" onsubmit="handleSaveMarriage(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="marriageId" value="">
+
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px; color:#f8fafc;">
+                        <div id="marriageCoupleNames" style="font-weight:700; color:#fef08a; margin-bottom:4px;">—</div>
+                        <div style="font-size:11.5px; color:#94a3b8;">Неке жағдайы мен мерзімін өзгерту</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Неке күйі (Статус брака) *</label>
+                        <select class="form-select" id="marriageStatus" required>
+                            <option value="married">Үйленген / Замужем (В браке) 💍</option>
+                            <option value="divorced">Ажырасқан (В разводе) 💔</option>
+                            <option value="widowed">Тұл / Вдовец/вдова</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Неке басталған жылы/күні</label>
+                            <input type="text" class="form-input" id="marriageStartDate" placeholder="Мысалы: 2008">
+                        </div>
+                        <div class="form-group">
+                            <label>Аяқталған / Ажырасқан жылы</label>
+                            <input type="text" class="form-input" id="marriageEndDate" placeholder="Мысалы: 2016">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ескертпелер (Примечания)</label>
+                        <input type="text" class="form-input" id="marriageNotes" placeholder="Қосымша мәліметтер...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="closeMarriageModal()" data-i18n="btn_cancel">Болдырмау</button>
+                    <button type="submit" class="btn-modal-submit" data-i18n="btn_save">Сақтау</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- МОДАЛЬДЫ ТЕРЕЗЕ: АДАМ ҚОСУ (РЕЖИМ ӨҢДЕУ) -->
     <div class="modal-overlay" id="addPersonModal">
         <div class="modal-card">
@@ -1626,12 +1796,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                                 <option value="F" data-i18n="gender_female">Әйел адам</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label data-i18n="form_is_deceased">Күйі</label>
-                            <select class="form-select" id="formIsDeceased" onchange="toggleDeathInputs()">
-                                <option value="0" data-i18n="status_living">Тірі</option>
-                                <option value="1" data-i18n="status_deceased">Дүниеден өткен</option>
-                            </select>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <label class="checkbox-label" style="margin-bottom:8px;">
+                                <input type="checkbox" id="formIsDeceased" onchange="toggleDeathInputs()">
+                                <span data-i18n="form_is_deceased_checkbox">Қайтыс болған / Ушёл из жизни</span>
+                            </label>
                         </div>
                     </div>
 
@@ -1646,9 +1815,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label data-i18n="form_birth_place">Туған жері</label>
-                        <input type="text" class="form-input" id="formBirthPlace" placeholder="Мысалы: Алматы қ.">
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label data-i18n="form_birth_place">Туған жері</label>
+                            <input type="text" class="form-input" id="formBirthPlace" placeholder="Мысалы: Алматы қ.">
+                        </div>
+                        <div class="form-group">
+                            <label>Руы (Шежіре тегі)</label>
+                            <input type="text" class="form-input" id="formClanRu" placeholder="Мысалы: Керей, Жағалбайлы...">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1765,7 +1940,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 brand_title_main: "Шежіре",
                 brand_title_sub: "Алтыбаевтар",
                 mode_editing: "Өңдеу",
-                mode_forest: "Шежіре-Орман",
+                mode_forest: "Шежіре-Орман", mode_list: "Список", btn_edit_person: "Редактировать", form_is_deceased_checkbox: "Ушёл из жизни", mode_list: "Тізім", btn_edit_person: "Өңдеу", form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Адамды іздеу...",
                 btn_you_are_here: "Сіз осындасыз",
                 btn_art_concept: "Арт-эскиз",
@@ -1835,7 +2010,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 brand_title_main: "Шежире",
                 brand_title_sub: "Алтыбаевых",
                 mode_editing: "Редактирование",
-                mode_forest: "Шежіре-Орман",
+                mode_forest: "Шежіре-Орман", mode_list: "Список", btn_edit_person: "Редактировать", form_is_deceased_checkbox: "Ушёл из жизни", mode_list: "Тізім", btn_edit_person: "Өңдеу", form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Поиск родственника...",
                 btn_you_are_here: "Вы здесь",
                 btn_art_concept: "Арт-концепт",
@@ -1936,43 +2111,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         // ========================================================
         // ДЕРЕКТЕРДІ СЕРВЕРДЕН ЖҮКТЕУ ЖӘНЕ БАСТАУ
         // ========================================================
-        let isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
 
-        function updateDemoButtonState() {
-            const btn = document.getElementById('btnToggleDemo');
-            const lbl = document.getElementById('demoLabel');
-            const icon = document.getElementById('demoIcon');
-            if (!btn) return;
-
-            const isDemoActive = isDemoMode || (treeData && treeData.is_demo);
-            if (isDemoActive) {
-                btn.classList.add('active');
-                if (lbl) lbl.innerText = i18n[currentLang].btn_demo_active;
-                if (icon) icon.innerText = '🌟';
-                btn.title = currentLang === 'ru' ? 'Включен демо-режим. Нажмите для возврата к базе.' : 'Демо-режим қосулы. Базаға оралу үшін басыңыз.';
-            } else {
-                btn.classList.remove('active');
-                if (lbl) lbl.innerText = i18n[currentLang].btn_demo_mode;
-                if (icon) icon.innerText = '🌟';
-                btn.title = currentLang === 'ru' ? 'Включить демо-режим' : 'Демонстрациялық режимді қосу';
-            }
-        }
-
-        function toggleDemoMode(forceState) {
-            if (forceState !== undefined) {
-                isDemoMode = !!forceState;
-            } else {
-                isDemoMode = !isDemoMode;
-            }
-            const url = new URL(window.location);
-            if (isDemoMode) {
-                url.searchParams.set('demo', '1');
-            } else {
-                url.searchParams.delete('demo');
-            }
-            window.history.replaceState({}, '', url);
-            initTree(isDemoMode);
-        }
 
         function updateScopeButtonState() {
             const bFocal = document.getElementById('btnScopeFocal');
@@ -1986,9 +2125,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             updateScopeButtonState();
 
             try {
-                const demoParam = isDemoMode ? '&demo=1' : '';
                 const expParam = expandedBranches.length > 0 ? `&expanded=${expandedBranches.join(',')}` : '';
-                const url = `/api/tree/layout?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}${demoParam}`;
+                const url = `/api/tree/layout?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data && data.layout) {
@@ -2006,9 +2144,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 expandedBranches.push(personId);
             }
             try {
-                const demoParam = isDemoMode ? '&demo=1' : '';
                 const expParam = `&expanded=${expandedBranches.join(',')}`;
-                const url = `/api/tree/layout?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}${demoParam}`;
+                const url = `/api/tree/layout?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data && data.layout) {
@@ -2043,17 +2180,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             switchScope('focal');
         }
 
-        async function initTree(forceDemo) {
-            if (forceDemo !== undefined) {
-                isDemoMode = !!forceDemo;
-            }
+        async function initTree() {
             setLanguage(currentLang);
             initEvents();
 
             try {
-                const demoParam = isDemoMode ? '&demo=1' : '';
                 const expParam = expandedBranches.length > 0 ? `&expanded=${expandedBranches.join(',')}` : '';
-                const url = `/api/tree?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}${demoParam}`;
+                const url = `/api/tree?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 treeData = data;
@@ -2065,13 +2198,14 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 }
                 activeKinships = data.initial_kinships || {};
 
-                updateDemoButtonState();
                 updateScopeButtonState();
 
                 if (currentMode === 'editing') {
                     renderEditingView();
-                } else {
+                } else if (currentMode === 'forest') {
                     renderForestView();
+                } else if (currentMode === 'list') {
+                    loadListViewData();
                 }
 
                 if (treeData.is_empty || !treeData.persons || treeData.persons.length === 0) {
@@ -2086,9 +2220,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             } catch (err) {
                 console.error("Деректерді жүктеу қатесі:", err);
                 treeData = { is_empty: true, error: err.message, persons: [], marriages: [], clans: [] };
-                updateDemoButtonState();
                 renderEditingView();
-                renderForestView();
             }
         }
 
@@ -2212,11 +2344,22 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         <div class="card-info">
                             <div class="card-name" title="${node.last_name || ''} ${node.first_name}">${node.last_name || ''} ${node.first_name}</div>
                             ${node.maiden_name ? `<div class="card-maiden">${currentLang === 'ru' ? 'девичья:' : 'қыз кезінде:'} ${node.maiden_name}</div>` : ''}
-                            <div class="card-years">${node.birth_year || '—'} ${node.death_year ? '— ' + node.death_year : (node.is_deceased ? '†' : `(${currentLang === 'ru' ? 'жив' : 'тірі'})`)}</div>
+                            <div class="card-years">${isDeceased ? `${node.birth_year || '—'} — ${node.death_year || '†'} ✨` : `${node.birth_year || '—'}`}</div>
                         </div>
                     </div>
-                    <div>
-                        <span class="card-clan-tag">${node.clan_ru || 'Керей'}</span>
+                    <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:2px;">
+                        <span class="card-clan-tag">${node.clan_ru || (currentLang === 'ru' ? 'не указан' : 'белгісіз')}</span>
+                        ${(() => {
+                            const kin = activeKinships[node.id];
+                            if (!kin || !kin.zhurt) return '';
+                            let zCls = 'zhurt-oz';
+                            if (kin.zhurt.includes('Нағашы')) zCls = 'zhurt-nagashy';
+                            else if (kin.zhurt.includes('Қайын')) zCls = 'zhurt-kaiyn';
+                            else if (kin.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
+                            else if (kin.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
+                            else if (kin.zhurt.includes('Құда')) zCls = 'zhurt-quda';
+                            return `<span class="card-zhurt-tag zhurt-pill ${zCls}">${kin.zhurt}</span>`;
+                        })()}
                     </div>
 
                     <!-- Карточканың айналасындағы жылдам қосу радиалды батырмалары -->
@@ -2358,12 +2501,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     </div>
                 `;
                 container.appendChild(emptyCard);
-                return;
-            }
-
-            // Егер демо режимі болса — демонстрациялық орманды көрсетеміз
-            if (treeData.is_demo || isDemoMode) {
-                renderDemoForestView(container);
                 return;
             }
 
@@ -2575,174 +2712,52 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             `;
             mainStand.appendChild(root);
             container.appendChild(mainStand);
+
+            // 2. ДИНАМИКАЛЫҚ КӨРШІ АҒАШТАР: НАҒАШЫ ЖӘНЕ ҚАЙЫН ЖҰРТ РУЛАРЫ (НАҚТЫ ДЕРЕКТЕР)
+            const otherClansMap = new Map();
+            persons.forEach(p => {
+                const c = p.clan_ru ? p.clan_ru.trim() : '';
+                if (c && c !== 'Керей' && c !== 'белгісіз' && c !== 'не указан') {
+                    if (!otherClansMap.has(c)) {
+                        otherClansMap.set(c, []);
+                    }
+                    otherClansMap.get(c).push(p);
+                }
+            });
+
+            let clanIdx = 0;
+            otherClansMap.forEach((clanPersons, clanName) => {
+                clanIdx++;
+                const isLeft = (clanIdx % 2 !== 0);
+                const stand = document.createElement('div');
+                stand.className = `clan-tree-stand ${isLeft ? 'stand-clan-left' : 'stand-clan-right'}`;
+
+                let clanPersonsHtml = '';
+                clanPersons.slice(0, 4).forEach(cp => {
+                    const isF = (cp.gender === 'F');
+                    clanPersonsHtml += `
+                        <div class="${isF ? 'flower-daughter-node' : 'leaf-son-node'}" onclick="selectPerson(${cp.id})" style="margin:4px;">
+                            <span>${isF ? '🌸' : '🌿'}</span>
+                            <div><strong>${cp.first_name} ${cp.last_name || ''}</strong> (${cp.birth_year || '—'})</div>
+                        </div>
+                    `;
+                });
+
+                stand.innerHTML = `
+                    <div class="crown-living-banner" style="background:${isLeft ? 'rgba(180,83,9,0.3)' : 'rgba(30,58,138,0.3)'}; border-color:${isLeft ? '#d4af37' : '#38bdf8'}; color:${isLeft ? '#fef08a' : '#bae6fd'};">
+                        <span>🌳</span>
+                        <span>${clanName} ағашы</span>
+                    </div>
+                    <div style="font-size:12px; color:#cbd5e1; max-width:320px; text-align:center; margin:8px 0;">
+                        ${currentLang === 'ru' ? 'Родственные связи и сваты' : 'Құрметті құдалар мен нағашылар руы'}
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px;">
+                        ${clanPersonsHtml}
+                    </div>
+                `;
+                container.appendChild(stand);
+            });
         }
-
-        // Демонстрациялық орман бейнелеуі
-        function renderDemoForestView(container) {
-            // 1. ОРТАЛЫҚ БАСТЫ АҒАШ: КЕРЕЙ — АЛТЫБАЕВТАР ӘУЛЕТІ
-            const mainStand = document.createElement('div');
-            mainStand.className = 'clan-tree-stand stand-main-kerey';
-            mainStand.id = 'standKerey';
-
-            // КРОНА (ЖОҒАРҒЫ ҚАТАРДА ТІРІЛЕР — БАЛАЛАР МЕН НЕВЕСТКАЛАР)
-            const crown = document.createElement('div');
-            crown.className = 'organic-crown-container';
-            crown.id = 'treeCrown';
-
-            crown.innerHTML = `
-                <div class="crown-living-banner">
-                    <span>☀️</span>
-                    <span>${i18n[currentLang].crown_title}</span>
-                </div>
-
-                <!-- 1. ЕҢ ЖАС ҰРПАҚ: АРНҰР (ҰЛ — ЛИСТИК) ЖӘНЕ МЕДИНА (ҚЫЗ — ГҮЛ) -->
-                <div class="branch-children-row">
-                    <div class="leaf-son-node" onclick="selectPerson(10)" title="Жас жапырақ (ұлы)">
-                        <span>🍃</span>
-                        <div><strong>Арнұр Алтыбаев</strong> (2014)</div>
-                    </div>
-                    <div class="flower-daughter-node" onclick="selectPerson(11)" title="Нәзік гүл (қызы)">
-                        <span>🌸</span>
-                        <div><strong>Медина Алтыбаева</strong> (2019)</div>
-                    </div>
-                </div>
-
-                <!-- 2. ЖАНДОС ПЕН ӘЛИЯ ШАҢЫРАҒЫ (ВЕТКА: МУЖ + ЖЕНА РЯДОМ У ОСНОВАНИЯ) -->
-                <div class="family-branch">
-                    <div class="branch-couple-node is-self-node" onclick="selectPerson(7)">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span>🎯</span>
-                            <div>
-                                <strong>Жандос Алтыбаев</strong> (1985)
-                                <div style="font-size:11px; color:#fef08a;">${i18n[currentLang].you_are_here_badge}</div>
-                            </div>
-                        </div>
-                        <div style="color:#d4af37; font-weight:700;">&</div>
-                        <div class="in-married-flower-node" onclick="event.stopPropagation(); selectPerson(8);" title="Жағалбайлы руынан келген берекелі келін">
-                            <span>🌸</span>
-                            <div>
-                                <strong>Әлия</strong> (1987)
-                                <div style="font-size:10px; color:#9d174d;">${i18n[currentLang].married_in_tag}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ҰЗАТЫЛЫП КЕТКЕН ҚЫЗ АЙНҰР (СЛЕД УШЕДШЕЙ В РОД КОНЫРАТ) -->
-                    <div style="margin-top:12px;">
-                        <div class="out-married-trace-node" onclick="flyToKonyrat()" title="Қоңыратқа келін болып кетті (клик — оның ағашына ұшып бару)">
-                            <span>🕊️</span>
-                            <div>
-                                <strong>Айнұр Алтыбаева</strong>
-                                <div style="font-size:10px; color:#fbcfe8;">${i18n[currentLang].married_away_arrow}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. ӘКЕСІ ҚАСЫМ ШАҢЫРАҒЫ (ШЕЖІРЕ РЕДАКТОРЫ) -->
-                <div class="family-branch">
-                    <div class="branch-couple-node" onclick="selectPerson(6)">
-                        <span>📜</span>
-                        <div>
-                            <strong>Қасым Сейітқалиұлы</strong> (1955)
-                            <div style="font-size:11px; color:#86efac;">${currentLang === 'ru' ? 'Главный редактор (Отец)' : 'Бас редактор (Әкесі)'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            mainStand.appendChild(crown);
-
-            // БИІК ҚАСИЕТТІ ДІҢГЕК (ОТ АЛТЫБАЯ ДО САМАЯ — БІРТҰТАС ПРЯМАЯ ЛИНИЯ)
-            const trunk = document.createElement('div');
-            trunk.className = 'organic-trunk';
-
-            trunk.innerHTML = `
-                <div class="trunk-ancestor-node" onclick="selectPerson(4)">
-                    ✨ Сейітқали Алтыбаев (1898 — 1972)
-                </div>
-                <div class="trunk-ancestor-node" onclick="selectPerson(3)" style="border-color:#f59e0b; background:#29180c; color:#fef08a;">
-                    👑 Алтыбай Баба (ок. 1795) — Ру басы
-                </div>
-                <div class="trunk-ancestor-node" onclick="selectPerson(2)">
-                    📜 Самай Би (ок. 1620)
-                </div>
-            `;
-            mainStand.appendChild(trunk);
-
-            // ҚАСИЕТТІ ТҮП ТАМЫР (КЕРЕЙ БАБА В САМОМ НИЗУ В ЗЕМЛЕ)
-            const root = document.createElement('div');
-            root.className = 'tree-sacred-root';
-            root.id = 'treeRoot';
-
-            root.innerHTML = `
-                <div class="root-ancestor-badge" onclick="selectPerson(1)">
-                    <span style="font-size:22px;">🌱</span>
-                    <div>
-                        <div>КЕРЕЙ БАБА (ок. 1380)</div>
-                        <div style="font-size:11px; color:#d4af37; font-weight:600;">
-                            ${currentLang === 'ru' ? 'Священный корень рода в земле (Тамга: Ашамай, Уран: Ошыбай!)' : 'Шежіренің ең түпкі қасиетті тамыры (Таңба: Ашамай, Ұран: Ошыбай!)'}
-                        </div>
-                    </div>
-                </div>
-            `;
-            mainStand.appendChild(root);
-            container.appendChild(mainStand);
-
-
-            // 2. КӨРШІ АҒАШ: ЖАҒАЛБАЙЛЫ (СОЛ ЖАҚТАҒЫ ТОҒАЙ)
-            const zhagalbaylyStand = document.createElement('div');
-            zhagalbaylyStand.className = 'clan-tree-stand stand-clan-left';
-            zhagalbaylyStand.id = 'standZhagalbayly';
-
-            zhagalbaylyStand.innerHTML = `
-                <div class="crown-living-banner" style="background:rgba(180,83,9,0.3); border-color:#d4af37; color:#fef08a;">
-                    <span>🌳</span>
-                    <span>${i18n[currentLang].clan_zhagalbayly_tree}</span>
-                </div>
-                <div style="font-size:12px; color:#cbd5e1; max-width:320px; text-align:center; margin:10px 0;">
-                    ${currentLang === 'ru' ? 'Род наших матерей (Бибинур, Алия), пришедших в семью Алтыбаевых' : 'Алтыбаевтар әулетіне келін болып түскен аяулы аналарымыздың руы'}
-                </div>
-                <div class="branch-couple-node" onclick="selectPerson(5)">
-                    <span>🌸</span>
-                    <div>
-                        <strong>Бибінұр Сейітқызы</strong> (1904 — 1984)
-                        <div style="font-size:10px; color:#fef08a;">${currentLang === 'ru' ? 'Золотая память матери' : 'Аналардың алтын естелігі'}</div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(zhagalbaylyStand);
-
-
-            // 3. КӨРШІ АҒАШ: ҚОҢЫРАТ (ОҢ ЖАҚТАҒЫ ТОҒАЙ)
-            const konyratStand = document.createElement('div');
-            konyratStand.className = 'clan-tree-stand stand-clan-right';
-            konyratStand.id = 'standKonyrat';
-
-            konyratStand.innerHTML = `
-                <div class="crown-living-banner" style="background:rgba(30,58,138,0.3); border-color:#38bdf8; color:#bae6fd;">
-                    <span>🌳</span>
-                    <span>${i18n[currentLang].clan_konyrat_tree}</span>
-                </div>
-                <div style="font-size:12px; color:#cbd5e1; max-width:320px; text-align:center; margin:10px 0;">
-                    ${currentLang === 'ru' ? 'Священный род Конырат, куда ушла невестой дочь Айнур' : 'Қасымның қызы Айнұр ұзатылып барған құрметті құдалар ағашы'}
-                </div>
-                <div style="display:flex; gap:12px; align-items:center;">
-                    <div class="leaf-son-node" onclick="selectPerson(12)">
-                        <span>🌿</span>
-                        <div><strong>Дәулет Төлегенов</strong> (1987)</div>
-                    </div>
-                    <div class="flower-daughter-node" onclick="selectPerson(9)">
-                        <span>🌸</span>
-                        <div>
-                            <strong>Айнұр</strong>
-                            <div style="font-size:10px; color:#fbcfe8;">← ${currentLang === 'ru' ? 'Невестка из рода Керей' : 'Керейден келген келін'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(konyratStand);
-        }
-
 
         // ========================================================
         // ТҰЛҒАНЫ ТАҢДАУ ЖӘНЕ БАРЛЫҚ КАРТОЧКАЛАРДЫҢ ТУЫСТЫҒЫН ЖАҢАРТУ
@@ -2766,12 +2781,35 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
             document.getElementById('panelPersonName').innerText = `${p.last_name || ''} ${p.first_name} ${p.middle_name || ''}`;
-            document.getElementById('panelPersonClan').innerText = p.clan_ru || 'Керей';
+            const clanDisplay = p.clan_ru || (currentLang === 'ru' ? 'не указан' : 'белгісіз');
+            document.getElementById('panelPersonClan').innerText = clanDisplay;
             document.getElementById('panelGender').innerText = p.gender === 'M' ? (currentLang === 'ru' ? 'Мужской' : 'Ер азамат') : (currentLang === 'ru' ? 'Женский' : 'Әйел адам');
-            document.getElementById('panelYears').innerText = `${p.birth_year || '—'} ${p.death_year ? '— ' + p.death_year : ''}`;
-            document.getElementById('panelPlace').innerText = p.birth_place || 'ШҚО';
-            document.getElementById('panelStatus').innerText = p.is_deceased ? (currentLang === 'ru' ? 'Умер(ла)' : 'Дүниеден өткен') : (currentLang === 'ru' ? 'Жив(а)' : 'Тірі');
+            
+            // Жылдары: живые — только год рождения! Ушедшие — годы жизни
+            if (p.is_deceased) {
+                document.getElementById('panelYears').innerText = `${p.birth_year || '—'} — ${p.death_year || '†'} ✨ (дүниеден өткен)`;
+            } else {
+                document.getElementById('panelYears').innerText = `${p.birth_year || '—'}`;
+            }
+            document.getElementById('panelPlace').innerText = p.birth_place || '—';
             document.getElementById('panelBiography').innerText = p.biography || (currentLang === 'ru' ? 'Биография не заполнена.' : 'Өмірбаяны жазылмаған.');
+
+            // Үш жұрт бейджі
+            const kin = activeKinships[id];
+            const zhurtRow = document.getElementById('panelZhurtRow');
+            const zhurtBadge = document.getElementById('panelZhurtBadge');
+            if (kin && kin.zhurt) {
+                if (zhurtRow) zhurtRow.style.display = 'flex';
+                let zCls = 'zhurt-oz';
+                if (kin.zhurt.includes('Нағашы')) zCls = 'zhurt-nagashy';
+                else if (kin.zhurt.includes('Қайын')) zCls = 'zhurt-kaiyn';
+                else if (kin.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
+                else if (kin.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
+                else if (kin.zhurt.includes('Құда')) zCls = 'zhurt-quda';
+                if (zhurtBadge) zhurtBadge.innerHTML = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span>`;
+            } else if (zhurtRow) {
+                zhurtRow.style.display = 'none';
+            }
 
             // Жеке туыстық сөйлемін серверден нақтылау
             try {
@@ -2793,7 +2831,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             // Серверден барлық туыстықты бірден сұрау (кэштей отырып)
             try {
-                const res = await fetch(`/api/kinship-all?base_id=${baseId}` + (isDemoMode ? '&demo=1' : ''));
+                const res = await fetch(`/api/kinship-all?base_id=${baseId}`);
                 const data = await res.json();
                 if (data && data.kinships) {
                     activeKinships = data.kinships;
@@ -2953,7 +2991,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 }
 
                 try {
-                    const res = await fetch(`/api/tree/search?q=${encodeURIComponent(q)}` + (isDemoMode ? '&demo=1' : ''));
+                    const res = await fetch(`/api/tree/search?q=${encodeURIComponent(q)}`);
                     const data = await res.json();
                     if (data && data.results && data.results.length > 0) {
                         searchDropdown.innerHTML = '';
@@ -3056,59 +3094,401 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         }
 
         function toggleDeathInputs() {
-            const isDeceased = document.getElementById('formIsDeceased').value === '1';
+            const isDeceased = document.getElementById('formIsDeceased').checked;
             document.getElementById('deathYearGroup').style.display = isDeceased ? 'block' : 'none';
         }
 
-        function handleSavePerson(e) {
+        function toggleEditDeathInputs() {
+            const isDeceased = document.getElementById('editIsDeceased').checked;
+            document.getElementById('editDeathSection').style.display = isDeceased ? 'block' : 'none';
+        }
+
+        // ========================================================
+        // РЕАЛЬНОЕ ДОБАВЛЕНИЕ РОДСТВЕННИКА (API -> БАЗА ДАННЫХ)
+        // ========================================================
+        async function handleSavePerson(e) {
             e.preventDefault();
             const relType = document.getElementById('formRelationType').value;
-            const baseId = parseInt(document.getElementById('formBasePersonId').value) || selectedPersonId;
+            const targetId = parseInt(document.getElementById('formBasePersonId').value) || selectedPersonId;
 
-            const newPerson = {
-                id: treeData.persons.length + 1,
-                first_name: document.getElementById('formFirstName').value,
-                last_name: document.getElementById('formLastName').value,
-                middle_name: document.getElementById('formMiddleName').value,
-                maiden_name: document.getElementById('formMaidenName').value,
-                gender: document.getElementById('formGender').value,
-                birth_year: document.getElementById('formBirthYear').value,
-                is_deceased: parseInt(document.getElementById('formIsDeceased').value),
-                death_year: document.getElementById('formDeathYear').value,
-                birth_place: document.getElementById('formBirthPlace').value,
-                biography: document.getElementById('formBiography').value,
-                clan_ru: 'Керей',
-            };
+            const isDeceased = document.getElementById('formIsDeceased').checked ? 1 : 0;
+            const formData = new URLSearchParams();
+            formData.append('target_id', targetId);
+            formData.append('relation_type', relType);
+            formData.append('first_name', document.getElementById('formFirstName').value.trim());
+            formData.append('last_name', document.getElementById('formLastName').value.trim());
+            formData.append('middle_name', document.getElementById('formMiddleName').value.trim());
+            formData.append('maiden_name', document.getElementById('formMaidenName').value.trim());
+            formData.append('gender', document.getElementById('formGender').value);
+            formData.append('clan_ru', document.getElementById('formClanRu').value.trim());
+            formData.append('birth_year', document.getElementById('formBirthYear').value.trim());
+            formData.append('birth_place', document.getElementById('formBirthPlace').value.trim());
+            formData.append('is_deceased', isDeceased);
+            formData.append('death_year', isDeceased ? document.getElementById('formDeathYear').value.trim() : '');
+            formData.append('biography', document.getElementById('formBiography').value.trim());
 
-            // Байланыстарды реттеу
-            if (relType === 'father') {
-                const base = treeData.persons.find(x => x.id === baseId);
-                if (base) base.father_id = newPerson.id;
-            } else if (relType === 'mother') {
-                const base = treeData.persons.find(x => x.id === baseId);
-                if (base) base.mother_id = newPerson.id;
-            } else if (relType === 'son' || relType === 'daughter' || relType === 'child') {
-                const base = treeData.persons.find(x => x.id === baseId);
-                if (base && base.gender === 'M') {
-                    newPerson.father_id = base.id;
-                } else if (base) {
-                    newPerson.mother_id = base.id;
+            try {
+                const res = await fetch('/api/person/create-relative', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeAddModal();
+                    alert(currentLang === 'ru' ? 'Родственник успешно добавлен в базу!' : 'Туыс сәтті қосылды!');
+                    await initTree();
+                    if (data.new_person_id) {
+                        flyToPerson(data.new_person_id);
+                    }
+                } else {
+                    alert('Қате / Ошибка: ' + (data.error || 'Белгісіз қате'));
                 }
-            } else if (relType === 'spouse') {
-                const base = treeData.persons.find(x => x.id === baseId);
-                if (base && base.gender === 'M') {
-                    treeData.marriages.push({ id: treeData.marriages.length + 1, husband_id: base.id, wife_id: newPerson.id });
-                } else if (base) {
-                    treeData.marriages.push({ id: treeData.marriages.length + 1, husband_id: newPerson.id, wife_id: base.id });
+            } catch (err) {
+                alert('Сұраныс қатесі: ' + err.message);
+            }
+        }
+
+        // ========================================================
+        // РЕАЛЬНОЕ РЕДАКТИРОВАНИЕ ПЕРСОНЫ (API -> AUDIT LOGS)
+        // ========================================================
+        async function openEditPersonModal(id) {
+            if (!canEdit) {
+                alert(currentLang === 'ru' ? 'У вас режим только чтения' : 'Өңдеу тек рұқсаты бар пайдаланушыларға қолжетімді');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/person?id=${id}`);
+                const data = await res.json();
+                if (!data || !data.person) {
+                    alert('Тұлға табылмады / Персона не найдена');
+                    return;
                 }
+                const p = data.person;
+                document.getElementById('editPersonId').value = p.id;
+                document.getElementById('editFirstName').value = p.first_name || '';
+                document.getElementById('editLastName').value = p.last_name || '';
+                document.getElementById('editMiddleName').value = p.middle_name || '';
+                document.getElementById('editMaidenName').value = p.maiden_name || '';
+                document.getElementById('editGender').value = p.gender || 'M';
+                document.getElementById('editClanRu').value = p.clan_ru || '';
+                document.getElementById('editBirthYear').value = p.birth_year || '';
+                document.getElementById('editBirthDate').value = p.birth_date || '';
+                document.getElementById('editBirthPlace').value = p.birth_place || '';
+
+                const isDeceased = (p.is_deceased == 1 || p.death_year || p.death_date);
+                document.getElementById('editIsDeceased').checked = !!isDeceased;
+                document.getElementById('editDeathSection').style.display = isDeceased ? 'block' : 'none';
+                document.getElementById('editDeathYear').value = p.death_year || '';
+                document.getElementById('editDeathDate').value = p.death_date || '';
+                document.getElementById('editDeathPlace').value = p.death_place || '';
+                document.getElementById('editBiography').value = p.biography || '';
+
+                const btnDel = document.getElementById('btnDeletePerson');
+                if (btnDel) {
+                    btnDel.style.display = isAdmin ? 'inline-flex' : 'none';
+                }
+
+                const auditContainer = document.getElementById('editAuditLogContainer');
+                if (data.audit_logs && data.audit_logs.length > 0) {
+                    let aHtml = '<table class="audit-table"><thead><tr><th>Уақыты</th><th>Әрекет</th><th>Өзгеріс</th><th>Пайдаланушы</th></tr></thead><tbody>';
+                    data.audit_logs.forEach(al => {
+                        aHtml += `
+                            <tr>
+                                <td style="white-space:nowrap;">${al.created_at || '—'}</td>
+                                <td><span style="font-weight:700; color:#d4af37;">${al.action}</span></td>
+                                <td>${al.description || '—'}</td>
+                                <td>${al.user_name || al.user_email || 'Админ'}</td>
+                            </tr>
+                        `;
+                    });
+                    aHtml += '</tbody></table>';
+                    auditContainer.innerHTML = aHtml;
+                } else {
+                    auditContainer.innerHTML = '<span style="color:#64748b; font-size:12px;">Бұл тұлға бойынша өзгерістер тарихы әзірге жоқ</span>';
+                }
+
+                document.getElementById('editPersonModal').classList.add('active');
+            } catch (err) {
+                alert('Жүктеу қатесі: ' + err.message);
+            }
+        }
+
+        function closeEditPersonModal() {
+            document.getElementById('editPersonModal').classList.remove('active');
+        }
+
+        async function handleSavePersonEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('editPersonId').value;
+            const isDeceased = document.getElementById('editIsDeceased').checked ? 1 : 0;
+
+            const formData = new URLSearchParams();
+            formData.append('id', id);
+            formData.append('first_name', document.getElementById('editFirstName').value.trim());
+            formData.append('last_name', document.getElementById('editLastName').value.trim());
+            formData.append('middle_name', document.getElementById('editMiddleName').value.trim());
+            formData.append('maiden_name', document.getElementById('editMaidenName').value.trim());
+            formData.append('gender', document.getElementById('editGender').value);
+            formData.append('clan_ru', document.getElementById('editClanRu').value.trim());
+            formData.append('birth_year', document.getElementById('editBirthYear').value.trim());
+            formData.append('birth_date', document.getElementById('editBirthDate').value.trim());
+            formData.append('birth_place', document.getElementById('editBirthPlace').value.trim());
+            formData.append('is_deceased', isDeceased);
+            formData.append('death_year', isDeceased ? document.getElementById('editDeathYear').value.trim() : '');
+            formData.append('death_date', isDeceased ? document.getElementById('editDeathDate').value.trim() : '');
+            formData.append('death_place', isDeceased ? document.getElementById('editDeathPlace').value.trim() : '');
+            formData.append('biography', document.getElementById('editBiography').value.trim());
+
+            try {
+                const res = await fetch('/api/person/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeEditPersonModal();
+                    alert(currentLang === 'ru' ? 'Данные успешно обновлены и сохранены в истории!' : 'Өзгерістер сәтті сақталды!');
+                    await initTree();
+                    selectPerson(parseInt(id));
+                    if (currentMode === 'list') {
+                        loadListViewData();
+                    }
+                } else {
+                    alert('Қате / Ошибка: ' + (data.error || 'Белгісіз қате'));
+                }
+            } catch (err) {
+                alert('Сұраныс қатесі: ' + err.message);
+            }
+        }
+
+        async function handleDeleteCurrentPerson() {
+            const id = document.getElementById('editPersonId').value;
+            if (!confirm(currentLang === 'ru' ? 'Вы уверены, что хотите удалить эту персону?' : 'Бұл тұлғаны өшіруге сенімдісіз бе?')) {
+                return;
+            }
+            try {
+                const formData = new URLSearchParams();
+                formData.append('id', id);
+                const res = await fetch('/api/person/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeEditPersonModal();
+                    alert(currentLang === 'ru' ? 'Персона помечена как удаленная' : 'Тұлға өшірілді');
+                    await initTree();
+                    if (currentMode === 'list') {
+                        loadListViewData();
+                    }
+                } else {
+                    alert('Қате: ' + (data.error || 'Белгісіз қате'));
+                }
+            } catch (err) {
+                alert('Қате: ' + err.message);
+            }
+        }
+
+        // ========================================================
+        // НЕКЕ МӘЛІМЕТТЕРІН ӨҢДЕУ (НЕКЕ / АЖЫРАСУ / МЕРЗІМІ)
+        // ========================================================
+        function openMarriageModal(m) {
+            document.getElementById('marriageId').value = m.id;
+            document.getElementById('marriageStatus').value = m.status || (m.is_current ? 'married' : 'divorced');
+            document.getElementById('marriageStartDate').value = m.start_date || m.marriage_date || '';
+            document.getElementById('marriageEndDate').value = m.end_date || m.divorce_date || '';
+            document.getElementById('marriageNotes').value = m.notes || '';
+
+            let husbandName = 'Күйеуі';
+            let wifeName = 'Жұбайы';
+            if (treeData && treeData.persons) {
+                const h = treeData.persons.find(x => x.id === m.husband_id);
+                const w = treeData.persons.find(x => x.id === m.wife_id);
+                if (h) husbandName = `${h.last_name || ''} ${h.first_name}`;
+                if (w) wifeName = `${w.last_name || ''} ${w.first_name}`;
+            }
+            document.getElementById('marriageCoupleNames').innerText = `${husbandName} ❤️ ${wifeName}`;
+            document.getElementById('marriageModal').classList.add('active');
+        }
+
+        function closeMarriageModal() {
+            document.getElementById('marriageModal').classList.remove('active');
+        }
+
+        async function handleSaveMarriage(e) {
+            e.preventDefault();
+            const id = document.getElementById('marriageId').value;
+            const formData = new URLSearchParams();
+            formData.append('id', id);
+            formData.append('status', document.getElementById('marriageStatus').value);
+            formData.append('start_date', document.getElementById('marriageStartDate').value.trim());
+            formData.append('end_date', document.getElementById('marriageEndDate').value.trim());
+            formData.append('notes', document.getElementById('marriageNotes').value.trim());
+
+            try {
+                const res = await fetch('/api/marriage/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeMarriageModal();
+                    alert(currentLang === 'ru' ? 'Данные брака успешно сохранены!' : 'Неке мәліметтері сақталды!');
+                    await initTree();
+                } else {
+                    alert('Қате: ' + (data.error || 'Белгісіз қате'));
+                }
+            } catch (err) {
+                alert('Қате: ' + err.message);
+            }
+        }
+
+        // ========================================================
+        // 3. «ТІЗІМ / СПИСОК» РЕЖИМІН ЖҮКТЕУ ЖӘНЕ ФИЛЬТРЛЕУ
+        // ========================================================
+        let listFilterTimer = null;
+        function handleListFilterChange() {
+            clearTimeout(listFilterTimer);
+            listFilterTimer = setTimeout(() => {
+                loadListViewData();
+            }, 250);
+        }
+
+        async function loadListViewData() {
+            const q = document.getElementById('listSearchInput').value.trim();
+            const clanId = document.getElementById('listClanFilter').value;
+            const gender = document.getElementById('listGenderFilter').value;
+            const status = document.getElementById('listStatusFilter').value;
+            const sort = document.getElementById('listSortFilter').value;
+
+            const params = new URLSearchParams();
+            if (q) params.set('q', q);
+            if (clanId) params.set('clan_id', clanId);
+            if (gender && gender !== 'all') params.set('gender', gender);
+            if (status && status !== 'all') params.set('status', status);
+            if (sort) params.set('sort', sort);
+
+            const tbody = document.getElementById('listTableBody');
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:24px; color:#94a3b8;">Іздеу жүргізілуде...</td></tr>';
+
+            try {
+                const res = await fetch(`/api/tree/list?${params.toString()}`);
+                const data = await res.json();
+                if (data && data.results) {
+                    listData = data.results;
+                    renderListTable(data.results);
+                    document.getElementById('listStatsCount').innerText = currentLang === 'ru' 
+                        ? `Найдено: ${data.total} персон` 
+                        : `Табылды: ${data.total} тұлға`;
+
+                    populateClanFilterOptions();
+                }
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:#ef4444;">Қате: ${err.message}</td></tr>`;
+            }
+        }
+
+        function populateClanFilterOptions() {
+            const select = document.getElementById('listClanFilter');
+            if (select.options.length > 1 || !treeData || !treeData.clans) return;
+
+            treeData.clans.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = c.name_kk || c.name_ru;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderListTable(items) {
+            const tbody = document.getElementById('listTableBody');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#94a3b8;">Талаптарға сай ешкім табылмады</td></tr>';
+                return;
             }
 
-            treeData.persons.push(newPerson);
-            closeAddModal();
+            items.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                const isDeceased = (p.is_deceased == 1);
+                const isM = (p.gender === 'M');
+                const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
 
-            renderEditingView();
-            renderForestView();
-            flyToPerson(newPerson.id);
+                // Үш жұрт бейджі
+                const kin = activeKinships[p.id];
+                let zhurtHtml = '—';
+                if (kin && kin.zhurt) {
+                    let zCls = 'zhurt-oz';
+                    if (kin.zhurt.includes('Нағашы')) zCls = 'zhurt-nagashy';
+                    else if (kin.zhurt.includes('Қайын')) zCls = 'zhurt-kaiyn';
+                    else if (kin.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
+                    else if (kin.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
+                    else if (kin.zhurt.includes('Құда')) zCls = 'zhurt-quda';
+                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div style="font-size:11px; color:#94a3b8; margin-top:2px;">${currentLang === 'ru' ? (kin.term_ru || kin.term_kk) : kin.term_kk}</div>`;
+                }
+
+                // Супруги
+                let spousesHtml = '—';
+                if (p.spouses && p.spouses.length > 0) {
+                    spousesHtml = p.spouses.map(s => {
+                        const isDiv = (s.status === 'divorced');
+                        return `<span style="font-size:12px; color:${isDiv ? '#94a3b8' : '#fbcfe8'};">${isDiv ? '💔' : '💍'} ${s.name} ${s.years ? `(${s.years})` : ''}</span>`;
+                    }).join('<br>');
+                }
+
+                // Родители
+                let parentsHtml = '—';
+                if (p.father_name || p.mother_name) {
+                    parentsHtml = `${p.father_name ? 'Әкесі: ' + p.father_name : ''}${p.father_name && p.mother_name ? '<br>' : ''}${p.mother_name ? 'Анасы: ' + p.mother_name : ''}`;
+                }
+
+                tr.innerHTML = `
+                    <td style="color:#64748b; font-size:11.5px;">${idx + 1}</td>
+                    <td>
+                        <div style="display:flex; align-items:center;">
+                            <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
+                            <div>
+                                <div style="font-weight:700; color:#f8fafc; font-size:13.5px;">${p.full_name}</div>
+                                ${p.maiden_name ? `<div style="font-size:11px; color:#f472b6;">девичья: ${p.maiden_name}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? 'Ер' : 'Әйел'}</span>
+                    </td>
+                    <td>
+                        <span class="clan-pill">${p.clan_ru || 'белгісіз'}</span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        ${p.years_display || '—'}
+                    </td>
+                    <td style="font-size:12px; color:#cbd5e1;">
+                        ${parentsHtml}
+                    </td>
+                    <td>
+                        ${spousesHtml}
+                    </td>
+                    <td>
+                        ${zhurtHtml}
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id})">🎯 Фокус</button>
+                        ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id})">✏️</button>` : ''}
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function focusPersonFromList(id) {
+            switchMode('editing');
+            flyToPerson(id);
         }
 
         // БАСТАУ

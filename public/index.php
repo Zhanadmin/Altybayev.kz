@@ -26,6 +26,12 @@ $router->get('/auth/google/callback', 'App\Controllers\AuthController@handleGoog
 $router->get('/api/me', 'App\Controllers\AuthController@currentUser');
 $router->get('/api/tree', 'App\Controllers\TreeController@apiTreeData', ['auth']);
 $router->get('/api/tree/layout', 'App\Controllers\TreeController@apiTreeLayout', ['auth']);
+$router->get('/api/tree/list', 'App\Controllers\TreeController@apiTreeList', ['auth']);
+$router->get('/api/person', 'App\Controllers\TreeController@apiPersonGet', ['auth']);
+$router->post('/api/person/update', 'App\Controllers\TreeController@apiPersonUpdate', ['auth']);
+$router->post('/api/person/create-relative', 'App\Controllers\TreeController@apiPersonCreateRelative', ['auth']);
+$router->post('/api/person/delete', 'App\Controllers\TreeController@apiPersonDelete', ['auth']);
+$router->post('/api/marriage/update', 'App\Controllers\TreeController@apiMarriageUpdate', ['auth']);
 $router->post('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
 $router->get('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);

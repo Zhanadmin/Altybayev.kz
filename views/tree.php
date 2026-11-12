@@ -952,6 +952,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             <button class="btn-action" onclick="openDictionaryModal()">
                 📖 Қазақтың туыстық атаулары
             </button>
+
+            <?php if (($user['role'] ?? '') === 'admin'): ?>
+            <!-- Быстрый переход в импорт GEDCOM для админа -->
+            <a href="/admin/import" class="btn-action" style="background:rgba(212,175,55,0.2); border:1px solid #d4af37; color:#fef08a; text-decoration:none;" title="GEDCOM импорты және предпросмотр">
+                📥 GEDCOM импорты
+            </a>
+            <?php endif; ?>
         </div>
     </header>
 

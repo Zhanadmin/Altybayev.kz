@@ -74,9 +74,11 @@ CREATE TABLE IF NOT EXISTS `persons` (
   -- Биография, заметки и главное фото
   `biography` MEDIUMTEXT DEFAULT NULL COMMENT 'Өмірбаяны / Заметки / Истории',
   `avatar_path` VARCHAR(255) DEFAULT NULL COMMENT 'Путь к главному фото',
+  `private_contacts` JSON DEFAULT NULL COMMENT 'Жабық байланыс деректері (телефон, email, мекенжай) тек әкімшіге',
 
   -- Служебные поля
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Мягкое удаление (soft delete)',
+  `import_batch_id` VARCHAR(64) DEFAULT NULL COMMENT 'Идентификатор пакета импорта GEDCOM',
   `created_by` INT UNSIGNED DEFAULT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -105,6 +107,7 @@ CREATE TABLE IF NOT EXISTS `marriages` (
   `is_current` TINYINT(1) NOT NULL DEFAULT 1,
   `divorce_date` VARCHAR(50) DEFAULT NULL,
   `notes` VARCHAR(255) DEFAULT NULL,
+  `import_batch_id` VARCHAR(64) DEFAULT NULL COMMENT 'Идентификатор пакета импорта GEDCOM',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_marriages_husband` (`husband_id`),

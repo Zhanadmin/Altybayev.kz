@@ -401,6 +401,10 @@ $roleInfo = $roleLabels[$userRole] ?? ['kk' => $userRole, 'ru' => $userRole, 'cl
                         <span class="badge-dev">Әзірленуде / В разработке</span>
                     </li>
                     <?php if ($userRole === 'admin'): ?>
+                    <li class="feature-item" style="background:#fefce8; border:1px solid #fef08a;">
+                        <span>📥 <strong>GEDCOM импорты (MyHeritage)</strong> — шежірені алдын ала көру, XSS-тазалау, жабық контактілер және базаға енгізу</span>
+                        <a href="/admin/import" class="badge-dev" style="background:#d97706; color:#fff; text-decoration:none;">Басқару / Открыть ➔</a>
+                    </li>
                     <li class="feature-item">
                         <span>⚙️ <strong>Әкімшілік панель / Панель администратора</strong> (Шақырулар мен рөлдерді басқару)</span>
                         <span class="badge-dev">Әзірленуде / В разработке</span>

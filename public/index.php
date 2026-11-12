@@ -28,6 +28,15 @@ $router->get('/api/tree', 'App\Controllers\TreeController@apiTreeData', ['auth']
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);
 $router->get('/api/tree/search', 'App\Controllers\TreeController@apiSearch', ['auth']);
 
+// 5. Админ-панель: Импорт GEDCOM из MyHeritage и управление откатами (TASK-005)
+$router->get('/admin/import', 'App\Controllers\AdminImportController@index', ['auth', 'admin']);
+$router->get('/admin/import/preview', 'App\Controllers\AdminImportController@preview', ['auth', 'admin']);
+$router->post('/admin/import/preview', 'App\Controllers\AdminImportController@preview', ['auth', 'admin']);
+$router->post('/admin/import/execute', 'App\Controllers\AdminImportController@execute', ['auth', 'admin']);
+$router->post('/admin/import/rollback', 'App\Controllers\AdminImportController@rollback', ['auth', 'admin']);
+$router->get('/admin/import/clear', 'App\Controllers\AdminImportController@clearPreview', ['auth', 'admin']);
+$router->get('/api/admin/import/preview', 'App\Controllers\AdminImportController@preview', ['auth', 'admin']);
+
 // Запуск диспетчера маршрутов
 $request = new Request();
 $router->dispatch($request);

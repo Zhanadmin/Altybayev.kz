@@ -83,6 +83,18 @@ class TreeController
             $clans = $demo['clans'];
         }
 
+        // Защита приватных данных (Требование 4): закрытые контакты отдавать только администратору
+        $isAdmin = Auth::isAdmin();
+        foreach ($persons as &$p) {
+            if (isset($p['private_contacts']) && is_string($p['private_contacts'])) {
+                $p['private_contacts'] = json_decode($p['private_contacts'], true);
+            }
+            if (!$isAdmin && isset($p['private_contacts'])) {
+                unset($p['private_contacts']);
+            }
+        }
+        unset($p);
+
         Response::json([
             'status' => 'success',
             'clans' => $clans,

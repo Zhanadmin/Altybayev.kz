@@ -25,6 +25,9 @@ $router->get('/auth/google/callback', 'App\Controllers\AuthController@handleGoog
 // 4. API маршруты
 $router->get('/api/me', 'App\Controllers\AuthController@currentUser');
 $router->get('/api/tree', 'App\Controllers\TreeController@apiTreeData', ['auth']);
+$router->get('/api/tree/layout', 'App\Controllers\TreeController@apiTreeLayout', ['auth']);
+$router->post('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
+$router->get('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);
 $router->get('/api/kinship-all', 'App\Controllers\TreeController@apiKinshipAll', ['auth']);
 $router->get('/api/tree/search', 'App\Controllers\TreeController@apiSearch', ['auth']);

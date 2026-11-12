@@ -11,6 +11,7 @@ use App\Core\Logger;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\KinshipService;
+use App\Services\TreeLayoutService;
 use PDO;
 
 /**
@@ -21,10 +22,12 @@ use PDO;
 class TreeController
 {
     protected KinshipService $kinshipService;
+    protected TreeLayoutService $treeLayoutService;
 
     public function __construct()
     {
         $this->kinshipService = new KinshipService();
+        $this->treeLayoutService = new TreeLayoutService();
     }
 
     /**
@@ -170,8 +173,26 @@ class TreeController
         } elseif ($isDemoActual) {
             $userPersonId = 7; // Жандос Алтыбаев в демо
         } else {
-            // Ищем привязку к первой персоне
-            $userPersonId = (int)$persons[0]['id'];
+            // Ищем привязку к Жандосу по имени / GEDCOM ID
+            foreach ($persons as $p) {
+                if (mb_stripos($p['first_name'] ?? '', 'Жандос') !== false || ($p['gedcom_id'] ?? '') === '@I6@') {
+                    $userPersonId = (int)$p['id'];
+                    break;
+                }
+            }
+            if (!$userPersonId) {
+                $userPersonId = (int)$persons[0]['id'];
+            }
+
+            // Если пользователь авторизован, автоматически сохраняем привязку в БД и сессии
+            if ($user && empty($user['person_id']) && $userPersonId) {
+                try {
+                    $db = Database::getConnection();
+                    $uStmt = $db->prepare("UPDATE `users` SET `person_id` = ? WHERE `id` = ?");
+                    $uStmt->execute([$userPersonId, $user['id']]);
+                    $_SESSION['user']['person_id'] = $userPersonId;
+                } catch (\Throwable $e) {}
+            }
         }
 
         // Защита приватных данных (Требование 4): закрытые контакты отдавать только администратору
@@ -185,6 +206,21 @@ class TreeController
             }
         }
         unset($p);
+
+        // Режим раскладки: по умолчанию окрестность ('focal') или полное древо ('full')
+        $layoutMode = (string)$request->get('mode', 'focal');
+        $reqFocalId = (int)$request->get('focal_id', 0);
+        $activeFocalId = $reqFocalId ?: $userPersonId;
+        $expandedStr = trim((string)$request->get('expanded', ''));
+        $expandedIds = $expandedStr !== '' ? array_map('intval', explode(',', $expandedStr)) : [];
+
+        $layout = $this->treeLayoutService->calculateLayout(
+            $persons,
+            $marriages,
+            $activeFocalId,
+            $layoutMode,
+            $expandedIds
+        );
 
         // Расчёт степеней родства относительно вошедшего пользователя по умолчанию
         $initialKinships = [];
@@ -200,8 +236,78 @@ class TreeController
             'persons' => $persons,
             'marriages' => $marriages,
             'user_person_id' => $userPersonId,
+            'focal_id' => $activeFocalId,
+            'layout_mode' => $layoutMode,
+            'layout' => $layout,
             'initial_kinships' => $initialKinships,
         ]);
+    }
+
+    /**
+     * API: Динамический пересчет раскладки (смена фокуса, сворачивание/разворачивание)
+     */
+    public function apiTreeLayout(Request $request): void
+    {
+        $isDemo = (bool)$request->get('demo', 0);
+        $dataset = $this->getDataset($isDemo);
+
+        if (!empty($dataset['error']) || empty($dataset['persons'])) {
+            Response::json(['status' => 'error', 'nodes' => [], 'edges' => []]);
+            return;
+        }
+
+        $user = Auth::user();
+        $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : null;
+        $focalId = (int)$request->get('focal_id', 0) ?: $userPersonId;
+        $mode = (string)$request->get('mode', 'focal');
+        $expandedStr = trim((string)$request->get('expanded', ''));
+        $expandedIds = $expandedStr !== '' ? array_map('intval', explode(',', $expandedStr)) : [];
+
+        $layout = $this->treeLayoutService->calculateLayout(
+            $dataset['persons'],
+            $dataset['marriages'],
+            $focalId,
+            $mode,
+            $expandedIds
+        );
+
+        Response::json([
+            'status' => 'success',
+            'layout' => $layout,
+        ]);
+    }
+
+    /**
+     * API: Связывание аккаунта пользователя с персоной в древе («Бұл мен / Это я»)
+     */
+    public function apiSetMyPerson(Request $request): void
+    {
+        $user = Auth::user();
+        if (!$user) {
+            Response::json(['error' => 'Авторизация қажет / Требуется авторизация'], 401);
+            return;
+        }
+
+        $personId = (int)$request->get('person_id', 0);
+        if (!$personId) {
+            Response::json(['error' => 'person_id is required'], 400);
+            return;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("UPDATE `users` SET `person_id` = ? WHERE `id` = ?");
+            $stmt->execute([$personId, $user['id']]);
+            $_SESSION['user']['person_id'] = $personId;
+
+            Response::json([
+                'status' => 'success',
+                'person_id' => $personId,
+                'message' => 'Сәтті байланыстырылды! / Успешно привязано!'
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
     }
 
     /**

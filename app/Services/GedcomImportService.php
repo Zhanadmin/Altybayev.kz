@@ -45,11 +45,16 @@ class GedcomImportService
                 $existingPersons[$row['gedcom_id']] = (int)$row['id'];
             }
 
-            // 2. Получение существующих браков для защиты от дублей
-            $stmtM = $pdo->query("SELECT `id`, `gedcom_id` FROM `marriages` WHERE `gedcom_id` IS NOT NULL");
+            // 2. Получение существующих браков для защиты от дублей (по gedcom_id и по паре супругов)
+            $stmtM = $pdo->query("SELECT `id`, `gedcom_id`, `husband_id`, `wife_id` FROM `marriages`");
             $existingMarriages = [];
+            $existingMarriagesByCouple = [];
             while ($rowM = $stmtM->fetch(PDO::FETCH_ASSOC)) {
-                $existingMarriages[$rowM['gedcom_id']] = (int)$rowM['id'];
+                if (!empty($rowM['gedcom_id'])) {
+                    $existingMarriages[$rowM['gedcom_id']] = (int)$rowM['id'];
+                }
+                $coupleKey = $rowM['husband_id'] . '_' . $rowM['wife_id'];
+                $existingMarriagesByCouple[$coupleKey] = (int)$rowM['id'];
             }
 
             // 3. Подготовка запросов для персон
@@ -158,9 +163,9 @@ class GedcomImportService
             }
 
             // 4. Обновление родительских связей (father_id, mother_id)
-            $updateParentsStmt = $pdo->prepare("
-                UPDATE `persons` SET `father_id` = ?, `mother_id` = ? WHERE `id` = ?
-            ");
+            $updateBothParentsStmt = $pdo->prepare("UPDATE `persons` SET `father_id` = ?, `mother_id` = ? WHERE `id` = ?");
+            $updateFatherOnlyStmt = $pdo->prepare("UPDATE `persons` SET `father_id` = ? WHERE `id` = ?");
+            $updateMotherOnlyStmt = $pdo->prepare("UPDATE `persons` SET `mother_id` = ? WHERE `id` = ?");
 
             foreach ($parsedData['persons'] as $gedcomId => $p) {
                 if (!isset($personIdMap[$gedcomId])) {
@@ -174,8 +179,12 @@ class GedcomImportService
                     ? $personIdMap[$p['mother_gedcom_id']]
                     : null;
 
-                if ($fatherDbId !== null || $motherDbId !== null) {
-                    $updateParentsStmt->execute([$fatherDbId, $motherDbId, $selfDbId]);
+                if ($fatherDbId !== null && $motherDbId !== null) {
+                    $updateBothParentsStmt->execute([$fatherDbId, $motherDbId, $selfDbId]);
+                } elseif ($fatherDbId !== null) {
+                    $updateFatherOnlyStmt->execute([$fatherDbId, $selfDbId]);
+                } elseif ($motherDbId !== null) {
+                    $updateMotherOnlyStmt->execute([$motherDbId, $selfDbId]);
                 }
             }
 
@@ -213,8 +222,12 @@ class GedcomImportService
                     continue;
                 }
 
-                if (isset($existingMarriages[$famGedcomId])) {
-                    $mId = $existingMarriages[$famGedcomId];
+                $existingId = $existingMarriages[$famGedcomId] 
+                    ?? $existingMarriagesByCouple[$husbDbId . '_' . $wifeDbId] 
+                    ?? $existingMarriagesByCouple[$wifeDbId . '_' . $husbDbId] 
+                    ?? null;
+
+                if ($existingId !== null) {
                     $updateMarriageStmt->execute([
                         $husbDbId,
                         $wifeDbId,
@@ -222,9 +235,9 @@ class GedcomImportService
                         $fam['marriage_place'] ?: null,
                         $fam['divorce_date'] ?: null,
                         $batchId,
-                        $mId
+                        $existingId
                     ]);
-                    $updatedMarriageIds[] = $mId;
+                    $updatedMarriageIds[] = $existingId;
                 } else {
                     $insertMarriageStmt->execute([
                         $famGedcomId,
@@ -239,6 +252,8 @@ class GedcomImportService
                     ]);
                     $newMId = (int)$pdo->lastInsertId();
                     $createdMarriageIds[] = $newMId;
+                    $existingMarriages[$famGedcomId] = $newMId;
+                    $existingMarriagesByCouple[$husbDbId . '_' . $wifeDbId] = $newMId;
                 }
             }
 

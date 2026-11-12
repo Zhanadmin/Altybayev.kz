@@ -137,6 +137,38 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
         }
 
+        /* Көлем ауыстырғышы (Окрестность / Барлығы 270) */
+        .scope-switcher {
+            display: flex;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 3px;
+            border-radius: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+        }
+        .scope-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .scope-btn:hover {
+            color: #f8fafc;
+        }
+        .scope-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fef08a;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
         /* Тіл таңдау және оң жақ құралдар */
         .nav-right {
             display: flex;
@@ -420,6 +452,66 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         .person-card.is-self {
             border: 2.5px solid #3b82f6;
             box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Тармақтарды ашу / жабу батырмалары (Expand / Collapse branch buttons) */
+        .btn-branch-expand {
+            position: absolute;
+            background: #0f172a;
+            color: #fef08a;
+            border: 1.5px solid #d4af37;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            z-index: 45;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .btn-branch-expand:hover {
+            background: #d4af37;
+            color: #0f172a;
+            transform: translateX(-50%) scale(1.08);
+            box-shadow: 0 0 16px rgba(212, 175, 55, 0.8);
+        }
+        .btn-branch-top {
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .btn-branch-bottom {
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Неке байланысының белгісі (Marriage Link Badge) */
+        .marriage-edge-badge {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #ec4899;
+            color: #ec4899;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 3px 10px rgba(236, 72, 153, 0.4);
+            z-index: 25;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .marriage-edge-badge:hover {
+            transform: translate(-50%, -50%) scale(1.25);
+            box-shadow: 0 0 14px rgba(236, 72, 153, 0.8);
         }
 
         /* Туыстық бейджигі (динамикалық түрде таңдалған адамға қатысты өзгереді) */
@@ -1329,6 +1421,18 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </button>
         </div>
 
+        <!-- КӨЛЕМ АУЫСТЫРҒЫШЫ (ОКРЕСТНОСТЬ / ВСЕ ДРЕВО 270) -->
+        <div class="scope-switcher" id="scopeSwitcher">
+            <button class="scope-btn active" id="btnScopeFocal" onclick="switchScope('focal')" title="Окрестность выбранного человека (MyHeritage)">
+                <span>🔍</span>
+                <span data-i18n="scope_focal">Окрестность</span>
+            </button>
+            <button class="scope-btn" id="btnScopeFull" onclick="switchScope('full')" title="Показать всё древо (270 человек)">
+                <span>🌐</span>
+                <span data-i18n="scope_full">Все древо</span>
+            </button>
+        </div>
+
         <!-- ТІЛ, ІЗДЕУ ЖӘНЕ ҚОСЫМША ҚҰРАЛДАР -->
         <div class="nav-right">
             <!-- Тіл ауыстырғыш (Қаз / Рус) -->
@@ -1466,8 +1570,14 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <div class="bio-box" id="panelBiography">—</div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn-modal-submit" style="flex:1;" onclick="openAddModal('child', selectedPersonId)">
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
+                <button type="button" class="btn-profile-action" onclick="setFocalFromProfile()" style="background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(217,119,6,0.3);">
+                    <span>🎯</span> <span data-i18n="btn_focus_here">Осы адамға бағыттау / Фокус</span>
+                </button>
+                <button type="button" class="btn-profile-action" id="btnSetMyPerson" onclick="setMyPersonFromProfile()" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(37,99,235,0.3);">
+                    <span>★</span> <span data-i18n="btn_set_me">Бұл мен (Өз аккаунтыма байлау)</span>
+                </button>
+                <button type="button" class="btn-modal-submit" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#f8fafc;" onclick="openAddModal('child', selectedPersonId)">
                     + <span data-i18n="btn_add_child">Бала қосу</span>
                 </button>
             </div>
@@ -1627,13 +1737,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
          ======================================================== -->
     <script>
         // СЕРВЕРДЕН АЛЫНҒАН АҚПАРАТТАР
-        const userPersonId = <?= (int)$userPersonId ?>;
+        let userPersonId = <?= (int)$userPersonId ?>;
         let currentMode = 'editing'; // 'editing' немесе 'forest'
+        let currentScope = 'focal'; // 'focal' (окрестность) немесе 'full' (барлық шежіре 270)
         let currentLang = localStorage.getItem('shezhire_lang') || 'kk';
 
         let treeData = null;
         let selectedPersonId = userPersonId;
         let activeKinships = {}; // person_id -> { term_kk, term_ru, code, badge_class }
+        let expandedBranches = []; // ашылған тармақтардың ID тізімі
 
         // Масштабтау және жылжыту координаталары
         let scale = 1.0;
@@ -1713,6 +1825,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 btn_import_gedcom: "📥 GEDCOM импорттау",
                 btn_view_demo: "🌟 Демо-режимді көру",
                 btn_return_real: "🌳 Негізгі базаға оралу",
+                scope_focal: "Окрестность",
+                scope_full: "Барлық шежіре",
+                btn_focus_here: "Осы адамға бағыттау / Фокус",
+                btn_set_me: "★ Бұл мен (Өз аккаунтыма байлау)",
             },
             ru: {
                 back_to_portal: "Главная страница",
@@ -1779,6 +1895,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 btn_import_gedcom: "📥 Импортировать GEDCOM",
                 btn_view_demo: "🌟 Включить демо-режим",
                 btn_return_real: "🌳 Вернуться к реальной базе",
+                scope_focal: "Окрестность",
+                scope_full: "Все древо (270)",
+                btn_focus_here: "Фокус на выбранном",
+                btn_set_me: "★ Это я (Привязать аккаунт)",
             }
         };
 
@@ -1854,6 +1974,75 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             initTree(isDemoMode);
         }
 
+        function updateScopeButtonState() {
+            const bFocal = document.getElementById('btnScopeFocal');
+            const bFull = document.getElementById('btnScopeFull');
+            if (bFocal) bFocal.classList.toggle('active', currentScope === 'focal');
+            if (bFull) bFull.classList.toggle('active', currentScope === 'full');
+        }
+
+        async function switchScope(scope) {
+            currentScope = scope;
+            updateScopeButtonState();
+
+            try {
+                const demoParam = isDemoMode ? '&demo=1' : '';
+                const expParam = expandedBranches.length > 0 ? `&expanded=${expandedBranches.join(',')}` : '';
+                const url = `/api/tree/layout?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}${demoParam}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data.layout) {
+                    treeData.layout = data.layout;
+                    renderEditingView();
+                    flyToPerson(selectedPersonId || userPersonId);
+                }
+            } catch (e) {
+                console.error("Scope ауыстыру қатесі:", e);
+            }
+        }
+
+        async function expandBranch(personId, type) {
+            if (!expandedBranches.includes(personId)) {
+                expandedBranches.push(personId);
+            }
+            try {
+                const demoParam = isDemoMode ? '&demo=1' : '';
+                const expParam = `&expanded=${expandedBranches.join(',')}`;
+                const url = `/api/tree/layout?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}${demoParam}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data.layout) {
+                    treeData.layout = data.layout;
+                    renderEditingView();
+                }
+            } catch (e) {
+                console.error("Тармақты ашу қатесі:", e);
+            }
+        }
+
+        async function setMyPersonFromProfile() {
+            if (!selectedPersonId) return;
+            try {
+                const res = await fetch(`/api/user/set-my-person?person_id=${selectedPersonId}`);
+                const data = await res.json();
+                if (data && data.status === 'success') {
+                    userPersonId = selectedPersonId;
+                    updateAllKinshipBadges(selectedPersonId);
+                    renderEditingView();
+                    alert(currentLang === 'ru' 
+                        ? 'Метка «Вы здесь» успешно привязана к выбранной персоне!' 
+                        : '«Сіз осындасыз» белгісі осы тұлғаға сәтті орнатылды!');
+                }
+            } catch (e) {
+                alert('Қате: ' + e.message);
+            }
+        }
+
+        function setFocalFromProfile() {
+            if (!selectedPersonId) return;
+            switchScope('focal');
+        }
+
         async function initTree(forceDemo) {
             if (forceDemo !== undefined) {
                 isDemoMode = !!forceDemo;
@@ -1862,15 +2051,28 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             initEvents();
 
             try {
-                const url = isDemoMode ? '/api/tree?demo=1' : '/api/tree';
+                const demoParam = isDemoMode ? '&demo=1' : '';
+                const expParam = expandedBranches.length > 0 ? `&expanded=${expandedBranches.join(',')}` : '';
+                const url = `/api/tree?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}${demoParam}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 treeData = data;
+                if (data.user_person_id) {
+                    userPersonId = data.user_person_id;
+                }
+                if (!selectedPersonId) {
+                    selectedPersonId = userPersonId || data.focal_id;
+                }
                 activeKinships = data.initial_kinships || {};
 
                 updateDemoButtonState();
-                renderEditingView();
-                renderForestView();
+                updateScopeButtonState();
+
+                if (currentMode === 'editing') {
+                    renderEditingView();
+                } else {
+                    renderForestView();
+                }
 
                 if (treeData.is_empty || !treeData.persons || treeData.persons.length === 0) {
                     // Центрируем камеру на карточке пустого состояния
@@ -1895,24 +2097,27 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             currentMode = mode;
             const btnEditing = document.getElementById('btnModeEditing');
             const btnForest = document.getElementById('btnModeForest');
+            const scopeSwitcher = document.getElementById('scopeSwitcher');
             const viewEditing = document.getElementById('editingView');
             const viewForest = document.getElementById('forestView');
 
             if (mode === 'editing') {
                 btnEditing.classList.add('active');
                 btnForest.classList.remove('active');
+                if (scopeSwitcher) scopeSwitcher.style.display = 'flex';
                 viewEditing.style.display = 'block';
                 viewForest.style.display = 'none';
-                renderConnectionsEditing();
+                renderEditingView();
                 if (treeData && treeData.persons && treeData.persons.length > 0) {
                     flyToPerson(selectedPersonId || userPersonId || treeData.persons[0].id);
                 }
             } else {
                 btnForest.classList.add('active');
                 btnEditing.classList.remove('active');
+                if (scopeSwitcher) scopeSwitcher.style.display = 'none';
                 viewEditing.style.display = 'none';
                 viewForest.style.display = 'block';
-                // Шежіре-Орман ашылғанда бірден жоғарғы кронаға (тірілерге) барады!
+                renderForestView();
                 if (treeData && treeData.persons && treeData.persons.length > 0) {
                     flyToCrown();
                 }
@@ -1920,7 +2125,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         }
 
         // ========================================================
-        // 1. «ӨҢДЕУ» РЕЖИМІН ДИНАМИКАЛЫҚ ҚҰРУ
+        // 1. «ӨҢДЕУ» РЕЖИМІН ДИНАМИКАЛЫҚ ҚҰРУ (MYHERITAGE СТИЛІ, НӨЛ ҚИЫЛЫС)
         // ========================================================
         function renderEditingView() {
             const container = document.getElementById('editingCardsContainer');
@@ -1952,39 +2157,26 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 return;
             }
 
-            // Иерархиялық орналасу картасы (буындар бойынша)
-            const layoutMap = {
-                1: { x: 2000, y: 1550 }, // Керей баба (корень)
-                2: { x: 2000, y: 1250 }, // Самай би
-                3: { x: 2000, y: 950 },  // Алтыбай баба
-                4: { x: 1800, y: 680 },  // Сейітқали
-                5: { x: 2120, y: 680 },  // Бибінұр (жұбайы, Жағалбайлы)
-                6: { x: 1950, y: 420 },  // Қасым (әкесі)
-                7: { x: 1820, y: 160 },  // Жандос (Сіз осындасыз)
-                8: { x: 2140, y: 160 },  // Әлия (жұбайы)
-                9: { x: 2520, y: 160 },  // Айнұр (қарындасы)
-                10: { x: 1720, y: -100 }, // Арнұр (ұлы)
-                11: { x: 2040, y: -100 }, // Медина (қызы)
-                12: { x: 2840, y: 160 }, // Дәулет (күйеу бала, Қоңырат)
-            };
+            const layoutNodes = (treeData.layout && treeData.layout.nodes && treeData.layout.nodes.length > 0)
+                ? treeData.layout.nodes
+                : fallbackLayout(treeData.persons, treeData.marriages);
 
-            treeData.persons.forEach(p => {
-                const pos = layoutMap[p.id] || { x: 1500 + (p.id % 6) * 280, y: 500 + Math.floor(p.id / 6) * 220 };
-                const isMale = p.gender === 'M';
-                const isDeceased = !!p.is_deceased;
-                const isSelf = p.id === userPersonId;
-                const isSelected = p.id === selectedPersonId;
+            layoutNodes.forEach(node => {
+                const isMale = node.gender === 'M';
+                const isDeceased = !!node.is_deceased;
+                const isSelf = node.id === userPersonId;
+                const isSelected = node.id === selectedPersonId;
 
                 const card = document.createElement('div');
                 card.className = `person-card ${isMale ? 'male' : 'female'} ${isDeceased ? 'deceased' : ''} ${isSelf ? 'is-self' : ''} ${isSelected ? 'selected' : ''}`;
-                card.id = `card-${p.id}`;
-                card.style.left = `${pos.x}px`;
-                card.style.top = `${pos.y}px`;
+                card.id = `card-${node.id}`;
+                card.style.left = `${node.x}px`;
+                card.style.top = `${node.y}px`;
 
-                const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
+                const initials = (node.first_name ? node.first_name[0] : '') + (node.last_name ? node.last_name[0] : '');
 
                 // Туыстық атауын алу
-                const kin = activeKinships[p.id] || { term_kk: 'Туысқан', term_ru: 'Родственник' };
+                const kin = activeKinships[node.id] || { term_kk: 'Туысқан', term_ru: 'Родственник' };
                 const kinLabel = currentLang === 'ru' ? (kin.term_ru || kin.term_kk) : kin.term_kk;
 
                 // Батырмалар жазбалары
@@ -1995,8 +2187,22 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 const tSon = currentLang === 'ru' ? '+ Сын' : '+ Ұл';
                 const tDaughter = currentLang === 'ru' ? '+ Дочь' : '+ Қыз';
 
+                // Скрытые предки / потомки батырмалары
+                let expandTopHtml = '';
+                if (node.has_hidden_parents) {
+                    const lbl = currentLang === 'ru' ? `▲ +${node.hidden_parents_count} предков` : `▲ +${node.hidden_parents_count} аталар`;
+                    expandTopHtml = `<button class="btn-branch-expand btn-branch-top" onclick="event.stopPropagation(); expandBranch(${node.id}, 'parents')">${lbl}</button>`;
+                }
+
+                let expandBottomHtml = '';
+                if (node.has_hidden_children) {
+                    const lbl = currentLang === 'ru' ? `▼ +${node.hidden_children_count} потомков` : `▼ +${node.hidden_children_count} балалар`;
+                    expandBottomHtml = `<button class="btn-branch-expand btn-branch-bottom" onclick="event.stopPropagation(); expandBranch(${node.id}, 'children')">${lbl}</button>`;
+                }
+
                 card.innerHTML = `
-                    <div class="card-kinship-badge ${isSelf ? 'self-rel' : (isSelected ? 'active-rel' : '')}" id="kin-badge-${p.id}">
+                    ${expandTopHtml}
+                    <div class="card-kinship-badge ${isSelf ? 'self-rel' : (isSelected ? 'active-rel' : '')}" id="kin-badge-${node.id}">
                         <span>${isSelf && !isSelected ? i18n[currentLang].you_are_here_badge : (isSelected ? i18n[currentLang].selected_badge : kinLabel)}</span>
                         ${isDeceased ? '<span>✨</span>' : '<span>🌿</span>'}
                     </div>
@@ -2004,30 +2210,30 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     <div class="card-header-inner">
                         <div class="card-avatar">${initials}</div>
                         <div class="card-info">
-                            <div class="card-name" title="${p.last_name || ''} ${p.first_name}">${p.last_name || ''} ${p.first_name}</div>
-                            ${p.maiden_name ? `<div class="card-maiden">${currentLang === 'ru' ? 'девичья:' : 'қыз кезінде:'} ${p.maiden_name}</div>` : ''}
-                            <div class="card-years">${p.birth_year || '—'} ${p.death_year ? '— ' + p.death_year : (p.is_deceased ? '†' : `(${currentLang === 'ru' ? 'жив' : 'тірі'})`)}</div>
-                            <div class="card-place">${p.birth_place || ''}</div>
+                            <div class="card-name" title="${node.last_name || ''} ${node.first_name}">${node.last_name || ''} ${node.first_name}</div>
+                            ${node.maiden_name ? `<div class="card-maiden">${currentLang === 'ru' ? 'девичья:' : 'қыз кезінде:'} ${node.maiden_name}</div>` : ''}
+                            <div class="card-years">${node.birth_year || '—'} ${node.death_year ? '— ' + node.death_year : (node.is_deceased ? '†' : `(${currentLang === 'ru' ? 'жив' : 'тірі'})`)}</div>
                         </div>
                     </div>
                     <div>
-                        <span class="card-clan-tag">${p.clan_ru || 'Керей'}</span>
+                        <span class="card-clan-tag">${node.clan_ru || 'Керей'}</span>
                     </div>
 
                     <!-- Карточканың айналасындағы жылдам қосу радиалды батырмалары -->
                     <div class="radial-action-wrap">
-                        <button class="radial-btn radial-top-father" data-tooltip="${tFather}" onclick="event.stopPropagation(); openAddModal('father', ${p.id})">+</button>
-                        <button class="radial-btn radial-top-mother" data-tooltip="${tMother}" onclick="event.stopPropagation(); openAddModal('mother', ${p.id})">+</button>
-                        <button class="radial-btn radial-left-spouse" data-tooltip="${tSpouse}" onclick="event.stopPropagation(); openAddModal('spouse', ${p.id})">+</button>
-                        <button class="radial-btn radial-right-sibling" data-tooltip="${tSibling}" onclick="event.stopPropagation(); openAddModal('sibling', ${p.id})">+</button>
-                        <button class="radial-btn radial-bottom-son" data-tooltip="${tSon}" onclick="event.stopPropagation(); openAddModal('son', ${p.id})">+</button>
-                        <button class="radial-btn radial-bottom-daughter" data-tooltip="${tDaughter}" onclick="event.stopPropagation(); openAddModal('daughter', ${p.id})">+</button>
+                        <button class="radial-btn radial-top-father" data-tooltip="${tFather}" onclick="event.stopPropagation(); openAddModal('father', ${node.id})">+</button>
+                        <button class="radial-btn radial-top-mother" data-tooltip="${tMother}" onclick="event.stopPropagation(); openAddModal('mother', ${node.id})">+</button>
+                        <button class="radial-btn radial-left-spouse" data-tooltip="${tSpouse}" onclick="event.stopPropagation(); openAddModal('spouse', ${node.id})">+</button>
+                        <button class="radial-btn radial-right-sibling" data-tooltip="${tSibling}" onclick="event.stopPropagation(); openAddModal('sibling', ${node.id})">+</button>
+                        <button class="radial-btn radial-bottom-son" data-tooltip="${tSon}" onclick="event.stopPropagation(); openAddModal('son', ${node.id})">+</button>
+                        <button class="radial-btn radial-bottom-daughter" data-tooltip="${tDaughter}" onclick="event.stopPropagation(); openAddModal('daughter', ${node.id})">+</button>
                     </div>
+                    ${expandBottomHtml}
                 `;
 
                 card.onclick = (e) => {
                     e.stopPropagation();
-                    selectPerson(p.id);
+                    selectPerson(node.id);
                 };
 
                 container.appendChild(card);
@@ -2036,55 +2242,92 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             renderConnectionsEditing();
         }
 
-        // БАЙЛАНЫС ЖЕЛІЛЕРІН СЫЗУ (СВЯЗИ ПОКОЛЕНИЙ И БРАКОВ)
+        // БАЙЛАНЫС ЖЕЛІЛЕРІН СЫЗУ (СВЯЗИ ПОКОЛЕНИЙ И БРАКОВ: ОРТОГОНАЛЬДЫ ШИНАЛАР)
         function renderConnectionsEditing() {
             const svg = document.getElementById('svgConnections');
             svg.innerHTML = '';
+            document.querySelectorAll('.marriage-edge-badge').forEach(el => el.remove());
+
             if (currentMode !== 'editing' || !treeData) return;
 
-            // Әке мен балалар желілері
-            treeData.persons.forEach(p => {
-                if (p.father_id) {
-                    const fatherCard = document.getElementById(`card-${p.father_id}`);
-                    const childCard = document.getElementById(`card-${p.id}`);
-                    if (fatherCard && childCard) {
-                        const x1 = parseInt(fatherCard.style.left) + 125;
-                        const y1 = parseInt(fatherCard.style.top) + 115;
-                        const x2 = parseInt(childCard.style.left) + 125;
-                        const y2 = parseInt(childCard.style.top);
+            const container = document.getElementById('editingCardsContainer');
+            const edges = (treeData.layout && treeData.layout.edges) ? treeData.layout.edges : null;
 
-                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                        const midY = (y1 + y2) / 2;
-                        path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
-                        path.setAttribute('stroke', '#64748b');
-                        path.setAttribute('stroke-width', '2.5');
-                        path.setAttribute('fill', 'none');
-                        svg.appendChild(path);
-                    }
-                }
-            });
-
-            // Неке желілері (супруги)
-            treeData.marriages.forEach(m => {
-                const hCard = document.getElementById(`card-${m.husband_id}`);
-                const wCard = document.getElementById(`card-${m.wife_id}`);
-                if (hCard && wCard) {
-                    const x1 = parseInt(hCard.style.left) + 250;
-                    const y1 = parseInt(hCard.style.top) + 55;
-                    const x2 = parseInt(wCard.style.left);
-                    const y2 = parseInt(wCard.style.top) + 55;
-
+            if (edges) {
+                // 1. Некелік байланыстар (Супруги: розовые линии + бейдж колец)
+                (edges.marriages || []).forEach(m => {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('x1', x1);
-                    line.setAttribute('y1', y1);
-                    line.setAttribute('x2', x2);
-                    line.setAttribute('y2', y2);
+                    line.setAttribute('x1', m.x1);
+                    line.setAttribute('y1', m.y1);
+                    line.setAttribute('x2', m.x2);
+                    line.setAttribute('y2', m.y2);
                     line.setAttribute('stroke', '#ec4899');
                     line.setAttribute('stroke-width', '2.5');
                     line.setAttribute('stroke-dasharray', '5 4');
                     svg.appendChild(line);
-                }
-            });
+
+                    const badge = document.createElement('div');
+                    badge.className = 'marriage-edge-badge';
+                    badge.style.left = `${m.mid_x}px`;
+                    badge.style.top = `${m.mid_y}px`;
+                    badge.innerHTML = '💍';
+                    badge.title = currentLang === 'ru' ? 'Супружеский союз' : 'Некелік одақ';
+                    container.appendChild(badge);
+                });
+
+                // 2. Родительско-детские ортогональные шины связей (без наложений на карточки)
+                (edges.parent_child || []).forEach(pc => {
+                    // Вертикальная линия от родителей вниз к горизонтальной шине
+                    const dropLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    dropLine.setAttribute('x1', pc.parent_mid_x);
+                    dropLine.setAttribute('y1', pc.parent_bottom_y);
+                    dropLine.setAttribute('x2', pc.parent_mid_x);
+                    dropLine.setAttribute('y2', pc.bus_y);
+                    dropLine.setAttribute('stroke', '#64748b');
+                    dropLine.setAttribute('stroke-width', '2.5');
+                    svg.appendChild(dropLine);
+
+                    // Горизонтальная шина над детьми
+                    const busLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    busLine.setAttribute('x1', pc.bus_min_x);
+                    busLine.setAttribute('y1', pc.bus_y);
+                    busLine.setAttribute('x2', pc.bus_max_x);
+                    busLine.setAttribute('y2', pc.bus_y);
+                    busLine.setAttribute('stroke', '#64748b');
+                    busLine.setAttribute('stroke-width', '2.5');
+                    svg.appendChild(busLine);
+
+                    // Отводки вниз к каждому ребенку
+                    (pc.children || []).forEach(c => {
+                        const cLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        cLine.setAttribute('x1', c.x);
+                        cLine.setAttribute('y1', c.bus_y);
+                        cLine.setAttribute('x2', c.x);
+                        cLine.setAttribute('y2', c.top_y);
+                        cLine.setAttribute('stroke', '#64748b');
+                        cLine.setAttribute('stroke-width', '2.5');
+                        svg.appendChild(cLine);
+                    });
+                });
+            }
+        }
+
+        // Резервный расчет координат при отсутствии layout от сервера
+        function fallbackLayout(persons, marriages) {
+            return persons.map((p, idx) => ({
+                id: p.id,
+                first_name: p.first_name,
+                last_name: p.last_name,
+                gender: p.gender,
+                clan_ru: p.clan_ru,
+                birth_year: p.birth_year,
+                death_year: p.death_year,
+                is_deceased: p.is_deceased,
+                x: 1000 + (idx % 8) * 310,
+                y: 300 + Math.floor(idx / 8) * 220,
+                width: 260,
+                height: 120,
+            }));
         }
 
 
@@ -2118,6 +2361,224 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 return;
             }
 
+            // Егер демо режимі болса — демонстрациялық орманды көрсетеміз
+            if (treeData.is_demo || isDemoMode) {
+                renderDemoForestView(container);
+                return;
+            }
+
+            // Нақты деректер үшін шежіре-орманды динамикалық құру
+            renderRealForestView(container);
+        }
+
+        // Нақты деректер үшін көркем орман бейнелеуі (қабаттасусыз, нақты Жандос отбасы)
+        function renderRealForestView(container) {
+            const persons = treeData.persons;
+            const marriages = treeData.marriages || [];
+            const personMap = new Map();
+            persons.forEach(p => personMap.set(p.id, p));
+
+            // Таңдалған немесе негізгі тұлға (Жандос немесе пайдаланушы)
+            let focalId = selectedPersonId || userPersonId;
+            let focal = focalId ? personMap.get(focalId) : null;
+            if (!focal) {
+                focal = persons.find(p => p.gedcom_id === '@I6@' || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
+            }
+
+            // Жұбайын табу
+            let spouse = null;
+            for (const m of marriages) {
+                if (m.husband_id === focal.id && m.wife_id && personMap.has(m.wife_id)) {
+                    spouse = personMap.get(m.wife_id);
+                    break;
+                } else if (m.wife_id === focal.id && m.husband_id && personMap.has(m.husband_id)) {
+                    spouse = personMap.get(m.husband_id);
+                    break;
+                }
+            }
+
+            // Балаларын табу
+            const children = persons.filter(p => 
+                p.father_id === focal.id || p.mother_id === focal.id ||
+                (spouse && (p.father_id === spouse.id || p.mother_id === spouse.id))
+            );
+            children.sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0));
+
+            // Ата-аналарын табу
+            const father = focal.father_id ? personMap.get(focal.father_id) : null;
+            const mother = focal.mother_id ? personMap.get(focal.mother_id) : null;
+
+            // Бауырларын табу
+            const siblings = persons.filter(p => 
+                p.id !== focal.id && 
+                ((father && p.father_id === father.id) || (mother && p.mother_id === mother.id))
+            );
+
+            // Ата-баба діңгегі (Әке жағымен тікелей жоғары қарай өрлеу)
+            const ancestorsTrunk = [];
+            let curAncestor = father;
+            const visited = new Set();
+            while (curAncestor && !visited.has(curAncestor.id)) {
+                visited.add(curAncestor.id);
+                ancestorsTrunk.push(curAncestor);
+                curAncestor = curAncestor.father_id ? personMap.get(curAncestor.father_id) : null;
+            }
+
+            // Түпкі ата немесе Керей баба
+            let rootPerson = null;
+            const kerey = persons.find(p => (p.first_name && p.first_name.includes('Керей')) || (p.last_name && p.last_name.includes('Керей')));
+            if (kerey) {
+                rootPerson = kerey;
+            } else if (ancestorsTrunk.length > 0) {
+                rootPerson = ancestorsTrunk[ancestorsTrunk.length - 1];
+            } else {
+                rootPerson = focal;
+            }
+
+            // 1. ОРТАЛЫҚ БАСТЫ АҒАШ: АЛТЫБАЕВТАР ӘУЛЕТІ
+            const mainStand = document.createElement('div');
+            mainStand.className = 'clan-tree-stand stand-main-kerey';
+            mainStand.id = 'standKerey';
+
+            // КРОНА
+            const crown = document.createElement('div');
+            crown.className = 'organic-crown-container';
+            crown.id = 'treeCrown';
+
+            let crownHtml = `
+                <div class="crown-living-banner">
+                    <span>☀️</span>
+                    <span>${i18n[currentLang].crown_title}</span>
+                </div>
+            `;
+
+            // Балалар қатары
+            if (children.length > 0) {
+                crownHtml += `<div class="branch-children-row">`;
+                children.forEach(c => {
+                    const isGirl = (c.gender === 'F');
+                    const icon = isGirl ? '🌸' : '🍃';
+                    const cls = isGirl ? 'flower-daughter-node' : 'leaf-son-node';
+                    const note = isGirl 
+                        ? (currentLang === 'ru' ? 'Цветок рода (дочь)' : 'Нәзік гүл (қызы)')
+                        : (currentLang === 'ru' ? 'Листик рода (сын)' : 'Жас жапырақ (ұлы)');
+                    crownHtml += `
+                        <div class="${cls}" onclick="selectPerson(${c.id})" title="${note}">
+                            <span>${icon}</span>
+                            <div><strong>${c.first_name || ''} ${c.last_name || ''}</strong> (${c.birth_year || '—'})</div>
+                        </div>
+                    `;
+                });
+                crownHtml += `</div>`;
+            }
+
+            // Негізгі шаңырақ (Фокальді тұлға + жұбайы)
+            crownHtml += `
+                <div class="family-branch">
+                    <div class="branch-couple-node is-self-node" onclick="selectPerson(${focal.id})">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span>🎯</span>
+                            <div>
+                                <strong>${focal.last_name || ''} ${focal.first_name}</strong> (${focal.birth_year || '—'})
+                                <div style="font-size:11px; color:#fef08a;">${i18n[currentLang].you_are_here_badge}</div>
+                            </div>
+                        </div>
+            `;
+
+            if (spouse) {
+                crownHtml += `
+                    <div style="color:#d4af37; font-weight:700;">&</div>
+                    <div class="in-married-flower-node" onclick="event.stopPropagation(); selectPerson(${spouse.id});" title="${spouse.last_name || ''} ${spouse.first_name}">
+                        <span>🌸</span>
+                        <div>
+                            <strong>${spouse.first_name} ${spouse.last_name || ''}</strong> (${spouse.birth_year || '—'})
+                            <div style="font-size:10px; color:#9d174d;">${i18n[currentLang].married_in_tag}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            crownHtml += `</div>`;
+
+            // Бауырлар қатары (егер бар болса)
+            if (siblings.length > 0) {
+                crownHtml += `<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;">`;
+                siblings.forEach(s => {
+                    const isSister = (s.gender === 'F');
+                    crownHtml += `
+                        <div class="branch-couple-node" style="padding:4px 10px; font-size:12px;" onclick="selectPerson(${s.id})">
+                            <span>${isSister ? '🌸' : '🌿'}</span>
+                            <div><strong>${s.first_name}</strong> (${s.birth_year || '—'})</div>
+                        </div>
+                    `;
+                });
+                crownHtml += `</div>`;
+            }
+
+            // Әкесі мен анасының шаңырағы
+            if (father || mother) {
+                const parentId = father ? father.id : (mother ? mother.id : focal.id);
+                crownHtml += `
+                    <div class="family-branch" style="margin-top:14px;">
+                        <div class="branch-couple-node" onclick="selectPerson(${parentId})">
+                            <span>📜</span>
+                            <div>
+                                <strong>${father ? (father.first_name + ' ' + (father.last_name || '')) : (mother.first_name + ' ' + (mother.last_name || ''))}</strong> (${(father && father.birth_year) || (mother && mother.birth_year) || '—'})
+                                <div style="font-size:11px; color:#86efac;">${currentLang === 'ru' ? 'Родители' : 'Әке-шеше шаңырағы'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            crownHtml += `</div>`;
+            crown.innerHTML = crownHtml;
+            mainStand.appendChild(crown);
+
+            // ДІҢГЕК (АТА-БАБАЛАР ШЕЖІРЕСІ)
+            const trunk = document.createElement('div');
+            trunk.className = 'organic-trunk';
+            let trunkHtml = '';
+            const displayTrunk = ancestorsTrunk.filter(a => rootPerson && a.id !== rootPerson.id);
+            if (displayTrunk.length > 0) {
+                displayTrunk.forEach(anc => {
+                    const isAltybay = (anc.first_name && anc.first_name.includes('Алтыбай')) || (anc.last_name && anc.last_name.includes('Алтыбай'));
+                    const style = isAltybay ? 'border-color:#f59e0b; background:#29180c; color:#fef08a;' : '';
+                    const icon = isAltybay ? '👑' : '✨';
+                    const title = isAltybay ? ' — Ру басы' : '';
+                    trunkHtml += `
+                        <div class="trunk-ancestor-node" onclick="selectPerson(${anc.id})" style="${style}">
+                            ${icon} ${anc.first_name} ${anc.last_name || ''} (${anc.birth_year || '—'}${anc.death_year ? ' — ' + anc.death_year : ''})${title}
+                        </div>
+                    `;
+                });
+            } else {
+                trunkHtml += `<div class="trunk-ancestor-node" onclick="selectPerson(${focal.id})">✨ ${focal.first_name} ${focal.last_name || ''}</div>`;
+            }
+            trunk.innerHTML = trunkHtml;
+            mainStand.appendChild(trunk);
+
+            // ТҮП ТАМЫР
+            const root = document.createElement('div');
+            root.className = 'tree-sacred-root';
+            root.id = 'treeRoot';
+            root.innerHTML = `
+                <div class="root-ancestor-badge" onclick="selectPerson(${rootPerson.id})">
+                    <span style="font-size:22px;">🌱</span>
+                    <div>
+                        <div>${(rootPerson.first_name + ' ' + (rootPerson.last_name || '')).toUpperCase()} (${rootPerson.birth_year ? 'ок. ' + rootPerson.birth_year : ''})</div>
+                        <div style="font-size:11px; color:#d4af37; font-weight:600;">
+                            ${currentLang === 'ru' ? 'Священный корень рода в земле (Таңба: Ашамай, Уран: Ошыбай!)' : 'Шежіренің ең түпкі қасиетті тамыры (Таңба: Ашамай, Ұран: Ошыбай!)'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainStand.appendChild(root);
+            container.appendChild(mainStand);
+        }
+
+        // Демонстрациялық орман бейнелеуі
+        function renderDemoForestView(container) {
             // 1. ОРТАЛЫҚ БАСТЫ АҒАШ: КЕРЕЙ — АЛТЫБАЕВТАР ӘУЛЕТІ
             const mainStand = document.createElement('div');
             mainStand.className = 'clan-tree-stand stand-main-kerey';

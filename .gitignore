@@ -1,0 +1,23 @@
+# Environment
+.env
+
+# Dependencies
+/vendor/
+
+# Uploads & User Media (keep directory structure)
+/public/uploads/*
+!/public/uploads/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/backups/*
+!/storage/backups/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+*.swp

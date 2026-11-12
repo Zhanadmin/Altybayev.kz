@@ -1,0 +1,13 @@
+{
+  "name": "altybayev/shezhire",
+  "description": "Жабық отбасылық Шежіре сайты / Закрытый семейный сайт Шежіре (altybayev.kz)",
+  "type": "project",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  }
+}

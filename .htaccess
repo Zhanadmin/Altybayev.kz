@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Если корневая папка сайта в Plesk осталась httpdocs (а не httpdocs/public),
+    # автоматически перенаправляем все запросы в папку public без изменения URL в браузере.
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Защита скрытых файлов и .env
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

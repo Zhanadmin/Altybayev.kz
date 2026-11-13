@@ -52,11 +52,11 @@ class KinshipService
 
         if ($targetId && $baseId && $targetId === $baseId) {
             return [
-                'term_kk' => 'Өзіңіз',
-                'term_ru' => 'Вы сами (Өзіңіз)',
+                'term_kk' => 'Мен',
+                'term_ru' => 'Я',
                 'code' => 'self',
-                'zhurt' => $this->getZhurtForPerson($basePerson, 'self'),
-                'explanation' => 'Сен осындасың / Вы здесь',
+                'zhurt' => '',
+                'explanation' => 'Мен / Я',
                 'badge_class' => 'badge-self',
             ];
         }
@@ -759,7 +759,6 @@ class KinshipService
 
         switch ($category) {
             case 'self':
-                return 'Өзіңіз';
             case 'spouse':
                 return '';
             case 'maternal':

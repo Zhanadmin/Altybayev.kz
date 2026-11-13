@@ -17,7 +17,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шежіре Алтыбаевтар — GEDCOM импорты және предпросмотр (Әкімші)</title>
+    <title><?= htmlspecialchars(\App\Core\I18n::siteTitle()) ?> — GEDCOM импорты және алдын ала қарау (Әкімші)</title>
     <style>
         :root {
             --bg: #f8fafc;

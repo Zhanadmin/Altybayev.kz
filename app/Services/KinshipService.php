@@ -17,6 +17,21 @@ class KinshipService
      */
     protected array $terms;
 
+    /**
+     * @var array<int, array<int, array>>
+     */
+    protected array $kinshipCache = [];
+
+    /**
+     * @var array<int, array>|null
+     */
+    protected ?array $cachedPersons = null;
+
+    /**
+     * @var array<int, array>|null
+     */
+    protected ?array $cachedMarriages = null;
+
     public function __construct()
     {
         $this->terms = KinshipDictionary::getTerms();
@@ -732,6 +747,110 @@ class KinshipService
         }
 
         return $result;
+    }
+
+    /**
+     * Загрузить данные из базы данных при их доступности
+     */
+    protected function loadDatasetIfAvailable(): void
+    {
+        if ($this->cachedPersons !== null) {
+            return;
+        }
+
+        $this->cachedPersons = [];
+        $this->cachedMarriages = [];
+
+        try {
+            if (class_exists(\App\Core\Database::class)) {
+                $db = \App\Core\Database::getConnection();
+                $stmtP = $db->query("SHOW TABLES LIKE 'persons'");
+                if ($stmtP && $stmtP->rowCount() > 0) {
+                    $stmt = $db->query("SELECT * FROM `persons` WHERE `is_deleted` = 0 ORDER BY `id` ASC");
+                    $persons = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    foreach ($persons as $p) {
+                        $this->cachedPersons[(int)$p['id']] = $p;
+                    }
+                }
+                $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
+                if ($stmtM && $stmtM->rowCount() > 0) {
+                    $mStmt = $db->query("SELECT * FROM `marriages` ORDER BY `id` ASC");
+                    $this->cachedMarriages = $mStmt->fetchAll(\PDO::FETCH_ASSOC);
+                }
+            }
+        } catch (\Throwable $e) {
+            // В автономных тестах или без БД тихо продолжаем с пустыми данными
+        }
+    }
+
+    /**
+     * Установить контекст данных вручную (для тестов или предварительно загруженных наборов)
+     *
+     * @param array<int, array> $persons
+     * @param array<int, array> $marriages
+     */
+    public function setDataset(array $persons, array $marriages = []): void
+    {
+        $this->cachedPersons = [];
+        foreach ($persons as $p) {
+            $this->cachedPersons[(int)$p['id']] = $p;
+        }
+        $this->cachedMarriages = $marriages;
+        $this->kinshipCache = [];
+    }
+
+    /**
+     * Получить описание родства между базовой персоной и целевой
+     *
+     * @param int $baseId Базовая персона (вошедший пользователь / фокус)
+     * @param int $targetId Персона, для которой определяется статус
+     * @param array<int, array> $persons Опциональный список всех персон
+     * @param array<int, array> $marriages Опциональный список браков
+     * @return array{term_kk: string, term_ru: string, code: string, zhurt: string, explanation: string, badge_class: string}|null
+     */
+    public function getKinshipDescription(int $baseId, int $targetId, array $persons = [], array $marriages = []): ?array
+    {
+        if ($baseId <= 0 || $targetId <= 0) {
+            return null;
+        }
+
+        if ($baseId === $targetId) {
+            return [
+                'term_kk' => 'Мен',
+                'term_ru' => 'Я',
+                'code' => 'self',
+                'zhurt' => '',
+                'explanation' => 'Мен / Я',
+                'badge_class' => 'badge-self',
+            ];
+        }
+
+        if (!empty($persons) && ($this->cachedPersons === null || empty($this->cachedPersons))) {
+            $this->setDataset($persons, $marriages);
+        }
+
+        if (isset($this->kinshipCache[$baseId][$targetId])) {
+            return $this->kinshipCache[$baseId][$targetId];
+        }
+
+        $this->loadDatasetIfAvailable();
+
+        $basePerson = $this->cachedPersons[$baseId] ?? null;
+        $targetPerson = $this->cachedPersons[$targetId] ?? null;
+
+        if (!$basePerson || !$targetPerson) {
+            return null;
+        }
+
+        if (!isset($this->kinshipCache[$baseId])) {
+            $this->kinshipCache[$baseId] = $this->calculateAllKinships(
+                $baseId,
+                $this->cachedPersons,
+                $this->cachedMarriages ?? []
+            );
+        }
+
+        return $this->kinshipCache[$baseId][$targetId] ?? null;
     }
 
     /**

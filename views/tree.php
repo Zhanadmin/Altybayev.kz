@@ -15,7 +15,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шежіре Алтыбаевтар — Интерактивті Древо («Өңдеу» және «Шежіре-Орман»)</title>
+    <title><?= htmlspecialchars(\App\Core\I18n::siteTitle()) ?> — <?= htmlspecialchars(\App\Core\I18n::t('nav_tree')) ?> («Өңдеу» / «Шежіре-Орман»)</title>
     <style>
         :root {
             --bg-canvas: #090e17;

@@ -73,13 +73,14 @@ class PersonController
 
         // Получаем всех людей в ассоциативный массив для связей родителей
         $allPersonsById = [];
-        $fullStmt = $db->query("SELECT id, first_name, last_name, gender, birth_year FROM persons WHERE is_deleted = 0");
+        $fullStmt = $db->query("SELECT * FROM persons WHERE is_deleted = 0");
         foreach ($fullStmt->fetchAll(PDO::FETCH_ASSOC) as $pRow) {
             $allPersonsById[$pRow['id']] = $pRow;
         }
 
         // Получаем карту браков
         $marriagesMap = [];
+        $mRows = [];
         $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
         if ($stmtM->rowCount() > 0) {
             $mRows = $db->query("SELECT * FROM marriages ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -102,6 +103,9 @@ class PersonController
                 }
             }
         }
+
+        // Задаем предзагруженный датасет для быстрого расчета родства (O(1) на каждую персону)
+        $this->kinshipService->setDataset($allPersonsById, $mRows);
 
         // Фильтрация по поисковой строке
         $filtered = [];

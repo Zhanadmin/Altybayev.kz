@@ -1665,6 +1665,17 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <span>📖</span>
                 <span data-i18n="btn_kinship_dict">Сөздік</span>
             </button>
+
+            <!-- Жеті ата тексеру және плакат басып шығару (TASK-004) -->
+            <button class="btn-tool" onclick="openZhetiAtaTreeModal()" title="Қазақтың «Жеті ата» қағидасын тексеру">
+                <span>📜</span>
+                <span>Жеті ата</span>
+            </button>
+
+            <a href="/tree/print" class="btn-tool" title="Шежірені басып шығару (Подарочный плакат)" style="text-decoration:none; color:inherit;">
+                <span>🖨️</span>
+                <span>Плакат</span>
+            </a>
         </div>
     </header>
 
@@ -1825,9 +1836,27 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <button type="button" class="btn-profile-action" id="btnSetMyPerson" onclick="setMyPersonFromProfile()" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(37,99,235,0.3);">
                     <span>★</span> <span data-i18n="btn_set_me">Бұл мен (Өз аккаунтыма байлау)</span>
                 </button>
+                <button type="button" class="btn-profile-action" onclick="openZhetiAtaTreeModal(selectedPersonId)" style="background:linear-gradient(135deg, #1e3a8a, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(30,58,138,0.3);">
+                    <span>📜</span> <span>Жеті атасын көру / тексеру</span>
+                </button>
                 <button type="button" class="btn-modal-submit" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#f8fafc;" onclick="openAddModal('child', selectedPersonId)">
                     + <span data-i18n="btn_add_child">Бала қосу</span>
                 </button>
+            </div>
+
+            <!-- ҮН ЖАЗБАЛАРЫ, ЕСТЕЛІКТЕР ЖӘНЕ ТАРИХИ ФОТОСУРЕТТЕР (TASK-004) -->
+            <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.12); padding-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="font-size:12.5px; color:#fef08a; font-weight:700; letter-spacing:0.5px;">
+                        🎙️ ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕР:
+                    </div>
+                    <button type="button" onclick="openAddMediaModal(selectedPersonId)" style="background:rgba(212,175,55,0.2); border:1px solid #d4af37; color:#fef08a; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:600; cursor:pointer; transition:all 0.2s ease;">
+                        + Жазба қосу
+                    </button>
+                </div>
+                <div id="panelMediaContainer" style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+                    <div style="color:#94a3b8; font-size:12px; font-style:italic;">Жүктелуде...</div>
+                </div>
             </div>
         </div>
     </aside>
@@ -2152,6 +2181,117 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             <div class="modal-footer">
                 <button class="btn-modal-submit" onclick="closeKinshipDictionaryModal()" data-i18n="btn_close">Жабу</button>
             </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ: ҚАЗАҚТЫҢ «ЖЕТІ АТА» САЛТЫН ТЕКСЕРУ (TASK-004) -->
+    <div class="modal-overlay" id="zhetiAtaModal">
+        <div class="modal-card" style="width:780px; max-width:95vw;">
+            <div class="modal-header">
+                <div>
+                    <h3>📜 Қазақтың «Жеті ата» қағидасын тексеру</h3>
+                    <div style="font-size:12px; color:#94a3b8;">Екі адам арасында әкелер желісі бойынша 7 буынды есептеу</div>
+                </div>
+                <button class="close-panel-btn" onclick="closeZhetiAtaTreeModal()">✕</button>
+            </div>
+            <div class="modal-body" style="max-height:75vh;">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#cbd5e1; line-height:1.5;">
+                    Қазақ халқының салты бойынша бір атадан тараған жеті атаға дейінгі ұрпақтар бір-бірімен қыз алысып, үйленуіне тыйым салынған. 7 буыннан кейін ғана ақсақалдар батасымен құда болуға рұқсат беріледі.
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:16px;">
+                    <div class="form-group">
+                        <label>1-ші адам (А тұлғасы):</label>
+                        <select class="form-select" id="zhetiAtaPersonA">
+                            <option value="">Жүктелуде...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>2-ші адам (Б тұлғасы):</label>
+                        <select class="form-select" id="zhetiAtaPersonB">
+                            <option value="">Жүктелуде...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-bottom:18px;">
+                    <button type="button" class="btn-modal-submit" onclick="runTreeZhetiAtaCheck()" style="padding:10px 28px; font-size:14px;">
+                        🔍 Жеті атаны тексеру
+                    </button>
+                </div>
+
+                <div id="zhetiAtaResultBox" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeZhetiAtaTreeModal()">Жабу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ: ДАУЫС (АУДИО), ЕСТЕЛІК ЖӘНЕ ФОТО ҚОСУ (TASK-004) -->
+    <div class="modal-overlay" id="addMediaModal">
+        <div class="modal-card" style="width:620px; max-width:95vw;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="addMediaModalTitle">🎙️ Жаңа дауыс немесе естелік қосу</h3>
+                    <div style="font-size:12px; color:#94a3b8;" id="addMediaModalSub">Тұлғаның өмірбаяны, ақсақалдың әңгімесі мен архивтік фотосы</div>
+                </div>
+                <button class="close-panel-btn" onclick="closeAddMediaModal()">✕</button>
+            </div>
+            <form id="addMediaForm" onsubmit="handleSaveMedia(event)">
+                <input type="hidden" id="mediaPersonId" value="">
+                
+                <div class="modal-body" style="max-height:70vh;">
+                    <!-- Переключатель типа медиа -->
+                    <div style="display:flex; gap:10px; margin-bottom:16px;">
+                        <button type="button" id="tabMediaAudio" class="lang-btn active" style="flex:1; padding:8px;" onclick="setMediaTab('audio')">
+                            🎙️ Аудио жазба
+                        </button>
+                        <button type="button" id="tabMediaStory" class="lang-btn" style="flex:1; padding:8px;" onclick="setMediaTab('story')">
+                            📝 Текстік естелік
+                        </button>
+                        <button type="button" id="tabMediaPhoto" class="lang-btn" style="flex:1; padding:8px;" onclick="setMediaTab('photo')">
+                            📷 Архивтік фото
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Тақырыбы (Атауы) *</label>
+                        <input type="text" class="form-input" id="mediaTitle" placeholder="Мысалы: 1982 жылғы әкенің естелігі" required>
+                    </div>
+
+                    <!-- Поле файла (для аудио и фото) -->
+                    <div class="form-group" id="mediaFileGroup">
+                        <label id="mediaFileLabel">Файлды таңдаңыз (MP3, M4A, WAV) *</label>
+                        <input type="file" class="form-input" id="mediaFileInput" accept="audio/*">
+                        <div style="font-size:11px; color:#94a3b8; margin-top:3px;" id="mediaFileHint">
+                            Қауіпсіз жабық қоймада сақталады (Git-ке түспейді, тек сайтқа кіргендерге қолжетімді)
+                        </div>
+                    </div>
+
+                    <!-- Поле текста истории (для story) -->
+                    <div class="form-group" id="mediaStoryGroup" style="display:none;">
+                        <label>Естелік мәтіні (Хикая, шежірелік деректер) *</label>
+                        <textarea class="form-textarea" id="mediaStoryContent" rows="6" placeholder="Ақсақалдың айтқан сөздері, естеліктері, өмір жолы туралы деректер..."></textarea>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Кім айтып берді (Айтушы / Автор)</label>
+                            <input type="text" class="form-input" id="mediaRecordedBy" placeholder="Мысалы: Ғабит ақсақал">
+                        </div>
+                        <div class="form-group">
+                            <label>Оқиға немесе жазба жылы</label>
+                            <input type="text" class="form-input" id="mediaEventYear" placeholder="Мысалы: 1985">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="closeAddMediaModal()">Болдырмау</button>
+                    <button type="submit" class="btn-modal-submit" id="btnSubmitMedia">Сақтау</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -3139,6 +3279,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 document.getElementById('panelKinshipCallout').innerHTML = `🔗 Туыстық желісі анықталды`;
             }
 
+            // Жүктелген дауыс, естеліктер мен фотосуреттерді шығару (TASK-004)
+            loadPersonMedia(p.id);
+
             openSidePanel();
         }
 
@@ -3806,6 +3949,319 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         function focusPersonFromList(id) {
             switchMode('editing');
             flyToPerson(id);
+        }
+
+        // ========================================================
+        // ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕРДІ БАСҚАРУ (TASK-004)
+        // ========================================================
+        let currentMediaTab = 'audio';
+
+        async function loadPersonMedia(personId) {
+            const container = document.getElementById('panelMediaContainer');
+            if (!container) return;
+            container.innerHTML = '<div style="color:#94a3b8; font-size:12px; font-style:italic;">Жүктелуде...</div>';
+
+            try {
+                const res = await fetch(`/api/person/media?person_id=${personId}`);
+                const json = await res.json();
+                if (!json.success || !json.data) {
+                    container.innerHTML = '<div style="color:#ef4444; font-size:12px;">Жүктеу қатесі</div>';
+                    return;
+                }
+
+                const data = json.data;
+                if (data.total_count === 0) {
+                    container.innerHTML = '<div style="color:#94a3b8; font-size:12px; font-style:italic;">Әзірге үн жазбасы мен естеліктер қосылмаған. «+ Жазба қосу» батырмасын басыңыз.</div>';
+                    return;
+                }
+
+                let html = '';
+
+                // Аудиозаписи
+                if (data.audio && data.audio.length > 0) {
+                    html += '<div style="font-size:11px; color:#fef08a; font-weight:700; margin-top:4px;">🎙️ АУДИОЖАЗБАЛАР (АҚСАҚАЛДАР ҮНІ):</div>';
+                    data.audio.forEach(a => {
+                        html += `
+                            <div style="background:rgba(255,255,255,0.04); border:1px solid #334155; border-radius:8px; padding:8px 10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="font-weight:700; color:#f8fafc; font-size:12.5px;">${a.title}</div>
+                                    <span style="font-size:10.5px; color:#94a3b8;">${a.duration_formatted}</span>
+                                </div>
+                                <div style="font-size:11px; color:#94a3b8; margin:2px 0 6px 0;">
+                                    ${a.recorded_by ? `Айтушы: ${a.recorded_by}` : ''} ${a.event_year ? `(${a.event_year} ж.)` : ''}
+                                </div>
+                                <audio controls preload="none" style="width:100%; height:32px; border-radius:4px;" src="${a.stream_url}"></audio>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Текстовые истории
+                if (data.stories && data.stories.length > 0) {
+                    html += '<div style="font-size:11px; color:#bae6fd; font-weight:700; margin-top:6px;">📝 ЕСТЕЛІКТЕР МЕН ТАРИХ:</div>';
+                    data.stories.forEach(s => {
+                        html += `
+                            <div style="background:rgba(255,255,255,0.04); border:1px solid #334155; border-radius:8px; padding:10px;">
+                                <div style="font-weight:700; color:#bae6fd; font-size:12.5px; margin-bottom:4px;">${s.title}</div>
+                                <div style="font-size:12px; color:#cbd5e1; line-height:1.5; white-space:pre-wrap; max-height:120px; overflow-y:auto;">${s.content}</div>
+                                <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                    ${s.recorded_by ? `Жазған/айтқан: ${s.recorded_by}` : ''} ${s.event_year ? `(${s.event_year} ж.)` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Фотографии
+                if (data.photos && data.photos.length > 0) {
+                    html += '<div style="font-size:11px; color:#fbcfe8; font-weight:700; margin-top:6px;">📷 АРХИВТІК ФОТОСУРЕТТЕР:</div>';
+                    data.photos.forEach(f => {
+                        html += `
+                            <div style="background:rgba(255,255,255,0.04); border:1px solid #334155; border-radius:8px; padding:8px;">
+                                <div style="font-weight:700; color:#fbcfe8; font-size:12px; margin-bottom:4px;">${f.title}</div>
+                                <a href="${f.stream_url}" target="_blank" title="Үлкейту">
+                                    <img src="${f.stream_url}" style="width:100%; max-height:150px; object-fit:cover; border-radius:6px;" alt="${f.title}">
+                                </a>
+                                <div style="font-size:10.5px; color:#94a3b8; margin-top:3px;">${f.recorded_by || ''} ${f.event_year ? `(${f.event_year} ж.)` : ''}</div>
+                            </div>
+                        `;
+                    });
+                }
+
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = `<div style="color:#ef4444; font-size:12px;">Қате: ${e.message}</div>`;
+            }
+        }
+
+        function openAddMediaModal(personId) {
+            const p = treeData ? treeData.persons.find(x => x.id === (personId || selectedPersonId)) : null;
+            if (!p) return;
+
+            document.getElementById('mediaPersonId').value = p.id;
+            document.getElementById('addMediaModalSub').innerText = `${p.first_name} ${p.last_name || ''} үшін жаңа жазба`;
+            document.getElementById('mediaTitle').value = '';
+            document.getElementById('mediaFileInput').value = '';
+            document.getElementById('mediaStoryContent').value = '';
+            document.getElementById('mediaRecordedBy').value = '';
+            document.getElementById('mediaEventYear').value = '';
+
+            setMediaTab('audio');
+            document.getElementById('addMediaModal').classList.add('active');
+        }
+
+        function closeAddMediaModal() {
+            document.getElementById('addMediaModal').classList.remove('active');
+        }
+
+        function setMediaTab(tab) {
+            currentMediaTab = tab;
+            ['tabMediaAudio', 'tabMediaStory', 'tabMediaPhoto'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+
+            const fileGroup = document.getElementById('mediaFileGroup');
+            const storyGroup = document.getElementById('mediaStoryGroup');
+            const fileLabel = document.getElementById('mediaFileLabel');
+            const fileInput = document.getElementById('mediaFileInput');
+
+            if (tab === 'audio') {
+                document.getElementById('tabMediaAudio').classList.add('active');
+                fileGroup.style.display = 'block';
+                storyGroup.style.display = 'none';
+                fileLabel.innerText = 'Аудио файлды таңдаңыз (MP3, M4A, WAV) *';
+                fileInput.accept = 'audio/*';
+            } else if (tab === 'story') {
+                document.getElementById('tabMediaStory').classList.add('active');
+                fileGroup.style.display = 'none';
+                storyGroup.style.display = 'block';
+            } else if (tab === 'photo') {
+                document.getElementById('tabMediaPhoto').classList.add('active');
+                fileGroup.style.display = 'block';
+                storyGroup.style.display = 'none';
+                fileLabel.innerText = 'Архивтік фотосуретті таңдаңыз (JPG, PNG, WEBP) *';
+                fileInput.accept = 'image/*';
+            }
+        }
+
+        async function handleSaveMedia(e) {
+            e.preventDefault();
+            const personId = parseInt(document.getElementById('mediaPersonId').value, 10);
+            const title = document.getElementById('mediaTitle').value.trim();
+            const recordedBy = document.getElementById('mediaRecordedBy').value.trim();
+            const eventYear = document.getElementById('mediaEventYear').value.trim();
+            const submitBtn = document.getElementById('btnSubmitMedia');
+
+            if (!personId || !title) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Сақталуда...';
+
+            try {
+                if (currentMediaTab === 'story') {
+                    const content = document.getElementById('mediaStoryContent').value.trim();
+                    if (!content) {
+                        alert('Естелік мәтінін жазыңыз!');
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Сақтау';
+                        return;
+                    }
+
+                    const res = await fetch('/api/person/story/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            person_id: personId,
+                            title: title,
+                            content: content,
+                            recorded_by: recordedBy,
+                            event_year: eventYear
+                        })
+                    });
+                    const result = await res.json();
+                    if (!result.success) throw new Error(result.message || 'Қате');
+                } else {
+                    const fileInput = document.getElementById('mediaFileInput');
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        alert('Файлды таңдаңыз!');
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Сақтау';
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('person_id', personId);
+                    formData.append('media_type', currentMediaTab);
+                    formData.append('title', title);
+                    formData.append('recorded_by', recordedBy);
+                    formData.append('event_year', eventYear);
+                    formData.append('media_file', fileInput.files[0]);
+
+                    const res = await fetch('/api/person/media/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await res.json();
+                    if (!result.success) throw new Error(result.message || 'Жүктеу қатесі');
+                }
+
+                closeAddMediaModal();
+                loadPersonMedia(personId);
+            } catch (err) {
+                alert('Қате: ' + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Сақтау';
+            }
+        }
+
+        // ========================================================
+        // ЖЕТІ АТА ТЕКСЕРУ МОДАЛЬДЫ ТЕРЕЗЕСІ (TASK-004)
+        // ========================================================
+        function openZhetiAtaTreeModal(preselectedId = null) {
+            if (!treeData || !treeData.persons) return;
+
+            const selA = document.getElementById('zhetiAtaPersonA');
+            const selB = document.getElementById('zhetiAtaPersonB');
+            selA.innerHTML = '';
+            selB.innerHTML = '';
+
+            const sorted = [...treeData.persons].sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
+            sorted.forEach(p => {
+                const optA = document.createElement('option');
+                optA.value = p.id;
+                optA.text = `${p.first_name} ${p.last_name || ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
+                selA.appendChild(optA);
+
+                const optB = document.createElement('option');
+                optB.value = p.id;
+                optB.text = `${p.first_name} ${p.last_name || ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
+                selB.appendChild(optB);
+            });
+
+            if (preselectedId) {
+                selA.value = preselectedId.toString();
+            } else if (selectedPersonId) {
+                selA.value = selectedPersonId.toString();
+            } else {
+                selA.value = "6"; // Жандос
+            }
+
+            // Второго человека выбираем отличающегося
+            const diffPerson = sorted.find(x => x.id !== parseInt(selA.value, 10));
+            if (diffPerson) {
+                selB.value = diffPerson.id.toString();
+            }
+
+            document.getElementById('zhetiAtaResultBox').style.display = 'none';
+            document.getElementById('zhetiAtaModal').classList.add('active');
+        }
+
+        function closeZhetiAtaTreeModal() {
+            document.getElementById('zhetiAtaModal').classList.remove('active');
+        }
+
+        async function runTreeZhetiAtaCheck() {
+            const a = document.getElementById('zhetiAtaPersonA').value;
+            const b = document.getElementById('zhetiAtaPersonB').value;
+            const resBox = document.getElementById('zhetiAtaResultBox');
+            resBox.style.display = 'block';
+            resBox.innerHTML = '<div style="text-align:center; padding:16px; color:#94a3b8;">Есептелуде...</div>';
+
+            try {
+                const res = await fetch(`/api/zheti-ata?a=${a}&b=${b}`);
+                const data = await res.json();
+                if (!data.success) {
+                    resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">${data.error || 'Қате орын алды'}</div>`;
+                    return;
+                }
+
+                const pat = data.paternal;
+                const isWithin = pat.is_within_7_generations;
+                const statusColor = isWithin ? '#ef4444' : (pat.verdict_code === 'exceeds_7' ? '#10b981' : '#64748b');
+                const bgColor = isWithin ? 'rgba(239,68,68,0.1)' : (pat.verdict_code === 'exceeds_7' ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)');
+
+                let html = `
+                    <div style="background:${bgColor}; border:2px solid ${statusColor}; border-radius:10px; padding:16px; margin-bottom:14px;">
+                        <div style="font-size:16px; font-weight:700; color:${statusColor}; margin-bottom:6px;">
+                            ${pat.title_kk}
+                        </div>
+                        <div style="font-size:13.5px; line-height:1.6; color:#f8fafc;">
+                            ${pat.desc_kk}
+                        </div>
+                    </div>
+                `;
+
+                if (pat.has_common_ancestor && pat.path_a && pat.path_b) {
+                    html += `
+                        <div style="background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:14px; margin-bottom:12px;">
+                            <div style="font-weight:700; font-size:13px; color:#fef08a; margin-bottom:10px;">
+                                🌿 Ортақ атаға дейінгі туыстық желісі (Әкелер желісі):
+                            </div>
+                            <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+                                <strong>${data.person_a.first_name} жағынан (${pat.gen_distance_a}-буын):</strong><br>
+                                ${pat.path_a.map(x => `${x.title_kk}: <strong>${x.person.first_name} ${x.person.last_name || ''}</strong>`).join(' ➔ ')}
+                            </div>
+                            <div style="font-size:13px; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+                                <strong>${data.person_b.first_name} жағынан (${pat.gen_distance_b}-буын):</strong><br>
+                                ${pat.path_b.map(x => `${x.title_kk}: <strong>${x.person.first_name} ${x.person.last_name || ''}</strong>`).join(' ➔ ')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (data.all_lines && data.all_lines.has_common_ancestor && data.all_lines.is_maternal) {
+                    html += `
+                        <div style="background:rgba(255,255,255,0.02); border:1px dashed #64748b; border-radius:8px; padding:10px 14px; font-size:12px; color:#94a3b8;">
+                            ℹ️ <strong>Справочно:</strong> ${data.all_lines.summary_kk}
+                        </div>
+                    `;
+                }
+
+                resBox.innerHTML = html;
+            } catch (err) {
+                resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">Қате: ${err.message}</div>`;
+            }
         }
 
         // БАСТАУ

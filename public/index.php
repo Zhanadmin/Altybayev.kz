@@ -38,7 +38,23 @@ $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth
 $router->get('/api/kinship-all', 'App\Controllers\TreeController@apiKinshipAll', ['auth']);
 $router->get('/api/tree/search', 'App\Controllers\TreeController@apiSearch', ['auth']);
 
-// 5. Админ-панель: Импорт GEDCOM из MyHeritage и управление откатами (TASK-005)
+// 5. Жеті ата, естеліктер мен аудио, памятные даты, печать шежіре (TASK-004)
+$router->get('/api/zheti-ata', 'App\Controllers\ZhetiAtaController@check', ['auth']);
+$router->post('/api/zheti-ata', 'App\Controllers\ZhetiAtaController@check', ['auth']);
+$router->get('/api/zheti-ata/seven', 'App\Controllers\ZhetiAtaController@sevenAncestors', ['auth']);
+$router->get('/api/memorial-dates', 'App\Controllers\MemorialController@apiSummary', ['auth']);
+$router->get('/api/memorial-dates/birthdays', 'App\Controllers\MemorialController@apiBirthdays', ['auth']);
+$router->get('/api/memorial-dates/anniversaries', 'App\Controllers\MemorialController@apiAnniversaries', ['auth']);
+$router->get('/api/person/media', 'App\Controllers\MediaController@apiList', ['auth']);
+$router->post('/api/person/media/upload', 'App\Controllers\MediaController@upload', ['auth']);
+$router->post('/api/person/story/save', 'App\Controllers\MediaController@saveStory', ['auth']);
+$router->post('/api/person/media/delete', 'App\Controllers\MediaController@delete', ['auth']);
+$router->get('/media/stream', 'App\Controllers\MediaController@stream', ['auth']);
+$router->get('/tree/print', 'App\Controllers\PrintPosterController@index', ['auth']);
+$router->get('/api/tree/print-data', 'App\Controllers\PrintPosterController@apiData', ['auth']);
+$router->get('/tree/print/svg', 'App\Controllers\PrintPosterController@downloadSvg', ['auth']);
+
+// 6. Админ-панель: Импорт GEDCOM из MyHeritage и управление откатами (TASK-005)
 $router->get('/admin/import', 'App\Controllers\AdminImportController@index', ['auth', 'admin']);
 $router->get('/admin/import/preview', 'App\Controllers\AdminImportController@preview', ['auth', 'admin']);
 $router->post('/admin/import/preview', 'App\Controllers\AdminImportController@preview', ['auth', 'admin']);

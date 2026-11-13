@@ -96,6 +96,12 @@ class GedcomParserTest
         $this->assert($foundZhandos, "Персона Жандос найдена в результатах");
         $this->assert($foundGabit, "Персона Габит найдена в результатах");
         $this->assert($foundShamsiden, "Персона Шамсиден найдена в результатах");
+
+        // Проверка корректности маппинга девичьей фамилии и фамилии по мужу (Асила @I24@)
+        $asila = array_values(array_filter($res['persons'], fn($p) => ($p['gedcom_id'] ?? '') === '@I24@'))[0] ?? null;
+        $this->assert($asila !== null, "Персона Асила (@I24@) найдена в результатах");
+        $this->assert(($asila['last_name'] ?? '') === 'Алтыбаева', "Текущая фамилия Асилы (_MARNM) = 'Алтыбаева'");
+        $this->assert(($asila['maiden_name'] ?? '') === 'Кубенова', "Девичья фамилия Асилы (SURN) = 'Кубенова'");
     }
 
     /**

@@ -273,7 +273,20 @@ class GedcomParserService
             $context = $tag;
             switch ($tag) {
                 case 'NAME':
-                    $this->parseNameField($value, $person);
+                    if (empty($person['first_name'])) {
+                        $this->parseNameField($value, $person);
+                    } else {
+                        // Второй NAME (часто фамилия по мужу в MyHeritage)
+                        if (preg_match('#/(.*?)/#', $value, $m)) {
+                            $secondSurname = $this->cleanSurname($m[1]);
+                            if (!empty($secondSurname) && !empty($person['last_name']) && $person['last_name'] !== $secondSurname) {
+                                if (empty($person['maiden_name'])) {
+                                    $person['maiden_name'] = $person['last_name'];
+                                }
+                                $person['last_name'] = $secondSurname;
+                            }
+                        }
+                    }
                     break;
                 case 'SEX':
                     $sex = strtoupper(trim($value));
@@ -345,10 +358,24 @@ class GedcomParserService
             if ($context === 'NAME') {
                 if ($tag === 'GIVN' && empty($person['first_name'])) {
                     $person['first_name'] = trim($value);
-                } elseif ($tag === 'SURN' && empty($person['last_name'])) {
-                    $person['last_name'] = $this->cleanSurname($value);
+                } elseif ($tag === 'SURN') {
+                    $surn = $this->cleanSurname($value);
+                    if (!empty($person['maiden_name'])) {
+                        $person['maiden_name'] = $surn;
+                    } else {
+                        $person['last_name'] = $surn;
+                    }
                 } elseif ($tag === '_MARNM') {
-                    $person['maiden_name'] = $this->cleanSurname($value);
+                    // _MARNM — фамилия по мужу (married name).
+                    // Текущей фамилией last_name становится _MARNM,
+                    // а девичьей фамилией maiden_name становится прежний last_name (SURN).
+                    $marnm = $this->cleanSurname($value);
+                    if (!empty($marnm)) {
+                        if (!empty($person['last_name']) && $person['last_name'] !== $marnm) {
+                            $person['maiden_name'] = $person['last_name'];
+                        }
+                        $person['last_name'] = $marnm;
+                    }
                 }
                 return;
             }

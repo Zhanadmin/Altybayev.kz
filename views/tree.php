@@ -2321,8 +2321,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     <div class="card-header-inner">
                         <div class="card-avatar">${initials}</div>
                         <div class="card-info">
-                            <div class="card-name" title="${node.last_name || ''} ${node.first_name}">${node.last_name || ''} ${node.first_name}</div>
-                            ${node.maiden_name ? `<div class="card-maiden">${currentLang === 'ru' ? 'девичья:' : 'қыз кезінде:'} ${node.maiden_name}</div>` : ''}
+                            <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
+                            ${node.maiden_name ? `<div class="card-maiden" style="font-size:11px; color:#f472b6;">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
                             <div class="card-years">${isDeceased ? `${node.birth_year || '—'} — ${node.death_year || '†'} ✨` : `${node.birth_year || '—'}`}</div>
                         </div>
                     </div>
@@ -2758,7 +2758,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             updateAllKinshipBadges(id);
 
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
-            document.getElementById('panelPersonName').innerText = `${p.last_name || ''} ${p.first_name} ${p.middle_name || ''}`;
+            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${p.middle_name || ''}`.trim();
+            if (p.maiden_name) {
+                fullNameDisplay += ` (${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
+            }
+            document.getElementById('panelPersonName').innerText = fullNameDisplay;
             const clanDisplay = p.clan_ru || (currentLang === 'ru' ? 'не указан' : 'белгісіз');
             document.getElementById('panelPersonClan').innerText = clanDisplay;
             document.getElementById('panelGender').innerText = p.gender === 'M' ? (currentLang === 'ru' ? 'Мужской' : 'Ер азамат') : (currentLang === 'ru' ? 'Женский' : 'Әйел адам');
@@ -3432,7 +3436,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                             <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
                             <div>
                                 <div style="font-weight:700; color:#f8fafc; font-size:13.5px;">${p.full_name}</div>
-                                ${p.maiden_name ? `<div style="font-size:11px; color:#f472b6;">девичья: ${p.maiden_name}</div>` : ''}
+                                ${p.maiden_name ? `<div style="font-size:11px; color:#f472b6;">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
                             </div>
                         </div>
                     </td>

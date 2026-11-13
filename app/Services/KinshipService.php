@@ -84,17 +84,18 @@ class KinshipService
         // 2. БАЛАЛАРЫ (Дети basePerson)
         if (($targetFatherId && $targetFatherId === $baseId) || ($targetMotherId && $targetMotherId === $baseId)) {
             if ($targetGender === 'F') {
-                return $this->formatResult('daughter', 'Туған қызы', 'Қыз', 'Дочь', $basePerson, 'Өз жұрты', 'Күйеуінің жағы');
+                return $this->formatResult('daughter', 'Туған қызы', 'Қыз', 'Дочь', $basePerson, 'Өз жұрты', 'Өз жұрты');
             }
-            return $this->formatResult('son', 'Туған ұлы', 'Ұл', 'Сын', $basePerson, 'Өз жұрты', 'Күйеуінің жағы');
+            return $this->formatResult('son', 'Туған ұлы', 'Ұл', 'Сын', $basePerson, 'Өз жұрты', 'Өз жұрты');
         }
 
         // 3. ЖҰБАЙЫ (Супруг / Супруга)
+        // Супруг(а) — это своя семья, термин «Жұбай / Әйелі» (рус. «Жена»), НЕ қайын жұрт. Не попадает ни в один из трёх жұрт.
         if ($this->areMarried($targetId, $baseId, $marriages, $targetPerson, $basePerson, $allPersonsById)) {
             if ($targetGender === 'F') {
-                return $this->formatResult('wife', 'Өмірлік жары', 'Жұбайы', 'Супруга', $basePerson, 'Қайын жұрты', 'Төркіні');
+                return $this->formatResult('wife', 'Өмірлік жары', 'Жұбайы', 'Супруга', $basePerson, '', '');
             }
-            return $this->formatResult('husband', 'Отағасы, күйеуі', 'Күйеуі', 'Супруг', $basePerson, 'Қайын жұрты', 'Күйеуінің жағы');
+            return $this->formatResult('husband', 'Отағасы, күйеуі', 'Күйеуі', 'Супруг', $basePerson, '', '');
         }
 
         // 4. ТУҒАН БАУЫРЛАР (Братья / Сестры)
@@ -759,6 +760,8 @@ class KinshipService
         switch ($category) {
             case 'self':
                 return 'Өзіңіз';
+            case 'spouse':
+                return '';
             case 'maternal':
             case 'maternal_cousin':
                 return 'Нағашы жұрты';

@@ -180,6 +180,20 @@ foreach ($allKin as $k) {
 }
 assertCheck(!$hasBadWords, "Слова 'сородич' и 'соплеменник' ПОЛНОСТЬЮ ОТСУТСТВУЮТ во всех расчетах");
 
+// 12. ТЕСТ СУПРУГ(А): Жұбай / Әйелі НЕ попадает ни в один из трёх жұрт
+$resSpouse = $service->determineKinship($testPersons[101], $testPersons[1], 'auto', $testPersons, $testMarriages);
+assertCheck($resSpouse['code'] === 'wife', "Асила для Жандоса — Жұбайы (code = wife)");
+assertCheck(empty($resSpouse['zhurt']), "Супруга НЕ попадает ни в один из трёх жұрт (zhurt пустой: '{$resSpouse['zhurt']}')");
+
+// Обратно: муж для женщины — Күйеуі, zhurt пустой
+$resHusband = $service->determineKinship($testPersons[1], $testPersons[101], 'auto', $testPersons, $testMarriages);
+assertCheck($resHusband['code'] === 'husband', "Жандос для Асилы — Күйеуі (code = husband)");
+assertCheck(empty($resHusband['zhurt']), "Муж НЕ попадает ни в один из трёх жұрт (zhurt пустой)");
+
+// Дети пары — Өз жұрты для обоих родителей
+$resChildFromMother = $service->determineKinship($testPersons[5], $testPersons[101], 'auto', $testPersons, $testMarriages);
+assertCheck($resChildFromMother['zhurt'] === 'Өз жұрты', "Сын для матери относится к 'Өз жұрты'");
+
 echo "\n-------------------------------------------------------\n";
 echo "Результат: {$passed} из {$total} проверок успешно пройдено!\n";
 if ($passed === $total) {

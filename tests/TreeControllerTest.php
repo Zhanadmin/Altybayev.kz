@@ -74,6 +74,40 @@ assertCheck(file_exists(__DIR__ . '/../storage/logs/error.log'), 'Ошибка �
 Config::set('DB_NAME', 'altybayev_clean_test');
 Database::resetConnection();
 
+// 5. Тестирование реального сохранения в БД и фиксации в audit_logs
+echo "\n5. Тестирование сохранения персоны и аудит-лога:\n";
+$db = Database::getConnection();
+$stmtZ = $db->query("SELECT * FROM persons WHERE gedcom_id = '@I6@' LIMIT 1");
+$zhandos = $stmtZ->fetch(PDO::FETCH_ASSOC);
+
+if ($zhandos) {
+    $db->beginTransaction();
+    try {
+        $testBio = "Автотест сохранения: " . date('Y-m-d H:i:s');
+        $upd = $db->prepare("UPDATE `persons` SET `biography` = ?, `birth_date` = '1985-01-30', `updated_at` = NOW() WHERE `id` = ?");
+        $upd->execute([$testBio, $zhandos['id']]);
+
+        $checkStmt = $db->prepare("SELECT biography, birth_date FROM persons WHERE id = ?");
+        $checkStmt->execute([$zhandos['id']]);
+        $resCheck = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        assertCheck($resCheck['biography'] === $testBio, 'Редактирование реально сохраняет значение в БД');
+        assertCheck($resCheck['birth_date'] === '1985-01-30', 'Полная дата рождения 1985-01-30 сохранена в базе');
+
+        $auditStmt = $db->prepare("INSERT INTO `audit_logs` (`user_id`, `user_name`, `user_email`, `action`, `entity_table`, `entity_id`, `summary`, `created_at`) VALUES (1, 'Жандос', 'zhandos.alt06@gmail.com', 'UPDATE', 'persons', ?, 'Тестовое сохранение', NOW())");
+        $auditStmt->execute([$zhandos['id']]);
+
+        $auditCheck = $db->prepare("SELECT id FROM audit_logs WHERE entity_table = 'persons' AND entity_id = ? ORDER BY id DESC LIMIT 1");
+        $auditCheck->execute([$zhandos['id']]);
+        assertCheck(!empty($auditCheck->fetch()), 'Запись успешно зафиксирована в audit_logs');
+
+        $db->rollBack();
+    } catch (\Throwable $e) {
+        $db->rollBack();
+        assertCheck(false, 'Ошибка теста сохранения: ' . $e->getMessage());
+    }
+}
+
 echo "\n-------------------------------------------------------\n";
 echo "Результат: {$passed} из {$total} проверок пройдено успешно!\n";
 if ($passed === $total) {

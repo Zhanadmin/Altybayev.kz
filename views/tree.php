@@ -1383,6 +1383,213 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             height: 10px;
             border-radius: 50%;
         }
+
+        /* Шаңырақ ореолдары (Family Aura) */
+        .family-aura {
+            position: absolute;
+            border-radius: 20px;
+            background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.01) 70%, transparent 100%);
+            border: 1.5px dashed rgba(212, 175, 55, 0.25);
+            pointer-events: none;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        .family-aura-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            padding: 2px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #d4af37;
+            background: #0f172a;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Жұбайлар біртұтас планкасы (Couple Unit Plate) */
+        .couple-unit-plate {
+            position: absolute;
+            border-radius: 18px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1.5px solid rgba(236, 72, 153, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 0 15px rgba(236, 72, 153, 0.05);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* ========================================================
+           3. «ТІЗІМ / СПИСОК» РЕЖИМІ
+           ======================================================== */
+        .list-view-container {
+            width: 100%;
+            height: calc(100vh - 64px);
+            overflow-y: auto;
+            background: #0b1120;
+            padding: 24px 32px;
+            box-sizing: border-box;
+            color: #f8fafc;
+        }
+
+        .list-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.7);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .list-search-input {
+            flex: 1 1 240px;
+            min-width: 200px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #f8fafc;
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        .list-search-input:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+        }
+
+        .list-select-filter {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #e2e8f0;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        .list-select-filter:focus {
+            border-color: #d4af37;
+        }
+
+        .list-stats-count {
+            font-size: 13px;
+            font-weight: 600;
+            color: #d4af37;
+            padding: 8px 14px;
+            background: rgba(212, 175, 55, 0.12);
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            white-space: nowrap;
+        }
+
+        .list-table-wrapper {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.7);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .list-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .list-table th {
+            background: rgba(30, 41, 59, 0.9);
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #334155;
+            white-space: nowrap;
+        }
+
+        .list-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .list-table tr:hover td {
+            background: rgba(51, 65, 85, 0.3);
+        }
+
+        .list-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-right: 12px;
+            flex-shrink: 0;
+            border: 1.5px solid transparent;
+        }
+        .list-avatar.male {
+            background: #1e3a5f;
+            color: #60a5fa;
+            border-color: #2563eb;
+        }
+        .list-avatar.female {
+            background: #4c1d3d;
+            color: #f472b6;
+            border-color: #ec4899;
+        }
+        .list-avatar.deceased {
+            background: #451a03;
+            color: #fcd34d;
+            border-color: #d97706;
+        }
+
+        .gender-badge-m {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(37, 99, 235, 0.15);
+            color: #60a5fa;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .gender-badge-f {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(236, 72, 153, 0.15);
+            color: #f472b6;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .btn-table-action {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 4px 9px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 4px;
+        }
+        .btn-table-action:hover {
+            background: #334155;
+            color: #f8fafc;
+            border-color: #d4af37;
+        }
     </style>
 </head>
 <body>
@@ -1400,7 +1607,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </div>
         </div>
 
-        <!-- РЕЖИМДЕР АУЫСТЫРҒЫШЫ («ӨҢДЕУ» ЖӘНЕ «ШЕЖІРЕ-ОРМАН») -->
+        <!-- РЕЖИМДЕР АУЫСТЫРҒЫШЫ («ӨҢДЕУ», «ШЕЖІРЕ-ОРМАН» ЖӘНЕ «ТІЗІМ») -->
         <div class="mode-switcher">
             <button class="mode-btn active" id="btnModeEditing" onclick="switchMode('editing')">
                 <span>🛠️</span>
@@ -1409,6 +1616,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             <button class="mode-btn" id="btnModeForest" onclick="switchMode('forest')">
                 <span>🌲</span>
                 <span data-i18n="mode_forest">Шежіре-Орман</span>
+            </button>
+            <button class="mode-btn" id="btnModeList" onclick="switchMode('list')">
+                <span>📋</span>
+                <span data-i18n="mode_list">Тізім</span>
             </button>
         </div>
 
@@ -1484,6 +1695,57 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <div id="forestTreesContainer"></div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ========================================================
+         3. «ТІЗІМ / СПИСОК» РЕЖИМІ (ТАБЛИЦА С ФИЛЬТРАМИ И ПОИСКОМ)
+         ======================================================== -->
+    <div class="list-view-container" id="listViewContainer" style="display:none;">
+        <div class="list-toolbar">
+            <input type="text" id="listSearchInput" class="list-search-input" placeholder="Аты-жөнін немесе туған жылын іздеу..." oninput="handleListFilterChange()">
+            <select id="listClanFilter" class="list-select-filter" onchange="handleListFilterChange()">
+                <option value="0">Барлық рулар / Все роды</option>
+            </select>
+            <select id="listGenderFilter" class="list-select-filter" onchange="handleListFilterChange()">
+                <option value="all">Жынысы: Барлығы / Пол: Все</option>
+                <option value="M">Ер / Мужской</option>
+                <option value="F">Әйел / Женский</option>
+            </select>
+            <select id="listStatusFilter" class="list-select-filter" onchange="handleListFilterChange()">
+                <option value="all">Күйі: Барлығы / Статус: Все</option>
+                <option value="living">Тірі ұрпақтар / Живые</option>
+                <option value="deceased">Ұшқан бабалар / Ушедшие</option>
+            </select>
+            <select id="listSortFilter" class="list-select-filter" onchange="handleListFilterChange()">
+                <option value="name_asc">Сұрыптау: А-Я / Сортировка: А-Я</option>
+                <option value="name_desc">Сұрыптау: Я-А / Сортировка: Я-А</option>
+                <option value="birth_asc">Туған жылы бойынша (өсу) / По году рождения (возр.)</option>
+                <option value="birth_desc">Туған жылы бойынша (кему) / По году рождения (убыв.)</option>
+                <option value="id_asc">ID бойынша / По ID</option>
+            </select>
+            <div class="list-stats-count" id="listStatsCount">Табылды: 0 тұлға</div>
+        </div>
+
+        <div class="list-table-wrapper">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>Тұлға / Персона</th>
+                        <th style="width:80px;">Жынысы</th>
+                        <th style="width:110px;">Руы</th>
+                        <th style="width:140px;">Өмір сүрген жылдары</th>
+                        <th>Ата-анасы</th>
+                        <th>Жұбайы</th>
+                        <th>Үш жұрт</th>
+                        <th style="width:130px;">Әрекет</th>
+                    </tr>
+                </thead>
+                <tbody id="listTableBody">
+                    <!-- Деректер JavaScript арқылы толтырылады -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -2204,35 +2466,55 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             }
         }
 
-        // РЕЖИМДЕРДІ АУЫСТЫРУ («ӨҢДЕУ» <-> «ШЕЖІРЕ-ОРМАН»)
+        // РЕЖИМДЕРДІ АУЫСТЫРУ («ӨҢДЕУ» <-> «ШЕЖІРЕ-ОРМАН» <-> «ТІЗІМ»)
         function switchMode(mode) {
             currentMode = mode;
             const btnEditing = document.getElementById('btnModeEditing');
             const btnForest = document.getElementById('btnModeForest');
+            const btnList = document.getElementById('btnModeList');
             const scopeSwitcher = document.getElementById('scopeSwitcher');
             const viewEditing = document.getElementById('editingView');
             const viewForest = document.getElementById('forestView');
+            const viewList = document.getElementById('listViewContainer');
+            const canvas = document.getElementById('canvasViewport');
+            const zoomControls = document.querySelector('.zoom-controls');
+            const treeLegend = document.querySelector('.tree-legend');
+
+            if (btnEditing) btnEditing.classList.toggle('active', mode === 'editing');
+            if (btnForest) btnForest.classList.toggle('active', mode === 'forest');
+            if (btnList) btnList.classList.toggle('active', mode === 'list');
 
             if (mode === 'editing') {
-                btnEditing.classList.add('active');
-                btnForest.classList.remove('active');
+                if (canvas) canvas.style.display = 'block';
+                if (viewList) viewList.style.display = 'none';
+                if (viewEditing) viewEditing.style.display = 'block';
+                if (viewForest) viewForest.style.display = 'none';
                 if (scopeSwitcher) scopeSwitcher.style.display = 'flex';
-                viewEditing.style.display = 'block';
-                viewForest.style.display = 'none';
+                if (zoomControls) zoomControls.style.display = 'flex';
+                if (treeLegend) treeLegend.style.display = 'flex';
                 renderEditingView();
                 if (treeData && treeData.persons && treeData.persons.length > 0) {
                     flyToPerson(selectedPersonId || userPersonId || treeData.persons[0].id);
                 }
-            } else {
-                btnForest.classList.add('active');
-                btnEditing.classList.remove('active');
+            } else if (mode === 'forest') {
+                if (canvas) canvas.style.display = 'block';
+                if (viewList) viewList.style.display = 'none';
+                if (viewEditing) viewEditing.style.display = 'none';
+                if (viewForest) viewForest.style.display = 'block';
                 if (scopeSwitcher) scopeSwitcher.style.display = 'none';
-                viewEditing.style.display = 'none';
-                viewForest.style.display = 'block';
+                if (zoomControls) zoomControls.style.display = 'flex';
+                if (treeLegend) treeLegend.style.display = 'flex';
                 renderForestView();
                 if (treeData && treeData.persons && treeData.persons.length > 0) {
                     flyToCrown();
                 }
+            } else if (mode === 'list') {
+                if (canvas) canvas.style.display = 'none';
+                if (viewList) viewList.style.display = 'block';
+                if (scopeSwitcher) scopeSwitcher.style.display = 'none';
+                if (zoomControls) zoomControls.style.display = 'none';
+                if (treeLegend) treeLegend.style.display = 'none';
+                loadListViewData();
             }
         }
 
@@ -2266,6 +2548,53 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 `;
                 container.appendChild(emptyCard);
                 return;
+            }
+
+            // Динамические размеры канваса и слоя связей SVG для предотвращения обрезки линий
+            const bounds = (treeData.layout && treeData.layout.bounds) ? treeData.layout.bounds : null;
+            const worldW = Math.max(7000, bounds ? (bounds.maxX + 3000) : 7000);
+            const worldH = Math.max(5000, bounds ? (bounds.maxY + 2000) : 5000);
+            if (world) {
+                world.style.width = worldW + 'px';
+                world.style.height = worldH + 'px';
+            }
+            if (svg) {
+                svg.setAttribute('width', worldW);
+                svg.setAttribute('height', worldH);
+                svg.style.width = worldW + 'px';
+                svg.style.height = worldH + 'px';
+            }
+
+            // 1. Шаңырақ ореолдары (Family Aura)
+            if (treeData.layout && treeData.layout.auras) {
+                treeData.layout.auras.forEach(aura => {
+                    const auraEl = document.createElement('div');
+                    auraEl.className = 'family-aura';
+                    auraEl.style.left = `${aura.x}px`;
+                    auraEl.style.top = `${aura.y}px`;
+                    auraEl.style.width = `${aura.width}px`;
+                    auraEl.style.height = `${aura.height}px`;
+                    if (aura.label) {
+                        const lbl = document.createElement('div');
+                        lbl.className = 'family-aura-label';
+                        lbl.innerText = aura.label;
+                        auraEl.appendChild(lbl);
+                    }
+                    container.appendChild(auraEl);
+                });
+            }
+
+            // 2. Жұбайлар біртұтас планкасы (Couple Unit Plate)
+            if (treeData.layout && treeData.layout.couples) {
+                treeData.layout.couples.forEach(cp => {
+                    const plateEl = document.createElement('div');
+                    plateEl.className = 'couple-unit-plate';
+                    plateEl.style.left = `${cp.x}px`;
+                    plateEl.style.top = `${cp.y}px`;
+                    plateEl.style.width = `${cp.width}px`;
+                    plateEl.style.height = `${cp.height}px`;
+                    container.appendChild(plateEl);
+                });
             }
 
             const layoutNodes = (treeData.layout && treeData.layout.nodes && treeData.layout.nodes.length > 0)
@@ -2767,13 +3096,19 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             document.getElementById('panelPersonClan').innerText = clanDisplay;
             document.getElementById('panelGender').innerText = p.gender === 'M' ? (currentLang === 'ru' ? 'Мужской' : 'Ер азамат') : (currentLang === 'ru' ? 'Женский' : 'Әйел адам');
             
-            // Жылдары: живые — только год рождения! Ушедшие — годы жизни
+            // Жылдары: живые — только год/дата рождения! Ушедшие — годы жизни
+            const birthDisp = p.birth_date ? p.birth_date : (p.birth_year || '—');
+            const deathDisp = p.death_date ? p.death_date : (p.death_year || '†');
             if (p.is_deceased) {
-                document.getElementById('panelYears').innerText = `${p.birth_year || '—'} — ${p.death_year || '†'} ✨ (дүниеден өткен)`;
+                document.getElementById('panelYears').innerText = `${birthDisp} — ${deathDisp} ✨ (${currentLang === 'ru' ? 'ушёл из жизни' : 'дүниеден өткен'})`;
             } else {
-                document.getElementById('panelYears').innerText = `${p.birth_year || '—'}`;
+                document.getElementById('panelYears').innerText = `${birthDisp}`;
             }
-            document.getElementById('panelPlace').innerText = p.birth_place || '—';
+            let placeDisp = p.birth_place || '—';
+            if (p.is_deceased && p.death_place) {
+                placeDisp += ` (${currentLang === 'ru' ? 'место кончины:' : 'қайтыс болған жері:'} ${p.death_place})`;
+            }
+            document.getElementById('panelPlace').innerText = placeDisp;
             document.getElementById('panelBiography').innerText = p.biography || (currentLang === 'ru' ? 'Биография не заполнена.' : 'Өмірбаяны жазылмаған.');
 
             // Үш жұрт бейджі

@@ -76,7 +76,7 @@ assertTest($zhandosDbId !== null, "Жандос (@I6@) найден в базе 
 $layoutService = new TreeLayoutService();
 
 // ========================================================
-// 1. ТЕСТИРОВАНИЕ РЕЖИМА ОКРЕСТНОСТИ (FOCAL MODE)
+// 1. ТЕСТИРОВАНИЕ РЕЖИМА ОКРЕСТНОСТИ (FOCAL MODE) ВОКРУГ ЖАНДОСА
 // ========================================================
 echo "\n--- 1. Режим окрестности (Focal Mode) вокруг Жандоса ---\n";
 $focalLayout = $layoutService->calculateLayout($persons, $marriages, $zhandosDbId, 'focal');
@@ -122,9 +122,107 @@ assertTest($focalIntersections === 0, "Количество пересечени
 
 
 // ========================================================
-// 2. ТЕСТИРОВАНИЕ ПОЛНОГО РЕЖИМА (FULL MODE: 270 ПЕРСОН)
+// 2. ТЕСТИРОВАНИЕ ФОКУСА НА ЖЕНЩИНЕ: МЕНСЛУ (@I2@, МАМА)
 // ========================================================
-echo "\n--- 2. Полный режим (Full Mode: все 270 персон) ---\n";
+echo "\n--- 2. Фокус на женщине: Менслу (@I2@, мама) ---\n";
+$mensluDbId = $idMap['@I2@'] ?? null;
+$mensluLayout = $layoutService->calculateLayout($persons, $marriages, $mensluDbId, 'focal');
+
+assertTest(count($mensluLayout['nodes']) > 0, "Персоны в окрестности Менслу загружены (" . count($mensluLayout['nodes']) . " персон)");
+assertTest(count($mensluLayout['edges']['marriages']) > 0, "Линии браков Менслу отрисованы (" . count($mensluLayout['edges']['marriages']) . " линий)");
+assertTest(count($mensluLayout['edges']['parent_child']) > 0, "Линии к детям Менслу отрисованы (" . count($mensluLayout['edges']['parent_child']) . " линий)");
+
+$mensluMinX = min(array_column($mensluLayout['nodes'], 'x'));
+assertTest($mensluMinX >= 1000, "Координаты окрестности Менслу строго положительные (minX={$mensluMinX} >= 1000)");
+
+$mensluIntersections = $layoutService->countIntersections($mensluLayout['nodes_by_id']);
+assertTest($mensluIntersections === 0, "0 пересечений карточек при фокусе на Менслу");
+
+
+// ========================================================
+// 3. ТЕСТИРОВАНИЕ ФОКУСА НА КЕЛІН (@I22@, ЖЕНА БРАТА)
+// ========================================================
+echo "\n--- 3. Фокус на келін (@I22@, жена брата): показ обеих семей ---\n";
+$kelinDbId = $idMap['@I22@'] ?? null;
+$kelinLayout = $layoutService->calculateLayout($persons, $marriages, $kelinDbId, 'focal');
+$kelinNodes = $kelinLayout['nodes_by_id'];
+
+assertTest(isset($kelinNodes[$kelinDbId]), "Келін присутствует в окрестности");
+
+// Муж келін (@I4@)
+$husbandDbId = $idMap['@I4@'] ?? null;
+assertTest($husbandDbId && isset($kelinNodes[$husbandDbId]), "Муж келін (@I4@) присутствует рядом");
+
+// Отец мужа (Габит @I1@)
+assertTest($fatherDbId && isset($kelinNodes[$fatherDbId]), "Отец мужа (Габит @I1@) присутствует в окрестности");
+
+// Брат мужа (Жандос @I6@)
+assertTest($zhandosDbId && isset($kelinNodes[$zhandosDbId]), "Брат мужа (Жандос @I6@) присутствует в окрестности");
+
+assertTest(count($kelinLayout['edges']['parent_child']) > 0, "Линии связей у келін отрисованы (" . count($kelinLayout['edges']['parent_child']) . " линий)");
+assertTest($layoutService->countIntersections($kelinNodes) === 0, "0 пересечений карточек при фокусе на келін");
+
+
+// ========================================================
+// 4. ТЕСТИРОВАНИЕ ФОКУСА НА ДЕДУШКЕ: ВНУКИ НЕ ПЕРЕМЕШИВАЮТСЯ
+// ========================================================
+echo "\n--- 4. Фокус на дедушке (Габит @I1@): внуки под своими родителями ---\n";
+$gabitDbId = $idMap['@I1@'] ?? null;
+$gabitLayout = $layoutService->calculateLayout($persons, $marriages, $gabitDbId, 'focal');
+$gNodes = $gabitLayout['nodes_by_id'];
+
+// Находим сыновей Габита: @I3@, @I4@, @I5@, @I6@
+$sonsGed = ['@I3@', '@I4@', '@I5@', '@I6@'];
+$sonsUnits = [];
+foreach ($sonsGed as $sGed) {
+    $sId = $idMap[$sGed] ?? null;
+    if ($sId && isset($gNodes[$sId])) {
+        // Находим детей этого сына
+        $childrenOfSon = [];
+        foreach ($persons as $pId => $p) {
+            if (($p['father_id'] === $sId || $p['mother_id'] === $sId) && isset($gNodes[$pId])) {
+                $childrenOfSon[] = $gNodes[$pId];
+            }
+        }
+        $sonsUnits[$sId] = [
+            'son' => $gNodes[$sId],
+            'children' => $childrenOfSon,
+        ];
+    }
+}
+
+// Проверяем, что для каждого сына, у которого есть дети:
+// Координаты X его детей не перекрываются с детьми другого сына
+$interleavingErrors = 0;
+$sonKeys = array_keys($sonsUnits);
+for ($i = 0; $i < count($sonKeys); $i++) {
+    $sA = $sonsUnits[$sonKeys[$i]];
+    if (empty($sA['children'])) continue;
+
+    $minXA = min(array_column($sA['children'], 'x'));
+    $maxXA = max(array_map(fn($c) => $c['x'] + $c['width'], $sA['children']));
+
+    for ($j = $i + 1; $j < count($sonKeys); $j++) {
+        $sB = $sonsUnits[$sonKeys[$j]];
+        if (empty($sB['children'])) continue;
+
+        $minXB = min(array_column($sB['children'], 'x'));
+        $maxXB = max(array_map(fn($c) => $c['x'] + $c['width'], $sB['children']));
+
+        // Проверяем, что диапазоны [minXA, maxXA] и [minXB, maxXB] не пересекаются
+        $overlap = !($maxXA <= $minXB || $maxXB <= $minXA);
+        if ($overlap) {
+            $interleavingErrors++;
+        }
+    }
+}
+assertTest($interleavingErrors === 0, "Группы внуков от разных сыновей НЕ перемешиваются (ошибок перемешивания: {$interleavingErrors})");
+
+
+// ========================================================
+// 5. ТЕСТИРОВАНИЕ ПОЛНОГО РЕЖИМА (FULL MODE: ВСЕ 270 ПЕРСОН)
+// ========================================================
+echo "\n--- 5. Полный режим (Full Mode: все 270 персон) ---\n";
 $fullLayout = $layoutService->calculateLayout($persons, $marriages, $zhandosDbId, 'full');
 
 $fullNodes = $fullLayout['nodes_by_id'];
@@ -154,13 +252,35 @@ foreach ($persons as $id => $p) {
 }
 assertTest($parentChildRowErrors === 0, "Все дети находятся строго строками ниже своих родителей (ошибок: {$parentChildRowErrors})");
 
+// Проверка одинакового Y для людей одного поколения
+$genYMap = [];
+$genMismatchErrors = 0;
+foreach ($fullNodes as $n) {
+    $gen = $n['generation'];
+    if (!isset($genYMap[$gen])) {
+        $genYMap[$gen] = $n['y'];
+    } elseif ($genYMap[$gen] !== $n['y']) {
+        $genMismatchErrors++;
+    }
+}
+assertTest($genMismatchErrors === 0, "Все люди одного поколения имеют одинаковый Y (ошибок смещения ряда: {$genMismatchErrors})");
+
 // ПРОВЕРКА ПЕРЕСЕЧЕНИЙ ПРЯМОУГОЛЬНИКОВ НА ВСЕХ 270 КАРТОЧКАХ (36 315 ПАР!)
 $fullIntersections = $layoutService->countIntersections($fullNodes);
 assertTest($fullIntersections === 0, "Количество пересечений карточек на полном объеме (270 человек): {$fullIntersections} (СТРОГО 0)");
 
+// Проверка наличия линий связей в полном режиме
+assertTest(count($fullLayout['edges']['marriages']) > 0, "Линии браков в полном режиме присутствуют (" . count($fullLayout['edges']['marriages']) . " линий)");
+assertTest(count($fullLayout['edges']['parent_child']) > 0, "Шины связей к детям в полном режиме присутствуют (" . count($fullLayout['edges']['parent_child']) . " линий)");
+
+// Проверка плашек пар и ореолов
+assertTest(count($fullLayout['couples']) > 0, "Общие плашки семейных пар сформированы (" . count($fullLayout['couples']) . " плашек)");
+assertTest(count($fullLayout['auras']) > 0, "Семейные ореолы сформированы (" . count($fullLayout['auras']) . " ореолов)");
+
 // Проверка границ холста
 $bounds = $fullLayout['bounds'];
 assertTest($bounds['width'] > 0 && $bounds['height'] > 0, "Границы холста рассчитаны корректно: {$bounds['width']} x {$bounds['height']} px");
+assertTest($bounds['minX'] >= 1000, "Минимальный X строго >= 1000 ({$bounds['minX']})");
 
 echo "\n-------------------------------------------------------\n";
 echo "Результат: {$passed} из {$total} проверок пройдено успешно!\n";

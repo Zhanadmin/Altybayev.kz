@@ -310,12 +310,15 @@ class TreeController
             $father = !empty($p['father_id']) ? ($personsById[$p['father_id']] ?? null) : null;
             $mother = !empty($p['mother_id']) ? ($personsById[$p['mother_id']] ?? null) : null;
 
-            // Годы: живые — только год рождения (никаких «жив»!), ушедшие — годы жизни с золотой иконкой ✨
+            // Годы и полные даты: живые — дата/год рождения (никаких «жив»!), ушедшие — годы жизни с золотой иконкой ✨
+            $birthDisp = !empty($p['birth_date']) ? date('d.m.Y', strtotime($p['birth_date'])) : ($p['birth_year'] ?: '—');
+            $deathDisp = !empty($p['death_date']) ? date('d.m.Y', strtotime($p['death_date'])) : ($p['death_year'] ?: '†');
+
             $yearsDisplay = '';
             if ($isDeceased) {
-                $yearsDisplay = ($p['birth_year'] ?: '—') . ' — ' . ($p['death_year'] ?: '†');
+                $yearsDisplay = "{$birthDisp} — {$deathDisp} ✨";
             } else {
-                $yearsDisplay = $p['birth_year'] ?: '—';
+                $yearsDisplay = $birthDisp;
             }
 
             $filtered[] = [
@@ -326,8 +329,13 @@ class TreeController
                 'middle_name' => $p['middle_name'] ?? null,
                 'full_name' => $fullName,
                 'gender' => $p['gender'],
+                'birth_date' => $p['birth_date'] ?? null,
                 'birth_year' => $p['birth_year'],
+                'birth_disp' => $birthDisp,
+                'death_date' => $p['death_date'] ?? null,
                 'death_year' => $p['death_year'],
+                'death_disp' => $isDeceased ? $deathDisp : '',
+                'death_place' => $p['death_place'] ?? null,
                 'years_display' => $yearsDisplay,
                 'is_deceased' => $isDeceased ? 1 : 0,
                 'birth_place' => $p['birth_place'],
@@ -475,13 +483,24 @@ class TreeController
             $maidenName = trim((string)$request->get('maiden_name', '')) ?: null;
             $middleName = trim((string)$request->get('middle_name', '')) ?: null;
             $gender = trim((string)$request->get('gender', 'M'));
-            $birthDate = trim((string)$request->get('birth_date', '')) ?: null;
-            $birthYear = trim((string)$request->get('birth_year', '')) ?: null;
+
+            $rawBirthDate = trim((string)$request->get('birth_date', ''));
+            $birthDate = $this->normalizeSqlDate($rawBirthDate);
+            $rawBirthYear = trim((string)$request->get('birth_year', '')) ?: null;
+            if (!$rawBirthYear && $birthDate) {
+                $rawBirthYear = substr($birthDate, 0, 4);
+            }
+            $birthYear = $rawBirthYear;
             $birthPlace = trim((string)$request->get('birth_place', '')) ?: null;
 
             // Обработка статуса смерти: у живых дата смерти пустая, у ушедших заполняется дата/год
-            $deathDate = trim((string)$request->get('death_date', '')) ?: null;
-            $deathYear = trim((string)$request->get('death_year', '')) ?: null;
+            $rawDeathDate = trim((string)$request->get('death_date', ''));
+            $deathDate = $this->normalizeSqlDate($rawDeathDate);
+            $rawDeathYear = trim((string)$request->get('death_year', '')) ?: null;
+            if (!$rawDeathYear && $deathDate) {
+                $rawDeathYear = substr($deathDate, 0, 4);
+            }
+            $deathYear = $rawDeathYear;
             $deathPlace = trim((string)$request->get('death_place', '')) ?: null;
             $isDeceasedInput = (int)$request->get('is_deceased', 0);
 
@@ -1054,5 +1073,22 @@ class TreeController
         } catch (\Throwable $e) {
             Logger::error("Ошибка записи audit_logs: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Нормализация строки даты в формат YYYY-MM-DD для SQL DATE
+     */
+    protected function normalizeSqlDate(?string $raw): ?string
+    {
+        if ($raw === null) return null;
+        $raw = trim($raw);
+        if ($raw === '') return null;
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $raw)) return $raw;
+        if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $raw, $m)) {
+            return sprintf('%04d-%02d-%02d', (int)$m[3], (int)$m[2], (int)$m[1]);
+        }
+        $ts = strtotime($raw);
+        if ($ts !== false) return date('Y-m-d', $ts);
+        return null;
     }
 }

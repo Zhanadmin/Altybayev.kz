@@ -355,10 +355,14 @@ class TreeController
             switch ($sort) {
                 case 'name_desc':
                     return strcmp($b['full_name'], $a['full_name']);
+                case 'birth_asc':
                 case 'birth_year_asc':
-                    return ((int)$a['birth_year']) <=> ((int)$b['birth_year']);
+                    return ((int)($a['birth_year'] ?? 0)) <=> ((int)($b['birth_year'] ?? 0));
+                case 'birth_desc':
                 case 'birth_year_desc':
-                    return ((int)$b['birth_year']) <=> ((int)$a['birth_year']);
+                    return ((int)($b['birth_year'] ?? 0)) <=> ((int)($a['birth_year'] ?? 0));
+                case 'id_asc':
+                    return ((int)$a['id']) <=> ((int)$b['id']);
                 case 'name_asc':
                 default:
                     return strcmp($a['full_name'], $b['full_name']);

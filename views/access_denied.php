@@ -1,16 +1,22 @@
 <?php
 declare(strict_types=1);
+
+use App\Core\I18n;
+
 /**
  * @var string|null $email
  * @var string|null $reason
  */
+$lang = I18n::lang();
+$siteTitle = I18n::siteTitle();
+$pageTitle = ($lang === 'ru') ? "{$siteTitle} — Доступ ограничен" : "{$siteTitle} — Қолжетімділік шектелген";
 ?>
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="<?= htmlspecialchars($lang) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Қолжетімділік шектелген / Доступ ограничен — Шежіре Алтыбаевтар</title>
+    <title><?= htmlspecialchars($pageTitle) ?></title>
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -26,6 +32,35 @@ declare(strict_types=1);
             justify-content: center;
             padding: 20px;
             color: #333333;
+            position: relative;
+        }
+        .lang-switch-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .lang-btn {
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            color: #cbd5e1;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .lang-btn.active {
+            background-color: #ffffff;
+            color: #0d1b2a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .card {
             background: #ffffff;
@@ -53,13 +88,7 @@ declare(strict_types=1);
             font-size: 22px;
             font-weight: 700;
             color: #0d1b2a;
-            margin-bottom: 6px;
-        }
-        .ru-title {
-            font-size: 15px;
-            color: #4b5563;
-            margin-bottom: 18px;
-            font-weight: 500;
+            margin-bottom: 12px;
         }
         .email-badge {
             display: inline-block;
@@ -83,11 +112,6 @@ declare(strict_types=1);
             text-align: left;
             margin-bottom: 24px;
             border: 1px solid #e5e7eb;
-        }
-        .message-box p + p {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px dashed #d1d5db;
         }
         .btn-group {
             display: flex;
@@ -130,6 +154,12 @@ declare(strict_types=1);
     </style>
 </head>
 <body>
+    <!-- Переключатель языка -->
+    <div class="lang-switch-top">
+        <a href="/lang/kk?ref=/access-denied" class="lang-btn <?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
+        <a href="/lang/ru?ref=/access-denied" class="lang-btn <?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
+    </div>
+
     <div class="card">
         <div class="icon-wrap" aria-hidden="true">
             <?php if (($reason ?? '') === 'account_blocked'): ?>
@@ -140,11 +170,9 @@ declare(strict_types=1);
         </div>
 
         <?php if (($reason ?? '') === 'account_blocked'): ?>
-            <h1>Аккаунт бұғатталған</h1>
-            <div class="ru-title">Аккаунт заблокирован</div>
+            <h1><?= $lang === 'ru' ? 'Аккаунт заблокирован' : 'Аккаунт бұғатталған' ?></h1>
         <?php else: ?>
-            <h1>Тек шақыру бойынша қолжетімді</h1>
-            <div class="ru-title">Доступ только по приглашению</div>
+            <h1><?= $lang === 'ru' ? 'Доступ только по приглашению' : 'Тек шақыру бойынша қолжетімді' ?></h1>
         <?php endif; ?>
 
         <?php if (!empty($email)): ?>
@@ -154,24 +182,26 @@ declare(strict_types=1);
         <div class="message-box">
             <?php if (($reason ?? '') === 'account_blocked'): ?>
                 <p>
-                    <strong>Қазақша:</strong> Сіздің аккаунтыңыз жүйеде уақытша тоқтатылған. Шежірені көру немесе өңдеу құқығын қалпына келтіру үшін сайт әкімшісіне хабарласыңыз.
-                </p>
-                <p>
-                    <strong>Русский:</strong> Ваша учетная запись временно приостановлена. Для восстановления доступа свяжитесь с администратором портала.
+                    <?= $lang === 'ru' 
+                        ? 'Ваша учетная запись временно приостановлена. Для восстановления доступа обратитесь к администратору портала.' 
+                        : 'Сіздің аккаунтыңыз жүйеде уақытша тоқтатылған. Шежірені көру немесе өңдеу құқығын қалпына келтіру үшін сайт әкімшісіне хабарласыңыз.' ?>
                 </p>
             <?php else: ?>
                 <p>
-                    <strong>Қазақша:</strong> Бұл электрондық поштаға шақыру жіберілмеген. «Шежіре Алтыбаевтар» порталы жабық отбасылық дерекқор болып табылады. Егер сіз осы әулеттің мүшесі болсаңыз, әкімші Жандосқа хабарласып, шақыру алыңыз.
-                </p>
-                <p>
-                    <strong>Русский:</strong> Для данного email еще нет приглашения. Портал «Шежире Алтыбаевых» является закрытым семейным ресурсом. Если вы являетесь членом семьи, свяжитесь с администратором (Жандосом) для получения приглашения.
+                    <?= $lang === 'ru' 
+                        ? "Для данного email еще нет активного приглашения. Портал «{$siteTitle}» является закрытым семейным ресурсом. Если вы являетесь членом семьи, свяжитесь с администратором для получения приглашения." 
+                        : "Бұл электрондық поштаға шақыру жіберілмеген. «{$siteTitle}» порталы жабық отбасылық дерекқор болып табылады. Егер сіз осы әулеттің мүшесі болсаңыз, әкімшіге хабарласып, шақыру алыңыз." ?>
                 </p>
             <?php endif; ?>
         </div>
 
         <div class="btn-group">
-            <a href="/auth/google" class="btn btn-primary">Басқа аккаунтпен кіру / Сменить аккаунт</a>
-            <a href="/logout" class="btn btn-secondary">Шығу / На главную входа</a>
+            <a href="/auth/google" class="btn btn-primary">
+                <?= $lang === 'ru' ? 'Сменить аккаунт Google' : 'Басқа Google аккаунтымен кіру' ?>
+            </a>
+            <a href="/logout" class="btn btn-secondary">
+                <?= $lang === 'ru' ? 'На главную входа' : 'Басты кіру бетіне оралу' ?>
+            </a>
         </div>
 
         <div class="footer">

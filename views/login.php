@@ -1,15 +1,21 @@
 <?php
 declare(strict_types=1);
+
+use App\Core\I18n;
+
 /**
  * @var string|null $error
  */
+$lang = I18n::lang();
+$siteTitle = I18n::siteTitle();
+$pageTitle = ($lang === 'ru') ? "{$siteTitle} — Вход в систему" : "{$siteTitle} — Жүйеге кіру";
 ?>
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="<?= htmlspecialchars($lang) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шежіре Алтыбаевтар — Кіру / Вход</title>
+    <title><?= htmlspecialchars($pageTitle) ?></title>
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -25,6 +31,35 @@ declare(strict_types=1);
             justify-content: center;
             padding: 20px;
             color: #333333;
+            position: relative;
+        }
+        .lang-switch-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .lang-btn {
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            color: #cbd5e1;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .lang-btn.active {
+            background-color: #ffffff;
+            color: #0d1b2a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .card {
             background: #ffffff;
@@ -56,15 +91,9 @@ declare(strict_types=1);
             margin-bottom: 6px;
             letter-spacing: -0.5px;
         }
-        .ru-title {
-            font-size: 15px;
-            color: #556270;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
         .subtitle {
-            font-size: 13px;
-            color: #7d8a99;
+            font-size: 13.5px;
+            color: #64748b;
             margin-bottom: 28px;
             line-height: 1.5;
         }
@@ -110,44 +139,54 @@ declare(strict_types=1);
         .notice {
             margin-top: 24px;
             font-size: 12px;
-            color: #6b7280;
+            color: #475569;
             line-height: 1.5;
-            background: #f3f4f6;
-            padding: 12px;
+            background: #f8fafc;
+            padding: 12px 14px;
             border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
         }
         .footer {
             margin-top: 24px;
-            font-size: 11px;
-            color: #9ca3af;
+            font-size: 11.5px;
+            color: #94a3b8;
         }
     </style>
 </head>
 <body>
+    <!-- Переключатель языка -->
+    <div class="lang-switch-top">
+        <a href="/lang/kk?ref=/login" class="lang-btn <?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
+        <a href="/lang/ru?ref=/login" class="lang-btn <?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
+    </div>
+
     <div class="card">
         <div class="emblem" aria-hidden="true">
             <span>Ш</span>
         </div>
-        <h1>Шежіре Алтыбаевтар</h1>
-        <div class="ru-title">Шежире Алтыбаевых</div>
-        <p class="subtitle">Отбасылық шежіре порталы<br><span style="color:#9ca3af;">Семейный генеалогический портал</span></p>
+
+        <h1><?= htmlspecialchars($siteTitle) ?></h1>
+        <p class="subtitle">
+            <?= $lang === 'ru' ? 'Семейный генеалогический портал' : 'Отбасылық шежіре порталы' ?>
+        </p>
 
         <?php if (!empty($error)): ?>
             <div class="error-box">
                 <?php if ($error === 'auth_failed'): ?>
-                    <strong>Кіру сәтсіз аяқталды / Ошибка входа:</strong><br>
-                    Google арқылы авторлану кезінде қате орын алды. Қайталап көріңіз. / При авторизации через Google произошла ошибка. Попробуйте снова.
+                    <strong><?= $lang === 'ru' ? 'Ошибка входа:' : 'Кіру сәтсіз аяқталды:' ?></strong><br>
+                    <?= $lang === 'ru' ? 'При авторизации через Google произошла ошибка. Попробуйте снова.' : 'Google арқылы кіру кезінде қате орын алды. Қайталап көріңіз.' ?>
                 <?php elseif ($error === 'invalid_state'): ?>
-                    <strong>Қауіпсіздік қатесі / Ошибка сессии:</strong><br>
-                    Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз. / Сессия устарела. Обновите страницу и попробуйте снова.
+                    <strong><?= $lang === 'ru' ? 'Ошибка сессии:' : 'Қауіпсіздік қатесі:' ?></strong><br>
+                    <?= $lang === 'ru' ? 'Сессия устарела. Обновите страницу и попробуйте снова.' : 'Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз.' ?>
                 <?php elseif ($error === 'forbidden'): ?>
-                    <strong>Рұқсат жоқ / Доступ запрещен:</strong><br>
-                    Бұл бөлімге кіруге құқығыңыз жеткіліксіз. / Недостаточно прав для доступа к этому разделу.
+                    <strong><?= $lang === 'ru' ? 'Доступ запрещен:' : 'Рұқсат жоқ:' ?></strong><br>
+                    <?= $lang === 'ru' ? 'Недостаточно прав для доступа к этому разделу.' : 'Бұл бөлімге кіруге құқығыңыз жеткіліксіз.' ?>
                 <?php elseif ($error === 'admin_only'): ?>
-                    <strong>Тек әкімшіге / Только для администратора:</strong><br>
-                    Бұл бет тек әкімшіге (Жандос) арналған. / Этот раздел доступен только администратору.
+                    <strong><?= $lang === 'ru' ? 'Только для администратора:' : 'Тек әкімшіге:' ?></strong><br>
+                    <?= $lang === 'ru' ? 'Этот раздел доступен только администратору.' : 'Бұл бет тек әкімшіге арналған.' ?>
                 <?php else: ?>
-                    <strong>Қате / Ошибка:</strong> <?= htmlspecialchars($error) ?>
+                    <strong><?= $lang === 'ru' ? 'Ошибка:' : 'Қате:' ?></strong> <?= htmlspecialchars($error) ?>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
@@ -159,13 +198,12 @@ declare(strict_types=1);
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span>Google арқылы кіру / Войти</span>
+            <span><?= $lang === 'ru' ? 'Войти через Google' : 'Google арқылы кіру' ?></span>
         </a>
 
         <div class="notice">
-            🔒 <strong>Жабық отбасылық шежіре:</strong><br>
-            Қолжетімділік тек шақырылған отбасы мүшелеріне ашық.<br>
-            <span style="color:#4b5563;">Доступ только для приглашенных членов семьи.</span>
+            🔒 <strong><?= $lang === 'ru' ? 'Закрытая родословная:' : 'Жабық отбасылық шежіре:' ?></strong><br>
+            <?= $lang === 'ru' ? 'Доступ открыт только для приглашенных членов семьи.' : 'Қолжетімділік тек шақырылған отбасы мүшелеріне ашық.' ?>
         </div>
 
         <div class="footer">

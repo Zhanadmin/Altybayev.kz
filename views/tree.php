@@ -1603,7 +1603,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </a>
             <div class="brand-title">
                 <span data-i18n="brand_title_main">Шежіре</span>
-                <span data-i18n="brand_title_sub">Алтыбаевтар</span>
+                <span data-i18n="brand_title_sub"></span>
             </div>
         </div>
 
@@ -2301,12 +2301,18 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
     <script>
         // СЕРВЕРДЕН АЛЫНҒАН АҚПАРАТТАР
         let userPersonId = <?= (int)$userPersonId ?>;
-        let currentMode = 'editing'; // 'editing' немесе 'forest'
+        const canEdit = <?= !empty($canEdit) ? 'true' : 'false' ?>;
+        const isAdmin = <?= !empty($isAdmin) ? 'true' : 'false' ?>;
+        const urlParams = new URLSearchParams(window.location.search);
+        const focusFromUrl = urlParams.get('focus') || urlParams.get('id');
+        let initialFocusId = focusFromUrl ? parseInt(focusFromUrl) : (<?= (int)($focusId ?? 0) ?> || userPersonId || 6);
+
+        let currentMode = urlParams.get('mode') === 'list' ? 'list' : 'editing'; // 'editing', 'forest', 'list'
         let currentScope = 'focal'; // 'focal' (окрестность) немесе 'full' (барлық шежіре 270)
         let currentLang = localStorage.getItem('shezhire_lang') || 'kk';
 
         let treeData = null;
-        let selectedPersonId = userPersonId;
+        let selectedPersonId = initialFocusId || userPersonId;
         let activeKinships = {}; // person_id -> { term_kk, term_ru, code, badge_class }
         let expandedBranches = []; // ашылған тармақтардың ID тізімі
 
@@ -2326,7 +2332,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             kk: {
                 back_to_portal: "Басты бет",
                 brand_title_main: "Шежіре",
-                brand_title_sub: "Алтыбаевтар",
+                brand_title_sub: "",
                 mode_editing: "Өңдеу",
                 mode_forest: "Шежіре-Орман", mode_list: "Список", btn_edit_person: "Редактировать", form_is_deceased_checkbox: "Ушёл из жизни", mode_list: "Тізім", btn_edit_person: "Өңдеу", form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Адамды іздеу...",
@@ -2391,9 +2397,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 btn_set_me: "★ Бұл мен (Өз аккаунтыма байлау)",
             },
             ru: {
-                back_to_portal: "Главная страница",
-                brand_title_main: "Шежире",
-                brand_title_sub: "Алтыбаевых",
+                back_to_portal: "Главная",
+                brand_title_main: "Родословная",
+                brand_title_sub: "",
                 mode_editing: "Редактирование",
                 mode_forest: "Шежіре-Орман", mode_list: "Список", btn_edit_person: "Редактировать", form_is_deceased_checkbox: "Ушёл из жизни", mode_list: "Тізім", btn_edit_person: "Өңдеу", form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Поиск родственника...",
@@ -3819,15 +3825,21 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         }
 
         async function loadListViewData() {
-            const q = document.getElementById('listSearchInput').value.trim();
-            const clanId = document.getElementById('listClanFilter').value;
-            const gender = document.getElementById('listGenderFilter').value;
-            const status = document.getElementById('listStatusFilter').value;
-            const sort = document.getElementById('listSortFilter').value;
+            const searchInput = document.getElementById('listSearchInput');
+            const clanFilter = document.getElementById('listClanFilter');
+            const genderFilter = document.getElementById('listGenderFilter');
+            const statusFilter = document.getElementById('listStatusFilter');
+            const sortFilter = document.getElementById('listSortFilter');
+
+            const q = searchInput ? searchInput.value.trim() : '';
+            const clanId = clanFilter ? clanFilter.value : '0';
+            const gender = genderFilter ? genderFilter.value : 'all';
+            const status = statusFilter ? statusFilter.value : 'all';
+            const sort = sortFilter ? sortFilter.value : 'name_asc';
 
             const params = new URLSearchParams();
             if (q) params.set('q', q);
-            if (clanId) params.set('clan_id', clanId);
+            if (clanId && clanId !== '0') params.set('clan_id', clanId);
             if (gender && gender !== 'all') params.set('gender', gender);
             if (status && status !== 'all') params.set('status', status);
             if (sort) params.set('sort', sort);

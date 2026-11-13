@@ -177,6 +177,23 @@ class AuthController
     }
 
     /**
+     * Смена языка интерфейса: /lang/{code}
+     */
+    public function switchLanguage(Request $request, string $code): void
+    {
+        if (in_array($code, ['kk', 'ru'], true)) {
+            \App\Core\I18n::setLang($code);
+        }
+
+        $ref = $request->get('ref', $_SERVER['HTTP_REFERER'] ?? '/');
+        if (!str_starts_with($ref, '/') && !str_contains($ref, 'altybayev.kz') && !str_contains($ref, 'localhost')) {
+            $ref = '/';
+        }
+
+        Response::redirect($ref);
+    }
+
+    /**
      * API: получить данные текущего авторизованного пользователя
      */
     public function currentUser(Request $request): void

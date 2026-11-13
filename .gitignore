@@ -7,6 +7,8 @@
 # Uploads & User Media (keep directory structure)
 /public/uploads/*
 !/public/uploads/.gitkeep
+!/public/uploads/.htaccess
+!/public/uploads/web.config
 /storage/uploads/*
 !/storage/uploads/.gitkeep
 /storage/backups/*

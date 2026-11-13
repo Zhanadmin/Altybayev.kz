@@ -16,6 +16,18 @@ $router->get('/', 'App\Controllers\HomeController@index', ['auth']);
 // 2. Интерактивное древо (MyHeritage + Шежіре-Орман / Лес)
 $router->get('/tree', 'App\Controllers\TreeController@index', ['auth']);
 
+// 3. Новые разделы обычного сайта (TASK-007)
+$router->get('/persons', 'App\Controllers\PersonController@index', ['auth']);
+$router->get('/person/{id}', 'App\Controllers\PersonController@show', ['auth']);
+$router->get('/families', 'App\Controllers\FamilyController@index', ['auth']);
+$router->get('/dates', 'App\Controllers\MemorialController@index', ['auth']);
+$router->get('/history', 'App\Controllers\HistoryController@index', ['auth']);
+$router->get('/admin', 'App\Controllers\AdminController@index', ['auth', 'admin']);
+$router->get('/lang/{code}', 'App\Controllers\AuthController@switchLanguage');
+$router->post('/api/photo/upload', 'App\Controllers\PhotoUploadController@upload', ['auth']);
+$router->post('/api/admin/user/role', 'App\Controllers\AdminController@updateUserRole', ['auth', 'admin']);
+$router->post('/api/history/rollback', 'App\Controllers\HistoryController@rollback', ['auth', 'admin']);
+
 // 3. Маршруты авторизации и аутентификации через Google
 $router->get('/login', 'App\Controllers\AuthController@showLogin');
 $router->get('/logout', 'App\Controllers\AuthController@logout');

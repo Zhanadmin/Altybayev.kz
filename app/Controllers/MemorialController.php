@@ -24,6 +24,33 @@ class MemorialController
     }
 
     /**
+     * Раздел «Есте қаларлық күндер / Памятные даты» (веб-страница)
+     */
+    public function index(Request $request): void
+    {
+        $user = Auth::user();
+        $focusPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : 6;
+
+        $daysAhead = (int)($request->get('days', 90));
+        if ($daysAhead <= 0 || $daysAhead > 365) {
+            $daysAhead = 90;
+        }
+
+        $birthdays = $this->service->getUpcomingBirthdays($daysAhead, $focusPersonId);
+        $anniversaries = $this->service->getMemorialAnniversaries($daysAhead, $focusPersonId);
+
+        Response::view('dates/index', [
+            'user'          => $user,
+            'userPersonId'  => $focusPersonId,
+            'birthdays'     => $birthdays,
+            'anniversaries' => $anniversaries,
+            'daysAhead'     => $daysAhead,
+            'canEdit'       => Auth::canEdit(),
+            'isAdmin'       => Auth::isAdmin(),
+        ]);
+    }
+
+    /**
      * API: Сводка всех памятных дат (дни рождения + годовщины)
      * GET /api/memorial-dates?days=60
      */

@@ -128,6 +128,47 @@ class I18n
     }
 
     /**
+     * Қазақ тілінде ілік септік жалғауларын дұрыс жалғау (Ілік септік: кімнің? ненің?)
+     * Мысалы: Ғабит -> Ғабиттің, Жандос -> Жандостың, Кенен -> Кененнің, Алтыбай -> Алтыбайдың
+     */
+    public static function kazakhGenitive(string $name): string
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return '';
+        }
+
+        $lastChar = mb_strtolower(mb_substr($name, -1));
+        $vowelsHard = ['а', 'о', 'ұ', 'ы', 'я'];
+        $vowelsSoft = ['ә', 'ө', 'ү', 'і', 'е', 'э', 'и', 'ю'];
+
+        $isSoft = false;
+        $len = mb_strlen($name);
+        for ($i = $len - 1; $i >= 0; $i--) {
+            $ch = mb_strtolower(mb_substr($name, $i, 1));
+            if (in_array($ch, $vowelsSoft, true)) {
+                $isSoft = true;
+                break;
+            }
+            if (in_array($ch, $vowelsHard, true)) {
+                $isSoft = false;
+                break;
+            }
+        }
+
+        $deaf = ['к', 'қ', 'п', 'с', 'т', 'ш', 'щ', 'ф', 'х', 'ц', 'ч', 'h'];
+        $sonor = ['б', 'в', 'г', 'ғ', 'д', 'ж', 'з', 'л', 'р', 'й', 'у'];
+
+        if (in_array($lastChar, $deaf, true)) {
+            return $name . ($isSoft ? 'тің' : 'тың');
+        }
+        if (in_array($lastChar, $sonor, true)) {
+            return $name . ($isSoft ? 'дің' : 'дың');
+        }
+        return $name . ($isSoft ? 'нің' : 'ның');
+    }
+
+    /**
      * Форматирование термина родства:
      * На казахском — чистый казахский термин.
      * На русском — казахский термин с русским переводом в скобках, например: «Әкесі (Отец)».

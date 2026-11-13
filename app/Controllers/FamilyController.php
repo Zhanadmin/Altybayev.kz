@@ -86,31 +86,118 @@ class FamilyController
             $coupleKey = "{$hId}_{$wId}";
             $children = $childrenByCouple[$coupleKey] ?? [];
 
+            // Сортировка детей внутри семьи по старшинству (по году рождения ascending)
+            usort($children, function ($cA, $cB) {
+                $yA = (int)($cA['birth_year'] ?? 0);
+                $yB = (int)($cB['birth_year'] ?? 0);
+                if ($yA && $yB && $yA !== $yB) {
+                    return $yA <=> $yB;
+                }
+                return ((int)$cA['id']) <=> ((int)$cB['id']);
+            });
+
+            // Определение старшинства и поколения
+            $hYear = (int)($husband['birth_year'] ?? 0);
+            $wYear = (int)($wife['birth_year'] ?? 0);
+            $seniorityYear = $hYear ?: ($wYear ?: 9999);
+
+            $hDec = !empty($husband['is_deceased']);
+            $wDec = !empty($wife['is_deceased']);
+            $bothDec = $hDec && $wDec;
+
+            // Определение поколения (0 = Ата-бабалар, 1 = 1-ұрпақ, 2 = 2-ұрпақ, 3 = 3-ұрпақ)
+            if ($bothDec || ($seniorityYear > 0 && $seniorityYear < 1945)) {
+                $genKey = 'ancestors';
+            } elseif ($seniorityYear >= 1945 && $seniorityYear < 1975) {
+                $genKey = 1;
+            } elseif ($seniorityYear >= 1975 && $seniorityYear < 1996) {
+                $genKey = 2;
+            } elseif ($seniorityYear >= 1996 && $seniorityYear < 9999) {
+                $genKey = 3;
+            } else {
+                $genKey = 2; // по умолчанию активное поколение
+            }
+
             $families[] = [
-                'marriage' => $m,
-                'husband'  => $husband,
-                'wife'     => $wife,
-                'h_name'   => $hName,
-                'w_name'   => $wName,
-                'status'   => $status,
-                'children' => $children,
+                'marriage'       => $m,
+                'husband'        => $husband,
+                'wife'           => $wife,
+                'h_name'         => $hName,
+                'w_name'         => $wName,
+                'status'         => $status,
+                'children'       => $children,
+                'seniority_year' => $seniorityYear,
+                'generation_key' => $genKey,
             ];
         }
 
+        // Группировка по поколениям
+        $generationGroups = [
+            'ancestors' => [
+                'key'         => 'ancestors',
+                'title_kk'    => 'Ата-бабалар',
+                'title_ru'    => 'Предки',
+                'badge'       => '🏛️',
+                'families'    => [],
+            ],
+            1 => [
+                'key'         => 1,
+                'title_kk'    => '1-ұрпақ',
+                'title_ru'    => '1-е поколение',
+                'badge'       => '🌳',
+                'families'    => [],
+            ],
+            2 => [
+                'key'         => 2,
+                'title_kk'    => '2-ұрпақ',
+                'title_ru'    => '2-е поколение',
+                'badge'       => '🌿',
+                'families'    => [],
+            ],
+            3 => [
+                'key'         => 3,
+                'title_kk'    => '3-ұрпақ',
+                'title_ru'    => '3-е поколение',
+                'badge'       => '🌱',
+                'families'    => [],
+            ],
+        ];
+
+        foreach ($families as $f) {
+            $gK = $f['generation_key'];
+            if (isset($generationGroups[$gK])) {
+                $generationGroups[$gK]['families'][] = $f;
+            }
+        }
+
+        // Внутри каждого поколения сортируем семьи строго по старшинству (старшие сверху)
+        foreach ($generationGroups as $gKey => &$group) {
+            usort($group['families'], function ($fA, $fB) {
+                $yA = (int)($fA['seniority_year'] ?? 9999);
+                $yB = (int)($fB['seniority_year'] ?? 9999);
+                if ($yA !== $yB) {
+                    return $yA <=> $yB;
+                }
+                return ((int)$fA['marriage']['id']) <=> ((int)$fB['marriage']['id']);
+            });
+        }
+        unset($group);
+
         Response::view('families/index', [
-            'user'          => $user,
-            'userPersonId'  => $userPersonId,
-            'families'      => $families,
-            'totalCount'    => count($families),
-            'totalAll'      => count($marriages),
-            'totalMarried'  => $totalMarried,
-            'totalDivorced' => $totalDivorced,
-            'filters'       => [
+            'user'             => $user,
+            'userPersonId'     => $userPersonId,
+            'families'         => $families,
+            'generationGroups' => $generationGroups,
+            'totalCount'       => count($families),
+            'totalAll'         => count($marriages),
+            'totalMarried'     => $totalMarried,
+            'totalDivorced'    => $totalDivorced,
+            'filters'          => [
                 'q'      => $q,
                 'status' => $statusFilter,
             ],
-            'canEdit'       => Auth::canEdit(),
-            'isAdmin'       => Auth::isAdmin(),
+            'canEdit'          => Auth::canEdit(),
+            'isAdmin'          => Auth::isAdmin(),
         ]);
     }
 }

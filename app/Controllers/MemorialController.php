@@ -38,12 +38,16 @@ class MemorialController
 
         $birthdays = $this->service->getUpcomingBirthdays($daysAhead, $focusPersonId);
         $anniversaries = $this->service->getMemorialAnniversaries($daysAhead, $focusPersonId);
+        $weddings = $this->service->getUpcomingWeddings($daysAhead, $focusPersonId);
+        $allEvents = $this->service->getAllUpcomingEvents($daysAhead, $focusPersonId);
 
         Response::view('dates/index', [
             'user'          => $user,
             'userPersonId'  => $focusPersonId,
             'birthdays'     => $birthdays,
             'anniversaries' => $anniversaries,
+            'weddings'      => $weddings,
+            'allEvents'     => $allEvents,
             'daysAhead'     => $daysAhead,
             'canEdit'       => Auth::canEdit(),
             'isAdmin'       => Auth::isAdmin(),

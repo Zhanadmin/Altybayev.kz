@@ -45,6 +45,7 @@ declare(strict_types=1);
                     <div>
                         <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Руы / Род</label>
                         <input type="text" id="editModalClanRu" placeholder="Керей, Жағалбайлы..." style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
+                        <div id="editModalClanHint" style="font-size:11px; color:#64748b; margin-top:3px; font-style:italic;"></div>
                     </div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
@@ -125,7 +126,18 @@ declare(strict_types=1);
                         document.getElementById('editModalMiddleName').value = p.middle_name || '';
                         document.getElementById('editModalMaidenName').value = p.maiden_name || '';
                         document.getElementById('editModalGender').value = p.gender || 'M';
-                        document.getElementById('editModalClanRu').value = p.clan_ru || '';
+                        
+                        const clanInput = document.getElementById('editModalClanRu');
+                        const clanHint = document.getElementById('editModalClanHint');
+                        clanInput.value = p.clan_ru || '';
+                        const canEditClan = (data.can_edit_clan !== false) && (!p.father_id);
+                        clanInput.readOnly = !canEditClan;
+                        clanInput.style.backgroundColor = canEditClan ? '#ffffff' : '#f1f5f9';
+                        clanInput.style.cursor = canEditClan ? 'text' : 'not-allowed';
+                        if (clanHint) {
+                            clanHint.textContent = canEditClan ? '' : (data.clan_hint || 'әкесінен / по отцу');
+                        }
+
                         document.getElementById('editModalBirthDate').value = p.birth_date || '';
                         document.getElementById('editModalBirthYear').value = p.birth_year || '';
                         document.getElementById('editModalBirthPlace').value = p.birth_place || '';

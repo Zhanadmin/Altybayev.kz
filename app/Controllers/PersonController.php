@@ -45,7 +45,10 @@ class PersonController
         $clanId = (int)$request->get('clan_id', 0);
         $gender = trim((string)$request->get('gender', ''));
         $status = trim((string)$request->get('status', '')); // 'living' | 'deceased'
-        $sort = trim((string)$request->get('sort', 'name_asc'));
+        $sort = trim((string)$request->get('sort', 'generation'));
+        if ($sort === '') {
+            $sort = 'generation';
+        }
 
         // 3. Запрос персон
         $sql = "SELECT * FROM `persons` WHERE `is_deleted` = 0";
@@ -133,24 +136,104 @@ class PersonController
             $filtered[] = $p;
         }
 
-        // Сортировка
-        usort($filtered, function ($a, $b) use ($sort) {
-            switch ($sort) {
-                case 'name_desc':
-                    return strcmp($b['full_name'], $a['full_name']);
-                case 'birth_asc':
-                case 'birth_year_asc':
-                    return ((int)($a['birth_year'] ?? 0)) <=> ((int)($b['birth_year'] ?? 0));
-                case 'birth_desc':
-                case 'birth_year_desc':
-                    return ((int)($b['birth_year'] ?? 0)) <=> ((int)($a['birth_year'] ?? 0));
-                case 'id_asc':
-                    return ((int)$a['id']) <=> ((int)$b['id']);
-                case 'name_asc':
-                default:
-                    return strcmp($a['full_name'], $b['full_name']);
+        // Группировка по поколениям и расчет старшинства (TASK-007)
+        $generationGroups = [
+            'ancestors' => [
+                'key'         => 'ancestors',
+                'title_kk'    => 'Ата-бабалар',
+                'title_ru'    => 'Предки',
+                'badge'       => '🏛️',
+                'persons'     => [],
+            ],
+            1 => [
+                'key'         => 1,
+                'title_kk'    => '1-ұрпақ',
+                'title_ru'    => '1-е поколение',
+                'badge'       => '🌳',
+                'persons'     => [],
+            ],
+            2 => [
+                'key'         => 2,
+                'title_kk'    => '2-ұрпақ',
+                'title_ru'    => '2-е поколение',
+                'badge'       => '🌿',
+                'persons'     => [],
+            ],
+            3 => [
+                'key'         => 3,
+                'title_kk'    => '3-ұрпақ',
+                'title_ru'    => '3-е поколение',
+                'badge'       => '🌱',
+                'persons'     => [],
+            ],
+        ];
+
+        foreach ($filtered as &$p) {
+            $bYear = (int)($p['birth_year'] ?? 0);
+            $isDec = !empty($p['is_deceased']);
+
+            // Старшинство семей внутри поколения считать по возрасту МУЖА
+            $seniorityYear = $bYear;
+            if ($p['gender'] === 'F' && !empty($p['spouses'])) {
+                $firstSpouse = $allPersonsById[$p['spouses'][0]['spouse_id']] ?? null;
+                if ($firstSpouse && !empty($firstSpouse['birth_year'])) {
+                    $seniorityYear = (int)$firstSpouse['birth_year'];
+                }
             }
-        });
+            if ($seniorityYear === 0) {
+                $seniorityYear = 9999;
+            }
+            $p['seniority_year'] = $seniorityYear;
+
+            if ($isDec || ($seniorityYear > 0 && $seniorityYear < 1945)) {
+                $genKey = 'ancestors';
+            } elseif ($seniorityYear >= 1945 && $seniorityYear < 1975) {
+                $genKey = 1;
+            } elseif ($seniorityYear >= 1975 && $seniorityYear < 1996) {
+                $genKey = 2;
+            } elseif ($seniorityYear >= 1996 && $seniorityYear < 9999) {
+                $genKey = 3;
+            } else {
+                $genKey = 2;
+            }
+            $p['generation_key'] = $genKey;
+            $generationGroups[$genKey]['persons'][] = &$p;
+        }
+        unset($p);
+
+        // Внутри каждого поколения сортируем строго по старшинству (старшие сверху)
+        foreach ($generationGroups as &$grp) {
+            usort($grp['persons'], function ($a, $b) {
+                $yA = (int)($a['seniority_year'] ?? 9999);
+                $yB = (int)($b['seniority_year'] ?? 9999);
+                if ($yA !== $yB) {
+                    return $yA <=> $yB;
+                }
+                return strcmp($a['full_name'], $b['full_name']);
+            });
+        }
+        unset($grp);
+
+        // Сортировка для плоского списка (когда пользователь явно выбрал имя или дату)
+        if ($sort !== 'generation') {
+            usort($filtered, function ($a, $b) use ($sort) {
+                switch ($sort) {
+                    case 'name_desc':
+                        return strcmp($b['full_name'], $a['full_name']);
+                    case 'birth_asc':
+                    case 'birth_year_asc':
+                        return ((int)($a['birth_year'] ?? 0)) <=> ((int)($b['birth_year'] ?? 0));
+                    case 'birth_desc':
+                    case 'birth_year_desc':
+                        return ((int)($b['birth_year'] ?? 0)) <=> ((int)($a['birth_year'] ?? 0));
+                    case 'id_asc':
+                        return ((int)$a['id']) <=> ((int)$b['id']);
+                    case 'name_asc':
+                    default:
+                        return strcmp($a['full_name'], $b['full_name']);
+                }
+            });
+        }
 
         // Общая статистика
         $totalPersons = count($allPersonsById);
@@ -165,23 +248,24 @@ class PersonController
         }
 
         Response::view('persons/index', [
-            'user'          => $user,
-            'userPersonId'  => $userPersonId,
-            'persons'       => $filtered,
-            'totalCount'    => count($filtered),
-            'totalAll'      => $totalPersons,
-            'totalLiving'   => $totalLiving,
-            'totalDeceased' => $totalDeceased,
-            'clans'         => $clans,
-            'filters'       => [
+            'user'              => $user,
+            'userPersonId'      => $userPersonId,
+            'persons'           => $filtered,
+            'generationGroups'  => $generationGroups,
+            'totalCount'        => count($filtered),
+            'totalAll'          => $totalPersons,
+            'totalLiving'       => $totalLiving,
+            'totalDeceased'     => $totalDeceased,
+            'clans'             => $clans,
+            'filters'           => [
                 'q'        => $q,
                 'clan_id'  => $clanId,
                 'gender'   => $gender,
                 'status'   => $status,
                 'sort'     => $sort,
             ],
-            'canEdit'       => Auth::canEdit(),
-            'isAdmin'       => Auth::isAdmin(),
+            'canEdit'           => Auth::canEdit(),
+            'isAdmin'           => Auth::isAdmin(),
         ]);
     }
 
@@ -265,10 +349,13 @@ class PersonController
         // 6. Родство к текущему пользователю
         $kinshipDesc = $this->kinshipService->getKinshipDescription($userPersonId, $id);
 
-        // 7. Медиа (истории, аудиозаписи, фото)
+        // 7. Үш жұрт (Три родственных круга с семейными папками, TASK-007)
+        $ushZhurt = $this->kinshipService->getUshZhurtFamilies($id);
+
+        // 8. Медиа (истории, аудиозаписи, фото)
         $mediaList = $this->mediaService->getPersonMedia($id);
 
-        // 8. Аудит логи
+        // 9. Аудит логи
         $auditLogs = [];
         $aStmtTable = $db->query("SHOW TABLES LIKE 'audit_logs'");
         if ($aStmtTable->rowCount() > 0) {
@@ -287,6 +374,7 @@ class PersonController
             'children'     => $children,
             'siblings'     => $siblings,
             'kinship'      => $kinshipDesc,
+            'ushZhurt'     => $ushZhurt,
             'mediaList'    => $mediaList,
             'auditLogs'    => $auditLogs,
             'canEdit'      => Auth::canEdit(),

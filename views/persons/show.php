@@ -12,9 +12,9 @@ $isDeceased = !empty($person['is_deceased']);
 $isMale = ($person['gender'] === 'M');
 $initials = mb_substr((string)($person['first_name'] ?? ''), 0, 1) . mb_substr((string)($person['last_name'] ?? ''), 0, 1);
 
-// Полные даты
-$birthDisp = !empty($person['birth_date']) ? date('d.m.Y', strtotime($person['birth_date'])) : ($person['birth_year'] ?: ($lang === 'ru' ? 'не указан' : 'белгісіз'));
-$deathDisp = !empty($person['death_date']) ? date('d.m.Y', strtotime($person['death_date'])) : ($person['death_year'] ?: ($lang === 'ru' ? 'не указан' : 'белгісіз'));
+// Полные даты через единый форматтер
+$birthDisp = !empty($person['birth_date']) ? I18n::formatDate($person['birth_date']) : ($person['birth_year'] ? I18n::formatDate($person['birth_year']) : ($lang === 'ru' ? 'не указан' : 'белгісіз'));
+$deathDisp = !empty($person['death_date']) ? I18n::formatDate($person['death_date']) : ($person['death_year'] ? I18n::formatDate($person['death_year']) : ($lang === 'ru' ? 'не указан' : 'белгісіз'));
 
 require __DIR__ . '/../layout/master_start.php';
 ?>
@@ -27,8 +27,8 @@ require __DIR__ . '/../layout/master_start.php';
             <span><?= $lang === 'ru' ? 'Назад к списку людей' : 'Адамдар тізіміне оралу' ?></span>
         </a>
         <span style="color: #cbd5e1;">/</span>
-        <span style="font-size: 13.5px; color: #64748b; font-weight: 500;">
-            ID #<?= (int)$person['id'] ?>
+        <span style="font-size: 13.5px; color: #0f172a; font-weight: 700;">
+            <?= htmlspecialchars($fullName) ?>
         </span>
     </div>
 
@@ -217,13 +217,28 @@ require __DIR__ . '/../layout/master_start.php';
                 <?php endif; ?>
             </div>
 
-            <?php if (!empty($person['biography'])): ?>
+            <?php if (!empty($person['biography'])): 
+                $bioLines = explode("\n", trim((string)$person['biography']));
+                $isLong = mb_strlen((string)$person['biography']) > 160 || count($bioLines) > 3;
+            ?>
                 <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9;">
-                    <div style="color: #64748b; font-size: 11.5px; margin-bottom: 4px; font-weight: 600;">
-                        <?= htmlspecialchars(I18n::t('biography_title')) ?>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="color: #0f172a; font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                            <span>📜</span>
+                            <span><?= htmlspecialchars(I18n::t('biography_title')) ?></span>
+                        </div>
+                        <?php if ($isLong): ?>
+                            <button type="button" onclick="toggleBiographyCollapse()" style="background: none; border: none; color: #2563eb; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <span id="toggleBioLabel"><?= htmlspecialchars(I18n::t('btn_read_more')) ?></span>
+                                <span id="toggleBioArrow">▼</span>
+                            </button>
+                        <?php endif; ?>
                     </div>
-                    <div style="font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-line;">
-                        <?= htmlspecialchars($person['biography']) ?>
+                    <div id="biographyContainer" style="<?= $isLong ? 'max-height: 4.8em; overflow: hidden; position: relative;' : '' ?> font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-line; transition: max-height 0.3s ease;">
+                        <?= htmlspecialchars(trim((string)$person['biography'])) ?>
+                        <?php if ($isLong): ?>
+                            <div id="biographyFadeOverlay" style="position: absolute; bottom: 0; left: 0; right: 0; height: 28px; background: linear-gradient(transparent, #ffffff); pointer-events: none;"></div>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -422,6 +437,171 @@ require __DIR__ . '/../layout/master_start.php';
             <?php endif; ?>
         </div>
 
+        <!-- Блок 6: Үш жұрт (Три родственных круга с семейными папками, TASK-007) -->
+        <?php if (!empty($ushZhurt)): 
+            $oz = $ushZhurt['oz_zhurt'];
+            $nagashy = $ushZhurt['nagashy_zhurt'];
+            $kaiyn = $ushZhurt['kaiyn_zhurt'];
+        ?>
+            <div style="background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                        <span>🌳</span>
+                        <span><?= htmlspecialchars(I18n::t('ush_zhurt_title')) ?></span>
+                    </h3>
+
+                    <!-- Переключатель табов 3 жұрт -->
+                    <div style="display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 10px; flex-wrap: wrap;">
+                        <button type="button" onclick="switchZhurtTab('oz')" id="tabBtn_oz" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12.5px; font-weight: 700; cursor: pointer; background: #1b3b6f; color: #ffffff;">
+                            <?= $oz['icon'] ?> <?= $lang === 'ru' ? $oz['title_ru'] : $oz['title_kk'] ?> (<?= $oz['total_count'] ?>)
+                        </button>
+                        <button type="button" onclick="switchZhurtTab('nagashy')" id="tabBtn_nagashy" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; background: transparent; color: #475569;">
+                            <?= $nagashy['icon'] ?> <?= $lang === 'ru' ? $nagashy['title_ru'] : $nagashy['title_kk'] ?> (<?= $nagashy['total_count'] ?>)
+                        </button>
+                        <button type="button" onclick="switchZhurtTab('kaiyn')" id="tabBtn_kaiyn" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; background: transparent; color: #475569;">
+                            <?= $kaiyn['icon'] ?> <?= $lang === 'ru' ? $kaiyn['title_ru'] : $kaiyn['title_kk'] ?> (<?= $kaiyn['total_count'] ?>)
+                        </button>
+                    </div>
+                </div>
+
+                <?php
+                $renderZhurtPane = function(array $zhurtData, string $paneId, bool $isActive) use ($lang) {
+                    ?>
+                    <div id="zhurtPane_<?= $paneId ?>" style="display: <?= $isActive ? 'block' : 'none' ?>;">
+                        <?php if (empty($zhurtData['families']) && empty($zhurtData['standalone'])): ?>
+                            <div style="padding: 24px; text-align: center; color: #94a3b8; font-size: 13px;">
+                                <?= $lang === 'ru' ? 'Сведения о родне в этом круге пока не внесены' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген' ?>
+                            </div>
+                        <?php else: ?>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <?php foreach ($zhurtData['families'] as $fam): 
+                                    $h = $fam['husband'];
+                                    $w = $fam['wife'];
+                                    $hName = $h ? trim(($h['last_name'] ?? '') . ' ' . $h['first_name']) : 'Белгісіз';
+                                    $wName = $w ? trim(($w['last_name'] ?? '') . ' ' . $w['first_name']) : 'Белгісіз';
+                                    $childCount = count($fam['children']);
+                                ?>
+                                    <details open style="border: 1.5px solid #e2e8f0; border-radius: 10px; background: #ffffff; overflow: hidden;">
+                                        <summary style="background: #f8fafc; padding: 12px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #f1f5f9; outline: none;">
+                                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                                <span>📁</span>
+                                                <span>
+                                                    <?php if ($h): ?>
+                                                        <a href="/person/<?= (int)$h['id'] ?>" style="color: #1e3a8a; text-decoration: none;"><?= htmlspecialchars($hName) ?></a>
+                                                        <?php if (!empty($fam['husband_kinship']['term_kk'])): ?>
+                                                            <span style="font-size: 11px; font-weight: 600; color: #2563eb; background: #eff6ff; padding: 2px 7px; border-radius: 10px; margin-left: 4px;">
+                                                                <?= htmlspecialchars(I18n::formatKinship($fam['husband_kinship']['term_kk'], $fam['husband_kinship']['term_ru'] ?? null)) ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <span>Белгісіз</span>
+                                                    <?php endif; ?>
+                                                    <span style="color: #cbd5e1; margin: 0 4px;">+</span>
+                                                    <?php if ($w): ?>
+                                                        <a href="/person/<?= (int)$w['id'] ?>" style="color: #831843; text-decoration: none;"><?= htmlspecialchars($wName) ?></a>
+                                                        <?php if (!empty($fam['wife_kinship']['term_kk'])): ?>
+                                                            <span style="font-size: 11px; font-weight: 600; color: #db2777; background: #fdf2f8; padding: 2px 7px; border-radius: 10px; margin-left: 4px;">
+                                                                <?= htmlspecialchars(I18n::formatKinship($fam['wife_kinship']['term_kk'], $fam['wife_kinship']['term_ru'] ?? null)) ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <span>Белгісіз</span>
+                                                    <?php endif; ?>
+                                                </span>
+                                            </div>
+                                            <span style="background: #e2e8f0; color: #475569; font-size: 11.5px; padding: 3px 9px; border-radius: 12px; font-weight: 600;">
+                                                <?= $childCount ?> <?= $lang === 'ru' ? 'детей' : 'бала' ?>
+                                            </span>
+                                        </summary>
+                                        <div style="padding: 12px 16px 14px 28px; background: #ffffff;">
+                                            <?php if ($childCount === 0): ?>
+                                                <div style="font-size: 12px; color: #94a3b8; font-style: italic;">
+                                                    <?= $lang === 'ru' ? 'Дети не зарегистрированы' : 'Балалары тіркелмеген' ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <?php foreach ($fam['children'] as $chItem): 
+                                                        $ch = $chItem['person'];
+                                                        $chKin = $chItem['kinship'];
+                                                        $chIsMale = ($ch['gender'] === 'M');
+                                                        $chName = trim(($ch['last_name'] ?? '') . ' ' . $ch['first_name']);
+                                                    ?>
+                                                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: #f8fafc; border-radius: 6px; font-size: 13px; border-left: 3px solid <?= $chIsMale ? '#2563eb' : '#db2777' ?>;">
+                                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                                <span><?= $chIsMale ? '👦' : '👧' ?></span>
+                                                                <a href="/person/<?= (int)$ch['id'] ?>" style="color: #0f172a; text-decoration: none; font-weight: 600;">
+                                                                    <?= htmlspecialchars($chName) ?>
+                                                                </a>
+                                                                <?php if (!empty($ch['birth_year'])): ?>
+                                                                    <span style="font-size: 11.5px; color: #64748b;">(<?= $ch['birth_year'] ?>)</span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                            <?php if (!empty($chKin['term_kk'])): ?>
+                                                                <span style="font-size: 11.5px; font-weight: 700; color: #1e3a8a; background: #e0f2fe; padding: 2px 8px; border-radius: 10px;">
+                                                                    <?= htmlspecialchars(I18n::formatKinship($chKin['term_kk'], $chKin['term_ru'] ?? null)) ?>
+                                                                </span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </details>
+                                <?php endforeach; ?>
+
+                                <?php if (!empty($zhurtData['standalone'])): ?>
+                                    <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                                        <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px;">
+                                            <?= $lang === 'ru' ? 'Другие родственники этого круга:' : 'Осы жұрттағы басқа туыстар:' ?>
+                                        </div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                            <?php foreach ($zhurtData['standalone'] as $stItem): 
+                                                $stP = $stItem['person'];
+                                                $stKin = $stItem['kinship'];
+                                            ?>
+                                                <a href="/person/<?= (int)$stP['id'] ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; font-size: 12px; color: #1e3a8a;">
+                                                    <strong><?= htmlspecialchars(trim(($stP['last_name'] ?? '') . ' ' . $stP['first_name'])) ?></strong>
+                                                    <?php if (!empty($stKin['term_kk'])): ?>
+                                                        <span style="color: #64748b; font-size: 11px;">(<?= htmlspecialchars(I18n::formatKinship($stKin['term_kk'], $stKin['term_ru'] ?? null)) ?>)</span>
+                                                    <?php endif; ?>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php
+                };
+
+                $renderZhurtPane($oz, 'oz', true);
+                $renderZhurtPane($nagashy, 'nagashy', false);
+                $renderZhurtPane($kaiyn, 'kaiyn', false);
+                ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Блок 7: Служебное / Технические данные (Только для администратора, в свёрнутом виде) -->
+        <?php if ($isAdmin): ?>
+            <div style="margin-top: 10px;">
+                <details style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer;">
+                        ⚙️ <?= htmlspecialchars(I18n::t('technical_details')) ?> (ID, GEDCOM, Audit)
+                    </summary>
+                    <div style="margin-top: 10px; font-size: 12px; color: #475569; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+                        <div>ID: <strong><?= (int)$person['id'] ?></strong></div>
+                        <div>GEDCOM: <strong><?= htmlspecialchars(str_replace('@', '', (string)($person['gedcom_id'] ?? '—'))) ?></strong></div>
+                        <div>Clan ID: <strong><?= (int)($person['clan_id'] ?? 0) ?></strong></div>
+                        <div>Father ID: <strong><?= (int)($person['father_id'] ?? 0) ?></strong></div>
+                        <div>Mother ID: <strong><?= (int)($person['mother_id'] ?? 0) ?></strong></div>
+                        <div>Created: <strong><?= htmlspecialchars((string)($person['created_at'] ?? '—')) ?></strong></div>
+                        <div>Updated: <strong><?= htmlspecialchars((string)($person['updated_at'] ?? '—')) ?></strong></div>
+                    </div>
+                </details>
+            </div>
+        <?php endif; ?>
+
     </div>
 </div>
 
@@ -549,6 +729,40 @@ require __DIR__ . '/../layout/master_start.php';
             msg.style.color = '#dc2626';
             msg.innerText = 'Сұраныс қатесі: ' + err.message;
         }
+    }
+
+    function toggleBiographyCollapse() {
+        const container = document.getElementById('biographyContainer');
+        const overlay = document.getElementById('biographyFadeOverlay');
+        const label = document.getElementById('toggleBioLabel');
+        const arrow = document.getElementById('toggleBioArrow');
+        if (!container) return;
+        const isCollapsed = container.style.maxHeight !== 'none';
+        if (isCollapsed) {
+            container.style.maxHeight = 'none';
+            if (overlay) overlay.style.display = 'none';
+            if (label) label.innerText = '<?= htmlspecialchars(I18n::t('btn_collapse')) ?>';
+            if (arrow) arrow.innerText = '▲';
+        } else {
+            container.style.maxHeight = '4.8em';
+            if (overlay) overlay.style.display = 'block';
+            if (label) label.innerText = '<?= htmlspecialchars(I18n::t('btn_read_more')) ?>';
+            if (arrow) arrow.innerText = '▼';
+        }
+    }
+
+    function switchZhurtTab(tab) {
+        const tabs = ['oz', 'nagashy', 'kaiyn'];
+        tabs.forEach(t => {
+            const pane = document.getElementById('zhurtPane_' + t);
+            const btn = document.getElementById('tabBtn_' + t);
+            if (pane) pane.style.display = (t === tab) ? 'block' : 'none';
+            if (btn) {
+                btn.style.background = (t === tab) ? '#1b3b6f' : 'transparent';
+                btn.style.color = (t === tab) ? '#ffffff' : '#475569';
+                btn.style.fontWeight = (t === tab) ? '700' : '600';
+            }
+        });
     }
 </script>
 

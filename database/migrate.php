@@ -81,10 +81,12 @@ try {
         logMsg("[SKIP] Базовая схема ({$schemaKey}) уже была применена ранее.", $logFile);
     }
 
-    // 3. Каталог дополнительных миграций (database/migrations/*.sql)
+    // 3. Каталог дополнительных миграций (database/migrations/*.sql, *.php)
     $migrationsDir = __DIR__ . '/migrations';
     if (is_dir($migrationsDir)) {
-        $migrationFiles = glob($migrationsDir . '/*.sql');
+        $sqlFiles = glob($migrationsDir . '/*.sql') ?: [];
+        $phpFiles = glob($migrationsDir . '/*.php') ?: [];
+        $migrationFiles = array_merge($sqlFiles, $phpFiles);
         sort($migrationFiles, SORT_STRING); // Сортировка по имени файла по порядку
 
         foreach ($migrationFiles as $filePath) {
@@ -96,13 +98,19 @@ try {
             }
 
             logMsg("--> Выполнение миграции: {$filename}...", $logFile);
-            $sql = file_get_contents($filePath);
-            if (trim($sql) === '') {
-                logMsg("[WARN] Файл {$filename} пуст, пропускаем.", $logFile);
-                continue;
-            }
 
-            $db->exec($sql);
+            if (str_ends_with($filename, '.php')) {
+                // Выполнение PHP миграции
+                require $filePath;
+            } else {
+                // Выполнение SQL миграции
+                $sql = file_get_contents($filePath);
+                if (trim($sql) === '') {
+                    logMsg("[WARN] Файл {$filename} пуст, пропускаем.", $logFile);
+                    continue;
+                }
+                $db->exec($sql);
+            }
 
             $stmtIns = $db->prepare("INSERT INTO `schema_migrations` (`migration`, `batch`, `applied_at`) VALUES (?, ?, NOW())");
             $stmtIns->execute([$filename, $currentBatch]);

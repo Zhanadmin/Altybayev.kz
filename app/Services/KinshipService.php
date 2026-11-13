@@ -996,4 +996,183 @@ class KinshipService
         }
         return null;
     }
+
+    /**
+     * Қазақтың «Үш жұрт» жүйесін отбасылық бумалармен («папкалармен») құру (TASK-007):
+     * 1. «Өз жұрты» (ер адамдар үшін) немесе «Төркіні» (әйелдер үшін)
+     * 2. «Нағашы жұрты»
+     * 3. «Қайын жұрты» (ер адамдар үшін) немесе «Күйеуінің жағы» (әйелдер үшін)
+     * Жұбайы мен өз балалары жұрттан бөлек, дербес шығарылады.
+     *
+     * @param int $baseId Бастапқы/таңдалған адамның ID-і
+     * @param array<int, array> $personsById Барлық адамдар
+     * @param array<int, array> $marriages Барлық некелер
+     * @return array
+     */
+    public function getUshZhurtFamilies(int $baseId, array $personsById = [], array $marriages = []): array
+    {
+        if ($baseId <= 0) {
+            return [];
+        }
+
+        if (empty($personsById)) {
+            $this->loadDatasetIfAvailable();
+            $personsById = $this->cachedPersons ?? [];
+            $marriages = $this->cachedMarriages ?? [];
+        }
+
+        $base = $personsById[$baseId] ?? null;
+        if (!$base) {
+            return [];
+        }
+
+        $isFemale = (($base['gender'] ?? 'M') === 'F');
+        $allKinships = $this->calculateAllKinships($baseId, $personsById, $marriages);
+
+        $ozPeople = [];
+        $nagashyPeople = [];
+        $kaiynPeople = [];
+        $ownSpouses = [];
+        $ownChildren = [];
+
+        // Карта детей по парам
+        $childrenByCouple = [];
+        foreach ($personsById as $p) {
+            $f = (int)($p['father_id'] ?? 0);
+            $m = (int)($p['mother_id'] ?? 0);
+            if ($f || $m) {
+                $key = "{$f}_{$m}";
+                $childrenByCouple[$key][] = $p['id'];
+            }
+        }
+
+        foreach ($allKinships as $targetId => $kin) {
+            if ($targetId === $baseId) continue;
+            $code = $kin['code'] ?? '';
+            $zhurt = $kin['zhurt'] ?? '';
+
+            if ($code === 'wife' || $code === 'husband') {
+                $ownSpouses[] = $targetId;
+                continue;
+            }
+            if ($code === 'son' || $code === 'daughter' || $code === 'child') {
+                $ownChildren[] = $targetId;
+                continue;
+            }
+
+            if (str_contains($zhurt, 'Нағашы')) {
+                $nagashyPeople[$targetId] = true;
+            } elseif (str_contains($zhurt, 'Қайын') || str_contains($zhurt, 'Күйеу') || str_contains($zhurt, 'Құда')) {
+                $kaiynPeople[$targetId] = true;
+            } elseif (str_contains($zhurt, 'Өз') || str_contains($zhurt, 'Төркін')) {
+                $ozPeople[$targetId] = true;
+            }
+        }
+
+        // Построитель семейных папок
+        $buildFamilies = function(array $personIdSet) use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId) {
+            $families = [];
+            $handledChildren = [];
+            $handledSpouses = [];
+
+            foreach ($marriages as $m) {
+                $hId = (int)($m['husband_id'] ?? 0);
+                $wId = (int)($m['wife_id'] ?? 0);
+
+                if (isset($personIdSet[$hId]) || isset($personIdSet[$wId])) {
+                    $h = $personsById[$hId] ?? null;
+                    $w = $personsById[$wId] ?? null;
+
+                    $coupleKey = "{$hId}_{$wId}";
+                    $cIds = $childrenByCouple[$coupleKey] ?? [];
+
+                    $childrenList = [];
+                    foreach ($cIds as $cId) {
+                        $cPerson = $personsById[$cId] ?? null;
+                        if ($cPerson) {
+                            $childrenList[] = [
+                                'person' => $cPerson,
+                                'kinship' => $allKinships[$cId] ?? null,
+                                'seniority' => (int)($cPerson['birth_year'] ?? 9999),
+                            ];
+                            $handledChildren[$cId] = true;
+                        }
+                    }
+
+                    // Сортировка детей внутри семьи по старшинству (по году рождения өсу ретімен)
+                    usort($childrenList, fn($a, $b) => $a['seniority'] <=> $b['seniority']);
+
+                    // Старшинство семьи по возрасту мужа (если нет — жены, затем дата брака)
+                    $hSeniority = (int)($h['birth_year'] ?? 0);
+                    $wSeniority = (int)($w['birth_year'] ?? 0);
+                    $seniority = $hSeniority ?: ($wSeniority ?: 9999);
+
+                    $families[] = [
+                        'marriage' => $m,
+                        'husband' => $h,
+                        'wife' => $w,
+                        'husband_kinship' => $hId ? ($allKinships[$hId] ?? null) : null,
+                        'wife_kinship' => $wId ? ($allKinships[$wId] ?? null) : null,
+                        'seniority' => $seniority,
+                        'children' => $childrenList,
+                    ];
+
+                    if ($hId) $handledSpouses[$hId] = true;
+                    if ($wId) $handledSpouses[$wId] = true;
+                }
+            }
+
+            // Сортировка семей внутри жұрт строго по старшинству мужа
+            usort($families, fn($a, $b) => $a['seniority'] <=> $b['seniority']);
+
+            // Отдельные родственники (бойдақ/ата-анасыз тұлғалар)
+            $standalone = [];
+            foreach (array_keys($personIdSet) as $pId) {
+                if (!isset($handledSpouses[$pId]) && !isset($handledChildren[$pId])) {
+                    $p = $personsById[$pId] ?? null;
+                    if ($p) {
+                        $standalone[] = [
+                            'person' => $p,
+                            'kinship' => $allKinships[$pId] ?? null,
+                            'seniority' => (int)($p['birth_year'] ?? 9999),
+                        ];
+                    }
+                }
+            }
+            usort($standalone, fn($a, $b) => $a['seniority'] <=> $b['seniority']);
+
+            return [
+                'families' => $families,
+                'standalone' => $standalone,
+                'total_count' => count($personIdSet),
+            ];
+        };
+
+        return [
+            'base_person' => $base,
+            'is_female' => $isFemale,
+            'oz_zhurt' => array_merge([
+                'title_kk' => $isFemale ? 'Төркіні' : 'Өз жұрты',
+                'title_ru' => $isFemale ? 'Төркіні (Семья по отцу)' : 'Өз жұрты (Родня по отцу)',
+                'icon' => '🛡️',
+            ], $buildFamilies($ozPeople)),
+
+            'nagashy_zhurt' => array_merge([
+                'title_kk' => 'Нағашы жұрты',
+                'title_ru' => 'Нағашы жұрты (Родня по матери)',
+                'icon' => '💎',
+            ], $buildFamilies($nagashyPeople)),
+
+            'kaiyn_zhurt' => array_merge([
+                'title_kk' => $isFemale ? 'Күйеуінің жағы' : 'Қайын жұрты',
+                'title_ru' => $isFemale ? 'Күйеуінің жағы (Семья мужа)' : 'Қайын жұрты (Родня жены)',
+                'icon' => '🤝',
+            ], $buildFamilies($kaiynPeople)),
+
+            'own_family' => [
+                'spouses' => array_values(array_filter(array_map(fn($id) => $personsById[$id] ?? null, $ownSpouses))),
+                'children' => array_values(array_filter(array_map(fn($id) => $personsById[$id] ?? null, $ownChildren))),
+            ]
+        ];
+    }
 }

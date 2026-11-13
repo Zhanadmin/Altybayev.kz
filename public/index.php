@@ -48,6 +48,7 @@ $router->post('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetM
 $router->get('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);
 $router->get('/api/kinship-all', 'App\Controllers\TreeController@apiKinshipAll', ['auth']);
+$router->get('/api/person/ush-zhurt', 'App\Controllers\TreeController@apiUshZhurt', ['auth']);
 $router->get('/api/tree/search', 'App\Controllers\TreeController@apiSearch', ['auth']);
 
 // 5. Жеті ата, естеліктер мен аудио, памятные даты, печать шежіре (TASK-004)

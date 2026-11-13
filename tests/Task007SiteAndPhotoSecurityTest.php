@@ -251,6 +251,47 @@ $stmtAudit = $db->query("SELECT COUNT(*) FROM audit_logs");
 $countAudit = (int)$stmtAudit->fetchColumn();
 assertCheck($countAudit > 0, "В таблице audit_logs присутствуют записи аудита (найдено: {$countAudit})");
 
+// -------------------------------------------------------------
+// 7. ТЕСТИРОВАНИЕ ПАТРИЛИНЕЙНОГО ПРАВИЛА РУ И ЧИСТОТЫ БИОГРАФИЙ
+// -------------------------------------------------------------
+echo "\n7. Тестирование патрилинейного правила ру и чистоты биографий:\n";
+
+// Асила Кубенова (ID 24) — келін, не должна быть Керей
+$stmtAsila = $db->prepare("SELECT * FROM persons WHERE id = 24");
+$stmtAsila->execute();
+$asila = $stmtAsila->fetch(PDO::FETCH_ASSOC);
+assertCheck($asila !== false, "Асила Кубенова найдена в БД (ID 24)");
+assertCheck(empty($asila['clan_id']), "У Асилы clan_id строго NULL (не Керей)");
+assertCheck($asila['clan_ru'] === 'белгісіз', "У Асилы clan_ru строго 'белгісіз'");
+
+// Жандос (ID 6) — потомок Керей по отцу
+$stmtZhandos = $db->prepare("SELECT * FROM persons WHERE id = 6");
+$stmtZhandos->execute();
+$zhandos = $stmtZhandos->fetch(PDO::FETCH_ASSOC);
+assertCheck($zhandos['clan_ru'] === 'Керей', "У Жандоса (ID 6) род 'Керей'");
+
+// Биография отца Габита (ID 1)
+$stmtGabit = $db->prepare("SELECT biography FROM persons WHERE id = 1");
+$stmtGabit->execute();
+$gabitBio = $stmtGabit->fetchColumn();
+assertCheck(strpos($gabitBio, '<') === false, "В биографии отца Габита полностью отсутствуют HTML-теги");
+assertCheck(strpos($gabitBio, 'CONC') === false && strpos($gabitBio, 'CONT') === false, "В биографии отца отсутствуют GEDCOM-теги (CONC/CONT)");
+assertCheck(mb_strlen($gabitBio) > 5000, "Текст биографии отца сохранен в полном объеме (>5 000 символов, факт: " . mb_strlen($gabitBio) . ")");
+
+// -------------------------------------------------------------
+// 8. ТЕСТИРОВАНИЕ ФОРМАТИРОВАНИЯ ДАТ И СЕМЕЙ-ПАПОК ҮШ ЖҰРТ
+// -------------------------------------------------------------
+echo "\n8. Тестирование форматирования дат и семей Үш жұрт:\n";
+
+assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'kk') === '1985 жылғы 13 қараша', "Казахский формат даты: '1985 жылғы 13 қараша'");
+assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'ru') === '13 ноября 1985', "Русский формат даты: '13 ноября 1985'");
+
+$kinService = new \App\Services\KinshipService();
+$zhurtRes = $kinService->getUshZhurtFamilies(6);
+assertCheck(isset($zhurtRes['oz_zhurt']) && isset($zhurtRes['nagashy_zhurt']) && isset($zhurtRes['kaiyn_zhurt']), "Үш жұрт содержит группы oz_zhurt, nagashy_zhurt, kaiyn_zhurt");
+assertCheck(!empty($zhurtRes['oz_zhurt']['families']), "Өз жұрты содержит семьи-папки");
+assertCheck(isset($zhurtRes['oz_zhurt']['families'][0]['children']), "Семья содержит отсортированных детей");
+
 // Очистка тестовой папки
 array_map('unlink', glob("{$testUploadDir}/*"));
 rmdir($testUploadDir);

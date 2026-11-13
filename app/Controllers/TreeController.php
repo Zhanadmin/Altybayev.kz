@@ -433,6 +433,10 @@ class TreeController
             $aStmt->execute([$id]);
             $auditLogs = $aStmt->fetchAll(PDO::FETCH_ASSOC);
 
+            // Флаг редактирования рода (только для родоначальников без отца в БД)
+            $person['can_edit_clan'] = empty($person['father_id']);
+            $person['clan_hint'] = !empty($person['father_id']) ? 'әкесінен / по отцу' : '';
+
             Response::json([
                 'status' => 'success',
                 'person' => $person,
@@ -515,9 +519,26 @@ class TreeController
                 $deathPlace = null;
             }
 
-            $clanRu = trim((string)$request->get('clan_ru', '')) ?: null;
-            $clanId = (int)$request->get('clan_id', 0) ?: null;
-            $biography = trim((string)$request->get('biography', '')) ?: null;
+            // Наследование рода (TASK-007):
+            // Род задается только у родоначальника/отца без отца в БД.
+            // У детей род строго наследуется от отца с подсказкой «әкесінен / по отцу».
+            $clanChanged = false;
+            if (!empty($oldPerson['father_id'])) {
+                $fStmt = $db->prepare("SELECT clan_id, clan_ru FROM persons WHERE id = ?");
+                $fStmt->execute([$oldPerson['father_id']]);
+                $fRow = $fStmt->fetch(PDO::FETCH_ASSOC);
+                $clanId = $fRow['clan_id'] ?? null;
+                $clanRu = $fRow['clan_ru'] ?? 'белгісіз';
+            } else {
+                $clanRu = trim((string)$request->get('clan_ru', '')) ?: null;
+                $clanId = (int)$request->get('clan_id', 0) ?: null;
+                if ($clanRu !== ($oldPerson['clan_ru'] ?? null) || $clanId !== (int)($oldPerson['clan_id'] ?? 0)) {
+                    $clanChanged = true;
+                }
+            }
+
+            $rawBiography = trim((string)$request->get('biography', '')) ?: null;
+            $biography = $rawBiography ? $this->cleanBiography($rawBiography) : null;
 
             $updateStmt = $db->prepare("
                 UPDATE `persons` SET
@@ -558,6 +579,38 @@ class TreeController
                 $biography,
                 $id
             ]);
+
+            // Каскадное обновление рода у потомков по мужской линии, если изменился род у отца-родоначальника
+            if ($clanChanged) {
+                $cascStmt = $db->prepare("
+                    UPDATE `persons` p
+                    JOIN (
+                        WITH RECURSIVE patrilineal AS (
+                            SELECT `id`, `gender` FROM `persons` WHERE `id` = ?
+                            UNION ALL
+                            SELECT `child`.`id`, `child`.`gender` 
+                            FROM `persons` `child`
+                            INNER JOIN `patrilineal` `pt` ON `child`.`father_id` = `pt`.`id`
+                            WHERE `pt`.`gender` = 'M'
+                        )
+                        SELECT `id` FROM `patrilineal` WHERE `id` != ?
+                    ) `k` ON `p`.`id` = `k`.`id`
+                    SET `p`.`clan_id` = ?, 
+                        `p`.`clan_ru` = ?
+                ");
+                $cascStmt->execute([$id, $id, $clanId, $clanRu]);
+
+                $user = Auth::user();
+                $this->recordAuditLog(
+                    'UPDATE',
+                    'persons',
+                    $id,
+                    "Род предка {$firstName} {$lastName} изменен на {$clanRu}, каскадно пересчитан у всех потомков по мужской линии",
+                    ['clan_ru' => $oldPerson['clan_ru'], 'clan_id' => $oldPerson['clan_id']],
+                    ['clan_ru' => $clanRu, 'clan_id' => $clanId],
+                    $user
+                );
+            }
 
             // Получаем новые значения
             $stmtNew = $db->prepare("SELECT * FROM `persons` WHERE `id` = ?");
@@ -936,6 +989,30 @@ class TreeController
     }
 
     /**
+     * API: Получить Үш жұрт (Три родственных круга) с семейными папками для персоны
+     */
+    public function apiUshZhurt(Request $request): void
+    {
+        $id = (int)$request->get('id', 0);
+        if (!$id) {
+            $user = Auth::user();
+            $id = !empty($user['person_id']) ? (int)$user['person_id'] : 6;
+        }
+
+        $dataset = $this->getDataset();
+        $persons = $dataset['persons'];
+        $marriages = $dataset['marriages'];
+
+        $ushZhurt = $this->kinshipService->getUshZhurtFamilies($id, $persons, $marriages);
+
+        Response::json([
+            'status' => 'success',
+            'base_id' => $id,
+            'ush_zhurt' => $ushZhurt,
+        ]);
+    }
+
+    /**
      * API: Расчет степени родства между двумя персонами
      */
     public function apiKinship(Request $request): void
@@ -1094,5 +1171,28 @@ class TreeController
         $ts = strtotime($raw);
         if ($ts !== false) return date('Y-m-d', $ts);
         return null;
+    }
+
+    /**
+     * Очистка текста биографии от HTML-мусора и служебных кодов GEDCOM
+     */
+    protected function cleanBiography(string $text): string
+    {
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/^[0-9]+\s+CONC\s+/m', '', $text);
+        $text = preg_replace('/^[0-9]+\s+CONT\s+/m', "\n", $text);
+        $text = preg_replace('/\bCONC\s+/i', '', $text);
+        $text = preg_replace('/\bCONT\s+/i', "\n", $text);
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+        $text = preg_replace('/<\/p>/i', "\n\n", $text);
+        $text = preg_replace('/<\/div>/i', "\n\n", $text);
+        $text = preg_replace('/<\/li>/i', "\n", $text);
+        $text = preg_replace('/<li[^>]*>/i', "• ", $text);
+        $text = strip_tags($text);
+        $text = preg_replace('/@[A-Z0-9_]+@/', '', $text);
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $text = preg_replace("/[ \t]+/", " ", $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", $text);
+        return trim($text);
     }
 }

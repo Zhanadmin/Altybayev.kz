@@ -2003,17 +2003,17 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             <!-- Батырмалар -->
             <button class="btn-tool" onclick="flyToSelf()" title="Өз карточкаңызға бару">
                 <span>🎯</span>
-                <span data-i18n="btn_you_are_here">Сіз осындасыз</span>
+                <span data-i18n="lbl_you_are_here">Сіз осындасыз</span>
             </button>
 
             <button class="btn-tool" onclick="openArtModal()" title="Шежіре-Орман арт-тұжырымдамасы">
                 <span>🎨</span>
-                <span data-i18n="btn_art_concept">Арт-эскиз</span>
+                <span data-i18n="lbl_art_concept">Арт-эскиз</span>
             </button>
 
             <button class="btn-tool" onclick="openKinshipDictionaryModal()" title="Қазақтың туыстық атаулары">
                 <span>📖</span>
-                <span data-i18n="btn_kinship_dict">Сөздік</span>
+                <span data-i18n="lbl_kinship_dict">Сөздік</span>
             </button>
 
             <!-- Жеті ата тексеру және плакат басып шығару (TASK-004) -->
@@ -2211,20 +2211,24 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
                 <button type="button" class="btn-profile-action" onclick="viewInEditingMode()" style="background:linear-gradient(135deg, #15803d, #166534); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(22,101,52,0.3);">
+                    <?php /* btn_view_in_tree */ ?>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    <span data-i18n="btn_view_in_tree">Древода көрсету («Өңдеу» режимі)</span>
+                    <span data-i18n="lbl_view_in_tree">Древода көрсету («Өңдеу» режимі)</span>
                 </button>
                 <button type="button" class="btn-profile-action" onclick="setFocalFromProfile()" style="background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(217,119,6,0.3);">
-                    <span>🎯</span> <span data-i18n="btn_focus_here">Осы адамға бағыттау / Фокус</span>
+                    <span>🎯</span> <span data-i18n="lbl_focus_here">Осы адамға бағыттау / Фокус</span>
                 </button>
                 <button type="button" class="btn-profile-action" id="btnSetMyPerson" onclick="setMyPersonFromProfile()" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(37,99,235,0.3);">
-                    <span>★</span> <span data-i18n="btn_set_me">Бұл мен (Өз аккаунтыма байлау)</span>
+                    <span>★</span> <span data-i18n="lbl_set_me">Бұл мен (Өз аккаунтыма байлау)</span>
                 </button>
                 <button type="button" class="btn-profile-action" onclick="openZhetiAtaTreeModal(selectedPersonId)" style="background:linear-gradient(135deg, #1e3a8a, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(30,58,138,0.3);">
                     <span>📜</span> <span>Жеті атасын көру / тексеру</span>
                 </button>
+                <button type="button" class="btn-profile-action" onclick="openUshZhurtModal(selectedPersonId)" style="background:linear-gradient(135deg, #0f766e, #115e59); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(15,118,110,0.3);">
+                    <span>🌳</span> <span>Үш жұртын көру / Три журта</span>
+                </button>
                 <button type="button" class="btn-modal-submit" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#f8fafc;" onclick="openAddModal('child', selectedPersonId)">
-                    + <span data-i18n="btn_add_child">Бала қосу</span>
+                    + <span data-i18n="lbl_add_child">Бала қосу</span>
                 </button>
             </div>
 
@@ -2293,6 +2297,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         <div class="form-group">
                             <label>Руы (Шежіре желісі)</label>
                             <input type="text" class="form-input" id="editClanRu" placeholder="Мысалы: Керей, Жағалбайлы, Қоңырат...">
+                            <div id="editClanHint" style="font-size:11px; color:#94a3b8; margin-top:3px; font-style:italic;"></div>
                         </div>
                     </div>
 
@@ -2356,8 +2361,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         </button>
                     </div>
                     <div style="display:flex; gap:10px;">
-                        <button type="button" class="btn-modal-cancel" onclick="closeEditPersonModal()" data-i18n="btn_cancel">Болдырмау</button>
-                        <button type="submit" class="btn-modal-submit" data-i18n="btn_save">Сақтау</button>
+                        <button type="button" class="btn-modal-cancel" onclick="closeEditPersonModal()" data-i18n="lbl_cancel">Болдырмау</button>
+                        <button type="submit" class="btn-modal-submit" data-i18n="lbl_save">Сақтау</button>
                     </div>
                 </div>
             </form>
@@ -2409,12 +2414,39 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeMarriageModal()" data-i18n="btn_cancel">Болдырмау</button>
-                    <button type="submit" class="btn-modal-submit" data-i18n="btn_save">Сақтау</button>
+                    <button type="button" class="btn-modal-cancel" onclick="closeMarriageModal()" data-i18n="lbl_cancel">Болдырмау</button>
+                    <button type="submit" class="btn-modal-submit" data-i18n="lbl_save">Сақтау</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ: ҮШ ЖҰРТ (TASK-007) -->
+    <div class="modal-overlay" id="ushZhurtModal" style="display:none;">
+        <div class="modal-card" style="width:780px; max-width:95vw; background:#0f172a; border:1px solid #334155; border-radius:12px; color:#f8fafc; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #334155;">
+                <div>
+                    <h3 id="ushZhurtModalTitle" style="margin:0; font-size:18px; color:#fef08a;">Үш жұрт</h3>
+                    <div style="font-size:12px; color:#94a3b8; margin-top:2px;" id="ushZhurtModalSubtitle">—</div>
+                </div>
+                <button class="close-panel-btn" onclick="closeUshZhurtModal()" style="background:transparent; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body" style="max-height:70vh; overflow-y:auto; padding:20px;">
+                <div style="display:flex; gap:8px; border-bottom:1px solid #334155; padding-bottom:10px; margin-bottom:16px;" id="ushZhurtTabButtons">
+                    <button type="button" id="tabBtnOz" onclick="switchUshZhurtTab('oz')" style="flex:1; padding:9px 12px; border-radius:6px; font-weight:700; font-size:13px; background:#1e3a8a; color:#ffffff; border:none; cursor:pointer;">Өз жұрты</button>
+                    <button type="button" id="tabBtnNagashy" onclick="switchUshZhurtTab('nagashy')" style="flex:1; padding:9px 12px; border-radius:6px; font-weight:700; font-size:13px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:none; cursor:pointer;">Нағашы жұрты</button>
+                    <button type="button" id="tabBtnKaiyn" onclick="switchUshZhurtTab('kaiyn')" style="flex:1; padding:9px 12px; border-radius:6px; font-weight:700; font-size:13px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:none; cursor:pointer;">Қайын жұрты</button>
+                </div>
+                <div id="ushZhurtContentContainer" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="text-align:center; padding:24px; color:#94a3b8;">Жүктелуде...</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:12px 20px; border-top:1px solid #334155; display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-modal-cancel" onclick="closeUshZhurtModal()" style="padding:8px 16px; border-radius:6px; background:#1e293b; color:#cbd5e1; border:1px solid #475569; cursor:pointer;">Жабу / Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <!-- МОДАЛЬДЫ ТЕРЕЗЕ: АДАМ ҚОСУ (РЕЖИМ ӨҢДЕУ) -->
     <div class="modal-overlay" id="addPersonModal">
         <div class="modal-card">
@@ -2493,8 +2525,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeAddModal()" data-i18n="btn_cancel">Болдырмау</button>
-                    <button type="submit" class="btn-modal-submit" data-i18n="btn_save">Сақтау</button>
+                    <button type="button" class="btn-modal-cancel" onclick="closeAddModal()" data-i18n="lbl_cancel">Болдырмау</button>
+                    <button type="submit" class="btn-modal-submit" data-i18n="lbl_save">Сақтау</button>
                 </div>
             </form>
         </div>
@@ -2531,7 +2563,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-modal-submit" onclick="closeArtModal()" data-i18n="btn_close">Түсінікті, жабу</button>
+                <button class="btn-modal-submit" onclick="closeArtModal()" data-i18n="lbl_close">Түсінікті, жабу</button>
             </div>
         </div>
     </div>
@@ -2563,7 +2595,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-modal-submit" onclick="closeKinshipDictionaryModal()" data-i18n="btn_close">Жабу</button>
+                <button class="btn-modal-submit" onclick="closeKinshipDictionaryModal()" data-i18n="lbl_close">Жабу</button>
             </div>
         </div>
     </div>
@@ -2726,13 +2758,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 mode_editing: "Өңдеу",
                 mode_forest: "3D Шежіре-Орман",
                 mode_list: "Тізім",
-                btn_view_in_tree: "Древода көрсету («Өңдеу» режимі)",
-                btn_edit_person: "Өңдеу",
+                lbl_view_in_tree: "Древода көрсету («Өңдеу» режимі)",
+                lbl_edit_person: "Өңдеу",
                 form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Адамды іздеу...",
-                btn_you_are_here: "Сіз осындасыз",
-                btn_art_concept: "Арт-эскиз",
-                btn_kinship_dict: "Сөздік",
+                lbl_you_are_here: "Сіз осындасыз",
+                lbl_art_concept: "Арт-эскиз",
+                lbl_kinship_dict: "Сөздік",
                 legend_male: "Ер азамат (бұтақ / карточка)",
                 legend_female: "Әйел адам / қыз (гүл)",
                 legend_deceased: "Ұшқан бабалар (алтын естелік реңкі)",
@@ -2742,10 +2774,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 profile_place: "Туған жері:",
                 profile_status: "Күйі:",
                 profile_biography_title: "ӨМІРБАЯНЫ МЕН ТАРИХЫ:",
-                btn_add_child: "Бала қосу",
-                btn_cancel: "Болдырмау",
-                btn_save: "Сақтау",
-                btn_close: "Жабу",
+                lbl_add_child: "Бала қосу",
+                lbl_cancel: "Болдырмау",
+                lbl_save: "Сақтау",
+                lbl_close: "Жабу",
                 form_first_name: "Аты *",
                 form_last_name: "Тегі (Фамилия)",
                 form_middle_name: "Әкесінің аты",
@@ -2783,8 +2815,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 selected_badge: "Мен",
                 empty_tree_title: "Деректер жоқ — GEDCOM импорттаңыз",
                 empty_tree_desc: "Деректер қорында әлі тұлғалар жоқ. MyHeritage жүйесінен GEDCOM файлын импорттаңыз.",
-                btn_import_gedcom: "📥 GEDCOM импорттау",
-                btn_return_real: "🌳 Негізгі базаға оралу",
+                lbl_import_gedcom: "📥 GEDCOM импорттау",
+                lbl_return_real: "🌳 Негізгі базаға оралу",
                 scope_focal: "Окрестность",
                 scope_full: "Барлық шежіре",
                 forest_submode_rodoslov: "Шежіре-Ағаш (Rodoslov)",
@@ -2792,8 +2824,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 rodoslov_paternal_trunk: "Әке жағы діңгегі: Керей руы",
                 rodoslov_maternal_trunk: "Аналар мен келіндер: Жағалбайлы, Қоңырат",
                 rodoslov_maiden_prefix: "қыз кезінде:",
-                btn_focus_here: "Осы адамға бағыттау / Фокус",
-                btn_set_me: "★ Бұл мен (Өз аккаунтыма байлау)",
+                lbl_focus_here: "Осы адамға бағыттау / Фокус",
+                lbl_set_me: "★ Бұл мен (Өз аккаунтыма байлау)",
             },
             ru: {
                 back_to_portal: "Главная",
@@ -2802,13 +2834,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 mode_editing: "Редактирование",
                 mode_forest: "3D Шежіре-Орман",
                 mode_list: "Список",
-                btn_view_in_tree: "Показать в древе («Редактирование»)",
-                btn_edit_person: "Редактировать",
+                lbl_view_in_tree: "Показать в древе («Редактирование»)",
+                lbl_edit_person: "Редактировать",
                 form_is_deceased_checkbox: "Ушёл из жизни",
                 search_placeholder: "Поиск родственника...",
-                btn_you_are_here: "Вы здесь",
-                btn_art_concept: "Арт-концепт",
-                btn_kinship_dict: "Словарь родства",
+                lbl_you_are_here: "Вы здесь",
+                lbl_art_concept: "Арт-концепт",
+                lbl_kinship_dict: "Словарь родства",
                 legend_male: "Мужчина (ветка / карточка)",
                 legend_female: "Женщина / дочь (цветок)",
                 legend_deceased: "Ушедшие предки (золотой тон памяти)",
@@ -2818,10 +2850,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 profile_place: "Место рождения:",
                 profile_status: "Статус:",
                 profile_biography_title: "БИОГРАФИЯ И ИСТОРИЯ:",
-                btn_add_child: "Добавить ребенка",
-                btn_cancel: "Отмена",
-                btn_save: "Сохранить",
-                btn_close: "Закрыть",
+                lbl_add_child: "Добавить ребенка",
+                lbl_cancel: "Отмена",
+                lbl_save: "Сохранить",
+                lbl_close: "Закрыть",
                 form_first_name: "Имя *",
                 form_last_name: "Фамилия",
                 form_middle_name: "Отчество",
@@ -2859,8 +2891,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 selected_badge: "Я",
                 empty_tree_title: "Данных нет — импортируйте GEDCOM",
                 empty_tree_desc: "В базе данных пока нет персон. Импортируйте файл GEDCOM из MyHeritage.",
-                btn_import_gedcom: "📥 Импортировать GEDCOM",
-                btn_return_real: "🌳 Вернуться к реальной базе",
+                lbl_import_gedcom: "📥 Импортировать GEDCOM",
+                lbl_return_real: "🌳 Вернуться к реальной базе",
                 scope_focal: "Окрестность",
                 scope_full: "Все древо (270)",
                 forest_submode_rodoslov: "Шежіре-Ағаш (Rodoslov)",
@@ -2868,8 +2900,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 rodoslov_paternal_trunk: "Отцовский ствол: род Керей",
                 rodoslov_maternal_trunk: "Материнский ствол: роды Жагалбайлы, Конырат",
                 rodoslov_maiden_prefix: "урожд.",
-                btn_focus_here: "Фокус на выбранном",
-                btn_set_me: "★ Это я (Привязать аккаунт)",
+                lbl_focus_here: "Фокус на выбранном",
+                lbl_set_me: "★ Это я (Привязать аккаунт)",
             }
         };
 
@@ -3097,7 +3129,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     <h2>${title}</h2>
                     <p>${desc}</p>
                     <div class="empty-actions">
-                        <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].btn_import_gedcom}</a>
+                        <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].lbl_import_gedcom}</a>
                     </div>
                 `;
                 container.appendChild(emptyCard);
@@ -3501,7 +3533,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             let focalId = selectedPersonId || userPersonId;
             let focal = focalId ? personMap.get(focalId) : null;
             if (!focal) {
-                focal = persons.find(p => p.id === 6 || p.gedcom_id === '@I6@' || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
+                focal = persons.find(p => p.id === 6 || p.id === 6 || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
             }
 
             let html = '';
@@ -3886,7 +3918,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             let focalId = selectedPersonId || userPersonId;
             let focal = focalId ? personMap.get(focalId) : null;
             if (!focal) {
-                focal = persons.find(p => p.gedcom_id === '@I6@' || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
+                focal = persons.find(p => p.id === 6 || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
             }
 
             // Жұбайын табу
@@ -4569,7 +4601,18 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 document.getElementById('editMiddleName').value = p.middle_name || '';
                 document.getElementById('editMaidenName').value = p.maiden_name || '';
                 document.getElementById('editGender').value = p.gender || 'M';
-                document.getElementById('editClanRu').value = p.clan_ru || '';
+                
+                const clanInput = document.getElementById('editClanRu');
+                const clanHint = document.getElementById('editClanHint');
+                clanInput.value = p.clan_ru || '';
+                const canEditClan = (data.can_edit_clan !== false) && (!p.father_id);
+                clanInput.readOnly = !canEditClan;
+                clanInput.style.backgroundColor = canEditClan ? '' : 'rgba(255,255,255,0.05)';
+                clanInput.style.cursor = canEditClan ? 'text' : 'not-allowed';
+                if (clanHint) {
+                    clanHint.textContent = canEditClan ? '' : (data.clan_hint || 'әкесінен / по отцу');
+                }
+
                 document.getElementById('editBirthYear').value = p.birth_year || '';
                 document.getElementById('editBirthDate').value = p.birth_date || '';
                 document.getElementById('editBirthPlace').value = p.birth_place || '';
@@ -4882,6 +4925,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     </td>
                     <td style="white-space:nowrap;">
                         <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id})">🎯 Фокус</button>
+                        <button type="button" class="btn-table-action" onclick="openUshZhurtModal(${p.id})" title="Үш жұрт">🌳 Жұрт</button>
                         ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id})">✏️</button>` : ''}
                     </td>
                 `;
@@ -4893,6 +4937,133 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         function focusPersonFromList(id) {
             switchMode('editing');
             flyToPerson(id);
+        }
+
+        // ========================================================
+        // ҮШ ЖҰРТ МОДАЛЬДЫ ТЕРЕЗЕСІ (TASK-007)
+        // ========================================================
+        let currentUshZhurtData = null;
+        let currentUshZhurtActiveTab = 'oz';
+
+        async function openUshZhurtModal(personId) {
+            const modal = document.getElementById('ushZhurtModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.getElementById('ushZhurtModalTitle').textContent = currentLang === 'ru' ? 'Три журта' : 'Үш жұрт';
+            document.getElementById('ushZhurtModalSubtitle').textContent = currentLang === 'ru' ? 'Загрузка...' : 'Жүктелуде...';
+            document.getElementById('ushZhurtContentContainer').innerHTML = `<div style="text-align:center; padding:24px; color:#94a3b8;">${currentLang === 'ru' ? 'Загрузка...' : 'Жүктелуде...'}</div>`;
+
+            try {
+                const res = await fetch(`/api/person/ush-zhurt?id=${personId}`);
+                const data = await res.json();
+                if (!data || !data.groups) {
+                    document.getElementById('ushZhurtContentContainer').innerHTML = `<div style="color:#ef4444; padding:20px; text-align:center;">${currentLang === 'ru' ? 'Данные не найдены' : 'Деректер табылмады'}</div>`;
+                    return;
+                }
+                currentUshZhurtData = data;
+                const p = data.person;
+                const pGender = p.gender === 'M' ? (currentLang === 'ru' ? 'мужчина' : 'ер') : (currentLang === 'ru' ? 'женщина' : 'әйел');
+                const pTitle = p ? `${p.full_name} (${pGender})` : '';
+                document.getElementById('ushZhurtModalSubtitle').textContent = pTitle;
+
+                if (data.groups.oz) document.getElementById('tabBtnOz').textContent = data.groups.oz.title;
+                if (data.groups.nagashy) document.getElementById('tabBtnNagashy').textContent = data.groups.nagashy.title;
+                if (data.groups.kaiyn) document.getElementById('tabBtnKaiyn').textContent = data.groups.kaiyn.title;
+
+                switchUshZhurtTab('oz');
+            } catch (e) {
+                document.getElementById('ushZhurtContentContainer').innerHTML = `<div style="color:#ef4444; padding:20px; text-align:center;">Қате: ${e.message}</div>`;
+            }
+        }
+
+        function closeUshZhurtModal() {
+            const modal = document.getElementById('ushZhurtModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function switchUshZhurtTab(tabKey) {
+            currentUshZhurtActiveTab = tabKey;
+            const tabs = ['oz', 'nagashy', 'kaiyn'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(t === 'oz' ? 'tabBtnOz' : (t === 'nagashy' ? 'tabBtnNagashy' : 'tabBtnKaiyn'));
+                if (btn) {
+                    if (t === tabKey) {
+                        btn.style.background = '#1e3a8a';
+                        btn.style.color = '#ffffff';
+                    } else {
+                        btn.style.background = 'rgba(255,255,255,0.06)';
+                        btn.style.color = '#cbd5e1';
+                    }
+                }
+            });
+
+            const container = document.getElementById('ushZhurtContentContainer');
+            if (!currentUshZhurtData || !currentUshZhurtData.groups || !currentUshZhurtData.groups[tabKey]) {
+                container.innerHTML = `<div style="color:#94a3b8; padding:20px; text-align:center;">${currentLang === 'ru' ? 'Нет данных' : 'Мәлімет жоқ'}</div>`;
+                return;
+            }
+
+            const group = currentUshZhurtData.groups[tabKey];
+            const families = group.families || [];
+            if (families.length === 0) {
+                container.innerHTML = `<div style="color:#94a3b8; font-style:italic; padding:24px; text-align:center; background:rgba(255,255,255,0.02); border-radius:8px;">${currentLang === 'ru' ? 'В этом журте пока нет внесенных родственников' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген'}</div>`;
+                return;
+            }
+
+            container.innerHTML = families.map(f => renderUshZhurtFolderHtml(f, 0)).join('');
+        }
+
+        function renderUshZhurtFolderHtml(fam, depth) {
+            const h = fam.husband;
+            const w = fam.wife;
+            const indent = depth * 16;
+            let coupleTitle = '';
+            if (h) {
+                coupleTitle += `👨 <strong style="color:#f8fafc;">${h.full_name}</strong> <span style="font-size:11.5px; color:#cbd5e1;">${h.birth_year ? `(${h.birth_year})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span>`;
+            }
+            if (w) {
+                coupleTitle += (h ? ' 💍 ' : '') + `👩 <strong style="color:#f8fafc;">${w.full_name}</strong> <span style="font-size:11.5px; color:#cbd5e1;">${w.birth_year ? `(${w.birth_year})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span>`;
+            }
+            if (!coupleTitle) coupleTitle = (currentLang === 'ru' ? 'Семья' : 'Отбасы');
+
+            const children = fam.children || [];
+            let childrenHtml = '';
+            if (children.length > 0) {
+                childrenHtml = children.map(c => {
+                    const cIcon = c.gender === 'F' ? '🌸' : '🌱';
+                    const cClan = c.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз');
+                    const cYears = c.birth_year ? `(${c.birth_year})` : '';
+                    let nested = '';
+                    if (c.families && c.families.length > 0) {
+                        nested = c.families.map(cf => renderUshZhurtFolderHtml(cf, depth + 1)).join('');
+                    }
+                    return `
+                        <div style="margin-top:8px; padding-left:16px; border-left:2px solid #334155;">
+                            <div style="font-size:13px; color:#e2e8f0; display:flex; align-items:center; gap:6px;">
+                                <span>${cIcon}</span>
+                                <a href="/person/${c.id}" style="color:#60a5fa; text-decoration:none; font-weight:600;">${c.full_name}</a>
+                                <span style="font-size:11px; color:#94a3b8;">${cYears} [${cClan}]</span>
+                            </div>
+                            ${nested}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                childrenHtml = `<div style="font-size:12px; color:#64748b; font-style:italic; padding-left:16px; margin-top:6px;">${currentLang === 'ru' ? 'Дети не указаны' : 'Балалары көрсетілмеген'}</div>`;
+            }
+
+            return `
+                <details open style="margin-left:${indent}px; background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; overflow:hidden; margin-bottom:8px;">
+                    <summary style="padding:10px 14px; background:rgba(255,255,255,0.05); cursor:pointer; font-size:13.5px; font-weight:600; color:#fef08a; display:flex; align-items:center; gap:8px;">
+                        <span>📁</span>
+                        <span>${coupleTitle}</span>
+                        <span style="font-size:11px; color:#94a3b8; margin-left:auto;">(${children.length} ${currentLang === 'ru' ? 'детей' : 'бала'})</span>
+                    </summary>
+                    <div style="padding:12px 14px;">
+                        ${childrenHtml}
+                    </div>
+                </details>
+            `;
         }
 
         // ========================================================

@@ -989,26 +989,33 @@ class TreeController
     }
 
     /**
-     * API: Получить Үш жұрт (Три родственных круга) с семейными папками для персоны
+     * API: Получить Үш жұрт (Три родственных круга: таблицы и папки) для персоны (TASK-011)
      */
     public function apiUshZhurt(Request $request): void
     {
         $id = (int)$request->get('id', 0);
         if (!$id) {
             $user = Auth::user();
-            $id = !empty($user['person_id']) ? (int)$user['person_id'] : 6;
+            $id = !empty($user['person_id']) ? (int)$user['person_id'] : $this->resolveZhandosPersonId();
         }
 
         $dataset = $this->getDataset();
         $persons = $dataset['persons'];
         $marriages = $dataset['marriages'];
+        $personsById = array_column($persons, null, 'id');
 
-        $ushZhurt = $this->kinshipService->getUshZhurtFamilies($id, $persons, $marriages);
+        $tablesData = $this->kinshipService->getUshZhurtTables($id, $personsById, $marriages);
+        $familiesData = $this->kinshipService->getUshZhurtFamilies($id, $personsById, $marriages);
 
         Response::json([
             'status' => 'success',
             'base_id' => $id,
-            'ush_zhurt' => $ushZhurt,
+            'person' => $tablesData['base_person'] ?? null,
+            'is_female' => $tablesData['is_female'] ?? false,
+            'groups' => $tablesData['groups'] ?? [],
+            'tables' => $tablesData['tables'] ?? [],
+            'ush_zhurt' => $familiesData,
+            'own_family' => $tablesData['own_family'] ?? [],
         ]);
     }
 

@@ -998,6 +998,193 @@ class KinshipService
     }
 
     /**
+     * Қазақтың «Үш жұрт» жүйесін кестелік түрде құру (TASK-011):
+     * 1. Өз жұрты (әйел адам үшін — Төркін жұрты)
+     * 2. Қайын жұрты (әйел адам үшін — Қайын жұрты / Күйеуінің жағы)
+     * 3. Нағашы жұрты
+     *
+     * Әр кестеде: адамның аты-жөні, туған-өлген жылдары, туыстық атауы (Kinship).
+     */
+    public function getUshZhurtTables(int $baseId, array $personsById = [], array $marriages = []): array
+    {
+        if ($baseId <= 0) {
+            return [];
+        }
+
+        if (!empty($personsById)) {
+            $personsById = array_column($personsById, null, 'id');
+        } else {
+            $this->loadDatasetIfAvailable();
+            $personsById = $this->cachedPersons ?? [];
+            $marriages = $this->cachedMarriages ?? [];
+        }
+
+        $base = $personsById[$baseId] ?? null;
+        if (!$base) {
+            return [];
+        }
+
+        $isFemale = (($base['gender'] ?? 'M') === 'F');
+        $allKinships = $this->calculateAllKinships($baseId, $personsById, $marriages);
+
+        $ozIds = [];
+        $nagashyIds = [];
+        $kaiynIds = [];
+        $ownSpouses = [];
+        $ownChildren = [];
+
+        foreach ($allKinships as $targetId => $kin) {
+            if ($targetId === $baseId) continue;
+            $code = $kin['code'] ?? '';
+            $zhurt = $kin['zhurt'] ?? '';
+
+            if ($code === 'wife' || $code === 'husband') {
+                $ownSpouses[] = $targetId;
+                continue;
+            }
+            if ($code === 'son' || $code === 'daughter' || $code === 'child') {
+                $ownChildren[] = $targetId;
+                continue;
+            }
+
+            if (str_contains($zhurt, 'Нағашы')) {
+                $nagashyIds[] = $targetId;
+            } elseif (str_contains($zhurt, 'Қайын') || str_contains($zhurt, 'Күйеу') || str_contains($zhurt, 'Құда')) {
+                $kaiynIds[] = $targetId;
+            } elseif (str_contains($zhurt, 'Өз') || str_contains($zhurt, 'Төркін')) {
+                $ozIds[] = $targetId;
+            }
+        }
+
+        $formatPersonRow = function(int $pId) use ($personsById, $allKinships) {
+            $p = $personsById[$pId] ?? null;
+            if (!$p) return null;
+
+            $bYear = !empty($p['birth_year']) ? (int)$p['birth_year'] : null;
+            $dYear = !empty($p['death_year']) ? (int)$p['death_year'] : null;
+            $isDeceased = (int)($p['is_deceased'] ?? 0);
+
+            $yearsDisplay = '—';
+            if ($bYear && $dYear) {
+                $yearsDisplay = "{$bYear}–{$dYear}";
+            } elseif ($bYear) {
+                $yearsDisplay = $isDeceased ? "{$bYear}–?" : "{$bYear}–...";
+            } elseif ($dYear) {
+                $yearsDisplay = "?–{$dYear}";
+            }
+
+            $kin = $allKinships[$pId] ?? [];
+            $termKk = $kin['term_kk'] ?? 'Туысқан';
+            $termRu = $kin['term_ru'] ?? 'Родственник';
+            $fullName = trim(($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? ''));
+
+            return [
+                'id' => $pId,
+                'first_name' => $p['first_name'] ?? '',
+                'last_name' => $p['last_name'] ?? '',
+                'full_name' => $fullName,
+                'maiden_name' => $p['maiden_name'] ?? null,
+                'gender' => $p['gender'] ?? 'M',
+                'birth_year' => $bYear,
+                'death_year' => $dYear,
+                'years_display' => $yearsDisplay,
+                'is_deceased' => $isDeceased,
+                'clan_ru' => $p['clan_ru'] ?? 'белгісіз',
+                'term_kk' => $termKk,
+                'term_ru' => $termRu,
+                'code' => $kin['code'] ?? '',
+                'explanation' => $kin['explanation'] ?? '',
+                'badge_class' => $kin['badge_class'] ?? 'badge-relative',
+                'seniority' => $bYear ?: 9999,
+            ];
+        };
+
+        $buildTableData = function(array $ids, string $key, string $titleKk, string $titleRu, string $descKk, string $descRu) use ($formatPersonRow) {
+            $items = [];
+            foreach ($ids as $id) {
+                $row = $formatPersonRow($id);
+                if ($row) {
+                    $items[] = $row;
+                }
+            }
+
+            usort($items, function($a, $b) {
+                $sA = $a['seniority'] ?: 9999;
+                $sB = $b['seniority'] ?: 9999;
+                if ($sA !== $sB) {
+                    return $sA <=> $sB;
+                }
+                return $a['id'] <=> $b['id'];
+            });
+
+            return [
+                'key' => $key,
+                'title_kk' => $titleKk,
+                'title_ru' => $titleRu,
+                'desc_kk' => $descKk,
+                'desc_ru' => $descRu,
+                'total_count' => count($items),
+                'items' => $items,
+            ];
+        };
+
+        $ozTable = $buildTableData(
+            $ozIds,
+            'oz',
+            $isFemale ? 'Төркін жұрты' : 'Өз жұрты',
+            $isFemale ? 'Төркін жұрты (Родня по отцу)' : 'Өз жұрты (Родня по отцу)',
+            $isFemale ? 'Родня по отцу (өз жұрты, төркіні)' : 'Родня по отцу (өз жұрты, өз елі)',
+            $isFemale ? 'Родня по отцу (её род)' : 'Родня по отцу (свой род)'
+        );
+
+        $kaiynTable = $buildTableData(
+            $kaiynIds,
+            'kaiyn',
+            'Қайын жұрты',
+            $isFemale ? 'Қайын жұрты (Родня мужа)' : 'Қайын жұрты (Родня супруги)',
+            $isFemale ? 'Күйеуінің жұрты' : 'Жұбайының туған-туыстары',
+            $isFemale ? 'Род мужа (қайын жұрт)' : 'Родня супруги (қайын жұрт)'
+        );
+
+        $nagashyTable = $buildTableData(
+            $nagashyIds,
+            'nagashy',
+            'Нағашы жұрты',
+            'Нағашы жұрты (Родня по матери)',
+            'Анасының туған-туыстары (нағашылар)',
+            'Родня по матери (нағашы жұрт)'
+        );
+
+        $ownSpousesFormatted = array_values(array_filter(array_map($formatPersonRow, $ownSpouses)));
+        $ownChildrenFormatted = array_values(array_filter(array_map($formatPersonRow, $ownChildren)));
+
+        $baseFormatted = $formatPersonRow($baseId);
+        if ($baseFormatted) {
+            $baseFormatted['term_kk'] = 'Өзі';
+            $baseFormatted['term_ru'] = 'Сам(а)';
+        }
+
+        return [
+            'base_person' => $baseFormatted,
+            'is_female' => $isFemale,
+            'groups' => [
+                'oz' => $ozTable,
+                'kaiyn' => $kaiynTable,
+                'nagashy' => $nagashyTable,
+            ],
+            'tables' => [
+                $ozTable,
+                $kaiynTable,
+                $nagashyTable,
+            ],
+            'own_family' => [
+                'spouses' => $ownSpousesFormatted,
+                'children' => $ownChildrenFormatted,
+            ],
+        ];
+    }
+
+    /**
      * Қазақтың «Үш жұрт» жүйесін отбасылық бумалармен («папкалармен») құру (TASK-007):
      * 1. «Өз жұрты» (ер адамдар үшін) немесе «Төркіні» (әйелдер үшін)
      * 2. «Нағашы жұрты»
@@ -1015,7 +1202,9 @@ class KinshipService
             return [];
         }
 
-        if (empty($personsById)) {
+        if (!empty($personsById)) {
+            $personsById = array_column($personsById, null, 'id');
+        } else {
             $this->loadDatasetIfAvailable();
             $personsById = $this->cachedPersons ?? [];
             $marriages = $this->cachedMarriages ?? [];

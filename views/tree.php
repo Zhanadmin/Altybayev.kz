@@ -2523,6 +2523,344 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .btn-table-action:hover { background: var(--c-hover); color: var(--c-text); border-color: var(--c-border-strong); }
         .btn-table-action .ic { width: 15px; height: 15px; }
 
+        /* --- TASK-011: Интерактивный блок трех таблиц Үш жұрт по клику на человека --- */
+        .list-table tr.list-person-row {
+            cursor: pointer;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .list-table tr.list-person-row:hover td {
+            background: var(--c-island-2);
+        }
+        .list-table tr.list-person-row.is-selected td {
+            background: var(--c-accent-soft);
+            border-bottom-color: transparent;
+        }
+        .list-table tr.list-person-row.is-selected td:first-child {
+            box-shadow: inset 4px 0 0 var(--c-accent);
+        }
+        .list-table tr.list-person-row.is-just-navigated td {
+            animation: pulseNavigatedRow 1.8s ease;
+        }
+        @keyframes pulseNavigatedRow {
+            0% { background: var(--c-accent-soft); box-shadow: inset 4px 0 0 var(--c-accent); }
+            50% { background: var(--c-accent-soft); box-shadow: inset 4px 0 0 var(--c-accent); }
+            100% { background: transparent; }
+        }
+
+        .lt-ush-drawer-row td.lt-ush-drawer-td {
+            padding: 0 !important;
+            background: var(--c-bg) !important;
+            border-bottom: 2px solid var(--c-border) !important;
+        }
+        .lt-ush-drawer-island {
+            background: var(--c-island);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-md);
+            margin: 10px 14px 18px 14px;
+            padding: 16px;
+            box-shadow: var(--shadow-island);
+        }
+        .lt-ush-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 24px;
+            color: var(--c-text-2);
+            font-size: 13px;
+        }
+        .lt-ush-drawer-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--c-border);
+        }
+        .lt-ush-person-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+        .lt-ush-title-name {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: var(--c-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .lt-ush-header-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .lt-ush-summary-pill {
+            font-size: 11.5px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: var(--r-pill);
+            border: 1px solid var(--c-border);
+            background: var(--c-island-2);
+            color: var(--c-text);
+        }
+        .lt-ush-summary-pill strong {
+            font-weight: 700;
+            color: var(--c-accent-text);
+            margin-left: 2px;
+        }
+        .lt-ush-summary-pill.oz { border-left: 3px solid var(--c-male); }
+        .lt-ush-summary-pill.kaiyn { border-left: 3px solid var(--c-female); }
+        .lt-ush-summary-pill.nagashy { border-left: 3px solid var(--c-accent); }
+        .lt-ush-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-toggle-layout {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 30px;
+            padding: 0 10px;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--c-border);
+            background: var(--c-island-2);
+            color: var(--c-text-2);
+            font-size: 11.5px;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-toggle-layout:hover {
+            background: var(--c-hover);
+            color: var(--c-text);
+            border-color: var(--c-border-strong);
+        }
+        .btn-toggle-layout .ic {
+            width: 13px;
+            height: 13px;
+        }
+
+        .lt-ush-tables-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            align-items: stretch;
+        }
+        .lt-ush-tables-grid.is-stacked {
+            grid-template-columns: 1fr !important;
+        }
+        @media (max-width: 1080px) {
+            .lt-ush-tables-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .lt-ush-card {
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-md);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .lt-ush-card-head {
+            padding: 10px 12px;
+            background: var(--c-island);
+            border-bottom: 1px solid var(--c-border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .lt-ush-card-title-wrap {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .lt-ush-card-title {
+            margin: 0;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--c-text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .lt-ush-card-count {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--c-text-2);
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            padding: 1px 6px;
+            border-radius: var(--r-pill);
+        }
+        .lt-ush-card-desc {
+            font-size: 11px;
+            color: var(--c-text-3);
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .lt-ush-card-search {
+            width: 100%;
+            height: 28px;
+            font-size: 11.5px;
+            padding: 0 8px;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--c-border);
+            background: var(--c-island-2);
+            color: var(--c-text);
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .lt-ush-card-search:focus {
+            border-color: var(--c-accent);
+            outline: none;
+            background: var(--c-island);
+        }
+        .lt-ush-subtable-wrap {
+            max-height: 380px;
+            overflow-y: auto;
+            overflow-x: auto;
+            flex: 1;
+            min-height: 120px;
+        }
+        .lt-ush-subtable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+        .lt-ush-subtable th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--c-island);
+            color: var(--c-text-2);
+            font-weight: 600;
+            font-size: 11px;
+            padding: 7px 10px;
+            border-bottom: 1px solid var(--c-border);
+            text-align: left;
+        }
+        .lt-ush-subtable td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--c-border);
+            vertical-align: middle;
+            color: var(--c-text);
+        }
+        .lt-ush-subtable tbody tr:last-child td {
+            border-bottom: 0;
+        }
+        .lt-ush-item-row {
+            cursor: pointer;
+            transition: background 0.12s ease;
+        }
+        .lt-ush-item-row:hover td {
+            background: var(--c-island);
+        }
+        .lt-ush-person-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .uz-avatar-mini {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9.5px;
+            font-weight: 700;
+            flex-shrink: 0;
+            border-width: 1.5px;
+            border-style: solid;
+        }
+        .uz-avatar-mini.male {
+            background: var(--c-male-soft);
+            color: var(--c-male);
+            border-color: var(--c-male);
+        }
+        .uz-avatar-mini.female {
+            background: var(--c-female-soft);
+            color: var(--c-female);
+            border-color: var(--c-female);
+        }
+        .uz-avatar-mini.deceased {
+            background: var(--c-accent-soft);
+            color: var(--c-accent-text);
+            border-color: var(--c-accent);
+        }
+        .lt-ush-person-text {
+            min-width: 0;
+            overflow: hidden;
+        }
+        .lt-ush-person-name {
+            display: block;
+            font-weight: 600;
+            color: var(--c-text);
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .lt-ush-years-text {
+            font-size: 11.5px;
+            color: var(--c-text-2);
+            white-space: nowrap;
+        }
+        .kin-term-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: var(--r-pill);
+            font-size: 10.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kin-term-badge.male {
+            background: var(--c-male-soft);
+            color: var(--c-male);
+        }
+        .kin-term-badge.female {
+            background: var(--c-female-soft);
+            color: var(--c-female);
+        }
+        .lt-ush-empty-cell {
+            text-align: center;
+            color: var(--c-text-3);
+            font-style: italic;
+            font-size: 11.5px;
+            padding: 24px 10px;
+        }
+        .uz-spin {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--c-border);
+            border-top-color: var(--c-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Узкие экраны: второстепенные колонки скрываются, значения уходят подписью под имя */
         @media (max-width: 1440px) {
             .list-table .lt-col-xl { display: none; }
@@ -5263,6 +5601,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             });
         }
 
+        // ========================================================
+        // 3. «ТІЗІМ»: ҮШ ЖҰРТ ТАБЛИЦАЛАРЫ (TASK-011)
+        // ========================================================
+        let currentOpenUshZhurtPersonId = null;
+        let currentOpenUshZhurtData = null;
+        const ushZhurtLayoutState = {}; // personId => 'grid' | 'stacked'
+
         function renderListTable(items) {
             const tbody = document.getElementById('listTableBody');
             tbody.innerHTML = '';
@@ -5274,6 +5619,18 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             items.forEach((p, idx) => {
                 const tr = document.createElement('tr');
+                const isSelected = (currentOpenUshZhurtPersonId === p.id);
+                tr.className = 'list-person-row' + (isSelected ? ' is-selected' : '');
+                tr.setAttribute('data-person-id', p.id);
+                tr.setAttribute('title', currentLang === 'ru' ? 'Клик — показать Үш жұрт' : 'Басу — Үш жұртты көрсету');
+
+                tr.addEventListener('click', (e) => {
+                    if (e.target.closest('.lt-actions') || e.target.closest('button') || e.target.closest('a')) {
+                        return;
+                    }
+                    togglePersonUshZhurt(p.id);
+                });
+
                 const isDeceased = (p.is_deceased == 1);
                 const isM = (p.gender === 'M');
                 const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
@@ -5350,15 +5707,291 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     </td>
                     <td>
                         <div class="lt-actions">
-                            <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id})" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
-                            <button type="button" class="btn-table-action" onclick="openUshZhurtModal(${p.id})" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
-                            ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id})" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
+                            <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id}); event.stopPropagation();" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
+                            <button type="button" class="btn-table-action" onclick="togglePersonUshZhurt(${p.id}); event.stopPropagation();" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
+                            ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id}); event.stopPropagation();" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
                         </div>
                     </td>
                 `;
 
                 tbody.appendChild(tr);
+
+                // Если для этой персоны был открыт drawer, пересоздаем его после строки
+                if (isSelected && currentOpenUshZhurtData && currentOpenUshZhurtData.base_id === p.id) {
+                    const drawerTr = createDrawerRowElement(p.id);
+                    tbody.appendChild(drawerTr);
+                    renderUshZhurtDrawerContent(p.id, currentOpenUshZhurtData);
+                }
             });
+        }
+
+        function createDrawerRowElement(personId) {
+            const drawerTr = document.createElement('tr');
+            drawerTr.id = 'ushDrawerRow_' + personId;
+            drawerTr.className = 'lt-ush-drawer-row';
+            drawerTr.innerHTML = `
+                <td colspan="9" class="lt-ush-drawer-td">
+                    <div class="lt-ush-drawer-island" id="ushDrawerIsland_${personId}">
+                        <div class="lt-ush-loading">
+                            <span class="uz-spin"></span>
+                            <span>${currentLang === 'ru' ? 'Загрузка трех таблиц Үш жұрт...' : 'Үш жұрт кестелері жүктелуде...'}</span>
+                        </div>
+                    </div>
+                </td>
+            `;
+            return drawerTr;
+        }
+
+        async function togglePersonUshZhurt(personId, forceOpen = false) {
+            personId = parseInt(personId, 10);
+            if (!personId) return;
+
+            // Если кликнули по уже открытой персоне (и не forceOpen), закрываем её
+            if (currentOpenUshZhurtPersonId === personId && !forceOpen) {
+                closePersonUshZhurt(personId);
+                return;
+            }
+
+            // Закрываем предыдущую открытую персону, если была открыта другая
+            if (currentOpenUshZhurtPersonId && currentOpenUshZhurtPersonId !== personId) {
+                closePersonUshZhurt(currentOpenUshZhurtPersonId);
+            }
+
+            const row = document.querySelector(`.list-person-row[data-person-id="${personId}"]`);
+            if (!row) return;
+
+            currentOpenUshZhurtPersonId = personId;
+            row.classList.add('is-selected');
+
+            const oldDrawer = document.getElementById('ushDrawerRow_' + personId);
+            if (oldDrawer) oldDrawer.remove();
+
+            const drawerTr = createDrawerRowElement(personId);
+            row.parentNode.insertBefore(drawerTr, row.nextSibling);
+
+            try {
+                const res = await fetch(`/api/person/ush-zhurt?id=${personId}`);
+                const data = await res.json();
+                if (!data || data.status !== 'success' || (!data.groups && !data.tables && !data.ush_zhurt)) {
+                    const island = document.getElementById('ushDrawerIsland_' + personId);
+                    if (island) {
+                        island.innerHTML = `<div class="list-msg is-error">${currentLang === 'ru' ? 'Ошибка загрузки данных' : 'Деректерді жүктеу қатесі'}</div>`;
+                    }
+                    return;
+                }
+
+                currentOpenUshZhurtData = data;
+                renderUshZhurtDrawerContent(personId, data);
+            } catch (err) {
+                const island = document.getElementById('ushDrawerIsland_' + personId);
+                if (island) {
+                    island.innerHTML = `<div class="list-msg is-error">Қате: ${err.message}</div>`;
+                }
+            }
+        }
+
+        function closePersonUshZhurt(personId) {
+            const drawerTr = document.getElementById('ushDrawerRow_' + personId);
+            if (drawerTr) drawerTr.remove();
+            const row = document.querySelector(`.list-person-row[data-person-id="${personId}"]`);
+            if (row) row.classList.remove('is-selected');
+            if (currentOpenUshZhurtPersonId === personId) {
+                currentOpenUshZhurtPersonId = null;
+                currentOpenUshZhurtData = null;
+            }
+        }
+
+        function renderUshZhurtDrawerContent(personId, data) {
+            const island = document.getElementById('ushDrawerIsland_' + personId);
+            if (!island) return;
+
+            const p = data.person || (data.ush_zhurt && data.ush_zhurt.base_person) || {};
+            const isFemale = !!data.is_female;
+            const groups = data.groups || {};
+            const ozTable = groups.oz || (data.tables && data.tables[0]) || { total_count: 0, items: [], title_kk: isFemale ? 'Төркін жұрты' : 'Өз жұрты' };
+            const kaiynTable = groups.kaiyn || (data.tables && data.tables[1]) || { total_count: 0, items: [], title_kk: 'Қайын жұрты' };
+            const nagashyTable = groups.nagashy || (data.tables && data.tables[2]) || { total_count: 0, items: [], title_kk: 'Нағашы жұрты' };
+
+            const isM = (p.gender === 'M');
+            const isDeceased = (p.is_deceased == 1);
+            const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
+            const layout = ushZhurtLayoutState[personId] || 'grid';
+
+            island.innerHTML = `
+                <div class="lt-ush-drawer-header">
+                    <div class="lt-ush-person-meta">
+                        <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
+                        <div>
+                            <div class="lt-ush-title-name">
+                                <strong>${p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''))}</strong>
+                                ${p.maiden_name ? `<span class="lt-sub is-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</span>` : ''}
+                                <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? (currentLang === 'ru' ? 'Мужчина' : 'Ер') : (currentLang === 'ru' ? 'Женщина' : 'Әйел')}</span>
+                                <span class="clan-pill">${p.clan_ru || 'белгісіз'}</span>
+                            </div>
+                            <div class="lt-sub">
+                                ${currentLang === 'ru' ? 'Годы жизни:' : 'Өмір сүрген жылдары:'} <strong>${p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')}</strong>
+                                <span style="margin: 0 6px; color: var(--c-border-strong);">•</span>
+                                ${currentLang === 'ru' ? 'Клик по родственнику в любой таблице — переход к нему в списке' : 'Кез келген кестедегі туысқанға басу — оның Үш жұртына көшу'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lt-ush-header-badges">
+                        <span class="lt-ush-summary-pill oz">${ozTable.title_kk || ozTable.title_ru}: <strong>${ozTable.total_count}</strong></span>
+                        <span class="lt-ush-summary-pill kaiyn">${kaiynTable.title_kk || kaiynTable.title_ru}: <strong>${kaiynTable.total_count}</strong></span>
+                        <span class="lt-ush-summary-pill nagashy">${nagashyTable.title_kk || nagashyTable.title_ru}: <strong>${nagashyTable.total_count}</strong></span>
+                    </div>
+
+                    <div class="lt-ush-header-actions">
+                        <button type="button" class="btn-toggle-layout" onclick="toggleUshLayout(${personId})" title="${currentLang === 'ru' ? 'Переключить вид: рядом (3 колонки) или под ним (одна колонка)' : 'Көріністі ауыстыру: қатар (3 баған) немесе бірінің астында бірі'}">
+                            <svg class="ic"><use href="#t-list"/></svg>
+                            <span id="ushLayoutLabel_${personId}">${layout === 'stacked' ? (currentLang === 'ru' ? 'Под ним (1)' : 'Тігінен (1)') : (currentLang === 'ru' ? 'Рядом (3)' : 'Қатар (3)')}</span>
+                        </button>
+                        <button type="button" class="btn-table-action" onclick="closePersonUshZhurt(${personId})" title="${currentLang === 'ru' ? 'Закрыть' : 'Жабу'}" aria-label="Закрыть">
+                            <svg class="ic"><use href="#t-close"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="lt-ush-tables-grid ${layout === 'stacked' ? 'is-stacked' : ''}" id="ushGrid_${personId}">
+                    ${renderSingleUshZhurtCard(ozTable, personId, 'oz')}
+                    ${renderSingleUshZhurtCard(kaiynTable, personId, 'kaiyn')}
+                    ${renderSingleUshZhurtCard(nagashyTable, personId, 'nagashy')}
+                </div>
+            `;
+        }
+
+        function renderSingleUshZhurtCard(tableData, basePersonId, zhurtKey) {
+            const items = tableData.items || [];
+            const count = tableData.total_count || items.length || 0;
+            const title = currentLang === 'ru' ? (tableData.title_ru || tableData.title_kk) : tableData.title_kk;
+            const desc = currentLang === 'ru' ? (tableData.desc_ru || tableData.desc_kk || '') : (tableData.desc_kk || '');
+
+            let rowsHtml = '';
+            if (items.length === 0) {
+                rowsHtml = `<tr><td colspan="3" class="lt-ush-empty-cell">${currentLang === 'ru' ? 'Сведения в этом круге пока не внесены' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген'}</td></tr>`;
+            } else {
+                rowsHtml = items.map(p => {
+                    const isM = (p.gender === 'M');
+                    const isDeceased = (p.is_deceased == 1);
+                    const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
+                    const term = currentLang === 'ru' ? (p.term_ru || p.term_kk) : p.term_kk;
+                    const years = p.years_display || (p.birth_year ? p.birth_year + (p.death_year ? '–' + p.death_year : '–...') : '—');
+
+                    return `
+                        <tr class="lt-ush-item-row" data-id="${p.id}" onclick="navigateToListPerson(${p.id})">
+                            <td class="lt-ush-col-person">
+                                <div class="lt-ush-person-inline">
+                                    <span class="uz-avatar-mini ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</span>
+                                    <div class="lt-ush-person-text">
+                                        <span class="lt-ush-person-name" title="${p.full_name}">${p.full_name}</span>
+                                        ${p.maiden_name ? `<span class="lt-sub is-maiden">(${p.maiden_name})</span>` : ''}
+                                        <span class="lt-sub">${p.clan_ru || 'белгісіз'}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="lt-ush-col-years">
+                                <span class="lt-ush-years-text">${years}</span>
+                            </td>
+                            <td class="lt-ush-col-term">
+                                <span class="kin-term-badge ${isM ? 'male' : 'female'}">${term}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            return `
+                <div class="lt-ush-card ${zhurtKey}-card" id="ushCard_${basePersonId}_${zhurtKey}">
+                    <div class="lt-ush-card-head">
+                        <div class="lt-ush-card-title-wrap">
+                            <h4 class="lt-ush-card-title">${title} <span class="lt-ush-card-count">(${count})</span></h4>
+                            <div class="lt-ush-card-desc">${desc}</div>
+                        </div>
+                        ${items.length > 5 ? `
+                            <div class="lt-ush-card-search-wrap">
+                                <input type="text" class="lt-ush-card-search" placeholder="${currentLang === 'ru' ? 'Фильтр...' : 'Сүзу...'}" oninput="filterUshCardRows(this, 'ushCard_${basePersonId}_${zhurtKey}')">
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="lt-ush-subtable-wrap">
+                        <table class="lt-ush-subtable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50%;">${currentLang === 'ru' ? 'Персона' : 'Тұлға'}</th>
+                                    <th style="width: 24%;">${currentLang === 'ru' ? 'Годы' : 'Жылдары'}</th>
+                                    <th style="width: 26%;">${currentLang === 'ru' ? 'Кем приходится' : 'Туыстық'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterUshCardRows(input, cardId) {
+            const val = input.value.trim().toLowerCase();
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const rows = card.querySelectorAll('tbody tr.lt-ush-item-row');
+            rows.forEach(r => {
+                const text = r.textContent.toLowerCase();
+                r.style.display = (!val || text.includes(val)) ? '' : 'none';
+            });
+        }
+
+        function toggleUshLayout(personId) {
+            const current = ushZhurtLayoutState[personId] || 'grid';
+            const next = current === 'grid' ? 'stacked' : 'grid';
+            ushZhurtLayoutState[personId] = next;
+            const grid = document.getElementById('ushGrid_' + personId);
+            const lbl = document.getElementById('ushLayoutLabel_' + personId);
+            if (grid) {
+                grid.classList.toggle('is-stacked', next === 'stacked');
+            }
+            if (lbl) {
+                lbl.textContent = next === 'stacked' 
+                    ? (currentLang === 'ru' ? 'Под ним (1)' : 'Тігінен (1)') 
+                    : (currentLang === 'ru' ? 'Рядом (3)' : 'Қатар (3)');
+            }
+        }
+
+        async function navigateToListPerson(targetId) {
+            targetId = parseInt(targetId, 10);
+            if (!targetId) return;
+
+            let row = document.querySelector(`.list-person-row[data-person-id="${targetId}"]`);
+
+            if (!row) {
+                const searchInput = document.getElementById('listSearchInput');
+                if (searchInput) searchInput.value = '';
+                const clanFilter = document.getElementById('listClanFilter');
+                if (clanFilter) clanFilter.value = '0';
+                const genderFilter = document.getElementById('listGenderFilter');
+                if (genderFilter) genderFilter.value = 'all';
+                const statusFilter = document.getElementById('listStatusFilter');
+                if (statusFilter) statusFilter.value = 'all';
+
+                await loadListViewData();
+                row = document.querySelector(`.list-person-row[data-person-id="${targetId}"]`);
+            }
+
+            if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                row.classList.remove('is-just-navigated');
+                void row.offsetWidth; // force reflow
+                row.classList.add('is-just-navigated');
+                setTimeout(() => {
+                    row.classList.remove('is-just-navigated');
+                }, 2000);
+
+                togglePersonUshZhurt(targetId, true);
+            } else {
+                togglePersonUshZhurt(targetId, true);
+            }
         }
 
         function focusPersonFromList(id) {
@@ -5383,19 +6016,27 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             try {
                 const res = await fetch(`/api/person/ush-zhurt?id=${personId}`);
                 const data = await res.json();
-                if (!data || !data.groups) {
+                if (!data || (!data.groups && !data.ush_zhurt)) {
                     document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg is-error">${currentLang === 'ru' ? 'Данные не найдены' : 'Деректер табылмады'}</div>`;
                     return;
                 }
                 currentUshZhurtData = data;
-                const p = data.person;
-                const pGender = p.gender === 'M' ? (currentLang === 'ru' ? 'мужчина' : 'ер') : (currentLang === 'ru' ? 'женщина' : 'әйел');
+                if (!currentUshZhurtData.groups && currentUshZhurtData.ush_zhurt) {
+                    currentUshZhurtData.groups = {
+                        oz: currentUshZhurtData.ush_zhurt.oz_zhurt,
+                        kaiyn: currentUshZhurtData.ush_zhurt.kaiyn_zhurt,
+                        nagashy: currentUshZhurtData.ush_zhurt.nagashy_zhurt,
+                    };
+                }
+                const p = data.person || (data.ush_zhurt && data.ush_zhurt.base_person);
+                const pGender = p && p.gender === 'M' ? (currentLang === 'ru' ? 'мужчина' : 'ер') : (currentLang === 'ru' ? 'женщина' : 'әйел');
                 const pTitle = p ? `${p.full_name} (${pGender})` : '';
                 document.getElementById('ushZhurtModalSubtitle').textContent = pTitle;
 
-                if (data.groups.oz) document.getElementById('tabBtnOz').textContent = data.groups.oz.title;
-                if (data.groups.nagashy) document.getElementById('tabBtnNagashy').textContent = data.groups.nagashy.title;
-                if (data.groups.kaiyn) document.getElementById('tabBtnKaiyn').textContent = data.groups.kaiyn.title;
+                const grp = currentUshZhurtData.groups || {};
+                if (grp.oz) document.getElementById('tabBtnOz').textContent = grp.oz.title || grp.oz.title_kk;
+                if (grp.nagashy) document.getElementById('tabBtnNagashy').textContent = grp.nagashy.title || grp.nagashy.title_kk;
+                if (grp.kaiyn) document.getElementById('tabBtnKaiyn').textContent = grp.kaiyn.title || grp.kaiyn.title_kk;
 
                 switchUshZhurtTab('oz');
             } catch (e) {

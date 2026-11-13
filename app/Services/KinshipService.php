@@ -861,12 +861,12 @@ class KinshipService
         $kin = $this->determineKinship($targetPerson, $userPerson, 'auto', $allPersonsById, $marriages);
 
         if ($kin['code'] === 'self') {
-            return '🎯 <strong>Сіз осындасыз</strong> (Бұл сіздің жеке карточкаңыз)';
+            return '<strong>Сіз осындасыз</strong> (Бұл сіздің жеке карточкаңыз)';
         }
 
         $zhurtTag = !empty($kin['zhurt']) ? "<span class=\"zhurt-pill\">{$kin['zhurt']}</span> " : "";
 
-        return "🔗 {$zhurtTag}Бұл кісі сізге: <strong>{$kin['term_kk']}</strong> <span style=\"opacity:0.85; font-size:12px;\">({$kin['term_ru']})</span>";
+        return "{$zhurtTag}Бұл кісі сізге: <strong>{$kin['term_kk']}</strong> <span style=\"opacity:0.85; font-size:12px;\">({$kin['term_ru']})</span>";
     }
 
     /**

@@ -101,7 +101,8 @@ if (p) {
     check('лента в центре экрана после центрирования', Math.abs(screenX - vw / 2) < 0.01 && Math.abs(screenY - vh / 2) < 0.01);
     check('позиция внутри холста', p.x > 0 && p.x < res.width && p.y > 0 && p.y < res.height);
 }
-// Всё древо проекта по GEDCOM — 40 876 × 5 180 px (см. RodoslovGeneratorTest): на экране 1280 px должно влезать
+// Всё древо проекта по GEDCOM: было 40 876 × 5 180 px, после плотной раскладки (17:18) ~27 400 px.
+// Берём прежнюю, бо́льшую ширину — с запасом: на экране 1280 px должно влезать
 const fullW = 40876, fullH = 5180;
 const fitScale = Math.min(1280 / (fullW + 2 * M), 720 / (fullH + 2 * M)) * 0.96;
 const minScaleSrc = /RODOSLOV_MIN_SCALE\s*=\s*([\d.]+)/.exec(html);

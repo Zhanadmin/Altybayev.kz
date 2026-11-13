@@ -8,7 +8,6 @@ declare(strict_types=1);
  */
 $userName = $user['name'] ?? 'Жандос Алтыбаев';
 $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
-$conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="kk">
@@ -28,7 +27,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=13">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
     <style>
         :root {
             --bg-canvas: #090e17;
@@ -1295,35 +1294,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
         }
 
-        /* ========================================================
-           КОНЦЕПТ-АРТ МОДАЛЫ (ЭСКИЗ ЖАНДОСҚА АРНАЛҒАН)
-           ======================================================== */
-        .art-modal-card {
-            background: #09121d;
-            border: 2px solid #d4af37;
-            border-radius: 16px;
-            width: 880px;
-            max-width: 94vw;
-            max-height: 92vh;
-            overflow-y: auto;
-            color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .art-image-wrap {
-            position: relative;
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        .art-image-wrap img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
 
         /* ========================================================
            МАСШТАБТАУ ПАНЕЛІ (ZOOM CONTROLS)
@@ -2094,6 +2064,483 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             .search-box { width: 100%; max-width: 100%; }
         }
     </style>
+    <style>
+        /* ========================================================
+           TASK-008 (замечание 13.11 17:08): режимы «Өңдеу» и «Тізім» в стиле дизайн-системы.
+           Только внешний вид: ID, onclick и логика прежние. Шежіре-Орман / 3D не затронуты.
+           ======================================================== */
+        /* цвета пола --c-male / --c-female — в design-system.css (общие для всего сайта) */
+
+        /* --- 1. «Өңдеу»: холст, карточки, связи --- */
+        .canvas-container {
+            background-color: var(--c-island-2);
+            background-image: radial-gradient(var(--c-border-strong) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .person-card {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-md);
+            box-shadow: var(--shadow-island);
+        }
+        .person-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-pop); }
+        .person-card.male { border-top: 3px solid var(--c-male); }
+        .person-card.female { border-top: 3px solid var(--c-female); }
+        .person-card.deceased {
+            border-color: var(--c-accent);
+            background: linear-gradient(180deg, var(--c-island) 0%, var(--c-accent-soft) 100%);
+            box-shadow: var(--shadow-island);
+        }
+        .person-card.deceased .card-years { color: var(--c-accent-text); font-weight: 600; }
+        /* выделение — кольцом тени, рамку и цветную полосу сверху не трогаем */
+        .person-card.is-self { box-shadow: 0 0 0 2px var(--c-text-3), var(--shadow-island); }
+        .person-card.selected { box-shadow: 0 0 0 3px var(--c-accent), var(--shadow-pop); }
+        .person-card.is-self, .person-card.selected { border: 1px solid var(--c-border); }   /* сброс старой рамки 2.5px */
+        .person-card.male.is-self, .person-card.male.selected { border-top: 3px solid var(--c-male); }
+        .person-card.female.is-self, .person-card.female.selected { border-top: 3px solid var(--c-female); }
+        .person-card.deceased.is-self, .person-card.deceased.selected { border-color: var(--c-accent); }
+
+        .card-kinship-badge {
+            background: var(--c-island-2);
+            color: var(--c-text-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-pill);
+            font-weight: 600;
+            gap: 6px;
+        }
+        .card-kinship-badge > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-kinship-badge.active-rel { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: transparent; box-shadow: none; }
+        .card-kinship-badge.self-rel { background: var(--c-hover); color: var(--c-text); border-color: transparent; }
+        .kin-mark { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--c-success); }
+        .kin-mark.is-deceased { background: var(--c-accent); }
+        .kin-mark.is-active { background: var(--c-accent); box-shadow: 0 0 0 3px var(--c-focus); }
+
+        .card-avatar {
+            background: var(--c-island-2);
+            color: var(--c-text-2);
+            border: 1.5px solid var(--c-border-strong);
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .person-card.male .card-avatar { background: var(--c-island-2); color: var(--c-male); border-color: var(--c-male); }
+        .person-card.female .card-avatar { background: var(--c-island-2); color: var(--c-female); border-color: var(--c-female); }
+        .person-card.deceased .card-avatar { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); }
+        .card-name { color: var(--c-text); font-weight: 600; }
+        .card-maiden { color: var(--c-female); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-years { color: var(--c-text-2); }
+        .card-place { color: var(--c-text-3); }
+        .card-clan-tag {
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            color: var(--c-text-2);
+            border-radius: var(--r-pill);
+            font-weight: 500;
+        }
+        .zhurt-pill {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: var(--r-pill);
+            background: var(--c-island-2);
+            color: var(--c-text-2);
+            border: 1px solid var(--c-border);
+            white-space: nowrap;
+        }
+        .card-zhurt-tag { margin-top: 6px; }
+        .zhurt-pill.zhurt-oz { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: transparent; }
+
+        .btn-branch-expand {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text-2);
+            border: 1px solid var(--c-border-strong);
+            border-radius: var(--r-pill);
+            box-shadow: var(--shadow-pop);
+            font-weight: 600;
+        }
+        .btn-branch-expand:hover { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); box-shadow: var(--shadow-pop); }
+        .btn-branch-expand .ic { width: 12px; height: 12px; }
+
+        .marriage-edge-badge {
+            width: 26px;
+            height: 26px;
+            background: var(--c-island);
+            border: 1.5px solid var(--c-female);
+            color: var(--c-female);
+            box-shadow: var(--shadow-island);
+        }
+        .marriage-edge-badge:hover { box-shadow: 0 0 0 3px var(--c-hover), var(--shadow-pop); }
+        .marriage-edge-badge .ic { width: 15px; height: 15px; }
+
+        .radial-btn {
+            background: var(--c-island);
+            border: 1.5px solid var(--c-accent);
+            color: var(--c-accent-text);
+            box-shadow: var(--shadow-pop);
+            font-family: var(--font-sans);
+            font-weight: 600;
+        }
+        .radial-btn:hover { background: var(--c-accent); color: #fff; }
+        .radial-btn::after {
+            background: var(--c-text);
+            color: var(--c-island);
+            border: 0;
+            border-radius: var(--r-sm);
+            font-family: var(--font-sans);
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+
+        .family-aura { background: transparent; border: 1.5px dashed var(--c-border-strong); border-radius: var(--r-lg); }
+        .family-aura-label {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-pill);
+        }
+        .couple-unit-plate { background: var(--c-island-2); border: 1px solid var(--c-border); border-radius: var(--r-lg); box-shadow: none; }
+
+        /* Линии связей: CSS сильнее атрибутов stroke, которые ставит JS */
+        svg.connections-layer line { stroke: var(--c-text-3); stroke-width: 1.5px; }
+        svg.connections-layer line[stroke-dasharray] { stroke: var(--c-female); }
+
+        .tree-empty-state {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-modal);
+            backdrop-filter: none;
+        }
+        .tree-empty-state .empty-icon { color: var(--c-text-3); }
+        .tree-empty-state .empty-icon .ic { width: 44px; height: 44px; }
+        .tree-empty-state h2 { color: var(--c-text); }
+        .tree-empty-state p { color: var(--c-text-2); }
+        .btn-empty-action.btn-import { background: var(--c-accent); color: #fff; box-shadow: none; }
+        .btn-empty-action.btn-import:hover { background: var(--c-accent); opacity: .88; transform: none; }
+
+        /* Масштаб и легенда — острова */
+        .zoom-controls, .tree-legend {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            border: 1px solid var(--c-border);
+            box-shadow: var(--shadow-pop);
+            backdrop-filter: none;
+        }
+        .zoom-controls { bottom: calc(var(--gap-shell) + 12px); left: calc(var(--gap-shell) + 12px); border-radius: var(--r-pill); }
+        .tree-legend { bottom: calc(var(--gap-shell) + 12px); right: calc(var(--gap-shell) + 12px); border-radius: var(--r-md); color: var(--c-text-2); }
+        .zoom-btn { color: var(--c-text-2); font-family: inherit; }
+        .zoom-btn:hover { background: var(--c-hover); color: var(--c-text); }
+        .zoom-btn .ic { width: 16px; height: 16px; }
+        .zoom-val { color: var(--c-text-2); font-weight: 600; }
+        .legend-dot { width: 8px; height: 8px; }
+        .legend-dot.lg-m { background: var(--c-male); }
+        .legend-dot.lg-f { background: var(--c-female); }
+        .legend-dot.lg-d { background: var(--c-accent); }
+        .legend-dot.lg-l { background: var(--c-success); }
+
+        /* Боковая панель профиля (открывается из «Өңдеу» и «Тізім») */
+        aside.side-profile-panel {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text);
+            border: 1px solid var(--c-border);
+            box-shadow: var(--shadow-modal);
+            backdrop-filter: none;
+        }
+        .side-header { border-bottom: 1px solid var(--c-border); gap: 12px; }
+        .side-header > div { min-width: 0; }
+        .side-name { color: var(--c-text); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+        .side-clan { font-size: 12px; color: var(--c-text-2); margin-top: 2px; }
+        :is(aside.side-profile-panel, #editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .close-panel-btn {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--r-sm);
+            color: var(--c-text-2);
+            padding: 0;
+        }
+        :is(aside.side-profile-panel, #editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .close-panel-btn:hover { background: var(--c-hover); color: var(--c-text); }
+        .close-panel-btn .ic { width: 16px; height: 16px; }
+        .kin-callout { background: var(--c-accent-soft); border: 1px solid transparent; color: var(--c-accent-text); border-radius: var(--r-md); }
+        .profile-kv { background: var(--c-island-2); border: 1px solid var(--c-border); border-radius: var(--r-md); }
+        .profile-kv-row { gap: 12px; }
+        .profile-kv-label { color: var(--c-text-2); flex-shrink: 0; }
+        .profile-kv-val { color: var(--c-text); text-align: right; min-width: 0; overflow-wrap: anywhere; }
+        .side-sub-title { font-size: 11px; color: var(--c-text-2); margin-bottom: 6px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+        .bio-box { background: var(--c-island-2); border: 1px solid var(--c-border); color: var(--c-text); border-radius: var(--r-md); user-select: text; }
+        .side-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+        .side-actions .btn { width: 100%; justify-content: flex-start; height: 38px; }
+        .side-media { margin-top: 8px; border-top: 1px solid var(--c-border); padding-top: 14px; }
+        .side-media-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .pm-item { background: var(--c-island-2); border: 1px solid var(--c-border); border-radius: var(--r-md); padding: 10px; }
+        .pm-title { font-weight: 600; color: var(--c-text); font-size: 12.5px; min-width: 0; overflow-wrap: anywhere; }
+        .pm-meta { font-size: 11px; color: var(--c-text-2); }
+        .pm-text { font-size: 12px; color: var(--c-text); line-height: 1.5; white-space: pre-wrap; max-height: 120px; overflow-y: auto; user-select: text; }
+        .pm-msg { color: var(--c-text-2); font-size: 12px; font-style: italic; }
+        .pm-msg.is-error { color: var(--c-danger); font-style: normal; }
+
+        /* --- Модалки режима «Өңдеу» / «Тізім» — белые острова на затемнении --- */
+        #editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal { background: var(--c-overlay); backdrop-filter: none; }
+        #editPersonModal .modal-card, #marriageModal .modal-card, #ushZhurtModal .modal-card, #addPersonModal .modal-card {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-modal);
+        }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .modal-header { border-bottom: 1px solid var(--c-border); gap: 12px; }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .modal-header h3 { color: var(--c-text); font-size: 17px; font-weight: 700; }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .modal-sub { font-size: 12px; color: var(--c-text-2); margin-top: 2px; }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .modal-footer { border-top: 1px solid var(--c-border); }
+        :is(#editPersonModal, #marriageModal, #addPersonModal) .form-group label { color: var(--c-text-2); font-weight: 600; font-size: 12px; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal) :is(.form-input, .form-select, .form-textarea) {
+            font-family: inherit;
+            background: var(--c-island);
+            border: 1px solid var(--c-border-strong);
+            color: var(--c-text);
+            border-radius: var(--r-sm);
+            user-select: text;
+        }
+        :is(#editPersonModal, #marriageModal, #addPersonModal) :is(.form-input, .form-textarea)::placeholder { color: var(--c-text-3); }
+        :is(#editPersonModal, #marriageModal, #addPersonModal) :is(.form-input, .form-select, .form-textarea):focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-focus); }
+        :is(#editPersonModal, #marriageModal, #addPersonModal) .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--c-text); cursor: pointer; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal) .checkbox-label input { accent-color: var(--c-accent); }
+        .ds-subbox { background: var(--c-island-2); border: 1px solid var(--c-border); border-radius: var(--r-md); padding: 12px; margin: 12px 0; }
+        .ds-subbox .couple-names { font-weight: 700; color: var(--c-text); margin-bottom: 4px; }
+        .ds-subbox .couple-hint { font-size: 11.5px; color: var(--c-text-2); }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-cancel {
+            font-family: inherit;
+            background: var(--c-island);
+            border: 1px solid var(--c-border-strong);
+            color: var(--c-text);
+            border-radius: var(--r-sm);
+        }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-cancel:hover { background: var(--c-island-2); }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit {
+            font-family: inherit;
+            background: var(--c-text);
+            color: var(--c-island);
+            border: 1px solid var(--c-text);
+            border-radius: var(--r-sm);
+            box-shadow: none;
+        }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit:hover { opacity: .88; }
+        #editPersonModal #btnDeletePerson { align-items: center; gap: 6px; background: var(--c-island); color: var(--c-danger); border-color: var(--c-border-strong); }
+        #editPersonModal #btnDeletePerson:hover { background: var(--c-danger-soft); border-color: var(--c-danger); }
+        .audit-log-section { margin-top: 12px; border-top: 1px solid var(--c-border); padding-top: 12px; }
+        .audit-log-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--c-text-2); margin-bottom: 8px; }
+        .audit-log-title .ic { width: 15px; height: 15px; }
+        .audit-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+        .audit-table th { text-align: left; background: var(--c-island-2); color: var(--c-text-2); font-weight: 600; padding: 7px 8px; border-bottom: 1px solid var(--c-border); }
+        .audit-table td { padding: 7px 8px; border-bottom: 1px solid var(--c-border); color: var(--c-text); overflow-wrap: anywhere; vertical-align: top; }
+        .audit-act { font-weight: 600; color: var(--c-accent-text); }
+        .audit-empty { color: var(--c-text-3); font-size: 12px; }
+
+        /* Үш жұрт: вкладки-капсулы и папки семей */
+        #ushZhurtTabButtons {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            margin-bottom: 16px;
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-pill);
+        }
+        #ushZhurtTabButtons button {
+            flex: 1;
+            min-width: 0;
+            padding: 7px 12px;
+            border: 0;
+            border-radius: var(--r-pill);
+            background: transparent;
+            color: var(--c-text-2);
+            font: 600 13px var(--font-sans);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #ushZhurtTabButtons button:hover { color: var(--c-text); }
+        #ushZhurtTabButtons button.active { background: var(--c-island); color: var(--c-text); box-shadow: 0 0 0 1px var(--c-border), 0 1px 2px rgba(0, 0, 0, 0.08); }
+        .uz-msg { color: var(--c-text-2); padding: 24px; text-align: center; }
+        .uz-msg.is-error { color: var(--c-danger); }
+        .uz-fam { background: var(--c-island); border: 1px solid var(--c-border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 8px; }
+        .uz-fam > summary { padding: 10px 14px; background: var(--c-island-2); cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--c-text); display: flex; align-items: center; gap: 8px; list-style: none; }
+        .uz-fam > summary::-webkit-details-marker { display: none; }
+        .uz-fam > summary .ic { width: 16px; height: 16px; color: var(--c-text-3); flex-shrink: 0; }
+        .uz-fam > summary .uz-title { min-width: 0; }
+        .uz-count { font-size: 11px; color: var(--c-text-2); margin-left: auto; white-space: nowrap; font-weight: 500; }
+        .uz-body { padding: 10px 14px; }
+        .uz-person strong { color: var(--c-text); }
+        .uz-meta { font-size: 11.5px; color: var(--c-text-2); font-weight: 400; }
+        .uz-plus { color: var(--c-female); font-weight: 400; margin: 0 2px; }
+        .uz-child { margin-top: 8px; padding-left: 14px; border-left: 2px solid var(--c-border); }
+        .uz-child-row { font-size: 13px; color: var(--c-text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .uz-child-row a { color: var(--c-text); font-weight: 600; text-decoration: none; }
+        .uz-child-row a:hover { color: var(--c-accent-text); text-decoration: underline; }
+        .uz-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--c-male); }
+        .uz-dot.f { background: var(--c-female); }
+        .uz-none { font-size: 12px; color: var(--c-text-3); font-style: italic; padding-left: 14px; margin-top: 6px; }
+
+        /* --- 3. «Тізім»: остров с панелью фильтров и таблицей без прокрутки вбок --- */
+        .list-view-container {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text);
+            padding: 20px 24px;
+        }
+        .list-toolbar {
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-md);
+            padding: 10px 12px;
+            gap: 8px;
+            margin-bottom: 16px;
+            backdrop-filter: none;
+        }
+        .list-search-wrap { position: relative; flex: 1 1 240px; min-width: 200px; display: flex; }
+        .list-search-wrap .ic { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--c-text-3); pointer-events: none; }
+        .list-search-input, .list-select-filter {
+            font-family: inherit;
+            height: 36px;
+            background: var(--c-island);
+            border: 1px solid var(--c-border-strong);
+            border-radius: var(--r-sm);
+            color: var(--c-text);
+            padding: 0 12px;
+            font-size: 13px;
+            user-select: text;
+        }
+        .list-search-input { flex: 1; min-width: 0; padding-left: 32px; }
+        .list-search-input::placeholder { color: var(--c-text-3); }
+        .list-select-filter { min-width: 0; max-width: 220px; text-overflow: ellipsis; }
+        .list-search-input:focus, .list-select-filter:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-focus); }
+        .list-stats-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--c-accent-text);
+            background: var(--c-accent-soft);
+            border: 0;
+            border-radius: var(--r-pill);
+            padding: 6px 12px;
+            margin-left: auto;
+        }
+        .list-table-wrapper {
+            background: var(--c-island);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-md);
+            box-shadow: none;
+        }
+        .list-table { table-layout: fixed; font-size: 13px; }
+        .list-table th {
+            background: var(--c-island-2);
+            color: var(--c-text-2);
+            font-weight: 600;
+            font-size: 11.5px;
+            text-transform: none;
+            letter-spacing: 0;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--c-border);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .list-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--c-border);
+            color: var(--c-text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            overflow-wrap: anywhere;
+            user-select: text;
+        }
+        .list-table tbody tr:last-child td { border-bottom: 0; }
+        .list-table tr:hover td { background: var(--c-island-2); }
+        .list-table .lt-num { width: 44px; color: var(--c-text-3); font-size: 11.5px; }
+        .list-table .lt-gender { width: 76px; }
+        .list-table .lt-clan { width: 11%; }
+        .list-table .lt-years { width: 120px; }
+        .list-table .lt-parents { width: 19%; }
+        .list-table .lt-spouse { width: 16%; }
+        .list-table .lt-zhurt { width: 12%; }
+        .list-table .lt-act { width: 128px; }   /* 3 кнопки по 30 px + промежутки + поля ячейки */
+        .list-msg { text-align: center; padding: 28px; color: var(--c-text-2); }
+        .list-msg.is-error { color: var(--c-danger); }
+        .lt-person { display: flex; align-items: center; min-width: 0; }
+        .lt-person > div:last-child { min-width: 0; }
+        .lt-name { font-weight: 600; color: var(--c-text); font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lt-sub { font-size: 11.5px; color: var(--c-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lt-sub.is-maiden { color: var(--c-female); }
+        .lt-sub-opt { display: none; }
+        .lt-small { font-size: 12px; color: var(--c-text-2); }
+        .lt-spouse-row { display: block; font-size: 12px; color: var(--c-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lt-spouse-row.is-divorced { color: var(--c-text-3); text-decoration: line-through; }
+        .list-avatar { width: 32px; height: 32px; font-weight: 600; font-size: 11.5px; margin-right: 10px; border-width: 1.5px; }
+        .list-avatar.male { background: var(--c-island-2); color: var(--c-male); border-color: var(--c-male); }
+        .list-avatar.female { background: var(--c-island-2); color: var(--c-female); border-color: var(--c-female); }
+        .list-avatar.deceased { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); }
+        .gender-badge-m, .gender-badge-f { padding: 2px 8px; border-radius: var(--r-pill); font-weight: 600; background: var(--c-island-2); border: 1px solid var(--c-border); }
+        .gender-badge-m { color: var(--c-male); }
+        .gender-badge-f { color: var(--c-female); }
+        .clan-pill {
+            display: inline-block;
+            max-width: 100%;
+            font-size: 11.5px;
+            padding: 2px 8px;
+            border-radius: var(--r-pill);
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            color: var(--c-text-2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .lt-actions { display: flex; gap: 4px; flex-wrap: nowrap; }
+        .btn-table-action {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--c-text-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-sm);
+            font-family: inherit;
+        }
+        .btn-table-action:hover { background: var(--c-hover); color: var(--c-text); border-color: var(--c-border-strong); }
+        .btn-table-action .ic { width: 15px; height: 15px; }
+
+        /* Узкие экраны: второстепенные колонки скрываются, значения уходят подписью под имя */
+        @media (max-width: 1440px) {
+            .list-table .lt-col-xl { display: none; }
+            .lt-sub-opt.xl { display: block; }
+        }
+        @media (max-width: 1180px) {
+            .list-table .lt-col-lg { display: none; }
+            .lt-sub-opt.lg { display: block; }
+        }
+        @media (max-width: 760px) {
+            .list-view-container { padding: 12px; }
+            .list-table .lt-col-md { display: none; }
+            .lt-sub-opt.md { display: block; }
+            .list-select-filter { flex: 1 1 140px; max-width: none; }
+            .list-stats-count { margin-left: 0; }
+            .tree-legend { display: none !important; }
+        }
+    </style>
 </head>
 <body>
     <!-- TASK-008: линейные иконки шапки -->
@@ -2111,6 +2558,21 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         <symbol id="t-print" viewBox="0 0 24 24"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/></symbol>
         <symbol id="t-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
         <symbol id="t-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+        <!-- TASK-008 (замечание 17:08): иконки режимов «Өңдеу» и «Тізім» -->
+        <symbol id="t-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+        <symbol id="t-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></symbol>
+        <symbol id="t-rings" viewBox="0 0 24 24"><circle cx="9" cy="14" r="5"/><circle cx="15" cy="14" r="5"/><path d="M10 5l2-2 2 2"/></symbol>
+        <symbol id="t-tree" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><path d="M12 7v5M6 17v-2.5a1.5 1.5 0 0 1 1.5-1.5h9a1.5 1.5 0 0 1 1.5 1.5V17"/></symbol>
+        <symbol id="t-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="16.5" cy="9" r="2.5"/><path d="M15.5 14.2a4.5 4.5 0 0 1 5 4.8"/></symbol>
+        <symbol id="t-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></symbol>
+        <symbol id="t-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="t-folder" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/></symbol>
+        <symbol id="t-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+        <symbol id="t-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></symbol>
+        <symbol id="t-mic" viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5V21"/></symbol>
+        <symbol id="t-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+        <symbol id="t-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+        <symbol id="t-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
     </svg>
 
     <!-- ЖОҒАРҒЫ БАСҚАРУ ПАНЕЛІ -->
@@ -2173,11 +2635,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             <button class="btn-tool" onclick="flyToSelf()" title="Өз карточкаңызға бару">
                 <svg class="ic"><use href="#t-target"/></svg>
                 <span data-i18n="lbl_you_are_here">Сіз осындасыз</span>
-            </button>
-
-            <button class="btn-tool" onclick="openArtModal()" title="Шежіре-Орман арт-тұжырымдамасы">
-                <svg class="ic"><use href="#t-image"/></svg>
-                <span data-i18n="lbl_art_concept">Арт-эскиз</span>
             </button>
 
             <button class="btn-tool" onclick="openKinshipDictionaryModal()" title="Қазақтың туыстық атаулары">
@@ -2269,7 +2726,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
          ======================================================== -->
     <div class="list-view-container" id="listViewContainer" style="display:none;">
         <div class="list-toolbar">
-            <input type="text" id="listSearchInput" class="list-search-input" placeholder="Аты-жөнін немесе туған жылын іздеу..." oninput="handleListFilterChange()">
+            <div class="list-search-wrap">
+                <svg class="ic"><use href="#t-search"/></svg>
+                <input type="text" id="listSearchInput" class="list-search-input" placeholder="Аты-жөнін немесе туған жылын іздеу..." oninput="handleListFilterChange()">
+            </div>
             <select id="listClanFilter" class="list-select-filter" onchange="handleListFilterChange()">
                 <option value="0">Барлық рулар / Все роды</option>
             </select>
@@ -2297,15 +2757,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             <table class="list-table">
                 <thead>
                     <tr>
-                        <th style="width:40px;">#</th>
+                        <th class="lt-num lt-col-md">#</th>
                         <th>Тұлға / Персона</th>
-                        <th style="width:80px;">Жынысы</th>
-                        <th style="width:110px;">Руы</th>
-                        <th style="width:140px;">Өмір сүрген жылдары</th>
-                        <th>Ата-анасы</th>
-                        <th>Жұбайы</th>
-                        <th>Үш жұрт</th>
-                        <th style="width:130px;">Әрекет</th>
+                        <th class="lt-gender lt-col-lg">Жынысы</th>
+                        <th class="lt-clan lt-col-xl">Руы</th>
+                        <th class="lt-years lt-col-md" title="Өмір сүрген жылдары">Жылдары</th>
+                        <th class="lt-parents lt-col-lg">Ата-анасы</th>
+                        <th class="lt-spouse lt-col-xl">Жұбайы</th>
+                        <th class="lt-zhurt lt-col-md">Үш жұрт</th>
+                        <th class="lt-act">Әрекет</th>
                     </tr>
                 </thead>
                 <tbody id="listTableBody">
@@ -2320,25 +2780,25 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         <button class="zoom-btn" onclick="zoomIn()" title="Жақындату / Приблизить">+</button>
         <span class="zoom-val" id="zoomLevel">100%</span>
         <button class="zoom-btn" onclick="zoomOut()" title="Алыстату / Отдалить">−</button>
-        <button class="zoom-btn" onclick="resetZoom()" title="Бастапқы күй / Сброс">⟲</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Бастапқы күй / Сброс" aria-label="Бастапқы күй / Сброс"><svg class="ic"><use href="#t-reset"/></svg></button>
     </div>
 
     <!-- ШАРТТЫ БЕЛГІЛЕР ЛЕГЕНДАСЫ -->
     <div class="tree-legend">
         <div class="legend-row">
-            <span class="legend-dot" style="background:#2563eb;"></span>
+            <span class="legend-dot lg-m"></span>
             <span data-i18n="legend_male">Ер азамат (бұтақ / карточка)</span>
         </div>
         <div class="legend-row">
-            <span class="legend-dot" style="background:#ec4899;"></span>
+            <span class="legend-dot lg-f"></span>
             <span data-i18n="legend_female">Әйел адам / қыз (гүл)</span>
         </div>
         <div class="legend-row">
-            <span class="legend-dot" style="background:#d97706; box-shadow: 0 0 6px rgba(217,119,6,0.8);"></span>
+            <span class="legend-dot lg-d"></span>
             <span data-i18n="legend_deceased">Ұшқан бабалар (алтын естелік реңкі)</span>
         </div>
         <div class="legend-row">
-            <span class="legend-dot" style="background:#22c55e;"></span>
+            <span class="legend-dot lg-l"></span>
             <span data-i18n="legend_living">Тірі ұрпақтар (жасыл жапырақ / өркен)</span>
         </div>
     </div>
@@ -2347,10 +2807,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
     <aside class="side-profile-panel" id="sideProfilePanel">
         <div class="side-header">
             <div>
-                <h3 id="panelPersonName" style="color:#fef08a; font-size:18px;">—</h3>
-                <div id="panelPersonClan" style="font-size:12px; color:#94a3b8; margin-top:2px;">—</div>
+                <h3 id="panelPersonName" class="side-name">—</h3>
+                <div id="panelPersonClan" class="side-clan">—</div>
             </div>
-            <button class="close-panel-btn" onclick="closeSidePanel()">✕</button>
+            <button class="close-panel-btn" onclick="closeSidePanel()" aria-label="Жабу / Закрыть" title="Жабу / Закрыть"><svg class="ic"><use href="#t-close"/></svg></button>
         </div>
         <div class="side-body">
             <!-- Динамикалық туыстық анықтамасы -->
@@ -2380,45 +2840,45 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             <!-- Өмірбаяны -->
             <div>
-                <div style="font-size:12px; color:#94a3b8; margin-bottom:6px; font-weight:700;" data-i18n="profile_biography_title">ӨМІРБАЯНЫ МЕН ТАРИХЫ:</div>
+                <div class="side-sub-title" data-i18n="profile_biography_title">ӨМІРБАЯНЫ МЕН ТАРИХЫ:</div>
                 <div class="bio-box" id="panelBiography">—</div>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
-                <button type="button" class="btn-profile-action" onclick="viewInEditingMode()" style="background:linear-gradient(135deg, #15803d, #166534); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(22,101,52,0.3);">
+            <div class="side-actions">
+                <button type="button" class="btn btn-primary btn-profile-action" onclick="viewInEditingMode()">
                     <?php /* btn_view_in_tree */ ?>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <svg class="ic"><use href="#t-tree"/></svg>
                     <span data-i18n="lbl_view_in_tree">Древода көрсету («Өңдеу» режимі)</span>
                 </button>
-                <button type="button" class="btn-profile-action" onclick="setFocalFromProfile()" style="background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(217,119,6,0.3);">
-                    <span>🎯</span> <span data-i18n="lbl_focus_here">Осы адамға бағыттау / Фокус</span>
+                <button type="button" class="btn btn-profile-action" onclick="setFocalFromProfile()">
+                    <svg class="ic"><use href="#t-target"/></svg> <span data-i18n="lbl_focus_here">Осы адамға бағыттау / Фокус</span>
                 </button>
-                <button type="button" class="btn-profile-action" id="btnSetMyPerson" onclick="setMyPersonFromProfile()" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(37,99,235,0.3);">
-                    <span>★</span> <span data-i18n="lbl_set_me">Бұл мен (Өз аккаунтыма байлау)</span>
+                <button type="button" class="btn btn-profile-action" id="btnSetMyPerson" onclick="setMyPersonFromProfile()">
+                    <svg class="ic"><use href="#t-star"/></svg> <span data-i18n="lbl_set_me">Бұл мен (Өз аккаунтыма байлау)</span>
                 </button>
-                <button type="button" class="btn-profile-action" onclick="openZhetiAtaTreeModal(selectedPersonId)" style="background:linear-gradient(135deg, #1e3a8a, #1d4ed8); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(30,58,138,0.3);">
-                    <span>📜</span> <span>Жеті атасын көру / тексеру</span>
+                <button type="button" class="btn btn-profile-action" onclick="openZhetiAtaTreeModal(selectedPersonId)">
+                    <svg class="ic"><use href="#t-scroll"/></svg> <span>Жеті атасын көру / тексеру</span>
                 </button>
-                <button type="button" class="btn-profile-action" onclick="openUshZhurtModal(selectedPersonId)" style="background:linear-gradient(135deg, #0f766e, #115e59); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(15,118,110,0.3);">
-                    <span>🌳</span> <span>Үш жұртын көру / Три журта</span>
+                <button type="button" class="btn btn-profile-action" onclick="openUshZhurtModal(selectedPersonId)">
+                    <svg class="ic"><use href="#t-users"/></svg> <span>Үш жұртын көру / Три журта</span>
                 </button>
-                <button type="button" class="btn-modal-submit" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#f8fafc;" onclick="openAddModal('child', selectedPersonId)">
-                    + <span data-i18n="lbl_add_child">Бала қосу</span>
+                <button type="button" class="btn btn-ghost" onclick="openAddModal('child', selectedPersonId)">
+                    <svg class="ic"><use href="#t-plus"/></svg> <span data-i18n="lbl_add_child">Бала қосу</span>
                 </button>
             </div>
 
             <!-- ҮН ЖАЗБАЛАРЫ, ЕСТЕЛІКТЕР ЖӘНЕ ТАРИХИ ФОТОСУРЕТТЕР (TASK-004) -->
-            <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.12); padding-top:14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div style="font-size:12.5px; color:#fef08a; font-weight:700; letter-spacing:0.5px;">
-                        🎙️ ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕР:
+            <div class="side-media">
+                <div class="side-media-head">
+                    <div class="side-sub-title" style="margin:0; display:flex; align-items:center; gap:6px;">
+                        <svg class="ic" style="width:14px;height:14px;"><use href="#t-mic"/></svg> ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕР
                     </div>
-                    <button type="button" onclick="openAddMediaModal(selectedPersonId)" style="background:rgba(212,175,55,0.2); border:1px solid #d4af37; color:#fef08a; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:600; cursor:pointer; transition:all 0.2s ease;">
-                        + Жазба қосу
+                    <button type="button" class="btn btn-sm" onclick="openAddMediaModal(selectedPersonId)">
+                        <svg class="ic" style="width:14px;height:14px;"><use href="#t-plus"/></svg> Жазба қосу
                     </button>
                 </div>
                 <div id="panelMediaContainer" style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
-                    <div style="color:#94a3b8; font-size:12px; font-style:italic;">Жүктелуде...</div>
+                    <div class="pm-msg">Жүктелуде...</div>
                 </div>
             </div>
         </div>
@@ -2431,9 +2891,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             <div class="modal-header">
                 <div>
                     <h3 id="modalEditTitle">Тұлға деректерін өңдеу</h3>
-                    <div style="font-size:12px; color:#94a3b8;" id="modalEditSubtitle">Барлық түзетулер жүйеде тіркеліп, деректер қорында сақталады</div>
+                    <div class="modal-sub" id="modalEditSubtitle">Барлық түзетулер жүйеде тіркеліп, деректер қорында сақталады</div>
                 </div>
-                <button class="close-panel-btn" onclick="closeEditPersonModal()">✕</button>
+                <button class="close-panel-btn" onclick="closeEditPersonModal()" aria-label="Жабу / Закрыть"><svg class="ic"><use href="#t-close"/></svg></button>
             </div>
             <form id="editPersonForm" onsubmit="handleSavePersonEdit(event)">
                 <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
@@ -2472,7 +2932,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         <div class="form-group">
                             <label>Руы (Шежіре желісі)</label>
                             <input type="text" class="form-input" id="editClanRu" placeholder="Мысалы: Керей, Жағалбайлы, Қоңырат...">
-                            <div id="editClanHint" style="font-size:11px; color:#94a3b8; margin-top:3px; font-style:italic;"></div>
+                            <div id="editClanHint" style="font-size:11px; color:var(--c-text-2); margin-top:3px; font-style:italic;"></div>
                         </div>
                     </div>
 
@@ -2492,7 +2952,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         <input type="text" class="form-input" id="editBirthPlace" placeholder="Мысалы: ШҚО, Үржар ауданы">
                     </div>
 
-                    <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid #334155; margin:12px 0;">
+                    <div class="ds-subbox">
                         <label class="checkbox-label" style="margin-bottom:8px;">
                             <input type="checkbox" id="editIsDeceased" onchange="toggleEditDeathInputs()">
                             <span data-i18n="form_is_deceased_checkbox">Қайтыс болған / Ушёл из жизни</span>
@@ -2523,16 +2983,16 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                     <!-- Аудит-лог тарихы -->
                     <div class="audit-log-section" id="editAuditSection">
-                        <div class="audit-log-title">📜 Өзгерістер тарихы (Audit Log)</div>
+                        <div class="audit-log-title"><svg class="ic"><use href="#t-history"/></svg> Өзгерістер тарихы (Audit Log)</div>
                         <div id="editAuditLogContainer">
-                            <span style="color:#94a3b8; font-size:12px;">Жүктелуде...</span>
+                            <span class="audit-empty">Жүктелуде...</span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <button type="button" class="btn-modal-cancel" id="btnDeletePerson" onclick="handleDeleteCurrentPerson()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; display:none;">
-                            🗑️ Жою / Удалить
+                        <button type="button" class="btn-modal-cancel" id="btnDeletePerson" onclick="handleDeleteCurrentPerson()" style="display:none;">
+                            <svg class="ic" style="width:15px;height:15px;"><use href="#t-trash"/></svg> Жою / Удалить
                         </button>
                     </div>
                     <div style="display:flex; gap:10px;">
@@ -2549,25 +3009,25 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         <div class="modal-card" style="width:520px;">
             <div class="modal-header">
                 <div>
-                    <h3>💍 Некелік одақ мәліметтері</h3>
-                    <div style="font-size:12px; color:#94a3b8;" id="marriageModalSubtitle">Супружеский союз / Развод</div>
+                    <h3>Некелік одақ мәліметтері</h3>
+                    <div class="modal-sub" id="marriageModalSubtitle">Супружеский союз / Развод</div>
                 </div>
-                <button class="close-panel-btn" onclick="closeMarriageModal()">✕</button>
+                <button class="close-panel-btn" onclick="closeMarriageModal()" aria-label="Жабу / Закрыть"><svg class="ic"><use href="#t-close"/></svg></button>
             </div>
             <form id="marriageForm" onsubmit="handleSaveMarriage(event)">
                 <div class="modal-body">
                     <input type="hidden" id="marriageId" value="">
 
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px; color:#f8fafc;">
-                        <div id="marriageCoupleNames" style="font-weight:700; color:#fef08a; margin-bottom:4px;">—</div>
-                        <div style="font-size:11.5px; color:#94a3b8;">Неке жағдайы мен мерзімін өзгерту</div>
+                    <div class="ds-subbox" style="margin:0 0 14px; font-size:13px;">
+                        <div id="marriageCoupleNames" class="couple-names">—</div>
+                        <div class="couple-hint">Неке жағдайы мен мерзімін өзгерту</div>
                     </div>
 
                     <div class="form-group">
                         <label>Неке күйі (Статус брака) *</label>
                         <select class="form-select" id="marriageStatus" required>
-                            <option value="married">Үйленген / Замужем (В браке) 💍</option>
-                            <option value="divorced">Ажырасқан (В разводе) 💔</option>
+                            <option value="married">Үйленген / Замужем (В браке)</option>
+                            <option value="divorced">Ажырасқан (В разводе)</option>
                             <option value="widowed">Тұл / Вдовец/вдова</option>
                         </select>
                     </div>
@@ -2598,26 +3058,26 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
     <!-- МОДАЛЬДЫ ТЕРЕЗЕ: ҮШ ЖҰРТ (TASK-007) -->
     <div class="modal-overlay" id="ushZhurtModal" style="display:none;">
-        <div class="modal-card" style="width:780px; max-width:95vw; background:#0f172a; border:1px solid #334155; border-radius:12px; color:#f8fafc; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #334155;">
+        <div class="modal-card" style="width:780px; max-width:95vw;">
+            <div class="modal-header">
                 <div>
-                    <h3 id="ushZhurtModalTitle" style="margin:0; font-size:18px; color:#fef08a;">Үш жұрт</h3>
-                    <div style="font-size:12px; color:#94a3b8; margin-top:2px;" id="ushZhurtModalSubtitle">—</div>
+                    <h3 id="ushZhurtModalTitle">Үш жұрт</h3>
+                    <div class="modal-sub" id="ushZhurtModalSubtitle">—</div>
                 </div>
-                <button class="close-panel-btn" onclick="closeUshZhurtModal()" style="background:transparent; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+                <button class="close-panel-btn" onclick="closeUshZhurtModal()" aria-label="Жабу / Закрыть"><svg class="ic"><use href="#t-close"/></svg></button>
             </div>
-            <div class="modal-body" style="max-height:70vh; overflow-y:auto; padding:20px;">
-                <div style="display:flex; gap:8px; border-bottom:1px solid #334155; padding-bottom:10px; margin-bottom:16px;" id="ushZhurtTabButtons">
-                    <button type="button" id="tabBtnOz" onclick="switchUshZhurtTab('oz')" style="flex:1; padding:9px 12px; border-radius:6px; font-weight:700; font-size:13px; background:#1e3a8a; color:#ffffff; border:none; cursor:pointer;">Өз жұрты</button>
-                    <button type="button" id="tabBtnNagashy" onclick="switchUshZhurtTab('nagashy')" style="flex:1; padding:9px 12px; border-radius:6px; font-weight:700; font-size:13px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:none; cursor:pointer;">Нағашы жұрты</button>
-                    <button type="button" id="tabBtnKaiyn" onclick="switchUshZhurtTab('kaiyn')" style="flex:1; padding:9px 12px; border-radius:6px; font-weight:700; font-size:13px; background:rgba(255,255,255,0.06); color:#cbd5e1; border:none; cursor:pointer;">Қайын жұрты</button>
+            <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+                <div id="ushZhurtTabButtons">
+                    <button type="button" id="tabBtnOz" class="active" onclick="switchUshZhurtTab('oz')">Өз жұрты</button>
+                    <button type="button" id="tabBtnNagashy" onclick="switchUshZhurtTab('nagashy')">Нағашы жұрты</button>
+                    <button type="button" id="tabBtnKaiyn" onclick="switchUshZhurtTab('kaiyn')">Қайын жұрты</button>
                 </div>
                 <div id="ushZhurtContentContainer" style="display:flex; flex-direction:column; gap:12px;">
-                    <div style="text-align:center; padding:24px; color:#94a3b8;">Жүктелуде...</div>
+                    <div class="uz-msg">Жүктелуде...</div>
                 </div>
             </div>
-            <div class="modal-footer" style="padding:12px 20px; border-top:1px solid #334155; display:flex; justify-content:flex-end;">
-                <button type="button" class="btn-modal-cancel" onclick="closeUshZhurtModal()" style="padding:8px 16px; border-radius:6px; background:#1e293b; color:#cbd5e1; border:1px solid #475569; cursor:pointer;">Жабу / Закрыть</button>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeUshZhurtModal()">Жабу / Закрыть</button>
             </div>
         </div>
     </div>
@@ -2627,7 +3087,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         <div class="modal-card">
             <div class="modal-header">
                 <h3 id="modalAddTitle">Адам қосу</h3>
-                <button class="close-panel-btn" onclick="closeAddModal()">✕</button>
+                <button class="close-panel-btn" onclick="closeAddModal()" aria-label="Жабу / Закрыть"><svg class="ic"><use href="#t-close"/></svg></button>
             </div>
             <form id="addPersonForm" onsubmit="handleSavePerson(event)">
                 <div class="modal-body">
@@ -2704,42 +3164,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     <button type="submit" class="btn-modal-submit" data-i18n="lbl_save">Сақтау</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- МОДАЛЬДЫ ТЕРЕЗЕ: ШЕЖІРЕ-ОРМАН АРТ-ТҰЖЫРЫМДАМАСЫ (ЭСКИЗ ЖАНДОСҚА) -->
-    <div class="modal-overlay" id="artModal">
-        <div class="art-modal-card">
-            <div class="modal-header">
-                <div>
-                    <h3 data-i18n="art_modal_title">🎨 «Шежіре-Орман» көркем тұжырымдамасы (Арт-эскиз)</h3>
-                    <div style="font-size:12px; color:#94a3b8; margin-top:2px;" data-i18n="art_modal_sub">
-                        Жандос пен оның әкесіне арналған көркем шежіре тұжырымдамасы
-                    </div>
-                </div>
-                <button class="close-panel-btn" onclick="closeArtModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="art-image-wrap">
-                    <img src="<?= htmlspecialchars($conceptArt) ?>" alt="Шежіре-Орман көркем тұжырымдамасы">
-                </div>
-                <div style="font-size:13.5px; color:#cbd5e1; line-height:1.6; background:rgba(255,255,255,0.03); padding:16px; border-radius:10px; border:1px solid rgba(212,175,55,0.2);">
-                    <p style="margin-bottom:8px;">
-                        <strong style="color:#fef08a;" data-i18n="art_desc_title">🌳 Көркем Шежіре-Орман мағынасы:</strong>
-                    </p>
-                    <ul style="padding-left:20px; display:flex; flex-direction:column; gap:6px;">
-                        <li data-i18n="art_desc_1"><strong>Әр ру — өз ағашы:</strong> Ортада қасиетті Керей бабадан өрбіген Алтыбаевтар ағашы, жанында құдалар рулары (Жағалбайлы, Қоңырат).</li>
-                        <li data-i18n="art_desc_2"><strong>Тірілер жоғарыда (Крона):</strong> Древо төменгі тамырдан емес, жоғарыдан — қазіргі тірі ұрпақтар мен балалардан басталады.</li>
-                        <li data-i18n="art_desc_3"><strong>Семьялар — бұтақтар:</strong> Үйленген ұл бұтақ болып өседі, оның басында жұбайы екеуі отырады.</li>
-                        <li data-i18n="art_desc_4"><strong>Ұлдар — жапырақтар (🍃):</strong> Әлі шаңырақ көтермеген ұлдар жас өркен-жапырақ болып өседі.</li>
-                        <li data-i18n="art_desc_5"><strong>Қыздар — гүлдер (🌸):</strong> Барлық арулар мен қыздар шежіреде заңды әрі әсем орын алады; ұзатылғанда күйеуінің ағашына гүл болып ұшып барады.</li>
-                        <li data-i18n="art_desc_6"><strong>Ұшқан бабалар — күзгі алтын реңк:</strong> Дүниеден өткен аруақтар сұр түспен емес, жылы естелік алтын түспен бейнеленеді.</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-modal-submit" onclick="closeArtModal()" data-i18n="lbl_close">Түсінікті, жабу</button>
-            </div>
         </div>
     </div>
 
@@ -2939,7 +3363,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Адамды іздеу...",
                 lbl_you_are_here: "Сіз осындасыз",
-                lbl_art_concept: "Арт-эскиз",
                 lbl_kinship_dict: "Сөздік",
                 legend_male: "Ер азамат (бұтақ / карточка)",
                 legend_female: "Әйел адам / қыз (гүл)",
@@ -2968,15 +3391,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 form_death_year: "Қайтыс болған жылы",
                 form_birth_place: "Туған жері",
                 form_biography: "Өмірбаяны мен естеліктер",
-                art_modal_title: "🎨 «Шежіре-Орман» көркем тұжырымдамасы (Арт-эскиз)",
-                art_modal_sub: "Жандос пен оның әкесіне арналған көркем шежіре тұжырымдамасы",
-                art_desc_title: "🌳 Көркем Шежіре-Орман мағынасы:",
-                art_desc_1: "Әр ру — өз ағашы: Ортада қасиетті Керей бабадан өрбіген Алтыбаевтар ағашы, жанында құдалар рулары (Жағалбайлы, Қоңырат).",
-                art_desc_2: "Тірілер жоғарыда (Крона): Древо төменгі тамырдан емес, жоғарыдан — қазіргі тірі ұрпақтар мен балалардан басталады.",
-                art_desc_3: "Семьялар — бұтақтар: Үйленген ұл бұтақ болып өседі, оның басында жұбайы екеуі отырады.",
-                art_desc_4: "Ұлдар — жапырақтар (🍃): Әлі шаңырақ көтермеген ұлдар жас өркен-жапырақ болып өседі.",
-                art_desc_5: "Қыздар — гүлдер (🌸): Барлық арулар мен қыздар шежіреде заңды әрі әсем орын алады; ұзатылғанда күйеуінің ағашына гүл болып ұшып барады.",
-                art_desc_6: "Ұшқан бабалар — күзгі алтын реңк: Дүниеден өткен аруақтар сұр түспен емес, жылы естелік алтын түспен бейнеленеді.",
                 dict_modal_title: "📖 Қазақтың туыстық атаулары анықтамалығы",
                 dict_modal_sub: "Өз жұрты, Нағашы жұрты және Қайын жұрты атаулары",
                 clan_main_tree: "🌳 Керей — Алтыбаевтар ағашы",
@@ -2991,7 +3405,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 selected_badge: "Мен",
                 empty_tree_title: "Деректер жоқ — GEDCOM импорттаңыз",
                 empty_tree_desc: "Деректер қорында әлі тұлғалар жоқ. MyHeritage жүйесінен GEDCOM файлын импорттаңыз.",
-                lbl_import_gedcom: "📥 GEDCOM импорттау",
+                lbl_import_gedcom: "GEDCOM импорттау",
                 lbl_return_real: "🌳 Негізгі базаға оралу",
                 scope_focal: "Окрестность",
                 scope_full: "Барлық шежіре",
@@ -3001,7 +3415,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 rodoslov_maternal_trunk: "Аналар мен келіндер: Жағалбайлы, Қоңырат",
                 rodoslov_maiden_prefix: "қыз кезінде:",
                 lbl_focus_here: "Осы адамға бағыттау / Фокус",
-                lbl_set_me: "★ Бұл мен (Өз аккаунтыма байлау)",
+                lbl_set_me: "Бұл мен (Өз аккаунтыма байлау)",
             },
             ru: {
                 back_to_portal: "Главная",
@@ -3015,7 +3429,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 form_is_deceased_checkbox: "Ушёл из жизни",
                 search_placeholder: "Поиск родственника...",
                 lbl_you_are_here: "Вы здесь",
-                lbl_art_concept: "Арт-концепт",
                 lbl_kinship_dict: "Словарь родства",
                 legend_male: "Мужчина (ветка / карточка)",
                 legend_female: "Женщина / дочь (цветок)",
@@ -3044,15 +3457,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 form_death_year: "Год смерти",
                 form_birth_place: "Место рождения",
                 form_biography: "Биография и воспоминания",
-                art_modal_title: "🎨 Художественный концепт «Шежіре-Орман» (Арт-эскиз)",
-                art_modal_sub: "Художественная концепция живого леса шежире для Жандоса и его отца",
-                art_desc_title: "🌳 Смысл живого леса Шежіре-Орман:",
-                art_desc_1: "Каждый род — отдельное дерево: В центре святое древо Алтыбаевых рода Керей, рядом родственные роды (Жагалбайлы, Конырат).",
-                art_desc_2: "Живые наверху (Крона): Древо открывается сверху — на живых потомках и детях, освещенное солнцем.",
-                art_desc_3: "Семьи — ветки: Создав семью, сын становится крепкой ветвью, у основания которой их пара с супругой.",
-                art_desc_4: "Сыновья — листья (🍃): До создания семьи сыновья растут молодыми свежими листьями.",
-                art_desc_5: "Дочери — цветы (🌸): Женщины занимают законное почетное место в шежире; выходя замуж, цветок перелетает к древу мужа.",
-                art_desc_6: "Ушедшие предки — золотые листья памяти: Предки не серые, а теплые золотисто-янтарные, оставаясь живой частью дерева.",
                 dict_modal_title: "📖 Словарь казахских терминов родства",
                 dict_modal_sub: "Родственники по отцу, по матери (нағашы) и со стороны супруги (қайын)",
                 clan_main_tree: "🌳 Керей — Древо Алтыбаевых",
@@ -3067,7 +3471,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 selected_badge: "Я",
                 empty_tree_title: "Данных нет — импортируйте GEDCOM",
                 empty_tree_desc: "В базе данных пока нет персон. Импортируйте файл GEDCOM из MyHeritage.",
-                lbl_import_gedcom: "📥 Импортировать GEDCOM",
+                lbl_import_gedcom: "Импортировать GEDCOM",
                 lbl_return_real: "🌳 Вернуться к реальной базе",
                 scope_focal: "Окрестность",
                 scope_full: "Все древо (270)",
@@ -3077,7 +3481,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 rodoslov_maternal_trunk: "Материнский ствол: роды Жагалбайлы, Конырат",
                 rodoslov_maiden_prefix: "урожд.",
                 lbl_focus_here: "Фокус на выбранном",
-                lbl_set_me: "★ Это я (Привязать аккаунт)",
+                lbl_set_me: "Это я (Привязать аккаунт)",
             }
         };
 
@@ -3302,7 +3706,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     : i18n[currentLang].empty_tree_desc;
 
                 emptyCard.innerHTML = `
-                    <div class="empty-icon">${isErr ? '⚠️' : '🌳'}</div>
+                    <div class="empty-icon"><svg class="ic"><use href="${isErr ? '#t-alert' : '#t-tree'}"/></svg></div>
                     <h2>${title}</h2>
                     <p>${desc}</p>
                     <div class="empty-actions">
@@ -3393,13 +3797,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 // Скрытые предки / потомки батырмалары
                 let expandTopHtml = '';
                 if (node.has_hidden_parents) {
-                    const lbl = currentLang === 'ru' ? `▲ +${node.hidden_parents_count} предков` : `▲ +${node.hidden_parents_count} аталар`;
+                    const lbl = '<svg class="ic"><use href="#t-up"/></svg>' + (currentLang === 'ru' ? `+${node.hidden_parents_count} предков` : `+${node.hidden_parents_count} аталар`);
                     expandTopHtml = `<button class="btn-branch-expand btn-branch-top" onclick="event.stopPropagation(); expandBranch(${node.id}, 'parents')">${lbl}</button>`;
                 }
 
                 let expandBottomHtml = '';
                 if (node.has_hidden_children) {
-                    const lbl = currentLang === 'ru' ? `▼ +${node.hidden_children_count} потомков` : `▼ +${node.hidden_children_count} балалар`;
+                    const lbl = '<svg class="ic"><use href="#t-down"/></svg>' + (currentLang === 'ru' ? `+${node.hidden_children_count} потомков` : `+${node.hidden_children_count} балалар`);
                     expandBottomHtml = `<button class="btn-branch-expand btn-branch-bottom" onclick="event.stopPropagation(); expandBranch(${node.id}, 'children')">${lbl}</button>`;
                 }
 
@@ -3407,15 +3811,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     ${expandTopHtml}
                     <div class="card-kinship-badge ${isSelf ? 'self-rel' : (isSelected ? 'active-rel' : '')}" id="kin-badge-${node.id}">
                         <span>${isSelf && !isSelected ? i18n[currentLang].you_are_here_badge : (isSelected ? i18n[currentLang].selected_badge : kinLabel)}</span>
-                        ${isDeceased ? '<span>✨</span>' : '<span>🌿</span>'}
+                        <span class="kin-mark ${isSelected ? 'is-active' : (isDeceased ? 'is-deceased' : '')}"></span>
                     </div>
 
                     <div class="card-header-inner">
                         <div class="card-avatar">${initials}</div>
                         <div class="card-info">
                             <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
-                            ${node.maiden_name ? `<div class="card-maiden" style="font-size:11px; color:#f472b6;">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
-                            <div class="card-years">${isDeceased ? `${node.birth_year || '—'} — ${node.death_year || '†'} ✨` : `${node.birth_year || '—'}`}</div>
+                            ${node.maiden_name ? `<div class="card-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
+                            <div class="card-years">${isDeceased ? `${node.birth_year || '—'} — ${node.death_year || '†'}` : `${node.birth_year || '—'}`}</div>
                         </div>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:2px;">
@@ -3484,7 +3888,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     badge.className = 'marriage-edge-badge';
                     badge.style.left = `${m.mid_x}px`;
                     badge.style.top = `${m.mid_y}px`;
-                    badge.innerHTML = '💍';
+                    badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
                     badge.title = currentLang === 'ru' ? 'Супружеский союз' : 'Некелік одақ';
                     container.appendChild(badge);
                 });
@@ -4203,7 +4607,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             const birthDisp = p.birth_date ? p.birth_date : (p.birth_year || '—');
             const deathDisp = p.death_date ? p.death_date : (p.death_year || '†');
             if (p.is_deceased) {
-                document.getElementById('panelYears').innerText = `${birthDisp} — ${deathDisp} ✨ (${currentLang === 'ru' ? 'ушёл из жизни' : 'дүниеден өткен'})`;
+                document.getElementById('panelYears').innerText = `${birthDisp} — ${deathDisp} (${currentLang === 'ru' ? 'ушёл из жизни' : 'дүниеден өткен'})`;
             } else {
                 document.getElementById('panelYears').innerText = `${birthDisp}`;
             }
@@ -4239,7 +4643,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     document.getElementById('panelKinshipCallout').innerHTML = kinData.phrase;
                 }
             } catch (e) {
-                document.getElementById('panelKinshipCallout').innerHTML = `🔗 Туыстық желісі анықталды`;
+                document.getElementById('panelKinshipCallout').innerHTML = `Туыстық желісі анықталды`;
             }
 
             // Жүктелген дауыс, естеліктер мен фотосуреттерді шығару (TASK-004)
@@ -4274,17 +4678,17 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 if (isSelected) {
                     badge.classList.add('active-rel');
-                    badge.innerHTML = `<span>★ ${i18n[currentLang].selected_badge}</span> <span>🎯</span>`;
+                    badge.innerHTML = `<span>${i18n[currentLang].selected_badge}</span> <span class="kin-mark is-active"></span>`;
                 } else if (isSelf) {
                     badge.classList.add('self-rel');
                     const kin = activeKinships[p.id];
                     const label = kin ? (currentLang === 'ru' ? (kin.term_ru || kin.term_kk) : kin.term_kk) : '';
-                    badge.innerHTML = `<span>★ ${i18n[currentLang].you_are_here_badge} ${label ? `(${label})` : ''}</span> <span>✨</span>`;
+                    badge.innerHTML = `<span>${i18n[currentLang].you_are_here_badge} ${label ? `(${label})` : ''}</span> <span class="kin-mark ${p.is_deceased ? 'is-deceased' : ''}"></span>`;
                 } else {
                     const kin = activeKinships[p.id];
                     if (kin) {
                         const label = currentLang === 'ru' ? (kin.term_ru || kin.term_kk) : kin.term_kk;
-                        badge.innerHTML = `<span>${label}</span> ${p.is_deceased ? '<span>✨</span>' : '<span>🌿</span>'}`;
+                        badge.innerHTML = `<span>${label}</span> <span class="kin-mark ${p.is_deceased ? 'is-deceased' : ''}"></span>`;
                     }
                 }
             });
@@ -4475,12 +4879,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         // ========================================================
         // МОДАЛЬДЫ ТЕРЕЗЕЛЕРДІ БАСҚАРУ
         // ========================================================
-        function openArtModal() {
-            document.getElementById('artModal').classList.add('active');
-        }
-        function closeArtModal() {
-            document.getElementById('artModal').classList.remove('active');
-        }
+        // TASK-008 (дополнение 17:09): режим «Арт-эскиз» убран по просьбе Жандоса
 
         function openKinshipDictionaryModal() {
             document.getElementById('kinshipDictModal').classList.add('active');
@@ -4620,7 +5019,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 clanInput.value = p.clan_ru || '';
                 const canEditClan = (data.can_edit_clan !== false) && (!p.father_id);
                 clanInput.readOnly = !canEditClan;
-                clanInput.style.backgroundColor = canEditClan ? '' : 'rgba(255,255,255,0.05)';
+                clanInput.style.backgroundColor = canEditClan ? '' : 'var(--c-island-2)';
                 clanInput.style.cursor = canEditClan ? 'text' : 'not-allowed';
                 if (clanHint) {
                     clanHint.textContent = canEditClan ? '' : (data.clan_hint || 'әкесінен / по отцу');
@@ -4650,7 +5049,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         aHtml += `
                             <tr>
                                 <td style="white-space:nowrap;">${al.created_at || '—'}</td>
-                                <td><span style="font-weight:700; color:#d4af37;">${al.action}</span></td>
+                                <td><span class="audit-act">${al.action}</span></td>
                                 <td>${al.description || '—'}</td>
                                 <td>${al.user_name || al.user_email || 'Админ'}</td>
                             </tr>
@@ -4659,7 +5058,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     aHtml += '</tbody></table>';
                     auditContainer.innerHTML = aHtml;
                 } else {
-                    auditContainer.innerHTML = '<span style="color:#64748b; font-size:12px;">Бұл тұлға бойынша өзгерістер тарихы әзірге жоқ</span>';
+                    auditContainer.innerHTML = '<span class="audit-empty">Бұл тұлға бойынша өзгерістер тарихы әзірге жоқ</span>';
                 }
 
                 document.getElementById('editPersonModal').classList.add('active');
@@ -4764,7 +5163,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 if (h) husbandName = `${h.last_name || ''} ${h.first_name}`;
                 if (w) wifeName = `${w.last_name || ''} ${w.first_name}`;
             }
-            document.getElementById('marriageCoupleNames').innerText = `${husbandName} ❤️ ${wifeName}`;
+            document.getElementById('marriageCoupleNames').innerText = `${husbandName} + ${wifeName}`;
             document.getElementById('marriageModal').classList.add('active');
         }
 
@@ -4833,7 +5232,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             if (sort) params.set('sort', sort);
 
             const tbody = document.getElementById('listTableBody');
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:24px; color:#94a3b8;">Іздеу жүргізілуде...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="list-msg">Іздеу жүргізілуде...</td></tr>';
 
             try {
                 const res = await fetch(`/api/tree/list?${params.toString()}`);
@@ -4848,7 +5247,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     populateClanFilterOptions();
                 }
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:#ef4444;">Қате: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="list-msg is-error">Қате: ${err.message}</td></tr>`;
             }
         }
 
@@ -4869,7 +5268,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             tbody.innerHTML = '';
 
             if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#94a3b8;">Талаптарға сай ешкім табылмады</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="list-msg">Талаптарға сай ешкім табылмады</td></tr>';
                 return;
             }
 
@@ -4889,16 +5288,16 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     else if (kin.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
                     else if (kin.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
                     else if (kin.zhurt.includes('Құда')) zCls = 'zhurt-quda';
-                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div style="font-size:11px; color:#94a3b8; margin-top:2px;">${currentLang === 'ru' ? (kin.term_ru || kin.term_kk) : kin.term_kk}</div>`;
+                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div class="lt-sub" style="margin-top:2px;">${currentLang === 'ru' ? (kin.term_ru || kin.term_kk) : kin.term_kk}</div>`;
                 }
 
-                // Супруги
+                // Супруги (разведённые — зачёркнуты, без эмодзи)
                 let spousesHtml = '—';
                 if (p.spouses && p.spouses.length > 0) {
                     spousesHtml = p.spouses.map(s => {
                         const isDiv = (s.status === 'divorced');
-                        return `<span style="font-size:12px; color:${isDiv ? '#94a3b8' : '#fbcfe8'};">${isDiv ? '💔' : '💍'} ${s.name} ${s.years ? `(${s.years})` : ''}</span>`;
-                    }).join('<br>');
+                        return `<span class="lt-spouse-row ${isDiv ? 'is-divorced' : ''}" title="${isDiv ? 'Ажырасқан / В разводе' : ''}">${s.name} ${s.years ? `(${s.years})` : ''}</span>`;
+                    }).join('');
                 }
 
                 // Родители
@@ -4907,39 +5306,54 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     parentsHtml = `${p.father_name ? 'Әкесі: ' + p.father_name : ''}${p.father_name && p.mother_name ? '<br>' : ''}${p.mother_name ? 'Анасы: ' + p.mother_name : ''}`;
                 }
 
+                // Подпись под именем, когда колонка «Жұбайы» скрыта (разведённые не показываются)
+                const spouseSub = (p.spouses || []).filter(s => s.status !== 'divorced').map(s => s.name).join(', ');
+                const genderLbl = isM ? 'Ер' : 'Әйел';
+                const clanLbl = p.clan_ru || 'белгісіз';
+                const tFocus = currentLang === 'ru' ? 'Фокус в древе' : 'Древода фокус';
+                const tEdit = currentLang === 'ru' ? 'Редактировать' : 'Өңдеу';
+
                 tr.innerHTML = `
-                    <td style="color:#64748b; font-size:11.5px;">${idx + 1}</td>
+                    <td class="lt-col-md" style="color:var(--c-text-3); font-size:11.5px;">${idx + 1}</td>
                     <td>
-                        <div style="display:flex; align-items:center;">
+                        <div class="lt-person">
                             <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
                             <div>
-                                <div style="font-weight:700; color:#f8fafc; font-size:13.5px;">${p.full_name}</div>
-                                ${p.maiden_name ? `<div style="font-size:11px; color:#f472b6;">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
+                                <div class="lt-name" title="${p.full_name}">${p.full_name}</div>
+                                ${p.maiden_name ? `<div class="lt-sub is-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
+                                <div class="lt-sub lt-sub-opt xl">${clanLbl}</div>
+                                <div class="lt-sub lt-sub-opt lg">${genderLbl}</div>
+                                <div class="lt-sub lt-sub-opt md">${p.years_display || '—'}</div>
+                                ${(p.father_name || p.mother_name) ? `<div class="lt-sub lt-sub-opt lg">${[p.father_name, p.mother_name].filter(Boolean).join(' / ')}</div>` : ''}
+                                ${spouseSub ? `<div class="lt-sub lt-sub-opt xl">${currentLang === 'ru' ? 'Супруг(а)' : 'Жұбайы'}: ${spouseSub}</div>` : ''}
+                                ${(kin && kin.zhurt) ? `<div class="lt-sub lt-sub-opt md">${kin.zhurt}</div>` : ''}
                             </div>
                         </div>
                     </td>
-                    <td>
-                        <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? 'Ер' : 'Әйел'}</span>
+                    <td class="lt-col-lg">
+                        <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${genderLbl}</span>
                     </td>
-                    <td>
-                        <span class="clan-pill">${p.clan_ru || 'белгісіз'}</span>
+                    <td class="lt-col-xl">
+                        <span class="clan-pill" title="${clanLbl}">${clanLbl}</span>
                     </td>
-                    <td style="white-space:nowrap;">
+                    <td class="lt-col-md" style="white-space:nowrap;">
                         ${p.years_display || '—'}
                     </td>
-                    <td style="font-size:12px; color:#cbd5e1;">
+                    <td class="lt-col-lg lt-small">
                         ${parentsHtml}
                     </td>
-                    <td>
+                    <td class="lt-col-xl">
                         ${spousesHtml}
                     </td>
-                    <td>
+                    <td class="lt-col-md">
                         ${zhurtHtml}
                     </td>
-                    <td style="white-space:nowrap;">
-                        <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id})">🎯 Фокус</button>
-                        <button type="button" class="btn-table-action" onclick="openUshZhurtModal(${p.id})" title="Үш жұрт">🌳 Жұрт</button>
-                        ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id})">✏️</button>` : ''}
+                    <td>
+                        <div class="lt-actions">
+                            <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id})" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
+                            <button type="button" class="btn-table-action" onclick="openUshZhurtModal(${p.id})" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
+                            ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id})" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
+                        </div>
                     </td>
                 `;
 
@@ -4964,13 +5378,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             modal.style.display = 'flex';
             document.getElementById('ushZhurtModalTitle').textContent = currentLang === 'ru' ? 'Три журта' : 'Үш жұрт';
             document.getElementById('ushZhurtModalSubtitle').textContent = currentLang === 'ru' ? 'Загрузка...' : 'Жүктелуде...';
-            document.getElementById('ushZhurtContentContainer').innerHTML = `<div style="text-align:center; padding:24px; color:#94a3b8;">${currentLang === 'ru' ? 'Загрузка...' : 'Жүктелуде...'}</div>`;
+            document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg">${currentLang === 'ru' ? 'Загрузка...' : 'Жүктелуде...'}</div>`;
 
             try {
                 const res = await fetch(`/api/person/ush-zhurt?id=${personId}`);
                 const data = await res.json();
                 if (!data || !data.groups) {
-                    document.getElementById('ushZhurtContentContainer').innerHTML = `<div style="color:#ef4444; padding:20px; text-align:center;">${currentLang === 'ru' ? 'Данные не найдены' : 'Деректер табылмады'}</div>`;
+                    document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg is-error">${currentLang === 'ru' ? 'Данные не найдены' : 'Деректер табылмады'}</div>`;
                     return;
                 }
                 currentUshZhurtData = data;
@@ -4985,7 +5399,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 switchUshZhurtTab('oz');
             } catch (e) {
-                document.getElementById('ushZhurtContentContainer').innerHTML = `<div style="color:#ef4444; padding:20px; text-align:center;">Қате: ${e.message}</div>`;
+                document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg is-error">Қате: ${e.message}</div>`;
             }
         }
 
@@ -4999,27 +5413,19 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             const tabs = ['oz', 'nagashy', 'kaiyn'];
             tabs.forEach(t => {
                 const btn = document.getElementById(t === 'oz' ? 'tabBtnOz' : (t === 'nagashy' ? 'tabBtnNagashy' : 'tabBtnKaiyn'));
-                if (btn) {
-                    if (t === tabKey) {
-                        btn.style.background = '#1e3a8a';
-                        btn.style.color = '#ffffff';
-                    } else {
-                        btn.style.background = 'rgba(255,255,255,0.06)';
-                        btn.style.color = '#cbd5e1';
-                    }
-                }
+                if (btn) btn.classList.toggle('active', t === tabKey);
             });
 
             const container = document.getElementById('ushZhurtContentContainer');
             if (!currentUshZhurtData || !currentUshZhurtData.groups || !currentUshZhurtData.groups[tabKey]) {
-                container.innerHTML = `<div style="color:#94a3b8; padding:20px; text-align:center;">${currentLang === 'ru' ? 'Нет данных' : 'Мәлімет жоқ'}</div>`;
+                container.innerHTML = `<div class="uz-msg">${currentLang === 'ru' ? 'Нет данных' : 'Мәлімет жоқ'}</div>`;
                 return;
             }
 
             const group = currentUshZhurtData.groups[tabKey];
             const families = group.families || [];
             if (families.length === 0) {
-                container.innerHTML = `<div style="color:#94a3b8; font-style:italic; padding:24px; text-align:center; background:rgba(255,255,255,0.02); border-radius:8px;">${currentLang === 'ru' ? 'В этом журте пока нет внесенных родственников' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген'}</div>`;
+                container.innerHTML = `<div class="uz-msg" style="font-style:italic;">${currentLang === 'ru' ? 'В этом журте пока нет внесенных родственников' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген'}</div>`;
                 return;
             }
 
@@ -5032,10 +5438,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             const indent = depth * 16;
             let coupleTitle = '';
             if (h) {
-                coupleTitle += `👨 <strong style="color:#f8fafc;">${h.full_name}</strong> <span style="font-size:11.5px; color:#cbd5e1;">${h.birth_year ? `(${h.birth_year})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span>`;
+                coupleTitle += `<span class="uz-person"><strong>${h.full_name}</strong> <span class="uz-meta">${h.birth_year ? `(${h.birth_year})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (w) {
-                coupleTitle += (h ? ' 💍 ' : '') + `👩 <strong style="color:#f8fafc;">${w.full_name}</strong> <span style="font-size:11.5px; color:#cbd5e1;">${w.birth_year ? `(${w.birth_year})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span>`;
+                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${w.full_name}</strong> <span class="uz-meta">${w.birth_year ? `(${w.birth_year})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (!coupleTitle) coupleTitle = (currentLang === 'ru' ? 'Семья' : 'Отбасы');
 
@@ -5043,7 +5449,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             let childrenHtml = '';
             if (children.length > 0) {
                 childrenHtml = children.map(c => {
-                    const cIcon = c.gender === 'F' ? '🌸' : '🌱';
+                    const cIcon = `<span class="uz-dot ${c.gender === 'F' ? 'f' : ''}"></span>`;
                     const cClan = c.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз');
                     const cYears = c.birth_year ? `(${c.birth_year})` : '';
                     let nested = '';
@@ -5051,28 +5457,28 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         nested = c.families.map(cf => renderUshZhurtFolderHtml(cf, depth + 1)).join('');
                     }
                     return `
-                        <div style="margin-top:8px; padding-left:16px; border-left:2px solid #334155;">
-                            <div style="font-size:13px; color:#e2e8f0; display:flex; align-items:center; gap:6px;">
-                                <span>${cIcon}</span>
-                                <a href="/person/${c.id}" style="color:#60a5fa; text-decoration:none; font-weight:600;">${c.full_name}</a>
-                                <span style="font-size:11px; color:#94a3b8;">${cYears} [${cClan}]</span>
+                        <div class="uz-child">
+                            <div class="uz-child-row">
+                                ${cIcon}
+                                <a href="/person/${c.id}">${c.full_name}</a>
+                                <span class="uz-meta">${cYears} [${cClan}]</span>
                             </div>
                             ${nested}
                         </div>
                     `;
                 }).join('');
             } else {
-                childrenHtml = `<div style="font-size:12px; color:#64748b; font-style:italic; padding-left:16px; margin-top:6px;">${currentLang === 'ru' ? 'Дети не указаны' : 'Балалары көрсетілмеген'}</div>`;
+                childrenHtml = `<div class="uz-none">${currentLang === 'ru' ? 'Дети не указаны' : 'Балалары көрсетілмеген'}</div>`;
             }
 
             return `
-                <details open style="margin-left:${indent}px; background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; overflow:hidden; margin-bottom:8px;">
-                    <summary style="padding:10px 14px; background:rgba(255,255,255,0.05); cursor:pointer; font-size:13.5px; font-weight:600; color:#fef08a; display:flex; align-items:center; gap:8px;">
-                        <span>📁</span>
-                        <span>${coupleTitle}</span>
-                        <span style="font-size:11px; color:#94a3b8; margin-left:auto;">(${children.length} ${currentLang === 'ru' ? 'детей' : 'бала'})</span>
+                <details open class="uz-fam" style="margin-left:${indent}px;">
+                    <summary>
+                        <svg class="ic"><use href="#t-folder"/></svg>
+                        <span class="uz-title">${coupleTitle}</span>
+                        <span class="uz-count">${children.length} ${currentLang === 'ru' ? 'детей' : 'бала'}</span>
                     </summary>
-                    <div style="padding:12px 14px;">
+                    <div class="uz-body">
                         ${childrenHtml}
                     </div>
                 </details>
@@ -5087,19 +5493,19 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         async function loadPersonMedia(personId) {
             const container = document.getElementById('panelMediaContainer');
             if (!container) return;
-            container.innerHTML = '<div style="color:#94a3b8; font-size:12px; font-style:italic;">Жүктелуде...</div>';
+            container.innerHTML = '<div class="pm-msg">Жүктелуде...</div>';
 
             try {
                 const res = await fetch(`/api/person/media?person_id=${personId}`);
                 const json = await res.json();
                 if (!json.success || !json.data) {
-                    container.innerHTML = '<div style="color:#ef4444; font-size:12px;">Жүктеу қатесі</div>';
+                    container.innerHTML = '<div class="pm-msg is-error">Жүктеу қатесі</div>';
                     return;
                 }
 
                 const data = json.data;
                 if (data.total_count === 0) {
-                    container.innerHTML = '<div style="color:#94a3b8; font-size:12px; font-style:italic;">Әзірге үн жазбасы мен естеліктер қосылмаған. «+ Жазба қосу» батырмасын басыңыз.</div>';
+                    container.innerHTML = '<div class="pm-msg">Әзірге үн жазбасы мен естеліктер қосылмаған. «Жазба қосу» батырмасын басыңыз.</div>';
                     return;
                 }
 
@@ -5107,15 +5513,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 // Аудиозаписи
                 if (data.audio && data.audio.length > 0) {
-                    html += '<div style="font-size:11px; color:#fef08a; font-weight:700; margin-top:4px;">🎙️ АУДИОЖАЗБАЛАР (АҚСАҚАЛДАР ҮНІ):</div>';
+                    html += '<div class="side-sub-title" style="margin:4px 0 0;">Аудиожазбалар (ақсақалдар үні)</div>';
                     data.audio.forEach(a => {
                         html += `
-                            <div style="background:rgba(255,255,255,0.04); border:1px solid #334155; border-radius:8px; padding:8px 10px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <div style="font-weight:700; color:#f8fafc; font-size:12.5px;">${a.title}</div>
-                                    <span style="font-size:10.5px; color:#94a3b8;">${a.duration_formatted}</span>
+                            <div class="pm-item">
+                                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                                    <div class="pm-title">${a.title}</div>
+                                    <span class="pm-meta">${a.duration_formatted}</span>
                                 </div>
-                                <div style="font-size:11px; color:#94a3b8; margin:2px 0 6px 0;">
+                                <div class="pm-meta" style="margin:2px 0 6px 0;">
                                     ${a.recorded_by ? `Айтушы: ${a.recorded_by}` : ''} ${a.event_year ? `(${a.event_year} ж.)` : ''}
                                 </div>
                                 <audio controls preload="none" style="width:100%; height:32px; border-radius:4px;" src="${a.stream_url}"></audio>
@@ -5126,13 +5532,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 // Текстовые истории
                 if (data.stories && data.stories.length > 0) {
-                    html += '<div style="font-size:11px; color:#bae6fd; font-weight:700; margin-top:6px;">📝 ЕСТЕЛІКТЕР МЕН ТАРИХ:</div>';
+                    html += '<div class="side-sub-title" style="margin:6px 0 0;">Естеліктер мен тарих</div>';
                     data.stories.forEach(s => {
                         html += `
-                            <div style="background:rgba(255,255,255,0.04); border:1px solid #334155; border-radius:8px; padding:10px;">
-                                <div style="font-weight:700; color:#bae6fd; font-size:12.5px; margin-bottom:4px;">${s.title}</div>
-                                <div style="font-size:12px; color:#cbd5e1; line-height:1.5; white-space:pre-wrap; max-height:120px; overflow-y:auto;">${s.content}</div>
-                                <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                            <div class="pm-item">
+                                <div class="pm-title" style="margin-bottom:4px;">${s.title}</div>
+                                <div class="pm-text">${s.content}</div>
+                                <div class="pm-meta" style="margin-top:4px;">
                                     ${s.recorded_by ? `Жазған/айтқан: ${s.recorded_by}` : ''} ${s.event_year ? `(${s.event_year} ж.)` : ''}
                                 </div>
                             </div>
@@ -5142,15 +5548,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 // Фотографии
                 if (data.photos && data.photos.length > 0) {
-                    html += '<div style="font-size:11px; color:#fbcfe8; font-weight:700; margin-top:6px;">📷 АРХИВТІК ФОТОСУРЕТТЕР:</div>';
+                    html += '<div class="side-sub-title" style="margin:6px 0 0;">Архивтік фотосуреттер</div>';
                     data.photos.forEach(f => {
                         html += `
-                            <div style="background:rgba(255,255,255,0.04); border:1px solid #334155; border-radius:8px; padding:8px;">
-                                <div style="font-weight:700; color:#fbcfe8; font-size:12px; margin-bottom:4px;">${f.title}</div>
+                            <div class="pm-item">
+                                <div class="pm-title" style="margin-bottom:4px;">${f.title}</div>
                                 <a href="${f.stream_url}" target="_blank" title="Үлкейту">
                                     <img src="${f.stream_url}" style="width:100%; max-height:150px; object-fit:cover; border-radius:6px;" alt="${f.title}">
                                 </a>
-                                <div style="font-size:10.5px; color:#94a3b8; margin-top:3px;">${f.recorded_by || ''} ${f.event_year ? `(${f.event_year} ж.)` : ''}</div>
+                                <div class="pm-meta" style="margin-top:3px;">${f.recorded_by || ''} ${f.event_year ? `(${f.event_year} ж.)` : ''}</div>
                             </div>
                         `;
                     });
@@ -5158,7 +5564,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 container.innerHTML = html;
             } catch (e) {
-                container.innerHTML = `<div style="color:#ef4444; font-size:12px;">Қате: ${e.message}</div>`;
+                container.innerHTML = `<div class="pm-msg is-error">Қате: ${e.message}</div>`;
             }
         }
 

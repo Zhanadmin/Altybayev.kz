@@ -109,6 +109,10 @@ function xmlBalanced(svg) {
     return stack.length === 0;
 }
 
+// при подключении из другого теста — только разбор GEDCOM, без запуска проверок
+module.exports = { parseGedcom, xmlBalanced };
+if (require.main !== module) return;
+
 console.log('RodoslovGeneratorTest — генератор SVG «Шежіре-Ағаш»');
 
 // --- 1. утилиты ---
@@ -196,10 +200,11 @@ if (!fs.existsSync(ged)) {
     });
     let widest = 0;
     byY.forEach(xs => { widest = Math.max(widest, xs.length); });
-    console.log('  .... самый широкий ярус: ' + widest + ' лент (минимум ' + widest * 290 + ' px)');
+    console.log('  .... самый широкий ярус: ' + widest + ' лент (минимум ' + widest * 262 + ' px)');
     let overlaps = 0;
-    byY.forEach(xs => { xs.sort((a, b) => a - b); for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] < 280) overlaps++; });
-    ok(overlaps === 0, 'ленты одного яруса не накладываются (шаг ≥ 280)');
+    // лента с хвостами — 248 px
+    byY.forEach(xs => { xs.sort((a, b) => a - b); for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] < 252) overlaps++; });
+    ok(overlaps === 0, 'ленты одного яруса не накладываются (шаг ≥ 252)');
 
     // дети выше родителей; супруги на одном ярусе
     const pos = res.positions;

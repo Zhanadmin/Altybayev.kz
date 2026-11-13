@@ -83,6 +83,9 @@ require __DIR__ . '/../layout/master_start.php';
                 $avatarPath = $ev['avatar_path'] ?? ($person['avatar_path'] ?? null);
                 $initials = $ev['initials'] ?? 'Ш';
                 $icon = $dtIcons[$type] ?? 'calendar';
+                // TASK-008 (дополнение 17:11): пол на аватаре; нет данных о поле — без цвета
+                $dtGender = (string)($ev['gender'] ?? ($ev['person']['gender'] ?? ''));
+                $dtG = $dtGender === 'M' ? ' is-m' : ($dtGender === 'F' ? ' is-f' : '');
             ?>
                 <article class="island event-card dt-card<?= $isToday ? ' dt-today' : '' ?>" data-type="<?= htmlspecialchars($type) ?>">
                     <div class="dt-card-head">
@@ -103,9 +106,9 @@ require __DIR__ . '/../layout/master_start.php';
                         <?php if ($type === 'wedding'): ?>
                             <span class="avatar"><svg class="ic" aria-hidden="true"><use href="#i-family"/></svg></span>
                         <?php elseif ($avatarPath): ?>
-                            <span class="avatar<?= $type === 'death_anniversary' ? ' deceased' : '' ?>"><img src="<?= htmlspecialchars($avatarPath) ?>" alt="<?= htmlspecialchars($ev['full_name'] ?? '') ?>"></span>
+                            <span class="avatar<?= $dtG ?><?= $type === 'death_anniversary' ? ' deceased' : '' ?>"><img src="<?= htmlspecialchars($avatarPath) ?>" alt="<?= htmlspecialchars($ev['full_name'] ?? '') ?>"></span>
                         <?php else: ?>
-                            <span class="avatar<?= $type === 'death_anniversary' ? ' deceased' : '' ?>"><?= htmlspecialchars($initials) ?></span>
+                            <span class="avatar<?= $dtG ?><?= $type === 'death_anniversary' ? ' deceased' : '' ?>"><?= htmlspecialchars($initials) ?></span>
                         <?php endif; ?>
 
                         <div>

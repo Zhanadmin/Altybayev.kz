@@ -316,7 +316,7 @@ class TreeController
 
             $yearsDisplay = '';
             if ($isDeceased) {
-                $yearsDisplay = "{$birthDisp} — {$deathDisp} ✨";
+                $yearsDisplay = "{$birthDisp} — {$deathDisp}";  // TASK-008: без эмодзи, ушедших выделяет золотистая обводка аватара
             } else {
                 $yearsDisplay = $birthDisp;
             }

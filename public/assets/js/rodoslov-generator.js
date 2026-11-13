@@ -25,15 +25,20 @@
     'use strict';
 
     // ---------- геометрия ----------
-    var SLOT = 290;          // шаг ленты внутри семьи
-    var UNIT_GAP = 46;       // зазор между семьями одного яруса
-    var TREE_GAP = 220;      // зазор между стволами разных родов
+    var SLOT = 262;          // шаг ленты внутри семьи (лента с хвостами — 248 px)
+    var UNIT_GAP = 46;       // зазор между семьями в начальной (контурной) раскладке
+    var SIB_GAP = 12;        // плотная раскладка: зазор между братьями и сёстрами
+    var FAM_GAP = 36;        // плотная раскладка: зазор между разными семьями одного рода
+    var TREE_GAP = 70;       // плотная раскладка: зазор между разными родами
+    var TRUNK_W = 300;       // место под ствол рода на ярусах ниже его корня
+    var SMALL_TREE = 6;      // род до 6 человек вставляется прямо рядом со связью
+    var FOCAL_WT = 6;        // вес прямой линии фокусной персоны в плотной раскладке
+    var SWEEPS = 8;        // число проходов «вверх-вниз» плотной раскладки
     var TIER = 330;          // шаг яруса (поколения)
     var MARGIN_X = 260;      // поля слева и справа
     var HEADER_H = 300;      // место под заголовок
     var GROUND_TO_TIER0 = 340; // от линии земли до нижнего яруса
     var FOOTER_H = 250;      // земля, подписи стволов, легенда
-    var TRUNK_HALF = 130;    // полуширина ствола с корнями в контуре раскладки
     var buildCounter = 0;    // счётчик построений — префикс id в <defs>
 
     // ---------- утилиты ----------
@@ -377,18 +382,295 @@
         unit.children.forEach(function (cu, i) { assignX(cu, cx + unit.offsets[i], out); });
     }
 
-    function treeContour(tree) {
-        var c = tree.root.contour;
-        // ствол от земли до корневой семьи занимает место на нижних ярусах
-        var withTrunk = {};
-        Object.keys(c).forEach(function (k) { withTrunk[k] = c[k].slice(); });
-        for (var l = 0; l < tree.root.level; l++) {
-            var seg = [-TRUNK_HALF, TRUNK_HALF];
-            withTrunk[l] = withTrunk[l]
-                ? [Math.min(withTrunk[l][0], seg[0]), Math.max(withTrunk[l][1], seg[1])]
-                : seg;
+    // ---------- плотная раскладка по ярусам (TASK-006, замечание 17:18) ----------
+    // Смещение ленты i от центра семьи.
+    function memberOffset(unit, i) {
+        return -unit.members.length * SLOT / 2 + SLOT / 2 + i * SLOT;
+    }
+
+    function setUnitX(unit, cx) {
+        unit.cx = cx;
+        unit.memberX = unit.members.map(function (m, i) { return cx + memberOffset(unit, i); });
+    }
+
+    // Смещение от центра семьи точки, откуда растёт ветвь к ребёнку (между родителями или над кровным).
+    function anchorOffset(model, unit, childId) {
+        var c = model.persons.get(childId);
+        var iF = c ? unit.members.indexOf(c.fatherId) : -1;
+        var iM = c ? unit.members.indexOf(c.motherId) : -1;
+        if (iF >= 0 && iM >= 0) return (memberOffset(unit, iF) + memberOffset(unit, iM)) / 2;
+        if (iF >= 0) return memberOffset(unit, iF);
+        if (iM >= 0) return memberOffset(unit, iM);
+        return memberOffset(unit, Math.max(0, unit.members.indexOf(unit.blood)));
+    }
+
+    // Связь рода t с уже размещёнными родами: ребёнок, супруг или родитель вне t.
+    function findLink(model, t, unitOf, done) {
+        var types = ['child', 'spouse', 'parent'];
+        for (var k = 0; k < types.length; k++) {
+            for (var a = 0; a < t.units.length; a++) {
+                var u = t.units[a];
+                for (var b = 0; b < u.members.length; b++) {
+                    var m = u.members[b];
+                    var p = model.persons.get(m);
+                    var cand = types[k] === 'child' ? model.childrenOf(m)
+                        : (types[k] === 'spouse' ? model.spousesOf(m) : [p.fatherId, p.motherId]);
+                    for (var c = 0; c < cand.length; c++) {
+                        var ou = cand[c] ? unitOf.get(cand[c]) : null;
+                        if (ou && ou.tree !== t && done.has(ou.tree)) {
+                            return { unit: u, inId: m, outUnit: ou, outId: cand[c], type: types[k] };
+                        }
+                    }
+                }
+            }
         }
-        return withTrunk;
+        return null;
+    }
+
+    // Плотная укладка одного яруса: порядок сохраняется, ленты не накладываются,
+    // сумма квадратов отклонений от желаемых x минимальна (изотоническая регрессия, PAVA).
+    function packLevel(items, ideals, gapFn) {
+        var n = items.length;
+        if (!n) return [];
+        var c = [0];
+        for (var i = 1; i < n; i++) {
+            c[i] = c[i - 1] + (items[i - 1].w + items[i].w) / 2 + gapFn(items[i - 1], items[i]);
+        }
+        var blocks = [];
+        for (var j = 0; j < n; j++) {
+            var wt = items[j].wt || 1;
+            blocks.push({ sum: (ideals[j] - c[j]) * wt, wt: wt, start: j, end: j });
+            while (blocks.length > 1) {
+                var q = blocks[blocks.length - 1];
+                var pr = blocks[blocks.length - 2];
+                if (pr.sum / pr.wt <= q.sum / q.wt) break;
+                pr.sum += q.sum;
+                pr.wt += q.wt;
+                pr.end = q.end;
+                blocks.pop();
+            }
+        }
+        var xs = new Array(n);
+        blocks.forEach(function (bl) {
+            var v = bl.sum / bl.wt;
+            for (var k = bl.start; k <= bl.end; k++) xs[k] = v + c[k];
+        });
+        return xs;
+    }
+
+    // Все роды на одном полотне: род матери и род жены вставляются рядом со своей связью,
+    // дети стоят плотной группой над родителями, родители — под своими детьми.
+    function compactLayout(model, trees, unitOf, spliceDepth, focalId) {
+        var main = trees[0];
+        // прямая линия фокусной персоны (предки, её семья, дети) держится ровнее остальных
+        var focalLine = new Set();
+        var fu = unitOf.get(focalId);
+        for (var g = 0; fu && g < 200; g++) { focalLine.add(fu); fu = fu.parent; }
+        var fself = unitOf.get(focalId);
+        if (fself) fself.children.forEach(function (c) { focalLine.add(c); });
+        var done = new Set([main]);
+        var linkOf = new Map();      // семья → связь её рода
+        var splices = new Map();     // семья → роды, вставляемые до/после неё
+        var linked = [];
+        var pending = trees.slice(1);
+        var progress = true;
+        while (pending.length && progress) {
+            progress = false;
+            pending = pending.filter(function (t) {
+                var link = findLink(model, t, unitOf, done);
+                if (!link) return true;
+                linkOf.set(link.unit, link);
+                var ou = link.outUnit;
+                var side = ou.members.indexOf(link.outId) >= ou.members.indexOf(ou.blood) ? 'after' : 'before';
+                link.side = side;
+                // большой род вставляем после поддерева предка связи, чтобы не раздвигать братьев
+                var at = ou;
+                var size = 0;
+                t.units.forEach(function (u) { size += u.members.length; });
+                if (size > SMALL_TREE) {
+                    for (var d = 0; d < (spliceDepth || 0) && at.parent; d++) at = at.parent;
+                }
+                if (!splices.has(at)) splices.set(at, { before: [], after: [] });
+                splices.get(at)[side].push(t);
+                done.add(t);
+                linked.push(t);
+                progress = true;
+                return false;
+            });
+        }
+        var unlinked = pending;
+
+        function linkIdeal(link) {
+            var ou = link.outUnit;
+            var u = link.unit;
+            var outX = ou.cx + memberOffset(ou, ou.members.indexOf(link.outId));
+            if (link.type === 'child') return outX - anchorOffset(model, u, link.outId);
+            var inOff = memberOffset(u, u.members.indexOf(link.inId));
+            if (link.type === 'spouse') return outX + (link.side === 'after' ? 1 : -1) * (SLOT + FAM_GAP) - inOff;
+            return ou.cx + anchorOffset(model, ou, link.inId) - inOff;
+        }
+
+        // начальные положения: контурная раскладка рода + сдвиг к связи
+        var right = -Infinity;
+        function shiftTree(t, dx) {
+            t.units.forEach(function (u) { setUnitX(u, u.cx + dx); });
+        }
+        function treeRight(t) {
+            var r = -Infinity;
+            t.units.forEach(function (u) { r = Math.max(r, u.cx + u.members.length * SLOT / 2); });
+            return r;
+        }
+        function treeLeft(t) {
+            var l = Infinity;
+            t.units.forEach(function (u) { l = Math.min(l, u.cx - u.members.length * SLOT / 2); });
+            return l;
+        }
+        right = treeRight(main);
+        linked.forEach(function (t) {
+            var link = null;
+            t.units.forEach(function (u) { if (linkOf.has(u)) link = linkOf.get(u); });
+            shiftTree(t, linkIdeal(link) - link.unit.cx);
+            right = Math.max(right, treeRight(t));
+        });
+        unlinked.forEach(function (t) {
+            shiftTree(t, right + TREE_GAP - treeLeft(t));
+            right = treeRight(t);
+        });
+
+        // порядок семей слева направо на каждом ярусе — обход в глубину с вставками родов;
+        // место ствола на нижних ярусах выбирается заново на каждом проходе — по положению корня
+        var levels = {};
+        var trunkLevels = {};
+        function push(item) {
+            var bucket = item.trunk ? trunkLevels : levels;
+            (bucket[item.level] = bucket[item.level] || []).push(item);
+        }
+        function visitUnit(u) {
+            var sp = splices.get(u);
+            if (sp) sp.before.forEach(visitTree);
+            push({ unit: u, level: u.level, w: u.members.length * SLOT, tree: u.tree, wt: focalLine.has(u) ? FOCAL_WT : 1 });
+            u.children.forEach(visitUnit);
+            if (sp) sp.after.forEach(visitTree);
+        }
+        function visitTree(t) {
+            t.trunkItems = [];
+            // до земли идут только стволы рода отца, матери и жены; у прочих родов — короткий отросток
+            t.grounded = t.kind !== 'other' || t.root.level === 0;
+            for (var l = 0; t.grounded && l < t.root.level; l++) {
+                var ti = { trunk: t, level: l, w: TRUNK_W, tree: t, x: t.root.cx, wt: 0.6 };
+                t.trunkItems.push(ti);
+                push(ti);
+            }
+            visitUnit(t.root);
+        }
+        visitTree(main);
+        unlinked.forEach(visitTree);
+
+        function gapFn(a, b) {
+            if (a.unit && b.unit && a.unit.parent && a.unit.parent === b.unit.parent) return SIB_GAP;
+            return a.tree === b.tree ? FAM_GAP : TREE_GAP;
+        }
+        function bloodX(u) {
+            return u.cx + memberOffset(u, u.members.indexOf(u.blood));
+        }
+        // над родителями: группа братьев и сестёр плотно, центр кровных лент — над точкой ветви
+        function parentIdeal(u) {
+            var p = u.parent;
+            var kids = p.children;
+            var anchor = 0;
+            kids.forEach(function (k) { anchor += p.cx + anchorOffset(model, p, k.blood); });
+            anchor /= kids.length;
+            var pos = 0;
+            var centers = [];
+            kids.forEach(function (k, i) {
+                if (i) pos += SIB_GAP;
+                centers.push(pos + k.members.length * SLOT / 2);
+                pos += k.members.length * SLOT;
+            });
+            var meanBlood = 0;
+            kids.forEach(function (k, i) { meanBlood += centers[i] + memberOffset(k, k.members.indexOf(k.blood)); });
+            meanBlood /= kids.length;
+            return centers[kids.indexOf(u)] + anchor - meanBlood;
+        }
+        // под детьми: точка ветви — посередине между крайними детьми
+        function childIdeal(u) {
+            var lo = Infinity, hi = -Infinity, off = 0;
+            u.children.forEach(function (k) {
+                var bx = bloodX(k);
+                lo = Math.min(lo, bx);
+                hi = Math.max(hi, bx);
+                off += anchorOffset(model, u, k.blood);
+            });
+            return (lo + hi) / 2 - off / u.children.length;
+        }
+        // null — у ленты нет привязки (одиночка без родителей и детей): её прижимаем к соседу
+        function idealOf(item, dir) {
+            if (item.trunk) return item.trunk.root.cx;
+            var u = item.unit;
+            if (linkOf.has(u)) return linkIdeal(linkOf.get(u));
+            var up = u.parent ? parentIdeal(u) : null;
+            var down = u.children.length ? childIdeal(u) : null;
+            if (dir === 'up') return up !== null ? up : down;
+            return down !== null ? down : up;
+        }
+        function fillFree(items, ideals) {
+            var i, any = -1;
+            for (i = 0; i < items.length; i++) if (ideals[i] !== null) { any = i; break; }
+            if (any < 0) {
+                // на ярусе нет ни одной привязки — оставляем как есть
+                for (i = 0; i < items.length; i++) ideals[i] = items[i].trunk ? items[i].x : items[i].unit.cx;
+                return;
+            }
+            for (i = any - 1; i >= 0; i--) {
+                ideals[i] = ideals[i + 1] - (items[i].w + items[i + 1].w) / 2 - gapFn(items[i], items[i + 1]);
+            }
+            for (i = any + 1; i < items.length; i++) {
+                if (ideals[i] === null) ideals[i] = ideals[i - 1] + (items[i - 1].w + items[i].w) / 2 + gapFn(items[i - 1], items[i]);
+            }
+        }
+        function itemsOf(k) {
+            var units = levels[k] || [];
+            var tr = (trunkLevels[k] || []).slice().sort(function (a, b) { return a.trunk.root.cx - b.trunk.root.cx; });
+            if (!tr.length) return units;
+            var out = [];
+            var j = 0;
+            units.forEach(function (it) {
+                while (j < tr.length && tr[j].trunk.root.cx < it.unit.cx) out.push(tr[j++]);
+                out.push(it);
+            });
+            while (j < tr.length) out.push(tr[j++]);
+            return out;
+        }
+        var keySet = {};
+        Object.keys(levels).concat(Object.keys(trunkLevels)).forEach(function (k) { keySet[k] = 1; });
+        var keys = Object.keys(keySet).map(Number).sort(function (a, b) { return a - b; });
+        function sweep(dir) {
+            var ks = dir === 'up' ? keys : keys.slice().reverse();
+            ks.forEach(function (k) {
+                var items = itemsOf(k);
+                var ideals = items.map(function (it) { return idealOf(it, dir); });
+                fillFree(items, ideals);
+                var xs = packLevel(items, ideals, gapFn);
+                items.forEach(function (it, i) {
+                    if (it.trunk) it.x = xs[i];
+                    else setUnitX(it.unit, xs[i]);
+                });
+            });
+        }
+        // последний проход — сверху вниз: родители встают под центр своих детей
+        // (широкие верхние ярусы задают места, узкие нижние подстраиваются)
+        for (var s = 0; s < SWEEPS; s++) { sweep('up'); sweep('down'); }
+
+        var minX = Infinity, maxX = -Infinity, maxLevel = 0;
+        keys.forEach(function (k) {
+            itemsOf(k).forEach(function (it) {
+                var x = it.trunk ? it.x : it.unit.cx;
+                minX = Math.min(minX, x - it.w / 2);
+                maxX = Math.max(maxX, x + it.w / 2);
+                if (it.unit) maxLevel = Math.max(maxLevel, it.unit.level);
+            });
+        });
+        return { minX: minX, maxX: maxX, maxLevel: maxLevel };
     }
 
     // ---------- рисование ----------
@@ -467,8 +749,8 @@
                 '<filter id="rs-paper" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 .45  0 0 0 0 .36  0 0 0 0 .22  0 0 0 .09 0"/></filter>' : '') +
             // лента: живые
             '<g id="rs-rb">' +
-            '<path d="M-100,-6 L-136,-6 L-124,12 L-136,30 L-100,30 Z" fill="#e3cf9e" stroke="#b29963" stroke-width="1"/>' +
-            '<path d="M100,-6 L136,-6 L124,12 L136,30 L100,30 Z" fill="#e3cf9e" stroke="#b29963" stroke-width="1"/>' +
+            '<path d="M-100,-6 L-124,-6 L-115,12 L-124,30 L-100,30 Z" fill="#e3cf9e" stroke="#b29963" stroke-width="1"/>' +
+            '<path d="M100,-6 L124,-6 L115,12 L124,30 L100,30 Z" fill="#e3cf9e" stroke="#b29963" stroke-width="1"/>' +
             '<path d="M-110,20 L-100,30 L-100,19 Z" fill="#b59b62"/><path d="M110,20 L100,30 L100,19 Z" fill="#b59b62"/>' +
             '<path d="M-110,-18 Q0,-28 110,-18 L110,20 Q0,10 -110,20 Z" fill="url(#rs-gRib)" stroke="#b29963" stroke-width="1.2"/>' +
             '<path d="M-104,-13.5 Q0,-22.6 104,-13.5" fill="none" stroke="#cdb684" stroke-width=".8"/>' +
@@ -476,8 +758,8 @@
             '</g>' +
             // лента: ушедшие
             '<g id="rs-rbG">' +
-            '<path d="M-100,-6 L-136,-6 L-124,12 L-136,30 L-100,30 Z" fill="#cf9f3b" stroke="#946b1f" stroke-width="1"/>' +
-            '<path d="M100,-6 L136,-6 L124,12 L136,30 L100,30 Z" fill="#cf9f3b" stroke="#946b1f" stroke-width="1"/>' +
+            '<path d="M-100,-6 L-124,-6 L-115,12 L-124,30 L-100,30 Z" fill="#cf9f3b" stroke="#946b1f" stroke-width="1"/>' +
+            '<path d="M100,-6 L124,-6 L115,12 L124,30 L100,30 Z" fill="#cf9f3b" stroke="#946b1f" stroke-width="1"/>' +
             '<path d="M-110,20 L-100,30 L-100,19 Z" fill="#8f661c"/><path d="M110,20 L100,30 L100,19 Z" fill="#8f661c"/>' +
             '<path d="M-110,-18 Q0,-28 110,-18 L110,20 Q0,10 -110,20 Z" fill="url(#rs-gRibG)" stroke="#946b1f" stroke-width="1.2"/>' +
             '<path d="M-104,-13.5 Q0,-22.6 104,-13.5" fill="none" stroke="#fbeab8" stroke-width=".9"/>' +
@@ -607,6 +889,7 @@
             tamgaPlaceholder: 'таңба',
             unknownClan: 'руы белгісіз',
             fixSurnames: true,
+            spliceDepth: 0,
             shadows: null,
             paper: null,
             legend: true,
@@ -694,44 +977,22 @@
         order.forEach(function (id) { if (!placed.has(id)) plantTree(id, 'other'); });
 
         // --- раскладка каждого дерева и расстановка стволов: главный в центре, остальные попеременно справа и слева ---
-        trees.forEach(function (t) { layoutUnit(t.root); t.contour = treeContour(t); });
-        var main = trees[0];
-        main.cx = 0;
-        var accRight = main.contour;
-        var accLeft = main.contour;
-        trees.slice(1).forEach(function (t, i) {
-            var toRight = (i % 2 === 0);
-            if (toRight) {
-                var dx = separation(accRight, t.contour, TREE_GAP);
-                if (!isFinite(dx)) dx = 0;
-                t.cx = dx;
-                accRight = mergeContour(accRight, shiftContour(t.contour, dx));
-                accLeft = mergeContour(accLeft, shiftContour(t.contour, dx));
-            } else {
-                var dl = separation(t.contour, accLeft, TREE_GAP);
-                if (!isFinite(dl)) dl = 0;
-                t.cx = -dl;
-                accLeft = mergeContour(accLeft, shiftContour(t.contour, -dl));
-                accRight = mergeContour(accRight, shiftContour(t.contour, -dl));
-            }
+        // начальное приближение — контурная раскладка каждого рода, затем общая плотная раскладка
+        trees.forEach(function (t) {
+            layoutUnit(t.root);
+            t.units = [];
+            assignX(t.root, 0, t.units);
+            t.units.forEach(function (u) { u.tree = t; });
         });
+        var lay = compactLayout(model, trees, unitOf, opts.spliceDepth, focalId);
 
         var allUnits = [];
-        trees.forEach(function (t) {
-            t.units = [];
-            assignX(t.root, t.cx, t.units);
-            allUnits = allUnits.concat(t.units);
-        });
+        trees.forEach(function (t) { allUnits = allUnits.concat(t.units); });
 
         // --- габариты ---
-        var minX = Infinity;
-        var maxX = -Infinity;
-        var maxLevel = 0;
-        Object.keys(accRight).forEach(function (k) {
-            minX = Math.min(minX, accRight[k][0]);
-            maxX = Math.max(maxX, accRight[k][1]);
-            maxLevel = Math.max(maxLevel, +k);
-        });
+        var minX = lay.minX;
+        var maxX = lay.maxX;
+        var maxLevel = lay.maxLevel;
         var shiftX = MARGIN_X - minX;
         var width = Math.max(1400, Math.ceil(maxX - minX + 2 * MARGIN_X));
         if (maxX - minX + 2 * MARGIN_X < 1400) shiftX += (1400 - (maxX - minX + 2 * MARGIN_X)) / 2;
@@ -852,11 +1113,18 @@
             var bi = u.members.indexOf(u.blood);
             var ax = X(u.members.length > 1 ? (u.memberX[0] + u.memberX[u.memberX.length - 1]) / 2 : u.memberX[bi]);
             var topY = Y(u.level) + 18;
-            var baseY = groundY + 8;
-            var big = clamp(46 + Math.sqrt(u.descendants + 1) * 7, 46, 120);
+            var grounded = t.grounded !== false;
+            // отросток прочего рода: короткий ствол с корнями под корневой лентой
+            var baseY = grounded ? groundY + 8 : Y(u.level) + 190;
+            var big = grounded ? clamp(46 + Math.sqrt(u.descendants + 1) * 7, 46, 120) : 30;
             var lean = (hash(t.rootId) - 0.5) * 40;
-            var p0 = [ax + lean * 0.3, baseY], p1 = [ax - lean, baseY - (baseY - topY) * 0.35],
-                p2 = [ax + lean, topY + (baseY - topY) * 0.35], p3 = [ax, topY];
+            // ствол идёт по месту, отведённому ему на нижних ярусах плотной раскладки
+            var ti = t.trunkItems || [];
+            var bx0 = ti.length ? X(ti[0].x) : ax;
+            var bx1 = ti.length ? X(ti[Math.floor(ti.length / 3)].x) : ax;
+            var bx2 = ti.length ? X(ti[Math.floor(ti.length * 2 / 3)].x) : ax;
+            var p0 = [bx0 + lean * 0.3, baseY], p1 = [bx1 - lean, baseY - (baseY - topY) * 0.35],
+                p2 = [bx2 + lean, topY + (baseY - topY) * 0.35], p3 = [ax, topY];
             trunks.push('<path d="' + taperedPath(p0, p1, p2, p3, function (tt) {
                 var flare = tt < 0.14 ? Math.pow((0.14 - tt) / 0.14, 2) * big * 0.9 : 0;
                 return big + (big * 0.5 - big) * tt + flare;
@@ -865,13 +1133,14 @@
             bark.push('<path d="' + curvePath([p0[0] + big * 0.16, p0[1] - 20], [p1[0] + big * 0.14, p1[1]], [p2[0] + big * 0.1, p2[1]], [p3[0] + big * 0.08, p3[1] + 10]) + '" stroke-width="1.4"/>');
             // корни
             var rootsSvg = '';
+            var rs = grounded ? 1 : 0.45;
             [-1, 1].forEach(function (side) {
                 [0, 1, 2].forEach(function (j) {
                     var sx = p0[0] + side * big * (0.25 + j * 0.15);
-                    var ex = p0[0] + side * (big * 0.9 + j * 46 + hash(t.rootId + j) * 30);
-                    var ey = baseY + 18 + j * 14;
-                    rootsSvg += '<path d="M' + r1(sx) + ',' + r1(baseY - 6) + ' C' + r1(sx + side * 20) + ',' + r1(baseY + 6) + ' ' +
-                        r1(ex - side * 30) + ',' + r1(ey) + ' ' + r1(ex) + ',' + r1(ey + 4) + '" stroke-width="' + (11 - j * 2) + '"/>';
+                    var ex = p0[0] + side * (big * 0.9 + (j * 46 + hash(t.rootId + j) * 30) * rs);
+                    var ey = baseY + (18 + j * 14) * rs;
+                    rootsSvg += '<path d="M' + r1(sx) + ',' + r1(baseY - 6) + ' C' + r1(sx + side * 20 * rs) + ',' + r1(baseY + 6 * rs) + ' ' +
+                        r1(ex - side * 30 * rs) + ',' + r1(ey) + ' ' + r1(ex) + ',' + r1(ey + 4 * rs) + '" stroke-width="' + r1((11 - j * 2) * (grounded ? 1 : 0.6)) + '"/>';
                 });
             });
             trunks.push('<g fill="none" stroke="#5a3d24" stroke-linecap="round"' + filt(opts, 'rs-sh') + '>' + rootsSvg + '</g>');
@@ -880,7 +1149,8 @@
             var rootP = model.persons.get(t.rootId);
             var surname = t.surname;
             var label = (opts.labels[t.kind] || opts.labels.other) + (surname ? ' · ' + clanPlural(surname).toUpperCase() : '');
-            marks.push('<text class="rs-lb" x="' + r1(p0[0]) + '" y="' + r1(groundY + 82) + '">' + escapeXml(label) + '</text>');
+            marks.push('<text class="rs-lb" x="' + r1(p0[0]) + '" y="' + r1(grounded ? groundY + 82 : baseY + 52) + '">' + escapeXml(label) + '</text>');
+            if (!grounded) return;
 
             // тамга рода на стволе (если ствол достаточно высок)
             var clan = t.kind === 'father' && opts.mainClan ? opts.mainClan : (rootP.clan && rootP.clan !== 'белгісіз' ? rootP.clan : opts.unknownClan);

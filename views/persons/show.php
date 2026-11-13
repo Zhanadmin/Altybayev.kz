@@ -11,6 +11,13 @@ $dsThemeReady = true; // TASK-008: страница переведена на д
 
 $isDeceased = !empty($person['is_deceased']);
 $isMale = ($person['gender'] === 'M');
+// TASK-008 (дополнение 17:11): класс пола для аватара; если пола в строке нет — по роли (отец/мать, супруг)
+$pcG = static function ($row, bool $fallbackMale): string {
+    $g = is_array($row) ? ($row['gender'] ?? '') : '';
+    if ($g === 'M') return ' is-m';
+    if ($g === 'F') return ' is-f';
+    return $fallbackMale ? ' is-m' : ' is-f';
+};
 $initials = mb_substr((string)($person['first_name'] ?? ''), 0, 1) . mb_substr((string)($person['last_name'] ?? ''), 0, 1);
 
 // Полные даты через единый форматтер
@@ -34,7 +41,7 @@ require __DIR__ . '/../layout/master_start.php';
     <!-- Заголовок карточки: фото, имя, статус, действия -->
     <div class="ds-page-head pc-head">
         <div class="pc-head-main">
-            <div class="avatar avatar-lg pc-avatar<?= $isDeceased ? ' deceased' : '' ?>">
+            <div class="avatar avatar-lg pc-avatar<?= $isMale ? ' is-m' : ' is-f' ?><?= $isDeceased ? ' deceased' : '' ?>">
                 <?php if (!empty($person['avatar_path'])): ?>
                     <img id="personAvatarImg" src="<?= htmlspecialchars((string)$person['avatar_path']) ?>" alt="<?= htmlspecialchars($fullName) ?>">
                 <?php else: ?>
@@ -181,7 +188,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     $ppName = trim(($pp['last_name'] ?? '') . ' ' . $pp['first_name'] . ' ' . ($pp['middle_name'] ?? ''));
                                 ?>
                                     <a href="/person/<?= (int)$pp['id'] ?>" class="person pc-link">
-                                        <span class="avatar"><?= htmlspecialchars($pcInitials($pp)) ?></span>
+                                        <span class="avatar<?= $pcG($pp, $pp === $father) ?><?= !empty($pp['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($pp)) ?></span>
                                         <span>
                                             <span class="meta"><?= htmlspecialchars($par['label']) ?></span>
                                             <span class="name"><?= htmlspecialchars($ppName) ?></span>
@@ -215,7 +222,7 @@ require __DIR__ . '/../layout/master_start.php';
                             ?>
                                 <div class="list-row<?= $isDiv ? ' pc-divorced' : '' ?>">
                                     <a href="/person/<?= (int)$sp['spouse_id'] ?>" class="person pc-link">
-                                        <span class="avatar"><?= htmlspecialchars($pcInitials($sp)) ?></span>
+                                        <span class="avatar<?= $pcG($sp, !$isMale) ?><?= !empty($sp['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sp)) ?></span>
                                         <span>
                                             <span class="name"><?= htmlspecialchars($spName) ?></span>
                                             <?php if (!empty($sp['maiden_name'])): ?>
@@ -246,7 +253,7 @@ require __DIR__ . '/../layout/master_start.php';
                             $chName = trim(($ch['last_name'] ?? '') . ' ' . $ch['first_name'] . ' ' . ($ch['middle_name'] ?? ''));
                         ?>
                             <a href="/person/<?= (int)$ch['id'] ?>" class="person pc-chip">
-                                <span class="avatar<?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($ch)) ?></span>
+                                <span class="avatar<?= $chIsMale ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($ch)) ?></span>
                                 <span>
                                     <span class="name" title="<?= htmlspecialchars($chName) ?>"><?= htmlspecialchars($chName) ?></span>
                                     <span class="meta"><?= $chIsMale ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?><?= !empty($ch['birth_year']) ? ' · ' . htmlspecialchars($pcYear($ch['birth_year'])) : '' ?></span>
@@ -267,7 +274,7 @@ require __DIR__ . '/../layout/master_start.php';
                             $sibName = trim(($sib['last_name'] ?? '') . ' ' . $sib['first_name'] . ' ' . ($sib['middle_name'] ?? ''));
                         ?>
                             <a href="/person/<?= (int)$sib['id'] ?>" class="person pc-chip">
-                                <span class="avatar<?= !empty($sib['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sib)) ?></span>
+                                <span class="avatar<?= $sibIsMale ? ' is-m' : ' is-f' ?><?= !empty($sib['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sib)) ?></span>
                                 <span>
                                     <span class="name" title="<?= htmlspecialchars($sibName) ?>"><?= htmlspecialchars($sibName) ?></span>
                                     <span class="meta"><?= $sibIsMale ? ($lang === 'ru' ? 'Брат' : 'Бауыры') : ($lang === 'ru' ? 'Сестра' : 'Қарындасы/Әпкесі') ?><?= !empty($sib['birth_year']) ? ' · ' . htmlspecialchars($pcYear($sib['birth_year'])) : '' ?></span>
@@ -373,7 +380,7 @@ require __DIR__ . '/../layout/master_start.php';
                                                         ?>
                                                             <div class="list-row">
                                                                 <a href="/person/<?= (int)$ch['id'] ?>" class="person pc-link">
-                                                                    <span class="avatar<?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars(mb_substr((string)($ch['first_name'] ?? ''), 0, 1) . mb_substr((string)($ch['last_name'] ?? ''), 0, 1) ?: 'Ш') ?></span>
+                                                                    <span class="avatar<?= (($ch['gender'] ?? '') === 'M') ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars(mb_substr((string)($ch['first_name'] ?? ''), 0, 1) . mb_substr((string)($ch['last_name'] ?? ''), 0, 1) ?: 'Ш') ?></span>
                                                                     <span>
                                                                         <span class="name"><?= htmlspecialchars($chName) ?></span>
                                                                         <span class="meta"><?= ($ch['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?><?= !empty($ch['birth_year']) ? ' · ' . htmlspecialchars((string)$ch['birth_year']) : '' ?></span>

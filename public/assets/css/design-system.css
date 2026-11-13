@@ -29,6 +29,10 @@
     --c-success-soft: #e5efe7;
     --c-overlay: rgba(28, 28, 26, 0.45);
     --c-focus: rgba(168, 136, 74, 0.35);
+    --c-male: #5b7fa6;           /* ер — спокойный синий */
+    --c-male-soft: #e9eff6;
+    --c-female: #b8708a;         /* әйел — приглушённый розовый */
+    --c-female-soft: #f7ecf0;
 
     --shadow-island: 0 1px 2px rgba(20, 20, 18, 0.04), 0 4px 16px rgba(20, 20, 18, 0.04);
     --shadow-pop: 0 8px 28px rgba(20, 20, 18, 0.12);
@@ -74,6 +78,7 @@
     --shadow-island: 0 1px 2px rgba(0, 0, 0, 0.25);
     --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.45);
     --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.6);
+    --c-male: #86a6c9; --c-male-soft: #263039; --c-female: #d495ac; --c-female-soft: #3a2a31;
     color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -87,6 +92,7 @@
         --shadow-island: 0 1px 2px rgba(0, 0, 0, 0.25);
         --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.45);
         --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.6);
+        --c-male: #86a6c9; --c-male-soft: #263039; --c-female: #d495ac; --c-female-soft: #3a2a31;
         color-scheme: dark;
     }
 }
@@ -281,6 +287,20 @@ p { margin: 0; }
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar.deceased { border: 1.5px solid var(--c-accent); color: var(--c-accent-text); background: var(--c-accent-soft); }
+/* TASK-008 (дополнение 17:11): пол — спокойный синий / розовый.
+   Живые: цветная обводка и фон; ушедшие: золотистая обводка + тонкое цветное кольцо снаружи. */
+.avatar.is-m { border: 1.5px solid var(--c-male); color: var(--c-male); background: var(--c-male-soft); }
+.avatar.is-f { border: 1.5px solid var(--c-female); color: var(--c-female); background: var(--c-female-soft); }
+.avatar.deceased.is-m { border-color: var(--c-accent); color: var(--c-male); background: var(--c-accent-soft); box-shadow: 0 0 0 2px var(--c-male); }
+.avatar.deceased.is-f { border-color: var(--c-accent); color: var(--c-female); background: var(--c-accent-soft); box-shadow: 0 0 0 2px var(--c-female); }
+.g-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; vertical-align: middle; background: var(--c-text-3); }
+.g-dot.is-m { background: var(--c-male); }
+.g-dot.is-f { background: var(--c-female); }
+.g-badge { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 600; padding: 2px 8px; border-radius: var(--r-pill); border: 1px solid var(--c-border); background: var(--c-island-2); color: var(--c-text-2); white-space: nowrap; }
+.g-badge.is-m { color: var(--c-male); background: var(--c-male-soft); border-color: transparent; }
+.g-badge.is-f { color: var(--c-female); background: var(--c-female-soft); border-color: transparent; }
+.fm-spouse.is-m { box-shadow: inset 3px 0 0 var(--c-male); }
+.fm-spouse.is-f { box-shadow: inset 3px 0 0 var(--c-female); }
 .avatar-lg { width: 96px; height: 96px; font-size: var(--fs-2xl); }
 .person { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
 .person .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -398,9 +418,94 @@ p { margin: 0; }
 .pp-stats b { font-weight: 700; margin-left: 2px; }
 .pp-filters .select { flex: 0 1 180px; min-width: 140px; }
 .pp-bar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; justify-content: space-between; }
+.pp-bar-actions { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.pp-toggle-btns { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.pp-toggle-btns .btn { height: 32px; padding: 0 var(--sp-3); font-size: var(--fs-xs); }
+.pp-toggle-btns .btn .ic { width: 14px; height: 14px; }
 .pp-groups { display: flex; flex-direction: column; gap: var(--sp-6); }
-.pp-group { scroll-margin-top: var(--sp-4); }
-.pp-group .island-head { margin-bottom: var(--sp-3); }
+.pp-group { scroll-margin-top: var(--sp-4); transition: margin-bottom 0.2s ease; }
+.pp-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--c-island);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-island);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pp-group-head:hover {
+    background: var(--c-hover);
+    border-color: var(--c-border-strong);
+}
+.pp-group-head:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+}
+.pp-group-head-main {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+.pp-group-head-main h3 {
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    margin: 0;
+}
+.pp-group-chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--c-text-2);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease;
+    flex-shrink: 0;
+}
+.pp-group-head:hover .pp-group-chevron {
+    color: var(--c-text);
+}
+.pp-group-hint {
+    font-size: var(--fs-xs);
+    color: var(--c-text-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.pp-group-body {
+    transition: opacity 0.2s ease;
+}
+.pp-group.is-collapsed {
+    margin-bottom: var(--sp-3);
+}
+.pp-group.is-collapsed .pp-group-head {
+    margin-bottom: 0;
+    background: var(--c-island-2);
+}
+.pp-group.is-collapsed .pp-group-head:hover {
+    background: var(--c-hover);
+}
+.pp-group.is-collapsed .pp-group-chevron {
+    transform: rotate(-90deg);
+}
+.pp-group.is-collapsed .pp-group-body {
+    display: none;
+}
+.pp-group.is-collapsed .pp-hint-collapse {
+    display: none !important;
+}
+.pp-group.is-collapsed .pp-hint-expand {
+    display: inline !important;
+}
+.pp-group:not(.is-collapsed) .pp-hint-collapse {
+    display: inline !important;
+}
+.pp-group:not(.is-collapsed) .pp-hint-expand {
+    display: none !important;
+}
 .pp-table { font-size: var(--fs-sm); }
 .pp-table td { vertical-align: top; }
 .pp-table td.actions { vertical-align: middle; padding-top: 6px; padding-bottom: 6px; overflow: visible; }

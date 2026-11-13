@@ -86,7 +86,7 @@ require __DIR__ . '/../layout/master_start.php';
 
                             <!-- Супруги (Пара) -->
                             <div class="fm-pair">
-                                <div class="island-sub fm-spouse">
+                                <div class="island-sub fm-spouse is-m">
                                     <div class="pc-label"><?= $lang === 'ru' ? 'Муж' : 'Отағасы' ?></div>
                                     <?php if ($h): ?>
                                         <a href="/person/<?= (int)$h['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['h_name']) ?>"><?= htmlspecialchars($f['h_name']) ?></a>
@@ -99,7 +99,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php endif; ?>
                                 </div>
 
-                                <div class="island-sub fm-spouse">
+                                <div class="island-sub fm-spouse is-f">
                                     <div class="pc-label"><?= $lang === 'ru' ? 'Жена' : 'Отанасы' ?></div>
                                     <?php if ($w): ?>
                                         <a href="/person/<?= (int)$w['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['w_name']) ?>"><?= htmlspecialchars($f['w_name']) ?></a>
@@ -136,6 +136,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <div class="pc-tags">
                                         <?php foreach ($children as $c): ?>
                                             <a href="/person/<?= (int)$c['id'] ?>" class="badge pc-tag" title="<?= ($c['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?>">
+                                                <span class="g-dot <?= ($c['gender'] === 'M') ? 'is-m' : 'is-f' ?>" aria-hidden="true"></span>
                                                 <?= htmlspecialchars($c['first_name']) ?>
                                                 <?php if (!empty($c['birth_year'])): ?>
                                                     <span><?= htmlspecialchars((string)$c['birth_year']) ?></span>

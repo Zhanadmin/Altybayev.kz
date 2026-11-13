@@ -105,7 +105,7 @@ require __DIR__ . '/layout/master_start.php';
                                 <div class="date-chip"><b><?= htmlspecialchars($chip['day']) ?></b><span><?= htmlspecialchars($chip['month']) ?></span></div>
                             <?php endif; ?>
                             <a href="/person/<?= (int)$b['person']['id'] ?>" class="person hm-person">
-                                <span class="avatar"><?= htmlspecialchars(mb_substr((string)($b['person']['first_name'] ?? 'Ш'), 0, 1)) ?></span>
+                                <span class="avatar<?= (($b['person']['gender'] ?? '') === 'F') ? ' is-f' : ((($b['person']['gender'] ?? '') === 'M') ? ' is-m' : '') ?>"><?= htmlspecialchars(mb_substr((string)($b['person']['first_name'] ?? 'Ш'), 0, 1)) ?></span>
                                 <div>
                                     <div class="name" title="<?= htmlspecialchars($pName) ?>"><?= htmlspecialchars($pName) ?></div>
                                     <div class="meta">
@@ -151,7 +151,7 @@ require __DIR__ . '/layout/master_start.php';
                                 <div class="date-chip"><b><?= htmlspecialchars($chip['day']) ?></b><span><?= htmlspecialchars($chip['month']) ?></span></div>
                             <?php endif; ?>
                             <a href="/person/<?= (int)$a['person']['id'] ?>" class="person hm-person">
-                                <span class="avatar deceased"><?= htmlspecialchars(mb_substr((string)($a['person']['first_name'] ?? 'Ш'), 0, 1)) ?></span>
+                                <span class="avatar deceased<?= (($a['person']['gender'] ?? '') === 'F') ? ' is-f' : ((($a['person']['gender'] ?? '') === 'M') ? ' is-m' : '') ?>"><?= htmlspecialchars(mb_substr((string)($a['person']['first_name'] ?? 'Ш'), 0, 1)) ?></span>
                                 <div>
                                     <div class="name" title="<?= htmlspecialchars($pName) ?>"><?= htmlspecialchars($pName) ?></div>
                                     <div class="meta">

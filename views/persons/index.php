@@ -98,17 +98,29 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
 <div class="pp-bar">
     <div class="small muted">
         <?= $lang === 'ru'
-            ? 'Отображено персон: <b>' . (int)$totalCount . '</b> из ' . (int)$totalAll
-            : 'Көрсетілген тұлғалар: <b>' . (int)$totalCount . '</b> (' . (int)$totalAll . ' ішінен)' ?>
+            ? 'Отображено персон: <b id="ppTotalDisplayed">' . (int)$totalCount . '</b> из ' . (int)$totalAll
+            : 'Көрсетілген тұлғалар: <b id="ppTotalDisplayed">' . (int)$totalCount . '</b> (' . (int)$totalAll . ' ішінен)' ?>
     </div>
     <?php if ($isGenerationView && !empty($persons)): ?>
-        <nav class="seg" aria-label="<?= $lang === 'ru' ? 'Поколения' : 'Ұрпақтар' ?>">
-            <a href="#pp-top" class="active"><?= $lang === 'ru' ? 'Все' : 'Барлығы' ?></a>
-            <?php foreach ($generationGroups as $gKey => $group): ?>
-                <?php if (count($group['persons']) === 0) continue; ?>
-                <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>"><?= htmlspecialchars($lang === 'ru' ? $group['title_ru'] : $group['title_kk']) ?></a>
-            <?php endforeach; ?>
-        </nav>
+        <div class="pp-bar-actions">
+            <div class="pp-toggle-btns" role="group" aria-label="<?= $lang === 'ru' ? 'Сворачивание поколений' : 'Ұрпақтарды жию немесе ашу' ?>">
+                <button type="button" class="btn btn-ghost btn-sm" id="btnCollapseAll" onclick="collapseAllGenerations()" title="<?= $lang === 'ru' ? 'Свернуть все поколения' : 'Барлық ұрпақтарды жию' ?>">
+                    <svg class="ic" aria-hidden="true"><use href="#i-chevron-up"/></svg>
+                    <span><?= $lang === 'ru' ? 'Свернуть все' : 'Барлығын жию' ?></span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btnExpandAll" onclick="expandAllGenerations()" title="<?= $lang === 'ru' ? 'Развернуть все поколения' : 'Барлық ұрпақтарды ашу' ?>">
+                    <svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                    <span><?= $lang === 'ru' ? 'Развернуть все' : 'Барлығын ашу' ?></span>
+                </button>
+            </div>
+            <nav class="seg" aria-label="<?= $lang === 'ru' ? 'Поколения' : 'Ұрпақтар' ?>">
+                <a href="#pp-top" class="active"><?= $lang === 'ru' ? 'Все' : 'Барлығы' ?></a>
+                <?php foreach ($generationGroups as $gKey => $group): ?>
+                    <?php if (count($group['persons']) === 0) continue; ?>
+                    <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>" onclick="ensureGenerationExpanded('<?= htmlspecialchars((string)$gKey) ?>')"><?= htmlspecialchars($lang === 'ru' ? $group['title_ru'] : $group['title_kk']) ?></a>
+                <?php endforeach; ?>
+            </nav>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -147,7 +159,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             <!-- Тұлға -->
             <td>
                 <div class="person">
-                    <span class="avatar<?= $isDeceased ? ' deceased' : '' ?>"<?= $isDeceased ? ' title="' . ($lang === 'ru' ? 'Светлая память' : 'Жарқын бейне') . '"' : '' ?>>
+                    <span class="avatar <?= $isMale ? 'is-m' : 'is-f' ?><?= $isDeceased ? ' deceased' : '' ?>"<?= $isDeceased ? ' title="' . ($lang === 'ru' ? 'Светлая память' : 'Жарқын бейне') . '"' : '' ?>>
                         <?php if (!empty($p['avatar_path'])): ?>
                             <img src="<?= htmlspecialchars((string)$p['avatar_path']) ?>" alt="">
                         <?php else: ?>
@@ -165,7 +177,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             </td>
 
             <!-- Жынысы -->
-            <td class="col-opt-lg"><span class="muted small"><?= htmlspecialchars($genderText) ?></span></td>
+            <td class="col-opt-lg"><span class="g-badge <?= $isMale ? 'is-m' : 'is-f' ?>"><span class="g-dot <?= $isMale ? 'is-m' : 'is-f' ?>"></span><?= htmlspecialchars($genderText) ?></span></td>
 
             <!-- Руы -->
             <td class="col-opt-xl clip"><span class="badge" title="<?= htmlspecialchars($clanText) ?>"><?= htmlspecialchars($clanText) ?></span></td>
@@ -279,20 +291,34 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
         <span class="muted small"><?= $lang === 'ru' ? 'Попробуйте изменить поисковый запрос или сбросить фильтры' : 'Іздеу сөзін өзгертіп көріңіз немесе сүзгілерді тазартыңыз' ?></span>
     </div>
 <?php elseif ($isGenerationView): ?>
-    <!-- ГРУППИРОВКА ПО ПОКОЛЕНИЯМ (По умолчанию, TASK-007) -->
-    <div class="pp-groups">
+    <!-- ГРУППИРОВКА ПО ПОКОЛЕНИЯМ (По умолчанию, TASK-007, TASK-010) -->
+    <div class="pp-groups" id="ppGroupsContainer">
         <?php
         $globalOffset = 0;
         foreach ($generationGroups as $gKey => $group):
             $countInGroup = count($group['persons']);
             if ($countInGroup === 0) continue;
+            $gTitle = $lang === 'ru' ? $group['title_ru'] : $group['title_kk'];
         ?>
-            <section class="pp-group" id="gen-<?= htmlspecialchars((string)$gKey) ?>">
-                <div class="island-head">
-                    <h3><?= htmlspecialchars($lang === 'ru' ? $group['title_ru'] : $group['title_kk']) ?></h3>
-                    <span class="badge"><?= $countInGroup ?> <?= $lang === 'ru' ? 'персон' : 'тұлға' ?></span>
+            <section class="pp-group" id="gen-<?= htmlspecialchars((string)$gKey) ?>" data-gen-key="<?= htmlspecialchars((string)$gKey) ?>">
+                <div class="pp-group-head" role="button" tabindex="0"
+                     aria-expanded="true" aria-controls="gen-body-<?= htmlspecialchars((string)$gKey) ?>"
+                     onclick="toggleGeneration('<?= htmlspecialchars((string)$gKey) ?>')"
+                     onkeydown="handleGroupHeadKeydown(event, '<?= htmlspecialchars((string)$gKey) ?>')"
+                     title="<?= $lang === 'ru' ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
+                    <div class="pp-group-head-main">
+                        <svg class="ic pp-group-chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                        <h3><?= htmlspecialchars($gTitle) ?></h3>
+                        <span class="badge pp-group-count" data-initial-count="<?= $countInGroup ?>">
+                            <?= $countInGroup ?> <?= $lang === 'ru' ? 'персон' : 'тұлға' ?>
+                        </span>
+                    </div>
+                    <span class="pp-group-hint desktop-only muted small">
+                        <span class="pp-hint-collapse"><?= $lang === 'ru' ? 'жию / свернуть' : 'жию' ?></span>
+                        <span class="pp-hint-expand"><?= $lang === 'ru' ? 'ашу / развернуть' : 'ашу' ?></span>
+                    </span>
                 </div>
-                <div class="table-wrap">
+                <div class="table-wrap pp-group-body" id="gen-body-<?= htmlspecialchars((string)$gKey) ?>">
                     <table class="table pp-table">
                         <?php $renderTableHeader(); ?>
                         <tbody>
@@ -317,6 +343,179 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
         </table>
     </div>
 <?php endif; ?>
+
+<script>
+(function() {
+    'use strict';
+    const STORAGE_KEY = 'shezhire_collapsed_generations';
+    const lang = <?= json_encode($lang) ?>;
+    const initialQuery = <?= json_encode((string)($filters['q'] ?? '')) ?>.trim().toLowerCase();
+
+    function getStoredCollapsed() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed.map(String) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveStoredCollapsed(keys) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
+        } catch (e) {}
+    }
+
+    function setGroupState(groupEl, isCollapsed) {
+        if (!groupEl) return;
+        const head = groupEl.querySelector('.pp-group-head');
+        if (isCollapsed) {
+            groupEl.classList.add('is-collapsed');
+            if (head) head.setAttribute('aria-expanded', 'false');
+        } else {
+            groupEl.classList.remove('is-collapsed');
+            if (head) head.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    window.toggleGeneration = function(genKey) {
+        const groupEl = document.querySelector('.pp-group[data-gen-key="' + genKey + '"]');
+        if (!groupEl) return;
+        const currentlyCollapsed = groupEl.classList.contains('is-collapsed');
+        const nextCollapsed = !currentlyCollapsed;
+        setGroupState(groupEl, nextCollapsed);
+
+        let list = getStoredCollapsed();
+        const keyStr = String(genKey);
+        if (nextCollapsed) {
+            if (!list.includes(keyStr)) list.push(keyStr);
+        } else {
+            list = list.filter(function(k) { return k !== keyStr; });
+        }
+        saveStoredCollapsed(list);
+    };
+
+    window.handleGroupHeadKeydown = function(e, genKey) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            window.toggleGeneration(genKey);
+        }
+    };
+
+    window.collapseAllGenerations = function() {
+        const groups = document.querySelectorAll('.pp-group[data-gen-key]');
+        const keys = [];
+        groups.forEach(function(g) {
+            setGroupState(g, true);
+            const k = g.getAttribute('data-gen-key');
+            if (k) keys.push(String(k));
+        });
+        saveStoredCollapsed(keys);
+    };
+
+    window.expandAllGenerations = function() {
+        const groups = document.querySelectorAll('.pp-group[data-gen-key]');
+        groups.forEach(function(g) {
+            setGroupState(g, false);
+        });
+        saveStoredCollapsed([]);
+    };
+
+    window.ensureGenerationExpanded = function(genKey) {
+        const groupEl = document.querySelector('.pp-group[data-gen-key="' + genKey + '"]');
+        if (groupEl) {
+            setGroupState(groupEl, false);
+            let list = getStoredCollapsed().filter(function(k) { return k !== String(genKey); });
+            saveStoredCollapsed(list);
+        }
+    };
+
+    function applySavedState() {
+        const stored = getStoredCollapsed();
+        document.querySelectorAll('.pp-group[data-gen-key]').forEach(function(group) {
+            const key = String(group.getAttribute('data-gen-key'));
+            const shouldCollapse = stored.includes(key);
+            setGroupState(group, shouldCollapse);
+        });
+
+        // Если при загрузке страницы уже был серверный поисковый запрос (filters[q]),
+        // раскрываем все группы с найденными персонами!
+        if (initialQuery !== '') {
+            document.querySelectorAll('.pp-group[data-gen-key]').forEach(function(group) {
+                const rowCount = group.querySelectorAll('.pp-table tbody tr').length;
+                if (rowCount > 0) {
+                    setGroupState(group, false);
+                }
+            });
+        }
+    }
+
+    applySavedState();
+
+    // Клиентский поиск в поле поиска (раскрывает группу с найденным человеком мгновенно)
+    const searchInput = document.querySelector('.pp-filters input[name="q"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const val = this.value.trim().toLowerCase();
+            if (val === '') {
+                applySavedState();
+                document.querySelectorAll('.pp-table tbody tr').forEach(function(tr) {
+                    tr.style.display = '';
+                });
+                document.querySelectorAll('.pp-group[data-gen-key]').forEach(function(group) {
+                    group.style.display = '';
+                    const badge = group.querySelector('.pp-group-count');
+                    const initCount = badge ? badge.getAttribute('data-initial-count') : null;
+                    if (badge && initCount) {
+                        badge.textContent = initCount + ' ' + (lang === 'ru' ? 'персон' : 'тұлға');
+                    }
+                });
+                const totalEl = document.getElementById('ppTotalDisplayed');
+                if (totalEl) {
+                    const allRows = document.querySelectorAll('.pp-table tbody tr').length;
+                    totalEl.textContent = String(allRows);
+                }
+                return;
+            }
+
+            let grandTotal = 0;
+            document.querySelectorAll('.pp-group[data-gen-key]').forEach(function(group) {
+                const rows = group.querySelectorAll('.pp-table tbody tr');
+                let groupMatch = 0;
+                rows.forEach(function(tr) {
+                    const txt = tr.textContent.toLowerCase();
+                    if (txt.includes(val)) {
+                        tr.style.display = '';
+                        groupMatch++;
+                        grandTotal++;
+                    } else {
+                        tr.style.display = 'none';
+                    }
+                });
+
+                if (groupMatch > 0) {
+                    // НАЙДЕН ЧЕЛОВЕК: обязательно раскрываем группу!
+                    setGroupState(group, false);
+                    group.style.display = '';
+                    const badge = group.querySelector('.pp-group-count');
+                    if (badge) {
+                        badge.textContent = groupMatch + ' ' + (lang === 'ru' ? 'найдено' : 'табылды');
+                    }
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+
+            const totalEl = document.getElementById('ppTotalDisplayed');
+            if (totalEl) {
+                totalEl.textContent = String(grandTotal);
+            }
+        });
+    }
+})();
+</script>
 
 <?php
 require __DIR__ . '/../layout/master_end.php';

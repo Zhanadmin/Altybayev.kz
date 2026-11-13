@@ -350,15 +350,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             background: linear-gradient(135deg, #fef08a, #d4af37);
             transform: translateY(-2px);
         }
-        .btn-empty-action.btn-demo {
-            background: rgba(255,255,255,0.08);
-            color: #fef08a;
-            border: 1px solid rgba(212, 175, 55, 0.5);
-        }
-        .btn-empty-action.btn-demo:hover {
-            background: rgba(212, 175, 55, 0.25);
-            transform: translateY(-2px);
-        }
 
         /* ========================================================
            КАНВАС ЖӘНЕ КЕҢІСТІК (VIEWPORT & WORLD)
@@ -1449,11 +1440,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </div>
 
             <!-- Батырмалар -->
-            <button class="btn-tool" id="btnToggleDemo" onclick="toggleDemoMode()" title="Демонстрациялық режимді қосу/өшіру">
-                <span id="demoIcon">🌟</span>
-                <span id="demoLabel" data-i18n="btn_demo_mode">Демо</span>
-            </button>
-
             <button class="btn-tool" onclick="flyToSelf()" title="Өз карточкаңызға бару">
                 <span>🎯</span>
                 <span data-i18n="btn_you_are_here">Сіз осындасыз</span>
@@ -1993,12 +1979,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 married_in_tag: "Жағалбайлы қызы ↗",
                 you_are_here_badge: "★ Сіз осындасыз",
                 selected_badge: "Таңдалған адам",
-                btn_demo_mode: "Демо",
-                btn_demo_active: "🌟 Демо",
                 empty_tree_title: "Деректер жоқ — GEDCOM импорттаңыз",
-                empty_tree_desc: "Деректер қорында әлі тұлғалар жоқ. MyHeritage жүйесінен GEDCOM файлын импорттаңыз немесе танысу үшін демонстрациялық режимді көріңіз.",
+                empty_tree_desc: "Деректер қорында әлі тұлғалар жоқ. MyHeritage жүйесінен GEDCOM файлын импорттаңыз.",
                 btn_import_gedcom: "📥 GEDCOM импорттау",
-                btn_view_demo: "🌟 Демо-режимді көру",
                 btn_return_real: "🌳 Негізгі базаға оралу",
                 scope_focal: "Окрестность",
                 scope_full: "Барлық шежіре",
@@ -2063,12 +2046,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 married_in_tag: "Дочь Жагалбайлы ↗",
                 you_are_here_badge: "★ Вы здесь",
                 selected_badge: "Выбранный человек",
-                btn_demo_mode: "Демо",
-                btn_demo_active: "🌟 Демо",
                 empty_tree_title: "Данных нет — импортируйте GEDCOM",
-                empty_tree_desc: "В базе данных пока нет персон. Импортируйте файл GEDCOM из MyHeritage или включите демонстрационный режим для ознакомления.",
+                empty_tree_desc: "В базе данных пока нет персон. Импортируйте файл GEDCOM из MyHeritage.",
                 btn_import_gedcom: "📥 Импортировать GEDCOM",
-                btn_view_demo: "🌟 Включить демо-режим",
                 btn_return_real: "🌳 Вернуться к реальной базе",
                 scope_focal: "Окрестность",
                 scope_full: "Все древо (270)",
@@ -2282,7 +2262,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     <p>${desc}</p>
                     <div class="empty-actions">
                         <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].btn_import_gedcom}</a>
-                        <button type="button" onclick="toggleDemoMode(true)" class="btn-empty-action btn-demo">${i18n[currentLang].btn_view_demo}</button>
                     </div>
                 `;
                 container.appendChild(emptyCard);
@@ -2497,7 +2476,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     <p>${desc}</p>
                     <div class="empty-actions">
                         <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].btn_import_gedcom}</a>
-                        <button type="button" onclick="toggleDemoMode(true)" class="btn-empty-action btn-demo">${i18n[currentLang].btn_view_demo}</button>
                     </div>
                 `;
                 container.appendChild(emptyCard);

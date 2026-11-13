@@ -1614,8 +1614,8 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <span data-i18n="mode_editing">Өңдеу</span>
             </button>
             <button class="mode-btn" id="btnModeForest" onclick="switchMode('forest')">
-                <span>🌲</span>
-                <span data-i18n="mode_forest">Шежіре-Орман</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px; vertical-align:middle;"><path d="M12 2L5 12h4l-3 8h12l-3-8h4L12 2z"/><line x1="12" y1="20" x2="12" y2="24"/></svg>
+                <span data-i18n="mode_forest">3D Шежіре-Орман</span>
             </button>
             <button class="mode-btn" id="btnModeList" onclick="switchMode('list')">
                 <span>📋</span>
@@ -1692,18 +1692,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </div>
 
             <!-- ========================================================
-                 2. «ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІ (ТІРІ КАРТИНА)
+                 2. «3D ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІ (THREE.JS / WEBGL FIRST-PERSON)
                  ======================================================== -->
-            <div class="forest-view" id="forestView">
-                <!-- Артқы күн сәулесі мен шуағы -->
-                <div class="forest-sun"></div>
-                <div class="forest-god-rays"></div>
-
-                <!-- Төменгі шөпті алаңқай -->
-                <div class="forest-meadow-floor"></div>
-
-                <!-- Контейнер для динамических деревьев родов (Керей, Жағалбайлы, Қоңырат) -->
-                <div id="forestTreesContainer"></div>
+            <div class="forest-view" id="forestView" style="display:none; width:100%; height:100%; position:absolute; top:0; left:0; z-index:15;">
+                <div id="forest3dMount" style="width:100%; height:100%; position:relative; overflow:hidden;"></div>
+                <div id="forestTreesContainer" style="display:none;"></div>
             </div>
 
         </div>
@@ -1830,6 +1823,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </div>
 
             <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
+                <button type="button" class="btn-profile-action" onclick="viewInEditingMode()" style="background:linear-gradient(135deg, #15803d, #166534); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(22,101,52,0.3);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span data-i18n="btn_view_in_tree">Древода көрсету («Өңдеу» режимі)</span>
+                </button>
                 <button type="button" class="btn-profile-action" onclick="setFocalFromProfile()" style="background:linear-gradient(135deg, #d97706, #b45309); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(217,119,6,0.3);">
                     <span>🎯</span> <span data-i18n="btn_focus_here">Осы адамға бағыттау / Фокус</span>
                 </button>
@@ -2296,6 +2293,12 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
     </div>
 
     <!-- ========================================================
+         THREE.JS ЖӘНЕ ШЕЖІРЕ-ОРМАН 3D ҚОЗҒАЛТҚЫШЫ (WEBGL)
+         ======================================================== -->
+    <script src="/assets/js/three/three.min.js"></script>
+    <script src="/assets/js/shezhire-forest-3d.js"></script>
+
+    <!-- ========================================================
          JAVASCRIPT ЛОГИКАСЫ МЕН ДИНАМИКАЛЫҚ ҚҰРЫЛЫМ
          ======================================================== -->
     <script>
@@ -2334,7 +2337,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 brand_title_main: "Шежіре",
                 brand_title_sub: "",
                 mode_editing: "Өңдеу",
-                mode_forest: "Шежіре-Орман", mode_list: "Список", btn_edit_person: "Редактировать", form_is_deceased_checkbox: "Ушёл из жизни", mode_list: "Тізім", btn_edit_person: "Өңдеу", form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
+                mode_forest: "3D Шежіре-Орман",
+                mode_list: "Тізім",
+                btn_view_in_tree: "Древода көрсету («Өңдеу» режимі)",
+                btn_edit_person: "Өңдеу",
+                form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Адамды іздеу...",
                 btn_you_are_here: "Сіз осындасыз",
                 btn_art_concept: "Арт-эскиз",
@@ -2401,7 +2408,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 brand_title_main: "Родословная",
                 brand_title_sub: "",
                 mode_editing: "Редактирование",
-                mode_forest: "Шежіре-Орман", mode_list: "Список", btn_edit_person: "Редактировать", form_is_deceased_checkbox: "Ушёл из жизни", mode_list: "Тізім", btn_edit_person: "Өңдеу", form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
+                mode_forest: "3D Шежіре-Орман",
+                mode_list: "Список",
+                btn_view_in_tree: "Показать в древе («Редактирование»)",
+                btn_edit_person: "Редактировать",
+                form_is_deceased_checkbox: "Ушёл из жизни",
                 search_placeholder: "Поиск родственника...",
                 btn_you_are_here: "Вы здесь",
                 btn_art_concept: "Арт-концепт",
@@ -2929,36 +2940,46 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
 
         // ========================================================
-        // 2. «ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІН ДИНАМИКАЛЫҚ ҚҰРУ
+        // 2. «3D ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІН ҚҰРУ (THREE.JS / WEBGL)
         // ========================================================
-        function renderForestView() {
-            const container = document.getElementById('forestTreesContainer');
-            container.innerHTML = '';
-            if (!treeData || !treeData.persons || treeData.persons.length === 0) {
-                const emptyCard = document.createElement('div');
-                emptyCard.className = 'tree-empty-state';
-                const isErr = treeData && treeData.status === 'error';
-                const title = isErr 
-                    ? (currentLang === 'ru' ? 'Ошибка базы данных' : 'Мәліметтер қоры қатесі')
-                    : i18n[currentLang].empty_tree_title;
-                const desc = isErr
-                    ? (treeData.message || '')
-                    : i18n[currentLang].empty_tree_desc;
+        let forest3DApp = null;
 
-                emptyCard.innerHTML = `
-                    <div class="empty-icon">${isErr ? '⚠️' : '🌲'}</div>
-                    <h2>${title}</h2>
-                    <p>${desc}</p>
-                    <div class="empty-actions">
-                        <a href="/admin/import" class="btn-empty-action btn-import">${i18n[currentLang].btn_import_gedcom}</a>
-                    </div>
-                `;
-                container.appendChild(emptyCard);
-                return;
+        function renderForest3DView() {
+            const mount = document.getElementById('forest3dMount');
+            if (!mount) return;
+
+            if (typeof ShezhireForest3D !== 'undefined') {
+                if (!forest3DApp) {
+                    forest3DApp = new ShezhireForest3D({
+                        container: mount,
+                        treeData: treeData,
+                        onPersonSelect: function(person) {
+                            selectPerson(person.id);
+                        }
+                    });
+                } else {
+                    forest3DApp.onWindowResize();
+                }
+            } else {
+                console.warn('Three.js or ShezhireForest3D is not ready yet.');
+                const container = document.getElementById('forestTreesContainer');
+                if (container) {
+                    container.style.display = 'block';
+                    renderRealForestView(container);
+                }
             }
+        }
 
-            // Нақты деректер үшін шежіре-орманды динамикалық құру
-            renderRealForestView(container);
+        function renderForestView() {
+            renderForest3DView();
+        }
+
+        function viewInEditingMode(personId) {
+            if (personId) selectedPersonId = personId;
+            switchMode('editing');
+            if (selectedPersonId) {
+                flyToPerson(selectedPersonId);
+            }
         }
 
         // Нақты деректер үшін көркем орман бейнелеуі (қабаттасусыз, нақты Жандос отбасы)
@@ -3037,7 +3058,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             let crownHtml = `
                 <div class="crown-living-banner">
-                    <span>☀️</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                     <span>${i18n[currentLang].crown_title}</span>
                 </div>
             `;
@@ -3047,14 +3068,14 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 crownHtml += `<div class="branch-children-row">`;
                 children.forEach(c => {
                     const isGirl = (c.gender === 'F');
-                    const icon = isGirl ? '🌸' : '🍃';
+                    const badgeText = isGirl ? (currentLang === 'ru' ? 'Дочь' : 'Қыз') : (currentLang === 'ru' ? 'Сын' : 'Ұл');
                     const cls = isGirl ? 'flower-daughter-node' : 'leaf-son-node';
                     const note = isGirl 
                         ? (currentLang === 'ru' ? 'Цветок рода (дочь)' : 'Нәзік гүл (қызы)')
                         : (currentLang === 'ru' ? 'Листик рода (сын)' : 'Жас жапырақ (ұлы)');
                     crownHtml += `
                         <div class="${cls}" onclick="selectPerson(${c.id})" title="${note}">
-                            <span>${icon}</span>
+                            <span class="foliage-type-badge">${badgeText}</span>
                             <div><strong>${c.first_name || ''} ${c.last_name || ''}</strong> (${c.birth_year || '—'})</div>
                         </div>
                     `;
@@ -3067,7 +3088,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <div class="family-branch">
                     <div class="branch-couple-node is-self-node" onclick="selectPerson(${focal.id})">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span>🎯</span>
+                            <span style="background:rgba(212,175,55,0.25); border:1px solid #d4af37; color:#fef08a; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700;">★</span>
                             <div>
                                 <strong>${focal.last_name || ''} ${focal.first_name}</strong> (${focal.birth_year || '—'})
                                 <div style="font-size:11px; color:#fef08a;">${i18n[currentLang].you_are_here_badge}</div>
@@ -3079,7 +3100,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 crownHtml += `
                     <div style="color:#d4af37; font-weight:700;">&</div>
                     <div class="in-married-flower-node" onclick="event.stopPropagation(); selectPerson(${spouse.id});" title="${spouse.last_name || ''} ${spouse.first_name}">
-                        <span>🌸</span>
+                        <span style="font-size:11px; color:#fbcfe8; font-weight:700;">${currentLang === 'ru' ? 'Жена' : 'Жұбайы'}</span>
                         <div>
                             <strong>${spouse.first_name} ${spouse.last_name || ''}</strong> (${spouse.birth_year || '—'})
                             <div style="font-size:10px; color:#9d174d;">${i18n[currentLang].married_in_tag}</div>
@@ -3095,9 +3116,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 crownHtml += `<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;">`;
                 siblings.forEach(s => {
                     const isSister = (s.gender === 'F');
+                    const sibLabel = isSister ? (currentLang === 'ru' ? 'Сестра' : 'Қарындас') : (currentLang === 'ru' ? 'Брат' : 'Бауыр');
                     crownHtml += `
                         <div class="branch-couple-node" style="padding:4px 10px; font-size:12px;" onclick="selectPerson(${s.id})">
-                            <span>${isSister ? '🌸' : '🌿'}</span>
+                            <span style="color:#94a3b8; font-size:11px; margin-right:4px;">${sibLabel}:</span>
                             <div><strong>${s.first_name}</strong> (${s.birth_year || '—'})</div>
                         </div>
                     `;
@@ -3111,7 +3133,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 crownHtml += `
                     <div class="family-branch" style="margin-top:14px;">
                         <div class="branch-couple-node" onclick="selectPerson(${parentId})">
-                            <span>📜</span>
+                            <span style="color:#86efac; font-size:11px; font-weight:700; margin-right:6px;">[Әулет]</span>
                             <div>
                                 <strong>${father ? (father.first_name + ' ' + (father.last_name || '')) : (mother.first_name + ' ' + (mother.last_name || ''))}</strong> (${(father && father.birth_year) || (mother && mother.birth_year) || '—'})
                                 <div style="font-size:11px; color:#86efac;">${currentLang === 'ru' ? 'Родители' : 'Әке-шеше шаңырағы'}</div>
@@ -3134,16 +3156,16 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 displayTrunk.forEach(anc => {
                     const isAltybay = (anc.first_name && anc.first_name.includes('Алтыбай')) || (anc.last_name && anc.last_name.includes('Алтыбай'));
                     const style = isAltybay ? 'border-color:#f59e0b; background:#29180c; color:#fef08a;' : '';
-                    const icon = isAltybay ? '👑' : '✨';
+                    const badge = isAltybay ? '<span style="color:#d4af37; font-weight:700; margin-right:4px;">[Ру басы]</span>' : '<span style="color:#fef08a; font-weight:700; margin-right:4px;">★</span>';
                     const title = isAltybay ? ' — Ру басы' : '';
                     trunkHtml += `
                         <div class="trunk-ancestor-node" onclick="selectPerson(${anc.id})" style="${style}">
-                            ${icon} ${anc.first_name} ${anc.last_name || ''} (${anc.birth_year || '—'}${anc.death_year ? ' — ' + anc.death_year : ''})${title}
+                            ${badge} ${anc.first_name} ${anc.last_name || ''} (${anc.birth_year || '—'}${anc.death_year ? ' — ' + anc.death_year : ''})${title}
                         </div>
                     `;
                 });
             } else {
-                trunkHtml += `<div class="trunk-ancestor-node" onclick="selectPerson(${focal.id})">✨ ${focal.first_name} ${focal.last_name || ''}</div>`;
+                trunkHtml += `<div class="trunk-ancestor-node" onclick="selectPerson(${focal.id})">★ ${focal.first_name} ${focal.last_name || ''}</div>`;
             }
             trunk.innerHTML = trunkHtml;
             mainStand.appendChild(trunk);
@@ -3154,7 +3176,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             root.id = 'treeRoot';
             root.innerHTML = `
                 <div class="root-ancestor-badge" onclick="selectPerson(${rootPerson.id})">
-                    <span style="font-size:22px;">🌱</span>
+                    <span style="color:#d4af37; font-weight:700; font-size:16px;">[ТАМЫР]</span>
                     <div>
                         <div>${(rootPerson.first_name + ' ' + (rootPerson.last_name || '')).toUpperCase()} (${rootPerson.birth_year ? 'ок. ' + rootPerson.birth_year : ''})</div>
                         <div style="font-size:11px; color:#d4af37; font-weight:600;">
@@ -3188,9 +3210,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 let clanPersonsHtml = '';
                 clanPersons.slice(0, 4).forEach(cp => {
                     const isF = (cp.gender === 'F');
+                    const sibLabel = isF ? (currentLang === 'ru' ? 'Дочь' : 'Қыз') : (currentLang === 'ru' ? 'Сын' : 'Ұл');
                     clanPersonsHtml += `
                         <div class="${isF ? 'flower-daughter-node' : 'leaf-son-node'}" onclick="selectPerson(${cp.id})" style="margin:4px;">
-                            <span>${isF ? '🌸' : '🌿'}</span>
+                            <span style="font-size:11px; color:${isF ? '#fbcfe8' : '#86efac'}; margin-right:4px;">${sibLabel}:</span>
                             <div><strong>${cp.first_name} ${cp.last_name || ''}</strong> (${cp.birth_year || '—'})</div>
                         </div>
                     `;
@@ -3198,7 +3221,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
                 stand.innerHTML = `
                     <div class="crown-living-banner" style="background:${isLeft ? 'rgba(180,83,9,0.3)' : 'rgba(30,58,138,0.3)'}; border-color:${isLeft ? '#d4af37' : '#38bdf8'}; color:${isLeft ? '#fef08a' : '#bae6fd'};">
-                        <span>🌳</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M12 2L5 12h4l-3 8h12l-3-8h4L12 2z"/><line x1="12" y1="20" x2="12" y2="24"/></svg>
                         <span>${clanName} ағашы</span>
                     </div>
                     <div style="font-size:12px; color:#cbd5e1; max-width:320px; text-align:center; margin:8px 0;">

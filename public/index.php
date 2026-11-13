@@ -31,7 +31,8 @@ $router->post('/api/history/rollback', 'App\Controllers\HistoryController@rollba
 // 3. Маршруты авторизации и аутентификации через Google
 $router->get('/login', 'App\Controllers\AuthController@showLogin');
 $router->get('/logout', 'App\Controllers\AuthController@logout');
-$router->get('/auth/google', 'App\Controllers\AuthController@redirectToGoogle');
+$router->get('/__test-login', 'App\Controllers\TestLoginController@login'); // TASK-009: только altybayev.st.int + флаг в .env, иначе 404
+$router->get('/auth/google','App\Controllers\AuthController@redirectToGoogle');
 $router->get('/auth/google/callback', 'App\Controllers\AuthController@handleGoogleCallback');
 
 // 4. API маршруты

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Эскиз TASK-008 — Шежіре Алтыбаевтар</title>
+<script>
+  /* Тема: сохранённый выбор, иначе — как в системе */
+  (function () {
+    try { var t = localStorage.getItem('shezhire_theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
+<link rel="stylesheet" href="../css/design-system.css">
+<style>
+  /* Только для эскиза: переключатель экранов */
+  .sketch-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 1200; }
+  .screen { display: none; }
+  .screen.on { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- Линейные иконки (SVG-спрайт) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.8.2 4.9 1.9 5.5 5.4"/></symbol>
+  <symbol id="i-family" viewBox="0 0 24 24"><circle cx="7" cy="6" r="2.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="12" cy="13" r="2"/><path d="M3 20v-4.5A3.5 3.5 0 0 1 6.5 12H8"/><path d="M21 20v-4.5a3.5 3.5 0 0 0-3.5-3.5H16"/><path d="M9 20v-1.5a3 3 0 0 1 6 0V20"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><circle cx="5" cy="19.5" r="2"/><circle cx="12" cy="19.5" r="2"/><circle cx="19" cy="19.5" r="2"/><path d="M12 6.5v6M5 17.5v-2.5h14v2.5M12 12.5v5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-chevrons" viewBox="0 0 24 24"><path d="m8 9 4-4 4 4M16 15l-4 4-4-4"/></symbol>
+  <symbol id="i-chevron-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <!-- Тамга-заглушка (стилизованный знак; реальную тамгу рода подставит Жандос) -->
+  <symbol id="i-tamga" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7c0 3 2.7 5 6 5s6-2 6-5"/><path d="M8 21h8"/></symbol>
+</svg>
+
+<div class="ds-sidebar-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+
+<div class="ds-shell">
+  <!-- Левая панель (остров) -->
+  <aside class="ds-sidebar" id="sidebar">
+    <button type="button" class="ds-clan-switch" data-tip="Руды / тармақты ауыстыру">
+      <span class="ds-tamga"><svg class="ic"><use href="#i-tamga"/></svg></span>
+      <span><b>Керей</b><span>Жағалбайлы · Алтыбаевтар</span></span>
+      <svg class="ic"><use href="#i-chevrons"/></svg>
+    </button>
+
+    <nav class="ds-nav" aria-label="Негізгі мәзір">
+      <div class="ds-nav-label">Шежіре</div>
+      <a href="#" data-go="home" class="active"><svg class="ic"><use href="#i-home"/></svg>Басты бет</a>
+      <a href="#" data-go="persons"><svg class="ic"><use href="#i-users"/></svg>Адамдар<span class="count">270</span></a>
+      <a href="#"><svg class="ic"><use href="#i-family"/></svg>Отбасылар<span class="count">71</span></a>
+      <a href="#"><svg class="ic"><use href="#i-tree"/></svg>Шежіре-Орман</a>
+      <div class="ds-divider"></div>
+      <div class="ds-nav-label">Жазбалар</div>
+      <a href="#"><svg class="ic"><use href="#i-calendar"/></svg>Есте қаларлық күндер</a>
+      <a href="#"><svg class="ic"><use href="#i-history"/></svg>Тарих</a>
+      <div class="ds-divider"></div>
+      <a href="#"><svg class="ic"><use href="#i-settings"/></svg>Әкімшілік</a>
+    </nav>
+
+    <div class="ds-sidebar-foot">altybayev.kz · 2026</div>
+  </aside>
+
+  <!-- Рабочая область (белый остров) -->
+  <div class="ds-main">
+    <header class="ds-topbar">
+      <button type="button" class="btn btn-ghost btn-icon mobile-only" onclick="toggleSidebar()" aria-label="Мәзір"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <div class="search desktop-only" style="width:320px">
+        <svg class="ic"><use href="#i-search"/></svg>
+        <input class="input" type="search" placeholder="Адамды іздеу…">
+      </div>
+      <div class="spacer"></div>
+      <div class="seg" role="group" aria-label="Тіл">
+        <button class="active">ҚАЗ</button><button>РУС</button>
+      </div>
+      <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleTheme()" aria-label="Тақырып" data-tip="Жарық / қараңғы">
+        <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
+      </button>
+      <div class="user-chip">
+        <span class="avatar">Ж</span><b class="desktop-only">Жандос</b><span class="badge badge-accent desktop-only">Әкімші</span>
+      </div>
+      <button type="button" class="btn btn-ghost btn-icon" aria-label="Шығу" data-tip="Шығу"><svg class="ic"><use href="#i-logout"/></svg></button>
+    </header>
+
+    <!-- ===== Экран 1: Басты бет ===== -->
+    <section class="ds-content screen on" id="s-home">
+      <div class="ds-crumbs"><span class="cur">Басты бет</span></div>
+      <div class="ds-page-head">
+        <div>
+          <h1>Сәлем, Жандос</h1>
+          <p class="sub">Сіз — Алтыбаев Жандос. Шежіреде 270 адам, 7 ұрпақ.</p>
+        </div>
+        <div class="actions">
+          <button class="btn"><svg class="ic"><use href="#i-tree"/></svg>Шежірені ашу</button>
+          <button class="btn btn-primary" onclick="openModal()"><svg class="ic"><use href="#i-plus"/></svg>Адам қосу</button>
+        </div>
+      </div>
+
+      <div class="grid grid-stats">
+        <div class="island stat"><div class="label"><svg class="ic"><use href="#i-users"/></svg>Адамдар</div><div class="value">270</div><div class="note">+4 осы айда</div></div>
+        <div class="island stat"><div class="label"><svg class="ic"><use href="#i-family"/></svg>Отбасылар</div><div class="value">71</div><div class="note">ұш-жұрт бойынша</div></div>
+        <div class="island stat"><div class="label"><svg class="ic"><use href="#i-tree"/></svg>Ұрпақтар</div><div class="value">7</div><div class="note">Жеті ата толық</div></div>
+        <div class="island stat"><div class="label"><svg class="ic"><use href="#i-camera"/></svg>Фотосуреттер</div><div class="value">128</div><div class="note">47 адамда фото жоқ</div></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="island">
+          <div class="island-head"><svg class="ic"><use href="#i-calendar"/></svg><h3>Жақын күндер</h3><a class="more" href="#">Барлығы</a></div>
+          <div class="list">
+            <div class="list-row"><div class="date-chip"><b>18</b><span>қар</span></div><div class="person"><span class="avatar">АС</span><div><div class="name">Айгүл Серікқызы</div><div class="meta">Туған күні · 34 жас</div></div></div><span class="right badge">5 күн</span></div>
+            <div class="list-row"><div class="date-chip"><b>22</b><span>қар</span></div><div class="person"><span class="avatar deceased">НА</span><div><div class="name">Нұрлан Әбдірахманұлы</div><div class="meta">Еске алу күні · 1938–2004</div></div></div><span class="right badge badge-accent">9 күн</span></div>
+            <div class="list-row"><div class="date-chip"><b>03</b><span>жел</span></div><div class="person"><span class="avatar">ҚБ</span><div><div class="name">Қуаныш Бекұлы</div><div class="meta">Туған күні · 12 жас</div></div></div><span class="right badge">20 күн</span></div>
+          </div>
+        </div>
+        <div class="island">
+          <div class="island-head"><svg class="ic"><use href="#i-history"/></svg><h3>Соңғы өзгерістер</h3><a class="more" href="#">Тарих</a></div>
+          <div class="list">
+            <div class="list-row"><span class="avatar">Ж</span><div><div>Жандос <span class="muted">фото қосты</span></div><div class="small muted">Мұрат Сәкенұлы · бүгін 11:40</div></div></div>
+            <div class="list-row"><span class="avatar">Д</span><div><div>Дана <span class="muted">туған күнді өзгертті</span></div><div class="small muted">Әсем Мұратқызы · кеше</div></div></div>
+            <div class="list-row"><span class="avatar">Ж</span><div><div>Жандос <span class="muted">бала қосты</span></div><div class="small muted">Ерлан Нұрланұлы → Әлихан · 11 қар</div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Экран 2: Адамдар / Тізім ===== -->
+    <section class="ds-content screen" id="s-persons">
+      <div class="ds-crumbs"><a href="#" data-go="home">Басты бет</a><svg class="ic" style="width:14px;height:14px"><use href="#i-chevron-r"/></svg><span>Адамдар</span><svg class="ic" style="width:14px;height:14px"><use href="#i-chevron-r"/></svg><span class="cur">Тізім</span></div>
+      <div class="ds-page-head">
+        <div><h1>Адамдар</h1><p class="sub">270 адам · 7 ұрпақ</p></div>
+        <div class="actions">
+          <div class="seg"><a href="#">Шежіре-Орман</a><a href="#" class="active">Тізім</a></div>
+          <button class="btn btn-primary" onclick="openModal()"><svg class="ic"><use href="#i-plus"/></svg>Адам қосу</button>
+        </div>
+      </div>
+
+      <div class="seg" role="tablist">
+        <button class="active">Барлығы</button><button>1-ұрпақ</button><button>2-ұрпақ</button><button>3-ұрпақ</button><button>4-ұрпақ</button><button>5-ұрпақ</button><button>6-ұрпақ</button><button>7-ұрпақ</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="search"><svg class="ic"><use href="#i-search"/></svg><input class="input" type="search" placeholder="Аты, тегі, әкесінің аты…"></div>
+        <select class="select"><option>Руы: барлығы</option><option>Керей</option><option>Жағалбайлы</option></select>
+        <select class="select"><option>Жынысы: барлығы</option><option>Ер</option><option>Әйел</option></select>
+        <select class="select"><option>Тірі және өткендер</option><option>Тірі</option><option>Өмірден өткен</option></select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <colgroup>
+            <col style="width:44px"><col style="width:26%"><col class="col-opt-md" style="width:9%"><col style="width:13%"><col class="col-opt-lg" style="width:18%"><col class="col-opt-xl" style="width:16%"><col style="width:14%"><col style="width:96px">
+          </colgroup>
+          <thead>
+            <tr><th class="num">#</th><th>Аты-жөні</th><th class="col-opt-md">Руы</th><th>Өмір жылдары</th><th class="col-opt-lg">Ата-анасы</th><th class="col-opt-xl">Жұбайы</th><th>Туыстығы</th><th class="actions"></th></tr>
+          </thead>
+          <tbody>
+            <tr class="group-row"><td colspan="8">3-ұрпақ · 14 адам</td></tr>
+            <tr><td class="num">1</td><td><div class="person"><span class="avatar deceased">НӘ</span><div><div class="name">Нұрлан Әбдірахманұлы Алтыбаев</div><div class="meta">Ер · Шұбартау</div></div></div></td><td class="col-opt-md clip">Жағалбайлы</td><td class="clip">1938 – 2004</td><td class="col-opt-lg clip">Әбдірахман, Күләш</td><td class="col-opt-xl clip">Зәуре</td><td><span class="badge">Атасы</span></td><td class="actions"><button class="btn btn-ghost btn-icon btn-sm" data-tip="Ашу"><svg class="ic"><use href="#i-eye"/></svg></button><button class="btn btn-ghost btn-icon btn-sm" data-tip="Өңдеу" onclick="openModal()"><svg class="ic"><use href="#i-edit"/></svg></button></td></tr>
+            <tr><td class="num">2</td><td><div class="person"><span class="avatar deceased">ЗҚ</span><div><div class="name">Зәуре Қасымқызы</div><div class="meta">Әйел · қыз кезінде Оспанова</div></div></div></td><td class="col-opt-md clip">Керей</td><td class="clip">1941 – 2019</td><td class="col-opt-lg clip">Қасым, Бибігүл</td><td class="col-opt-xl clip">Нұрлан</td><td><span class="badge">Әжесі</span></td><td class="actions"><button class="btn btn-ghost btn-icon btn-sm"><svg class="ic"><use href="#i-eye"/></svg></button><button class="btn btn-ghost btn-icon btn-sm" onclick="openModal()"><svg class="ic"><use href="#i-edit"/></svg></button></td></tr>
+            <tr class="group-row"><td colspan="8">4-ұрпақ · 31 адам</td></tr>
+            <tr><td class="num">3</td><td><div class="person"><span class="avatar">ЕН</span><div><div class="name">Ерлан Нұрланұлы Алтыбаев</div><div class="meta">Ер · Семей</div></div></div></td><td class="col-opt-md clip">Жағалбайлы</td><td class="clip">1965 ж.т.</td><td class="col-opt-lg clip">Нұрлан, Зәуре</td><td class="col-opt-xl clip">Гүлнар</td><td><span class="badge">Әкесі</span></td><td class="actions"><button class="btn btn-ghost btn-icon btn-sm"><svg class="ic"><use href="#i-eye"/></svg></button><button class="btn btn-ghost btn-icon btn-sm" onclick="openModal()"><svg class="ic"><use href="#i-edit"/></svg></button></td></tr>
+            <tr><td class="num">4</td><td><div class="person"><span class="avatar">МН</span><div><div class="name">Мұрат Нұрланұлы Алтыбаев</div><div class="meta">Ер · Алматы</div></div></div></td><td class="col-opt-md clip">Жағалбайлы</td><td class="clip">1969 ж.т.</td><td class="col-opt-lg clip">Нұрлан, Зәуре</td><td class="col-opt-xl clip">Сәуле</td><td><span class="badge">Ағасы (әкесінің інісі)</span></td><td class="actions"><button class="btn btn-ghost btn-icon btn-sm"><svg class="ic"><use href="#i-eye"/></svg></button><button class="btn btn-ghost btn-icon btn-sm" onclick="openModal()"><svg class="ic"><use href="#i-edit"/></svg></button></td></tr>
+            <tr><td class="num">5</td><td><div class="person"><span class="avatar">ГС</span><div><div class="name">Гүлнар Сапарқызы</div><div class="meta">Әйел · қыз кезінде Жұмабаева</div></div></div></td><td class="col-opt-md clip">Найман</td><td class="clip">1967 ж.т.</td><td class="col-opt-lg clip">Сапар, Роза</td><td class="col-opt-xl clip">Ерлан</td><td><span class="badge">Анасы</span></td><td class="actions"><button class="btn btn-ghost btn-icon btn-sm"><svg class="ic"><use href="#i-eye"/></svg></button><button class="btn btn-ghost btn-icon btn-sm" onclick="openModal()"><svg class="ic"><use href="#i-edit"/></svg></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">Тар экранда «Руы», «Ата-анасы», «Жұбайы» бағандары жасырылады — олар адам карточкасында бар. Көлденең жылжыту жоқ.</p>
+    </section>
+
+    <!-- ===== Экран 3: Карточка человека ===== -->
+    <section class="ds-content screen" id="s-person">
+      <div class="ds-crumbs"><a href="#" data-go="persons">Адамдар</a><svg class="ic" style="width:14px;height:14px"><use href="#i-chevron-r"/></svg><span class="cur">Ерлан Нұрланұлы</span></div>
+
+      <div class="island" style="display:flex; gap:20px; align-items:center; flex-wrap:wrap">
+        <span class="avatar avatar-lg">ЕН</span>
+        <div style="flex:1; min-width:220px">
+          <h1 style="font-size:28px; font-weight:700">Ерлан Нұрланұлы Алтыбаев</h1>
+          <p class="sub muted" style="margin-top:4px">1965 ж.т. · Семей · 4-ұрпақ</p>
+          <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap"><span class="badge badge-accent">Жағалбайлы</span><span class="badge">Сіздің әкеңіз</span><span class="badge badge-success">Тірі</span></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn"><svg class="ic"><use href="#i-camera"/></svg>Фото</button>
+          <button class="btn"><svg class="ic"><use href="#i-tree"/></svg>Шежіреде</button>
+          <button class="btn btn-primary" onclick="openModal()"><svg class="ic"><use href="#i-edit"/></svg>Өңдеу</button>
+        </div>
+      </div>
+
+      <div class="seg"><button class="active">Мәлімет</button><button>Отбасы</button><button>Жеті ата</button><button>Фото</button><button>Тарих</button></div>
+
+      <div class="grid grid-2">
+        <div class="island">
+          <div class="island-head"><h3>Негізгі мәлімет</h3></div>
+          <dl class="props">
+            <dt>Тегі</dt><dd>Алтыбаев</dd>
+            <dt>Аты</dt><dd>Ерлан</dd>
+            <dt>Әкесінің аты</dt><dd>Нұрланұлы</dd>
+            <dt>Руы</dt><dd>Жағалбайлы <span class="hint">· әкесінен</span></dd>
+            <dt>Туған күні</dt><dd>12.04.1965</dd>
+            <dt>Туған жері</dt><dd>Семей облысы, Абай ауданы</dd>
+          </dl>
+        </div>
+        <div class="island">
+          <div class="island-head"><h3>Отбасы</h3></div>
+          <div class="list">
+            <div class="list-row"><div class="person"><span class="avatar deceased">НӘ</span><div><div class="name">Нұрлан Әбдірахманұлы</div><div class="meta">Әкесі · 1938–2004</div></div></div></div>
+            <div class="list-row"><div class="person"><span class="avatar deceased">ЗҚ</span><div><div class="name">Зәуре Қасымқызы</div><div class="meta">Анасы · 1941–2019</div></div></div></div>
+            <div class="list-row"><div class="person"><span class="avatar">ГС</span><div><div class="name">Гүлнар Сапарқызы</div><div class="meta">Жұбайы</div></div></div></div>
+            <div class="list-row"><div class="person"><span class="avatar">ЖЕ</span><div><div class="name">Жандос Ерланұлы</div><div class="meta">Ұлы</div></div></div><span class="right badge badge-accent">Сіз</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Модалка-остров -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal-head"><h3 id="mTitle">Тұлғаны өңдеу</h3><button class="btn btn-ghost btn-icon" onclick="closeModal()" aria-label="Жабу"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>Аты *</label><input class="input" value="Ерлан"></div>
+        <div class="field"><label>Тегі</label><input class="input" value="Алтыбаев"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Әкесінің аты</label><input class="input" value="Нұрланұлы"></div>
+        <div class="field"><label>Руы</label><input class="input" value="Жағалбайлы" readonly><span class="hint">әкесінен беріледі</span></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Туған күні</label><input class="input" type="date" value="1965-04-12"></div>
+        <div class="field"><label>Жынысы</label><select class="select"><option>Ер</option><option>Әйел</option></select></div>
+      </div>
+      <label class="check"><input type="checkbox"> Өмірден өткен</label>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Бас тарту</button><button class="btn btn-primary" onclick="closeModal(); toast()">Сақтау</button></div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toasts"></div>
+
+<!-- Переключатель экранов эскиза -->
+<div class="sketch-bar seg" style="box-shadow:var(--shadow-pop)">
+  <button data-go="home" class="active">1 · Басты бет</button>
+  <button data-go="persons">2 · Адамдар</button>
+  <button data-go="person">3 · Карточка</button>
+</div>
+
+<script>
+  function go(name) {
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.toggle('on', s.id === 's-' + name); });
+    document.querySelectorAll('.sketch-bar [data-go]').forEach(function (b) { b.classList.toggle('active', b.dataset.go === name); });
+    document.querySelectorAll('.ds-nav a').forEach(function (a) {
+      var t = a.dataset.go; a.classList.toggle('active', t === name || (name === 'person' && t === 'persons'));
+    });
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-go]').forEach(function (el) {
+    el.addEventListener('click', function (e) { e.preventDefault(); go(el.dataset.go); });
+  });
+  document.querySelectorAll('#s-persons .table tbody tr:not(.group-row)').forEach(function (tr) {
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', function (e) { if (!e.target.closest('button')) go('person'); });
+  });
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('shezhire_theme', next); } catch (e) {}
+    document.cookie = 'shezhire_theme=' + next + '; path=/; max-age=31536000; SameSite=Lax';
+  }
+  if (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sbOverlay').classList.toggle('open');
+  }
+  function openModal() { document.getElementById('modal').classList.add('open'); }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function toast() {
+    var t = document.createElement('div');
+    t.className = 'toast success';
+    t.innerHTML = '<svg class="ic"><use href="#i-check"/></svg><div><b>Сақталды</b><div class="small muted">Өзгерістер тарихқа жазылды</div></div>';
+    document.getElementById('toasts').appendChild(t);
+    setTimeout(function () { t.remove(); }, 3000);
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>

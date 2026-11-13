@@ -16,6 +16,19 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(\App\Core\I18n::siteTitle()) ?> — <?= htmlspecialchars(\App\Core\I18n::t('nav_tree')) ?> («Өңдеу» / «Шежіре-Орман»)</title>
+    <script>
+        /* TASK-008: тема — сохранённый выбор, иначе как в системе */
+        (function () {
+            try {
+                var t = localStorage.getItem('shezhire_theme');
+                if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=13">
     <style>
         :root {
             --bg-canvas: #090e17;
@@ -1662,22 +1675,41 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             position: absolute;
             top: 0;
             left: 0;
-            width: 3200px;
-            height: 2400px;
             transform-origin: 0 0;
-            will-change: transform;
         }
 
+        /* Размер холста задаёт JS по размеру SVG из RodoslovGenerator */
         .rodoslov-card-canvas {
             position: relative;
-            width: 3000px;
-            height: 2200px;
-            margin: 100px;
-            background: #fffefb;
-            border: 3px double #b8860b;
-            border-radius: 12px;
-            box-shadow: 0 25px 70px rgba(92, 58, 33, 0.16), inset 0 0 120px rgba(212, 175, 55, 0.06);
-            overflow: hidden;
+            background: #fbf7ee;
+            box-shadow: 0 25px 70px rgba(92, 58, 33, 0.16);
+        }
+        .rodoslov-card-canvas > svg {
+            display: block;
+        }
+        .rodoslov-card-canvas .rs-p {
+            cursor: pointer;
+        }
+        .rodoslov-card-canvas .rs-p:hover,
+        .rodoslov-card-canvas .rs-p:focus-visible {
+            filter: drop-shadow(0 0 6px rgba(202, 138, 4, 0.85));
+            outline: none;
+        }
+        .rodoslov-card-canvas .rs-p.is-selected {
+            filter: drop-shadow(0 0 8px rgba(202, 138, 4, 1));
+        }
+        .rodoslov-stats {
+            position: absolute;
+            left: 16px;
+            bottom: 16px;
+            z-index: 30;
+            font: 12px Georgia, 'Times New Roman', serif;
+            color: #5a4128;
+            background: rgba(251, 247, 238, 0.9);
+            border: 1px solid #d9c49a;
+            border-radius: 8px;
+            padding: 4px 10px;
+            pointer-events: none;
         }
 
         .rodoslov-corner-kazakh {
@@ -1941,14 +1973,151 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
         }
     </style>
+    <style>
+        /* ========================================================
+           TASK-008: шапка-остров и рамка вокруг древа в стиле дизайн-системы.
+           Внутренности древа (карточки, Шежіре-Орман, 3D) — TASK-006, здесь не меняются.
+           ======================================================== */
+        body {
+            background: var(--c-bg);
+            font-size: 16px;        /* сброс базы дизайн-системы: размеры древа прежние */
+            line-height: normal;
+            padding: var(--gap-shell);
+            gap: var(--gap-shell);
+        }
+        header.tree-nav {
+            font-family: var(--font-sans);
+            background: var(--c-island);
+            color: var(--c-text);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-island);
+            padding: 8px 12px;
+            flex-wrap: wrap;
+            row-gap: 8px;
+        }
+        header.tree-nav .ic { width: 16px; height: 16px; }
+        .nav-right { flex-wrap: wrap; justify-content: flex-end; }
+        .back-link {
+            color: var(--c-text-2);
+            background: var(--c-island-2);
+            border-color: var(--c-border);
+            border-radius: var(--r-pill);
+        }
+        .back-link:hover { color: var(--c-text); background: var(--c-hover); border-color: var(--c-border-strong); }
+        .brand-title { color: var(--c-text); letter-spacing: -0.01em; }
+        .brand-title span { color: var(--c-text); }
+        .brand-title span + span { color: var(--c-accent-text); }
+        header.tree-nav .mode-switcher, header.tree-nav .scope-switcher, header.tree-nav .lang-switcher {
+            background: var(--c-island-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-pill);
+        }
+        header.tree-nav .mode-btn, header.tree-nav .scope-btn, header.tree-nav .lang-btn { color: var(--c-text-2); border: 0; font-family: inherit; }
+        header.tree-nav .mode-btn:hover, header.tree-nav .scope-btn:hover, header.tree-nav .lang-btn:hover { color: var(--c-text); }
+        header.tree-nav .mode-btn.active, header.tree-nav .scope-btn.active, header.tree-nav .lang-btn.active {
+            background: var(--c-island);
+            color: var(--c-text);
+            border: 0;
+            box-shadow: 0 0 0 1px var(--c-border), 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+        .search-input {
+            background: var(--c-island-2);
+            border-color: var(--c-border);
+            color: var(--c-text);
+            font-family: inherit;
+        }
+        .search-input::placeholder { color: var(--c-text-3); }
+        .search-input:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-focus); }
+        .search-icon { color: var(--c-text-3); display: flex; }
+        .search-dropdown {
+            background: var(--c-island);
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-md);
+            box-shadow: var(--shadow-pop);
+        }
+        .search-item { color: var(--c-text); border-bottom-color: var(--c-border); }
+        .search-item:hover { background: var(--c-hover); color: var(--c-text); }
+        .search-item .tf-sub { font-size: 11px; color: var(--c-text-2); }
+        .tf-g { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--c-text-3); }
+        .tf-g-m { background: #5b7fa6; }
+        .tf-g-f { background: #b8708a; }
+        header.tree-nav .btn-tool {
+            background: transparent;
+            color: var(--c-text-2);
+            border-color: var(--c-border);
+            font-family: inherit;
+        }
+        header.tree-nav .btn-tool:hover, header.tree-nav .btn-tool.active {
+            background: var(--c-hover);
+            border-color: var(--c-border-strong);
+            color: var(--c-text);
+            box-shadow: none;
+        }
+        header.tree-nav .theme-toggle { width: 32px; height: 32px; }
+        /* Рамка вокруг древа: скруглённый остров на светло-сером фоне */
+        .canvas-container {
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-island);
+            min-height: 0;
+        }
+        .list-view-container {
+            flex: 1;
+            min-height: 0;
+            height: auto;
+            border: 1px solid var(--c-border);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-island);
+        }
+        /* Боковая панель профиля — под шапкой (высоту шапки задаёт JS в --hdr-bottom), внутри рамки */
+        aside.side-profile-panel {
+            top: calc(var(--hdr-bottom, 68px) + var(--gap-shell));
+            bottom: var(--gap-shell);
+            height: auto;
+            max-width: calc(100vw - 2 * var(--gap-shell));
+            border-radius: var(--r-lg);
+            overflow: hidden;
+        }
+        aside.side-profile-panel.open { right: var(--gap-shell); }
+        @media (max-width: 1100px) {
+            header.tree-nav .btn-tool span { display: none; }   /* только иконки, подпись — в title */
+        }
+        @media (max-width: 760px) {
+            body { padding: 8px; gap: 8px; --gap-shell: 8px; }
+            header.tree-nav { padding: 8px; }
+            header.tree-nav .nav-right { gap: 6px; }
+            header.tree-nav .mode-switcher { max-width: 100%; overflow-x: auto; }
+            header.tree-nav .mode-btn { padding: 6px 10px; }
+            header.tree-nav .mode-btn svg { display: none; }      /* подписи режимов остаются, иконки прячем */
+            header.tree-nav .scope-btn span { display: none; }   /* у кнопок есть title */
+            .search-box { width: 100%; max-width: 100%; }
+        }
+    </style>
 </head>
 <body>
+    <!-- TASK-008: линейные иконки шапки -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="t-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+        <symbol id="t-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></symbol>
+        <symbol id="t-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+        <symbol id="t-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/></symbol>
+        <symbol id="t-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/></symbol>
+        <symbol id="t-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+        <symbol id="t-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+        <symbol id="t-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5-9 8.5"/></symbol>
+        <symbol id="t-book" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></symbol>
+        <symbol id="t-scroll" viewBox="0 0 24 24"><path d="M7 4h11a2 2 0 0 1 2 2v1h-4"/><path d="M16 7v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1h10"/><path d="M7 4a2 2 0 0 0-2 2v11M9 9h4M9 13h4"/></symbol>
+        <symbol id="t-print" viewBox="0 0 24 24"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/></symbol>
+        <symbol id="t-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+        <symbol id="t-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    </svg>
 
     <!-- ЖОҒАРҒЫ БАСҚАРУ ПАНЕЛІ -->
     <header class="tree-nav">
         <div class="nav-left">
             <a href="/" class="back-link">
-                <span>←</span>
+                <svg class="ic"><use href="#t-back"/></svg>
                 <span data-i18n="back_to_portal">Басты бет</span>
             </a>
             <div class="brand-title">
@@ -1960,15 +2129,15 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         <!-- РЕЖИМДЕР АУЫСТЫРҒЫШЫ («ӨҢДЕУ», «ШЕЖІРЕ-ОРМАН» ЖӘНЕ «ТІЗІМ») -->
         <div class="mode-switcher">
             <button class="mode-btn active" id="btnModeEditing" onclick="switchMode('editing')">
-                <span>🛠️</span>
+                <svg class="ic"><use href="#t-edit"/></svg>
                 <span data-i18n="mode_editing">Өңдеу</span>
             </button>
             <button class="mode-btn" id="btnModeForest" onclick="switchMode('forest')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px; vertical-align:middle;"><path d="M12 2L5 12h4l-3 8h12l-3-8h4L12 2z"/><line x1="12" y1="20" x2="12" y2="24"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M12 2L5 12h4l-3 8h12l-3-8h4L12 2z"/><line x1="12" y1="20" x2="12" y2="24"/></svg>
                 <span data-i18n="mode_forest">3D Шежіре-Орман</span>
             </button>
             <button class="mode-btn" id="btnModeList" onclick="switchMode('list')">
-                <span>📋</span>
+                <svg class="ic"><use href="#t-list"/></svg>
                 <span data-i18n="mode_list">Тізім</span>
             </button>
         </div>
@@ -1976,11 +2145,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         <!-- КӨЛЕМ АУЫСТЫРҒЫШЫ (ОКРЕСТНОСТЬ / ВСЕ ДРЕВО 270) -->
         <div class="scope-switcher" id="scopeSwitcher">
             <button class="scope-btn active" id="btnScopeFocal" onclick="switchScope('focal')" title="Окрестность выбранного человека (MyHeritage)">
-                <span>🔍</span>
+                <svg class="ic"><use href="#t-focus"/></svg>
                 <span data-i18n="scope_focal">Окрестность</span>
             </button>
             <button class="scope-btn" id="btnScopeFull" onclick="switchScope('full')" title="Показать всё древо (270 человек)">
-                <span>🌐</span>
+                <svg class="ic"><use href="#t-globe"/></svg>
                 <span data-i18n="scope_full">Все древо</span>
             </button>
         </div>
@@ -1995,37 +2164,42 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             <!-- Іздеу жолы -->
             <div class="search-box">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon"><svg class="ic" style="width:14px;height:14px;"><use href="#t-search"/></svg></span>
                 <input type="text" class="search-input" id="treeSearchInput" placeholder="Адамды іздеу..." autocomplete="off">
                 <div class="search-dropdown" id="searchDropdown"></div>
             </div>
 
             <!-- Батырмалар -->
             <button class="btn-tool" onclick="flyToSelf()" title="Өз карточкаңызға бару">
-                <span>🎯</span>
+                <svg class="ic"><use href="#t-target"/></svg>
                 <span data-i18n="lbl_you_are_here">Сіз осындасыз</span>
             </button>
 
             <button class="btn-tool" onclick="openArtModal()" title="Шежіре-Орман арт-тұжырымдамасы">
-                <span>🎨</span>
+                <svg class="ic"><use href="#t-image"/></svg>
                 <span data-i18n="lbl_art_concept">Арт-эскиз</span>
             </button>
 
             <button class="btn-tool" onclick="openKinshipDictionaryModal()" title="Қазақтың туыстық атаулары">
-                <span>📖</span>
+                <svg class="ic"><use href="#t-book"/></svg>
                 <span data-i18n="lbl_kinship_dict">Сөздік</span>
             </button>
 
             <!-- Жеті ата тексеру және плакат басып шығару (TASK-004) -->
             <button class="btn-tool" onclick="openZhetiAtaTreeModal()" title="Қазақтың «Жеті ата» қағидасын тексеру">
-                <span>📜</span>
+                <svg class="ic"><use href="#t-scroll"/></svg>
                 <span>Жеті ата</span>
             </button>
 
-            <a href="/tree/print" class="btn-tool" title="Шежірені басып шығару (Подарочный плакат)" style="text-decoration:none; color:inherit;">
-                <span>🖨️</span>
+            <a href="/tree/print" class="btn-tool" title="Шежірені басып шығару (Подарочный плакат)" style="text-decoration:none;">
+                <svg class="ic"><use href="#t-print"/></svg>
                 <span>Плакат</span>
             </a>
+
+            <!-- TASK-008: светлая / тёмная тема (общий выбор с сайтом) -->
+            <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleTreeTheme()" aria-label="Жарық / қараңғы тақырып" title="Жарық / қараңғы тақырып">
+                <svg class="ic ic-sun"><use href="#t-sun"/></svg><svg class="ic ic-moon"><use href="#t-moon"/></svg>
+            </button>
         </div>
     </header>
 
@@ -2040,6 +2214,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <svg class="connections-layer" id="svgConnections"></svg>
                 <div id="editingCardsContainer"></div>
             </div>
+        </div>
 
             <!-- ========================================================
                  2. «ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІ (РОДОСЛОВ АҒАШ-СХЕМА ЖӘНЕ 3D THREE.JS)
@@ -2058,12 +2233,13 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 </div>
 
                 <!-- 2.1 Иллюстрированное Родословное Древо-Схема (Стиль Rodoslov Obitelji на чистом светлом фоне) -->
-                <div id="forestRodoslovMount" class="rodoslov-mount" style="display:block;">
+                <div id="forestRodoslovMount" class="rodoslov-mount" style="display:block;" tabindex="0" aria-label="Шежіре-ағаш: тышқанмен жылжыту, дөңгелекпен масштаб / перетаскивание и масштаб колесом">
                     <div class="rodoslov-panzoom-world" id="rodoslovWorld">
                         <div class="rodoslov-card-canvas" id="rodoslovCanvas">
-                            <!-- SVG Дерево, стволы, ветви и орнаменты отрисовываются через JS -->
+                            <!-- SVG строит RodoslovGenerator из /api/tree (public/assets/js/rodoslov-generator.js) -->
                         </div>
                     </div>
+                    <div class="rodoslov-stats" id="rodoslovStats" aria-live="polite"></div>
                     <!-- Панель управления масштабом Родословной -->
                     <div class="rodoslov-zoom-toolbar">
                         <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovZoom(1.2)" title="Жақындату / Приблизить">
@@ -2075,7 +2251,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                         <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovFitTree()" title="Бүкіл ағаш / Обзор">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
-                        <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovFocusFocal()" title="Жандосқа бару / К фокусу">
+                        <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovFocusFocal()" title="Өзіме бару / К себе">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         </button>
                     </div>
@@ -2086,7 +2262,6 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 <div id="forestTreesContainer" style="display:none;"></div>
             </div>
 
-        </div>
     </div>
 
     <!-- ========================================================
@@ -2716,6 +2891,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
          ======================================================== -->
     <script src="/assets/js/three/three.min.js"></script>
     <script src="/assets/js/shezhire-forest-3d.js"></script>
+    <script src="/assets/js/rodoslov-generator.js"></script>
 
     <!-- ========================================================
          JAVASCRIPT ЛОГИКАСЫ МЕН ДИНАМИКАЛЫҚ ҚҰРЫЛЫМ
@@ -3088,8 +3264,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 if (viewEditing) viewEditing.style.display = 'none';
                 if (viewForest) viewForest.style.display = 'block';
                 if (scopeSwitcher) scopeSwitcher.style.display = 'none';
-                if (zoomControls) zoomControls.style.display = 'flex';
-                if (treeLegend) treeLegend.style.display = 'flex';
+                // у Шежіре-Ағаш и 3D свои кнопки масштаба и легенда; общие управляют скрытым холстом «Өңдеу»
+                if (zoomControls) zoomControls.style.display = 'none';
+                if (treeLegend) treeLegend.style.display = 'none';
                 renderForestView();
                 if (treeData && treeData.persons && treeData.persons.length > 0) {
                     flyToCrown();
@@ -3374,12 +3551,21 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         // ========================================================
         let forest3DApp = null;
         let currentForestSubmode = 'rodoslov';
-        let rodoslovScale = 0.55;
+        let rodoslovScale = 0.85;
         let rodoslovPanX = 0;
         let rodoslovPanY = 0;
         let isRodoslovDragging = false;
         let rodoslovDragStartX = 0;
         let rodoslovDragStartY = 0;
+        let rodoslovDragMoved = false;
+        let rodoslovDownX = 0;
+        let rodoslovDownY = 0;
+        let rodoslovResult = null;       // результат RodoslovGenerator.build: svg, width, height, positions
+        let rodoslovRenderedData = null; // какой treeData уже нарисован
+        let rodoslovRenderKey = '';
+        const RODOSLOV_MARGIN = 60;
+        const RODOSLOV_MIN_SCALE = 0.02; // всё древо (≈40 000 px) должно влезать в экран
+        const RODOSLOV_MAX_SCALE = 2.5;
 
         function switchForestSubmode(submode) {
             currentForestSubmode = submode;
@@ -3405,7 +3591,28 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         function updateRodoslovTransform() {
             const world = document.getElementById('rodoslovWorld');
             if (!world) return;
+            rodoslovResetScroll();
             world.style.transform = `translate(${rodoslovPanX}px, ${rodoslovPanY}px) scale(${rodoslovScale})`;
+        }
+
+        // Фокус на ленте (tabindex) заставляет браузер прокрутить контейнеры с overflow:hidden,
+        // и вид «уезжает» от рассчитанного центра. Положение задаёт только transform — прокрутку обнуляем.
+        function rodoslovResetScroll() {
+            ['forestRodoslovMount', 'canvasViewport'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el && (el.scrollLeft || el.scrollTop)) { el.scrollLeft = 0; el.scrollTop = 0; }
+            });
+        }
+
+        // Размер холста = SVG генератора + поля вокруг
+        function rodoslovWorldSize() {
+            const w = rodoslovResult ? rodoslovResult.width : 800;
+            const h = rodoslovResult ? rodoslovResult.height : 600;
+            return { w: w + 2 * RODOSLOV_MARGIN, h: h + 2 * RODOSLOV_MARGIN };
+        }
+
+        function rodoslovClampScale(s) {
+            return Math.max(RODOSLOV_MIN_SCALE, Math.min(RODOSLOV_MAX_SCALE, s));
         }
 
         function rodoslovZoom(factor, centerX, centerY) {
@@ -3416,8 +3623,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             const cy = (centerY !== undefined) ? centerY : rect.height / 2;
 
             const oldScale = rodoslovScale;
-            let newScale = rodoslovScale * factor;
-            newScale = Math.max(0.22, Math.min(2.2, newScale));
+            const newScale = rodoslovClampScale(rodoslovScale * factor);
 
             rodoslovPanX = cx - (cx - rodoslovPanX) * (newScale / oldScale);
             rodoslovPanY = cy - (cy - rodoslovPanY) * (newScale / oldScale);
@@ -3426,33 +3632,50 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             updateRodoslovTransform();
         }
 
+        // «Бүкіл ағаш»: вписать всё древо в экран
         function rodoslovFitTree() {
             const mount = document.getElementById('forestRodoslovMount');
             if (!mount) return;
             const rect = mount.getBoundingClientRect();
-            const canvasW = 3200;
-            const canvasH = 2400;
-
-            const scaleX = rect.width / canvasW;
-            const scaleY = rect.height / canvasH;
-            rodoslovScale = Math.min(scaleX, scaleY) * 0.95;
-            rodoslovScale = Math.max(0.22, Math.min(1.2, rodoslovScale));
-
-            rodoslovPanX = (rect.width - canvasW * rodoslovScale) / 2;
-            rodoslovPanY = (rect.height - canvasH * rodoslovScale) / 2;
-
+            if (!rect.width || !rect.height) return;
+            const size = rodoslovWorldSize();
+            rodoslovScale = rodoslovClampScale(Math.min(rect.width / size.w, rect.height / size.h) * 0.96);
+            rodoslovPanX = (rect.width - size.w * rodoslovScale) / 2;
+            rodoslovPanY = (rect.height - size.h * rodoslovScale) / 2;
             updateRodoslovTransform();
         }
 
-        function rodoslovFocusFocal() {
+        // Поставить ленту человека в центр экрана. false — человека нет на рисунке.
+        function rodoslovCenterOn(personId, targetScale) {
             const mount = document.getElementById('forestRodoslovMount');
-            if (!mount) return;
+            if (!mount || !rodoslovResult || !personId) return false;
+            const pos = rodoslovResult.positions[personId];
+            if (!pos) return false;
             const rect = mount.getBoundingClientRect();
-            rodoslovScale = 1.0;
-            // Фокальді жұп (Жандос & Асила) шамамен (1600, 580) маңында орналасқан
-            rodoslovPanX = rect.width / 2 - 1600 * rodoslovScale;
-            rodoslovPanY = rect.height / 2 - 580 * rodoslovScale;
+            if (!rect.width || !rect.height) return false;
+            if (targetScale) rodoslovScale = rodoslovClampScale(targetScale);
+            rodoslovPanX = rect.width / 2 - (RODOSLOV_MARGIN + pos.x) * rodoslovScale;
+            rodoslovPanY = rect.height / 2 - (RODOSLOV_MARGIN + pos.y) * rodoslovScale;
             updateRodoslovTransform();
+            return true;
+        }
+
+        // «К фокусу»: к своей ленте («Сіз осындасыз») или к выбранному человеку
+        function rodoslovFocusFocal() {
+            const id = (rodoslovResult && rodoslovResult.positions[userPersonId]) ? userPersonId
+                : (selectedPersonId || (rodoslovResult ? rodoslovResult.focalId : 0));
+            if (!rodoslovCenterOn(id, 0.9)) rodoslovFitTree();
+            rodoslovHighlight(selectedPersonId);
+        }
+
+        function rodoslovHighlight(personId) {
+            const canvas = document.getElementById('rodoslovCanvas');
+            if (!canvas) return;
+            canvas.querySelectorAll('.rs-p.is-selected').forEach(el => el.classList.remove('is-selected'));
+            const id = parseInt(personId, 10);
+            if (!id) return;
+            const el = canvas.querySelector('.rs-p[data-person-id="' + id + '"]');
+            if (el) el.classList.add('is-selected');
         }
 
         function setupRodoslovEvents() {
@@ -3460,11 +3683,23 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             if (!mount || mount.getAttribute('data-events-bound') === 'true') return;
             mount.setAttribute('data-events-bound', 'true');
 
+            // Прокрутка от фокуса на ленте — сразу обнуляем, пока открыт «Шежіре-Ағаш»
+            const viewportEl = document.getElementById('canvasViewport');
+            [mount, viewportEl].forEach(function(el) {
+                if (!el) return;
+                el.addEventListener('scroll', function() {
+                    if (mount.offsetParent !== null) rodoslovResetScroll();
+                });
+            });
+
+            // Перетаскивание мышью (в т.ч. начиная с ленты; клик после сдвига не открывает карточку)
             mount.addEventListener('mousedown', function(e) {
-                if (e.target.closest('.rodoslov-ribbon') || e.target.closest('.rodoslov-zoom-toolbar')) {
-                    return;
-                }
+                e.stopPropagation(); // не двигать скрытый холст режима «Өңдеу»
+                rodoslovDragMoved = false;
+                if (e.button !== 0 || e.target.closest('.rodoslov-zoom-toolbar')) return;
                 isRodoslovDragging = true;
+                rodoslovDownX = e.clientX;
+                rodoslovDownY = e.clientY;
                 rodoslovDragStartX = e.clientX - rodoslovPanX;
                 rodoslovDragStartY = e.clientY - rodoslovPanY;
                 mount.style.cursor = 'grabbing';
@@ -3472,6 +3707,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
             window.addEventListener('mousemove', function(e) {
                 if (!isRodoslovDragging) return;
+                if (Math.abs(e.clientX - rodoslovDownX) + Math.abs(e.clientY - rodoslovDownY) > 5) rodoslovDragMoved = true;
                 rodoslovPanX = e.clientX - rodoslovDragStartX;
                 rodoslovPanY = e.clientY - rodoslovDragStartY;
                 updateRodoslovTransform();
@@ -3480,393 +3716,166 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             window.addEventListener('mouseup', function() {
                 if (isRodoslovDragging) {
                     isRodoslovDragging = false;
-                    if (mount) mount.style.cursor = 'grab';
+                    mount.style.cursor = 'grab';
                 }
             });
 
+            // Клик после перетаскивания гасим до того, как он дойдёт до ленты
+            mount.addEventListener('click', function(e) {
+                if (rodoslovDragMoved) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    rodoslovDragMoved = false;
+                }
+            }, true);
+
             mount.addEventListener('wheel', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 const factor = (e.deltaY < 0) ? 1.12 : 0.89;
                 const rect = mount.getBoundingClientRect();
                 rodoslovZoom(factor, e.clientX - rect.left, e.clientY - rect.top);
             }, { passive: false });
 
-            // Touch-басқару
-            let touchStartX = 0, touchStartY = 0;
+            // Сенсор: один палец — прокрутка, два — масштаб щипком
+            let touchStartX = 0, touchStartY = 0, pinchDist = 0;
+            function touchDist(t) {
+                return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+            }
             mount.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) rodoslovDragMoved = false;
+                if (e.target.closest('.rodoslov-zoom-toolbar')) return;
                 if (e.touches.length === 1) {
+                    rodoslovDownX = e.touches[0].clientX;
+                    rodoslovDownY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX - rodoslovPanX;
+                    touchStartY = e.touches[0].clientY - rodoslovPanY;
+                } else if (e.touches.length === 2) {
+                    rodoslovDragMoved = true;
+                    pinchDist = touchDist(e.touches);
+                }
+            }, { passive: true });
+            mount.addEventListener('touchmove', function(e) {
+                if (e.target.closest('.rodoslov-zoom-toolbar')) return;
+                if (e.touches.length === 1) {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    if (Math.abs(t.clientX - rodoslovDownX) + Math.abs(t.clientY - rodoslovDownY) > 8) rodoslovDragMoved = true;
+                    rodoslovPanX = t.clientX - touchStartX;
+                    rodoslovPanY = t.clientY - touchStartY;
+                    updateRodoslovTransform();
+                } else if (e.touches.length === 2 && pinchDist > 0) {
+                    e.preventDefault();
+                    const d = touchDist(e.touches);
+                    const rect = mount.getBoundingClientRect();
+                    const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                    const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                    rodoslovZoom(d / pinchDist, cx, cy);
+                    pinchDist = d;
+                }
+            }, { passive: false });
+            function touchEnd(e) {
+                if (e.touches.length === 1) {
+                    // после щипка продолжаем прокрутку оставшимся пальцем без скачка
                     touchStartX = e.touches[0].clientX - rodoslovPanX;
                     touchStartY = e.touches[0].clientY - rodoslovPanY;
                 }
+                if (e.touches.length < 2) pinchDist = 0;
+            }
+            mount.addEventListener('touchend', touchEnd);
+            mount.addEventListener('touchcancel', touchEnd);
+
+            // Клавиатура: стрелки — сдвиг, +/− — масштаб, 0 — всё древо
+            mount.addEventListener('keydown', function(e) {
+                const step = 80;
+                if (e.key === 'ArrowLeft') rodoslovPanX += step;
+                else if (e.key === 'ArrowRight') rodoslovPanX -= step;
+                else if (e.key === 'ArrowUp') rodoslovPanY += step;
+                else if (e.key === 'ArrowDown') rodoslovPanY -= step;
+                else if (e.key === '+' || e.key === '=') { rodoslovZoom(1.2); e.preventDefault(); return; }
+                else if (e.key === '-') { rodoslovZoom(0.8); e.preventDefault(); return; }
+                else if (e.key === '0') { rodoslovFitTree(); e.preventDefault(); return; }
+                else return;
+                e.preventDefault();
+                updateRodoslovTransform();
             });
-            mount.addEventListener('touchmove', function(e) {
-                if (e.touches.length === 1) {
-                    e.preventDefault();
-                    rodoslovPanX = e.touches[0].clientX - touchStartX;
-                    rodoslovPanY = e.touches[0].clientY - touchStartY;
-                    updateRodoslovTransform();
-                }
-            }, { passive: false });
         }
 
+        // Шежіре-Ағаш: SVG строит RodoslovGenerator из реальных данных /api/tree
         function renderRodoslovView() {
             const canvas = document.getElementById('rodoslovCanvas');
-            if (!canvas || !treeData || !treeData.persons) return;
+            const worldEl = document.getElementById('rodoslovWorld');
+            const statsEl = document.getElementById('rodoslovStats');
+            if (!canvas || !worldEl) return;
+            setupRodoslovEvents();
 
-            if (canvas.getAttribute('data-rendered') === 'true') {
+            const isRu = currentLang === 'ru';
+            if (typeof RodoslovGenerator === 'undefined') {
+                canvas.textContent = isRu ? 'Модуль родословной не загрузился. Обновите страницу.' : 'Шежіре модулі жүктелмеді. Бетті жаңартыңыз.';
+                return;
+            }
+            if (!treeData || !Array.isArray(treeData.persons)) return;
+
+            const focalId = userPersonId || selectedPersonId || treeData.focal_id || 0;
+            const key = [currentLang, focalId, treeData.persons.length, (treeData.marriages || []).length].join('|');
+            if (rodoslovRenderedData === treeData && rodoslovRenderKey === key) {
+                rodoslovHighlight(selectedPersonId);
                 return;
             }
 
-            const persons = treeData.persons;
-            const marriages = treeData.marriages || [];
-            const personMap = new Map();
-            persons.forEach(p => personMap.set(p.id, p));
-
-            const spouseMap = new Map();
-            marriages.forEach(m => {
-                if (m.husband_id && m.wife_id) {
-                    spouseMap.set(m.husband_id, { spouseId: m.wife_id, marriage: m });
-                    spouseMap.set(m.wife_id, { spouseId: m.husband_id, marriage: m });
+            const opts = {
+                focalId: focalId,
+                title: isRu ? 'РОДОСЛОВНОЕ ДРЕВО' : 'ШЕЖІРЕ-АҒАШ',
+                emptyText: isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз',
+                onPersonClick: function(id) {
+                    rodoslovHighlight(id);
+                    // id из БД может прийти строкой — отдаём selectPerson исходное значение
+                    const p = treeData.persons.find(x => Number(x.id) === id);
+                    selectPerson(p ? p.id : id);
                 }
-            });
-
-            let focalId = selectedPersonId || userPersonId;
-            let focal = focalId ? personMap.get(focalId) : null;
-            if (!focal) {
-                focal = persons.find(p => p.id === 6 || p.id === 6 || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
+            };
+            if (isRu) {
+                opts.maidenPrefix = 'урожд.';
+                opts.marriagePrefix = 'брак ·';
+                opts.tamgaPlaceholder = 'тамга';
+                opts.unknownClan = 'род не указан';
+                opts.labels = { father: 'ПО ОТЦУ', mother: 'ПО МАТЕРИ', inlaw: 'РОД ЖЕНЫ', other: 'СВАТЫ' };
+                opts.legendText = {
+                    son: 'сын',
+                    daughter: 'дочь / сноха',
+                    deceased: 'ушедшие (золотая лента, золотые листья)',
+                    marriage: 'брак',
+                    dates: '*  дата рождения     †  дата смерти'
+                };
             }
 
-            let html = '';
+            try {
+                rodoslovResult = RodoslovGenerator.mount(canvas, treeData, opts);
+            } catch (err) {
+                console.error('RodoslovGenerator:', err);
+                rodoslovResult = null;
+                canvas.textContent = isRu ? 'Не удалось построить древо.' : 'Шежіре-ағашты құру мүмкін болмады.';
+                return;
+            }
+            rodoslovRenderedData = treeData;
+            rodoslovRenderKey = key;
 
-            // 1. Бұрыштық қазақи ою-өрнектер (SVG)
-            const kazakhCornerSvg = `
-                <svg viewBox="0 0 100 100" fill="none" stroke="#b8860b" stroke-width="2.5">
-                    <path d="M10 10 H50 C60 10 70 20 70 30 C70 40 60 45 50 45 C40 45 35 35 35 25" />
-                    <path d="M10 10 V50 C10 60 20 70 30 70 C40 70 45 60 45 50 C45 40 35 35 25 35" />
-                    <circle cx="10" cy="10" r="4" fill="#b8860b" />
-                    <path d="M15 15 L30 30" stroke-width="1.5" />
-                </svg>
-            `;
-            html += `<div class="rodoslov-corner-kazakh top-left">${kazakhCornerSvg}</div>`;
-            html += `<div class="rodoslov-corner-kazakh top-right">${kazakhCornerSvg}</div>`;
-            html += `<div class="rodoslov-corner-kazakh bottom-left">${kazakhCornerSvg}</div>`;
-            html += `<div class="rodoslov-corner-kazakh bottom-right">${kazakhCornerSvg}</div>`;
+            canvas.style.width = rodoslovResult.width + 'px';
+            canvas.style.height = rodoslovResult.height + 'px';
+            canvas.style.margin = RODOSLOV_MARGIN + 'px';
+            const size = rodoslovWorldSize();
+            worldEl.style.width = size.w + 'px';
+            worldEl.style.height = size.h + 'px';
 
-            // 2. Жоғарғы тақырыптық баннер
-            const titleText = currentLang === 'ru' ? 'РОДОСЛОВНОЕ ДРЕВО СЕМЬИ АЛТЫБАЕВЫХ' : 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕ-АҒАШЫ';
-            const subText = 'Орта жүз • Керей (Ашамай) • Көшебе • Бұзау • Шортан • Қосақ • Кенен • Алтыбай';
-            html += `
-                <div class="rodoslov-title-banner">
-                    <div class="rodoslov-title-text">${titleText}</div>
-                    <div class="rodoslov-title-sub">${subText}</div>
-                </div>
-            `;
-
-            // 3. Орталық Ата таңбалары картушы (Tamga Cartouche)
-            html += `
-                <div class="rodoslov-tamga-cartouche">
-                    <div class="rodoslov-tamga-title">${currentLang === 'ru' ? 'Священные тамги родов' : 'Қасиетті ата таңбалары'}</div>
-                    <div class="rodoslov-tamgas-row">
-                        <div class="rodoslov-tamga-item" title="Род Керей (Отцовский ствол)">
-                            <div class="rodoslov-tamga-symbol">✕</div>
-                            <div class="rodoslov-tamga-name">КЕРЕЙ</div>
-                            <div class="rodoslov-tamga-uran">«Ошыбай!»</div>
-                        </div>
-                        <div class="rodoslov-tamga-item" title="Род Жағалбайлы (Материнский ствол)">
-                            <div class="rodoslov-tamga-symbol">⊥</div>
-                            <div class="rodoslov-tamga-name">ЖАҒАЛБАЙЛЫ</div>
-                            <div class="rodoslov-tamga-uran">«Малатау!»</div>
-                        </div>
-                        <div class="rodoslov-tamga-item" title="Род Қоңырат (Род сватов)">
-                            <div class="rodoslov-tamga-symbol">П</div>
-                            <div class="rodoslov-tamga-name">ҚОҢЫРАТ</div>
-                            <div class="rodoslov-tamga-uran">«Алатау!»</div>
-                        </div>
-                    </div>
-                    <div style="font-size:10px; color:#78350f; font-style:italic; margin-top:4px;">
-                        ${currentLang === 'ru' ? 'Единство ветвей и поколений' : 'Бірлік пен береке діңгегі'}
-                    </div>
-                </div>
-            `;
-
-            // 4. Ярустар (Generation Tiers)
-            const tierDefs = [
-                { tier: 7, y: 220, label: currentLang === 'ru' ? '7-ЯРУС: ЖАС ӨРКЕН (БАЛАЛАР)' : '7-ЯРУС: ЖАС ӨРКЕН (БАЛАЛАР)' },
-                { tier: 6, y: 480, label: currentLang === 'ru' ? '6-ЯРУС: ГЛАВНЫЙ ОЧАГ (ЖАНДОС И АСИЛА)' : '6-ЯРУС: БАСТЫ ШАҢЫРАҚ (ЖАНДОС ПЕН АСИЛА)' },
-                { tier: 5, y: 740, label: currentLang === 'ru' ? '5-ЯРУС: ПОКОЛЕНИЕ РОДИТЕЛЕЙ (ГАБИТ И МЕНСЛУ)' : '5-ЯРУС: АТА-АНА БУЫНЫ (ҒАБИТ ПЕН МЕНСЛУ)' },
-                { tier: 4, y: 1000, label: currentLang === 'ru' ? '4-ЯРУС: СЕМЬЯ ГАНИ И РАУШАН' : '4-ЯРУС: ҒАНИ МЕН РАУШАН ӘУЛЕТІ' },
-                { tier: 3, y: 1260, label: currentLang === 'ru' ? '3-ЯРУС: ПОКОЛЕНИЕ ШАМСИДЕНА' : '3-ЯРУС: ШАМСИДЕН БАБА БУЫНЫ' },
-                { tier: 2, y: 1520, label: currentLang === 'ru' ? '2-ЯРУС: РОД АЛТЫБАЯ' : '2-ЯРУС: АЛТЫБАЙ БАБА ӘУЛЕТІ' },
-                { tier: 1, y: 1780, label: currentLang === 'ru' ? '1-ЯРУС: КОРНИ РОДА КЕРЕЙ' : '1-ЯРУС: КЕРЕЙ БАБА ЖӘНЕ ТҮП ТАМЫР' },
-            ];
-
-            tierDefs.forEach(td => {
-                html += `<div class="rodoslov-tier-label" style="top:${td.y - 12}px;">${td.label}</div>`;
-                html += `<div class="rodoslov-tier-line" style="top:${td.y}px;"></div>`;
-            });
-
-            // 5. Көркем ағаш суреті (SVG Дерево, корни, два ствола, схождение в крону)
-            let svgHtml = `
-                <svg class="rodoslov-tree-svg" width="3000" height="2200" viewBox="0 0 3000 2200">
-                    <defs>
-                        <linearGradient id="trunkLeftGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#3d2212" />
-                            <stop offset="50%" stop-color="#6d3b19" />
-                            <stop offset="100%" stop-color="#4a2510" />
-                        </linearGradient>
-                        <linearGradient id="trunkRightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#4a2810" />
-                            <stop offset="50%" stop-color="#7c431d" />
-                            <stop offset="100%" stop-color="#3d200e" />
-                        </linearGradient>
-                        <linearGradient id="crownBranchGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stop-color="#5c3014" />
-                            <stop offset="100%" stop-color="#8a4d22" />
-                        </linearGradient>
-                        <radialGradient id="soilGrad" cx="50%" cy="100%" r="80%">
-                            <stop offset="0%" stop-color="#2a180d" stop-opacity="0.35" />
-                            <stop offset="100%" stop-color="#2a180d" stop-opacity="0" />
-                        </radialGradient>
-                    </defs>
-
-                    <!-- Топырақ және тамыр қабаты -->
-                    <ellipse cx="1500" cy="2160" rx="1400" ry="120" fill="url(#soilGrad)" />
-
-                    <!-- ЛЕВЫЙ СТВОЛ: РОД КЕРЕЙ (ӘКЕ ЖАҒЫ) -->
-                    <path d="M750 2150 C700 2050 620 1950 560 1880" stroke="#4a2810" stroke-width="24" stroke-linecap="round" fill="none" />
-                    <path d="M750 2150 C790 2070 860 1980 920 1900" stroke="#5c3315" stroke-width="20" stroke-linecap="round" fill="none" />
-                    <path d="M750 2150 C720 2000 740 1850 780 1720" stroke="url(#trunkLeftGrad)" stroke-width="70" stroke-linecap="round" fill="none" />
-                    <path d="M780 1720 C820 1560 890 1420 1020 1320" stroke="url(#trunkLeftGrad)" stroke-width="58" stroke-linecap="round" fill="none" />
-                    <path d="M1020 1320 C1140 1240 1300 1180 1420 1140" stroke="url(#trunkLeftGrad)" stroke-width="46" stroke-linecap="round" fill="none" />
-
-                    <!-- ПРАВЫЙ СТВОЛ: РОДЫ ЖАҒАЛБАЙЛЫ И ҚОҢЫРАТ (АНАЛАР МЕН КЕЛІНДЕР) -->
-                    <path d="M2250 2150 C2310 2050 2380 1950 2440 1880" stroke="#4a2810" stroke-width="24" stroke-linecap="round" fill="none" />
-                    <path d="M2250 2150 C2190 2070 2120 1980 2060 1900" stroke="#5c3315" stroke-width="20" stroke-linecap="round" fill="none" />
-                    <path d="M2250 2150 C2280 2000 2250 1850 2200 1720" stroke="url(#trunkRightGrad)" stroke-width="70" stroke-linecap="round" fill="none" />
-                    <path d="M2200 1720 C2160 1560 2090 1420 1960 1320" stroke="url(#trunkRightGrad)" stroke-width="58" stroke-linecap="round" fill="none" />
-                    <path d="M1960 1320 C1840 1240 1680 1180 1560 1140" stroke="url(#trunkRightGrad)" stroke-width="46" stroke-linecap="round" fill="none" />
-
-                    <!-- СХОЖДЕНИЕ В ОБЩУЮ КРОНУ (ШАҢЫРАҚ) -->
-                    <path d="M1420 1140 C1460 1050 1480 940 1480 820" stroke="url(#crownBranchGrad)" stroke-width="42" stroke-linecap="round" fill="none" />
-                    <path d="M1560 1140 C1530 1050 1510 940 1500 820" stroke="url(#crownBranchGrad)" stroke-width="42" stroke-linecap="round" fill="none" />
-                    <path d="M1490 820 C1490 680 1490 560 1490 480" stroke="url(#crownBranchGrad)" stroke-width="34" stroke-linecap="round" fill="none" />
-
-                    <!-- БҰТАҚТАР: 5-ЯРУС (ҒАБИТ ЖӘНЕ МЕНСЛУ) -->
-                    <path d="M1490 820 C1400 780 1300 760 1200 750" stroke="url(#crownBranchGrad)" stroke-width="24" stroke-linecap="round" fill="none" />
-                    <path d="M1490 820 C1580 780 1680 760 1780 750" stroke="url(#crownBranchGrad)" stroke-width="24" stroke-linecap="round" fill="none" />
-
-                    <!-- БҰТАҚТАР: 6-ЯРУС (ЖАНДОС ЖӘНЕ АСИЛА) -->
-                    <path d="M1490 560 C1420 520 1350 500 1280 490" stroke="url(#crownBranchGrad)" stroke-width="22" stroke-linecap="round" fill="none" />
-                    <path d="M1490 560 C1560 520 1630 500 1700 490" stroke="url(#crownBranchGrad)" stroke-width="22" stroke-linecap="round" fill="none" />
-
-                    <!-- БҰТАҚТАР: 7-ЯРУС (БАЛАЛАР: АҚНҰР, ЖАНСАЯ, АЙЗЕРЕ) -->
-                    <path d="M1490 480 C1430 380 1350 300 1280 240" stroke="url(#crownBranchGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
-                    <path d="M1490 480 C1490 380 1490 310 1490 240" stroke="url(#crownBranchGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
-                    <path d="M1490 480 C1550 380 1630 300 1700 240" stroke="url(#crownBranchGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
-
-                    <!-- БҰТАҚТАР: 4-ЯРУС (ҒАНИ ЖӘНЕ РАУШАН) -->
-                    <path d="M1020 1320 C1080 1180 1180 1080 1280 1010" stroke="url(#trunkLeftGrad)" stroke-width="26" stroke-linecap="round" fill="none" />
-                    <path d="M1960 1320 C1900 1180 1800 1080 1700 1010" stroke="url(#trunkRightGrad)" stroke-width="26" stroke-linecap="round" fill="none" />
-
-                    <!-- БҰТАҚТАР: 3-ЯРУС (ШАМСИДЕН) -->
-                    <path d="M780 1720 C840 1520 980 1390 1120 1270" stroke="url(#trunkLeftGrad)" stroke-width="30" stroke-linecap="round" fill="none" />
-
-                    <!-- БҰТАҚТАР: 2-ЯРУС (АЛТЫБАЙ БАБА) -->
-                    <path d="M750 1850 C800 1720 920 1620 1060 1530" stroke="url(#trunkLeftGrad)" stroke-width="34" stroke-linecap="round" fill="none" />
-
-                    <!-- СТИЛИЗОВАЛҒАН ҚАЗАҚИ ӨРНЕКТЕР (ҚОШҚАР МҮЙІЗ) ДІҢГЕКТЕРДІҢ БОЙЫНДА -->
-                    <path d="M750 2000 Q780 1970 810 1990 T840 2020 Q820 2040 790 2020" fill="none" stroke="#d4af37" stroke-width="2.5" opacity="0.65" />
-                    <path d="M2250 2000 Q2220 1970 2190 1990 T2160 2020 Q2180 2040 2210 2020" fill="none" stroke="#d4af37" stroke-width="2.5" opacity="0.65" />
-                    <path d="M1490 920 Q1460 900 1460 880 T1490 860 Q1520 880 1520 900" fill="none" stroke="#d4af37" stroke-width="2" opacity="0.75" />
-
-                    <!-- ТҮП ТАМЫРЛАРДЫҢ СИПАТТАМАСЫ -->
-                    <text x="750" y="2185" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#78350f" text-anchor="middle" letter-spacing="1">
-                        ${currentLang === 'ru' ? 'ӘКЕ ЖАҒЫ: КЕРЕЙ РУЫ (✕ ОШЫБАЙ!)' : 'ӘКЕ ЖАҒЫ: КЕРЕЙ РУЫ (✕ ОШЫБАЙ!)'}
-                    </text>
-                    <text x="2250" y="2185" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#78350f" text-anchor="middle" letter-spacing="1">
-                        ${currentLang === 'ru' ? 'АНАЛАР МЕН КЕЛІНДЕР: ЖАҒАЛБАЙЛЫ (⊥) & ҚОҢЫРАТ (П)' : 'АНАЛАР МЕН КЕЛІНДЕР: ЖАҒАЛБАЙЛЫ (⊥) & ҚОҢЫРАТ (П)'}
-                    </text>
-                </svg>
-            `;
-            html += svgHtml;
-
-            // Лента-свиток қалыбын жасау
-            function renderRibbonHtml(p, x, y, options = {}) {
-                const isDeceased = p.is_deceased || (p.death_year && p.death_year > 0);
-                const isMale = (p.gender === 'M');
-                const isFocal = (p.id === focal.id);
-                const isWife = options.isWife;
-                const isDaughter = options.isDaughter;
-                const isSon = options.isSon;
-
-                let cls = 'rodoslov-ribbon';
-                if (isFocal) cls += ' is-focal';
-                else if (isDeceased) cls += ' is-deceased';
-                else if (isWife) cls += ' is-wife';
-                else if (isDaughter) cls += ' is-daughter';
-                else if (isSon) cls += ' is-son';
-
-                // Векторлық белгіше (Strictly SVG / typography - ZERO emojis!)
-                let iconSvg = '';
-                if (isFocal) {
-                    iconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#ca8a04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
-                } else if (isDeceased) {
-                    iconSvg = `<span style="font-weight:900; color:#b45309; font-size:15px; line-height:1;">†</span>`;
-                } else if (isDaughter || isWife) {
-                    iconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#db2777"><circle cx="12" cy="12" r="3"/><path d="M12 2a4 4 0 0 1 4 4c0 2-4 6-4 6s-4-4-4-6a4 4 0 0 1 4-4zm0 20a4 4 0 0 1-4-4c0-2 4-6 4-6s4 4 4 6a4 4 0 0 1-4 4zm10-10a4 4 0 0 1-4 4c-2 0-6-4-6-4s4-4 6-4a4 4 0 0 1 4 4zM2 12a4 4 0 0 1 4-4c2 0 6 4 6 4s-4 4-6 4a4 4 0 0 1-4-4z"/></svg>`;
-                } else {
-                    iconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#16a34a"><path d="M11 20A7 7 0 0 1 4 13C4 8.5 7.5 4 13 3c4 0 7 2 7 6 0 5-3.5 11-9 11z"/><path d="M11 20v-5"/></svg>`;
-                }
-
-                let years = '';
-                if (p.birth_year) {
-                    years += `* ${p.birth_year}`;
-                }
-                if (p.death_year) {
-                    years += (years ? ', ' : '') + `† ${p.death_year}`;
-                }
-
-                let maidenInfo = '';
-                if (isWife) {
-                    const mName = p.maiden_name || (p.clan_ru ? (p.clan_ru + ' қызы') : '');
-                    if (mName && mName !== p.last_name) {
-                        const prefix = currentLang === 'ru' ? 'урожд.' : 'қыз кезінде:';
-                        maidenInfo = ` <span style="font-size:11px; color:#9d174d; font-style:italic;">(${prefix} ${mName})</span>`;
-                    }
-                }
-
-                const fullName = `${p.first_name || ''} ${p.last_name || ''}`.trim();
-                const titleTip = `${fullName} (${years}) — ${currentLang === 'ru' ? 'Кликните для профиля' : 'Толық көру үшін басыңыз'}`;
-
-                return `
-                    <div class="${cls}" style="left:${x}px; top:${y}px;" onclick="selectPerson(${p.id})" title="${titleTip}">
-                        ${iconSvg}
-                        <strong>${fullName}</strong>
-                        ${maidenInfo}
-                        ${years ? `<span style="font-size:11.5px; opacity:0.85; margin-left:4px;">(${years})</span>` : ''}
-                    </div>
-                `;
+            if (statsEl) {
+                const st = rodoslovResult.stats || {};
+                statsEl.textContent = isRu
+                    ? `Человек: ${st.placed || 0} · поколений: ${st.levels || 0}`
+                    : `Адам: ${st.placed || 0} · буын: ${st.levels || 0}`;
             }
 
-            function renderWeddingRingsBadge(x, y, yearText) {
-                return `
-                    <div class="rodoslov-rings-badge" style="left:${x}px; top:${y}px;">
-                        <svg class="rodoslov-rings-icon" viewBox="0 0 40 24" fill="none" stroke="#ca8a04" stroke-width="2.2">
-                            <circle cx="14" cy="12" r="9" />
-                            <circle cx="26" cy="12" r="9" />
-                        </svg>
-                        ${yearText ? `<div class="rodoslov-marriage-date">${yearText}</div>` : ''}
-                    </div>
-                `;
-            }
-
-            // Нақты тұлғаларды ярустар бойынша орналастыру
-            // 7-ЯРУС: Жандостың қыздары (Ақнұр, Жансая, Айзере)
-            const children = persons.filter(p => p.father_id === 6 || p.mother_id === 6 || p.father_id === 24 || p.mother_id === 24);
-            children.sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0));
-
-            const tier7Y = 220;
-            const childrenStartX = 1500 - ((children.length - 1) * 220) / 2;
-            children.forEach((c, idx) => {
-                const isDaughter = (c.gender === 'F');
-                const cx = childrenStartX + idx * 220;
-                html += renderRibbonHtml(c, cx - 100, tier7Y, { isDaughter: isDaughter, isSon: !isDaughter });
-            });
-
-            // 6-ЯРУС: Жандос пен Асила және бауырлары
-            const tier6Y = 480;
-            const zhandosX = 1350;
-            html += renderRibbonHtml(focal, zhandosX - 120, tier6Y, { isSon: true });
-
-            const asila = personMap.get(24) || (spouseMap.get(focal.id) ? personMap.get(spouseMap.get(focal.id).spouseId) : null);
-            if (asila) {
-                const asilaX = 1650;
-                html += renderRibbonHtml(asila, asilaX - 80, tier6Y, { isWife: true });
-                html += renderWeddingRingsBadge(1500, tier6Y + 16, currentLang === 'ru' ? 'неке: 2009 ж.' : 'неке: 2009 ж.');
-            }
-
-            const siblings = persons.filter(p => p.id !== focal.id && (p.father_id === 1 || p.mother_id === 2));
-            siblings.sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0));
-            const sibStartX = 900;
-            siblings.forEach((s, idx) => {
-                const sx = (idx < 2) ? (sibStartX - idx * 240) : (1880 + (idx - 2) * 240);
-                html += renderRibbonHtml(s, sx, tier6Y, { isDaughter: (s.gender === 'F'), isSon: (s.gender === 'M') });
-            });
-
-            // 5-ЯРУС: Ата-ана (Ғабит пен Менслу) және Ғабиттің бауырлары
-            const tier5Y = 740;
-            const gabit = personMap.get(1);
-            const menslu = personMap.get(2);
-            if (gabit) {
-                html += renderRibbonHtml(gabit, 1340 - 120, tier5Y, { isSon: true });
-            }
-            if (menslu) {
-                html += renderRibbonHtml(menslu, 1660 - 80, tier5Y, { isWife: true });
-                html += renderWeddingRingsBadge(1500, tier5Y + 16, currentLang === 'ru' ? 'неке: 1979 ж.' : 'неке: 1979 ж.');
-            }
-
-            const gabitSiblings = persons.filter(p => p.id !== 1 && p.father_id === 7);
-            gabitSiblings.slice(0, 4).forEach((gs, idx) => {
-                const gx = (idx < 2) ? (920 - idx * 240) : (1880 + (idx - 2) * 240);
-                html += renderRibbonHtml(gs, gx, tier5Y, { isDaughter: (gs.gender === 'F'), isSon: (gs.gender === 'M') });
-            });
-
-            // 4-ЯРУС: Ата-әже (Ғани мен Раушан)
-            const tier4Y = 1000;
-            const gani = personMap.get(7);
-            const raushan = personMap.get(8);
-            if (gani) {
-                html += renderRibbonHtml(gani, 1340 - 120, tier4Y, { isSon: true });
-            }
-            if (raushan) {
-                html += renderRibbonHtml(raushan, 1660 - 80, tier4Y, { isWife: true });
-                html += renderWeddingRingsBadge(1500, tier4Y + 16, currentLang === 'ru' ? 'неке: 1952 ж.' : 'неке: 1952 ж.');
-            }
-
-            // 3-ЯРУС: Шамсиден баба мен Сұлушаш
-            const tier3Y = 1260;
-            const shamsiden = personMap.get(63);
-            const shamsidenSpouse = personMap.get(64);
-            if (shamsiden) {
-                html += renderRibbonHtml(shamsiden, 1340 - 120, tier3Y, { isSon: true });
-            }
-            if (shamsidenSpouse) {
-                html += renderRibbonHtml(shamsidenSpouse, 1660 - 80, tier3Y, { isWife: true });
-                html += renderWeddingRingsBadge(1500, tier3Y + 16, currentLang === 'ru' ? 'неке: 1926 ж.' : 'неке: 1926 ж.');
-            }
-
-            // 2-ЯРУС: Алтыбай баба Кененұлы мен бәйбішесі
-            const tier2Y = 1520;
-            const altybay = personMap.get(65);
-            const altybaySpouse = personMap.get(66);
-            if (altybay) {
-                html += renderRibbonHtml(altybay, 1340 - 140, tier2Y, { isSon: true });
-            }
-            if (altybaySpouse) {
-                html += renderRibbonHtml(altybaySpouse, 1660 - 60, tier2Y, { isWife: true });
-                html += renderWeddingRingsBadge(1500, tier2Y + 16, currentLang === 'ru' ? 'неке: 1890 ж.' : 'неке: 1890 ж.');
-            }
-
-            // 1-ЯРУС: Түп аталар шежіресі (Керей -> Ашамайлы -> Көшебе -> Бұзау -> Шортан -> Қосақ -> Кенен)
-            const tier1Y = 1780;
-            const rootLineageIds = [165, 239, 240, 241, 242, 243, 249];
-            rootLineageIds.forEach((rid, idx) => {
-                const rp = personMap.get(rid);
-                if (rp) {
-                    const rx = 360 + idx * 175;
-                    const ry = tier1Y + (idx % 2 === 0 ? 0 : 38);
-                    html += renderRibbonHtml(rp, rx, ry, { isSon: true });
-                }
-            });
-
-            canvas.innerHTML = html;
-            canvas.setAttribute('data-rendered', 'true');
-
-            setupRodoslovEvents();
-
-            setTimeout(() => {
-                rodoslovFitTree();
-            }, 50);
+            // та же цель, что у кнопки «К себе» и flyToCrown — без скачка между двумя центрированиями
+            requestAnimationFrame(rodoslovFocusFocal);
         }
 
         function renderForest3DView() {
@@ -4317,6 +4326,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                     const cy = parseInt(card.style.top) + 65;
                     flyTo(cx, cy, 1.0);
                 }
+            } else if (currentMode === 'forest' && currentForestSubmode === 'rodoslov') {
+                // поиск и «Сіз осындасыз» в Шежіре-Ағаш: показать ленту этого человека
+                if (rodoslovCenterOn(id, Math.max(rodoslovScale, 0.85))) rodoslovHighlight(id);
+                else rodoslovFocusFocal();
             } else {
                 flyToCrown();
             }
@@ -4431,9 +4444,9 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                             row.innerHTML = `
                                 <div>
                                     <strong>${item.name}</strong>
-                                    <div style="font-size:11px; color:#94a3b8;">${item.years} &bull; ${item.clan}</div>
+                                    <div class="tf-sub">${item.years} &bull; ${item.clan}</div>
                                 </div>
-                                <span>${item.gender === 'M' ? '🌿' : '🌸'}</span>
+                                <span class="tf-g ${item.gender === 'M' ? 'tf-g-m' : 'tf-g-f'}" aria-hidden="true"></span>
                             `;
                             row.onclick = () => {
                                 searchDropdown.classList.remove('active');
@@ -5381,6 +5394,31 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
         // БАСТАУ
         window.addEventListener('DOMContentLoaded', initTree);
+    </script>
+    <script>
+        /* TASK-008: переключатель темы — тот же выбор (localStorage + cookie), что на остальных страницах */
+        function toggleTreeTheme() {
+            const root = document.documentElement;
+            const current = root.getAttribute('data-theme')
+                || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('shezhire_theme', next); } catch (e) {}
+            document.cookie = `shezhire_theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+        (function () {
+            const root = document.documentElement;
+            if (!root.getAttribute('data-theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                root.setAttribute('data-theme', 'dark');
+            }
+            /* низ шапки → --hdr-bottom: боковая панель профиля открывается под шапкой, даже если та в 2 строки */
+            const hdr = document.querySelector('header.tree-nav');
+            if (!hdr) return;
+            const syncHdr = () => root.style.setProperty('--hdr-bottom', Math.round(hdr.getBoundingClientRect().bottom) + 'px');
+            syncHdr();
+            if (window.ResizeObserver) new ResizeObserver(syncHdr).observe(hdr);
+            window.addEventListener('resize', syncHdr);
+        })();
     </script>
 </body>
 </html>

@@ -239,6 +239,73 @@ class PrintPosterService
     }
 
     /**
+     * Данные для рисованного древа «Шежіре-Ағаш» (Rodoslov) на плакате:
+     * потомки корня по отцовской линии (как в getPosterData) + их супруги
+     * и браки между ними. Формат совпадает с /api/tree (persons, marriages),
+     * его понимает public/assets/js/rodoslov-generator.js.
+     *
+     * @return array{persons: list<array>, marriages: list<array>, focal_id: int}
+     */
+    public function getRodoslovData(int $rootId, int $maxGenerations = 7, ?array $poster = null): array
+    {
+        // $poster — уже посчитанный getPosterData() (чтобы не обходить древо дважды)
+        $poster = $poster ?? $this->getPosterData($rootId, $maxGenerations);
+        $rootId = (int)($poster['root']['id'] ?? 0);
+
+        $ids = [];
+        foreach ($poster['levels'] as $lvl) {
+            foreach ($lvl as $card) {
+                $ids[(int)$card['id']] = true;
+                foreach ($card['spouses'] as $sp) {
+                    $ids[(int)$sp['id']] = true;
+                }
+            }
+        }
+
+        $fields = ['id', 'gedcom_id', 'first_name', 'last_name', 'maiden_name', 'gender',
+            'father_id', 'mother_id', 'birth_date', 'birth_year', 'death_date', 'death_year',
+            'is_deceased', 'clan_ru'];
+        $persons = [];
+        foreach (array_keys($ids) as $id) {
+            if (!isset($this->persons[$id])) {
+                continue;
+            }
+            $row = [];
+            foreach ($fields as $f) {
+                $row[$f] = $this->persons[$id][$f] ?? null;
+            }
+            // Родители вне плаката не нужны: супруга не тянет за собой свой род.
+            foreach (['father_id', 'mother_id'] as $f) {
+                if ((int)($row[$f] ?? 0) > 0 && !isset($ids[(int)$row[$f]])) {
+                    $row[$f] = null;
+                }
+            }
+            $persons[] = $row;
+        }
+
+        $marriages = [];
+        $seen = [];
+        foreach (array_keys($ids) as $id) {
+            foreach ($this->marriagesByPerson[$id] ?? [] as $m) {
+                $h = (int)$m['husband_id'];
+                $w = (int)$m['wife_id'];
+                $key = $h . ':' . $w;
+                if (isset($seen[$key]) || !isset($ids[$h], $ids[$w])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $marriages[] = [
+                    'husband_id'    => $h,
+                    'wife_id'       => $w,
+                    'marriage_date' => $m['marriage_date'] ?? ($m['start_date'] ?? null),
+                ];
+            }
+        }
+
+        return ['persons' => $persons, 'marriages' => $marriages, 'focal_id' => $rootId];
+    }
+
+    /**
      * Генерация чистого векторного SVG-плаката высокой четкости для профессиональной печати
      *
      * @param int $rootId

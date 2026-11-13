@@ -1,90 +1,98 @@
 <?php
 declare(strict_types=1);
 ?>
-            </div>
-        </main>
+                </div>
+            </main>
+        </div>
     </div>
 
-    <!-- Модальное окно редактирования/добавления персоны (общее для страниц) -->
-    <div id="globalPersonEditModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15, 23, 42, 0.65); z-index:999; align-items:center; justify-content:center; padding:16px;">
-        <div style="background:#ffffff; border-radius:14px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.3); padding:24px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
-                <h3 id="modalPersonEditTitle" style="font-size:18px; font-weight:700; color:#0f172a;">Тұлғаны өңдеу</h3>
-                <button type="button" onclick="closeGlobalPersonEditModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#64748b;">&times;</button>
+    <!-- Модальное окно редактирования/добавления персоны (общее для страниц) — белый остров поверх затемнения -->
+    <div id="globalPersonEditModal" class="modal-backdrop" style="display:none;">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalPersonEditTitle">
+            <div class="modal-head">
+                <h3 id="modalPersonEditTitle">Тұлғаны өңдеу</h3>
+                <button type="button" class="btn btn-ghost btn-icon" onclick="closeGlobalPersonEditModal()" aria-label="Жабу / Закрыть">
+                    <svg class="ic"><use href="#i-x"/></svg>
+                </button>
             </div>
             <form id="globalPersonEditForm" onsubmit="handleGlobalPersonSave(event)">
                 <input type="hidden" id="editModalPersonId" name="id" value="">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Аты / Имя *</label>
-                        <input type="text" id="editModalFirstName" required style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Тегі / Фамилия</label>
-                        <input type="text" id="editModalLastName" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Әкесінің аты / Отчество</label>
-                        <input type="text" id="editModalMiddleName" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Қыз кезіндегі тегі / Девичья фамилия</label>
-                        <input type="text" id="editModalMaidenName" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Жынысы / Пол</label>
-                        <select id="editModalGender" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                            <option value="M">Ер / Мужской</option>
-                            <option value="F">Әйел / Женский</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Руы / Род</label>
-                        <input type="text" id="editModalClanRu" placeholder="Керей, Жағалбайлы..." style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                        <div id="editModalClanHint" style="font-size:11px; color:#64748b; margin-top:3px; font-style:italic;"></div>
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Туған күні / Дата рождения</label>
-                        <input type="date" id="editModalBirthDate" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Туған жылы / Год</label>
-                        <input type="text" id="editModalBirthYear" placeholder="мысалы, 1985" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                    </div>
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Туған жері / Место рождения</label>
-                    <input type="text" id="editModalBirthPlace" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
-                </div>
-                <div style="margin-bottom:14px; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
-                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#1e293b; cursor:pointer;">
-                        <input type="checkbox" id="editModalIsDeceased" onchange="toggleEditModalDeceasedFields(this.checked)">
-                        <span>Өмірден өткен / Умер(ла) †</span>
-                    </label>
-                    <div id="editModalDeceasedFields" style="display:none; margin-top:10px; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div>
-                            <label style="display:block; font-size:11px; color:#64748b; margin-bottom:2px;">Қайтыс болған күні / Дата</label>
-                            <input type="date" id="editModalDeathDate" style="width:100%; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="editModalFirstName">Аты / Имя *</label>
+                            <input type="text" id="editModalFirstName" class="input" required>
                         </div>
-                        <div>
-                            <label style="display:block; font-size:11px; color:#64748b; margin-bottom:2px;">Жылы / Год</label>
-                            <input type="text" id="editModalDeathYear" placeholder="мысалы, 2020" style="width:100%; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;">
+                        <div class="field">
+                            <label for="editModalLastName">Тегі / Фамилия</label>
+                            <input type="text" id="editModalLastName" class="input">
                         </div>
                     </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="editModalMiddleName">Әкесінің аты / Отчество</label>
+                            <input type="text" id="editModalMiddleName" class="input">
+                        </div>
+                        <div class="field">
+                            <label for="editModalMaidenName">Қыз кезіндегі тегі / Девичья фамилия</label>
+                            <input type="text" id="editModalMaidenName" class="input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="editModalGender">Жынысы / Пол</label>
+                            <select id="editModalGender" class="select">
+                                <option value="M">Ер / Мужской</option>
+                                <option value="F">Әйел / Женский</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="editModalClanRu">Руы / Род</label>
+                            <input type="text" id="editModalClanRu" class="input" placeholder="Керей, Жағалбайлы...">
+                            <div id="editModalClanHint" class="hint"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="editModalBirthDate">Туған күні / Дата рождения</label>
+                            <input type="date" id="editModalBirthDate" class="input">
+                        </div>
+                        <div class="field">
+                            <label for="editModalBirthYear">Туған жылы / Год</label>
+                            <input type="text" id="editModalBirthYear" class="input" placeholder="мысалы, 1985">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="editModalBirthPlace">Туған жері / Место рождения</label>
+                        <input type="text" id="editModalBirthPlace" class="input">
+                    </div>
+                    <div class="island-sub">
+                        <label class="check">
+                            <input type="checkbox" id="editModalIsDeceased" onchange="toggleEditModalDeceasedFields(this.checked)">
+                            <span>Өмірден өткен / Умер(ла)</span>
+                        </label>
+                        <div id="editModalDeceasedFields" class="form-row" style="display:none; margin-top:12px;">
+                            <div class="field">
+                                <label for="editModalDeathDate">Қайтыс болған күні / Дата</label>
+                                <input type="date" id="editModalDeathDate" class="input">
+                            </div>
+                            <div class="field">
+                                <label for="editModalDeathYear">Жылы / Год</label>
+                                <input type="text" id="editModalDeathYear" class="input" placeholder="мысалы, 2020">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:10px;">
-                    <button type="button" onclick="closeGlobalPersonEditModal()" style="padding:9px 16px; border:1px solid #cbd5e1; background:#ffffff; color:#475569; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">Бас тарту / Отмена</button>
-                    <button type="submit" style="padding:9px 18px; border:none; background:#1b3b6f; color:#ffffff; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">Сақтау / Сохранить</button>
+                <div class="modal-foot">
+                    <button type="button" class="btn" onclick="closeGlobalPersonEditModal()">Бас тарту / Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сақтау / Сохранить</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Уведомления -->
+    <div class="toast-stack" id="appToastStack" aria-live="polite"></div>
 
     <script>
         function toggleMobileSidebar() {
@@ -102,6 +110,46 @@ declare(strict_types=1);
             localStorage.setItem('shezhire_lang', lang);
             // Перезагружаем текущую страницу или переходим на маршрут установки языка
             window.location.href = `/lang/${lang}?ref=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        }
+
+        // TASK-008: светлая / тёмная тема; без выбора — как в системе
+        function toggleAppTheme() {
+            const root = document.documentElement;
+            const current = root.getAttribute('data-theme')
+                || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('shezhire_theme', next); } catch (e) {}
+            document.cookie = `shezhire_theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+        (function () {
+            // Иконка солнце/луна должна соответствовать системной теме, если выбора ещё нет
+            const root = document.documentElement;
+            if (!root.getAttribute('data-theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                root.setAttribute('data-theme', 'dark');
+            }
+        })();
+
+        // TASK-008: уведомления в едином стиле (вместо системных alert)
+        function showAppToast(message, type) {
+            const stack = document.getElementById('appToastStack');
+            if (!stack) { alert(message); return; }
+            const kind = (type === 'success') ? 'success' : 'error';
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + kind;
+            toast.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+            const svgNs = 'http://www.w3.org/2000/svg';
+            const icon = document.createElementNS(svgNs, 'svg');
+            icon.setAttribute('class', 'ic');
+            const use = document.createElementNS(svgNs, 'use');
+            use.setAttribute('href', kind === 'success' ? '#i-check' : '#i-alert');
+            icon.appendChild(use);
+            const text = document.createElement('div');
+            text.textContent = String(message);
+            toast.appendChild(icon);
+            toast.appendChild(text);
+            stack.appendChild(toast);
+            setTimeout(function () { toast.remove(); }, kind === 'error' ? 7000 : 3500);
         }
 
         function toggleEditModalDeceasedFields(isDeceased) {
@@ -126,14 +174,13 @@ declare(strict_types=1);
                         document.getElementById('editModalMiddleName').value = p.middle_name || '';
                         document.getElementById('editModalMaidenName').value = p.maiden_name || '';
                         document.getElementById('editModalGender').value = p.gender || 'M';
-                        
+
                         const clanInput = document.getElementById('editModalClanRu');
                         const clanHint = document.getElementById('editModalClanHint');
                         clanInput.value = p.clan_ru || '';
                         const canEditClan = (data.can_edit_clan !== false) && (!p.father_id);
+                        // Вид поля «только чтение» задаёт дизайн-система (.input[readonly]) — в обеих темах
                         clanInput.readOnly = !canEditClan;
-                        clanInput.style.backgroundColor = canEditClan ? '#ffffff' : '#f1f5f9';
-                        clanInput.style.cursor = canEditClan ? 'text' : 'not-allowed';
                         if (clanHint) {
                             clanHint.textContent = canEditClan ? '' : (data.clan_hint || 'әкесінен / по отцу');
                         }
@@ -148,7 +195,7 @@ declare(strict_types=1);
                         document.getElementById('editModalDeathYear').value = p.death_year || '';
                     }
                 })
-                .catch(e => alert('Қате / Ошибка: ' + e.message));
+                .catch(e => showAppToast('Қате / Ошибка: ' + e.message, 'error'));
         }
 
         function closeGlobalPersonEditModal() {
@@ -186,10 +233,10 @@ declare(strict_types=1);
                     closeGlobalPersonEditModal();
                     window.location.reload();
                 } else {
-                    alert('Қате: ' + (data.error || 'Сақтау мүмкін болмады'));
+                    showAppToast('Қате: ' + (data.error || 'Сақтау мүмкін болмады'), 'error');
                 }
             } catch (err) {
-                alert('Сұраныс қатесі: ' + err.message);
+                showAppToast('Сұраныс қатесі: ' + err.message, 'error');
             }
         }
     </script>

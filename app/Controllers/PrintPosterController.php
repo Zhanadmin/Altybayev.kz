@@ -33,13 +33,15 @@ class PrintPosterController
         $defaultRoot = !empty($patriarchs) ? $patriarchs[0]['id'] : 65; // Алтыбай или первый корень
 
         $rootId = (int)$request->get('root', $defaultRoot);
-        $gens = (int)$request->get('gens', 7);
+        $gens = max(1, min(15, (int)$request->get('gens', 7)));
         $lang = (string)$request->get('lang', 'kk');
         if (!in_array($lang, ['kk', 'ru'], true)) {
             $lang = 'kk';
         }
 
         $posterData = $this->service->getPosterData($rootId, $gens, $lang);
+        // при неверном root сервис подставляет другой корень — показываем фактический
+        $rootId = (int)($posterData['root']['id'] ?? $rootId);
 
         Response::view('print_poster', [
             'user'         => $user,
@@ -48,6 +50,7 @@ class PrintPosterController
             'gens'         => $gens,
             'lang'         => $lang,
             'posterData'   => $posterData,
+            'rodoslovData' => $this->service->getRodoslovData($rootId, $gens, $posterData),
         ]);
     }
 

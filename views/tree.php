@@ -1590,6 +1590,356 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             color: #f8fafc;
             border-color: #d4af37;
         }
+
+        /* ========================================================
+           2.1 «ШЕЖІРЕ-АҒАШ (RODOSLOV)» ИЛЛЮСТРИРОВАННАЯ СХЕМА
+           Стиль "Rodoslov obitelji": светлый фон, многоствольное древо,
+           ленты-свитки, кольца брака, тамги родов, казахские мотивы
+           ======================================================== */
+        .forest-submode-bar {
+            position: absolute;
+            top: 72px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 35;
+            display: inline-flex;
+            gap: 6px;
+            background: rgba(24, 20, 16, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 5px 8px;
+            border-radius: 9999px;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .forest-submode-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 16px;
+            border-radius: 9999px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .forest-submode-btn:hover {
+            color: #fef08a;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .forest-submode-btn.active {
+            background: linear-gradient(135deg, #d4af37 0%, #b45309 100%);
+            color: #1a0f00;
+            border-color: #fef08a;
+            box-shadow: 0 2px 12px rgba(212, 175, 55, 0.45);
+            font-weight: 700;
+        }
+
+        .rodoslov-mount {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #faf6ee radial-gradient(circle at 50% 30%, #fffdfa 0%, #f7f0e1 65%, #ebdcc2 100%);
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .rodoslov-mount:active {
+            cursor: grabbing;
+        }
+
+        .rodoslov-panzoom-world {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3200px;
+            height: 2400px;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        .rodoslov-card-canvas {
+            position: relative;
+            width: 3000px;
+            height: 2200px;
+            margin: 100px;
+            background: #fffefb;
+            border: 3px double #b8860b;
+            border-radius: 12px;
+            box-shadow: 0 25px 70px rgba(92, 58, 33, 0.16), inset 0 0 120px rgba(212, 175, 55, 0.06);
+            overflow: hidden;
+        }
+
+        .rodoslov-corner-kazakh {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            pointer-events: none;
+            opacity: 0.75;
+            z-index: 2;
+        }
+        .rodoslov-corner-kazakh.top-left { top: 12px; left: 12px; }
+        .rodoslov-corner-kazakh.top-right { top: 12px; right: 12px; transform: scaleX(-1); }
+        .rodoslov-corner-kazakh.bottom-left { bottom: 12px; left: 12px; transform: scaleY(-1); }
+        .rodoslov-corner-kazakh.bottom-right { bottom: 12px; right: 12px; transform: scale(-1); }
+
+        .rodoslov-title-banner {
+            position: absolute;
+            top: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .rodoslov-title-text {
+            font-family: 'Georgia', 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #3e2211;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        }
+
+        .rodoslov-title-sub {
+            font-family: 'Georgia', serif;
+            font-size: 15px;
+            font-style: italic;
+            color: #78350f;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        .rodoslov-tree-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3000px;
+            height: 2200px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .rodoslov-tamga-cartouche {
+            position: absolute;
+            top: 1200px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 270px;
+            height: 270px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fffef9 0%, #fbf3df 68%, #ebd4a8 100%);
+            border: 4px double #b8860b;
+            box-shadow: 0 12px 35px rgba(92, 58, 33, 0.22), inset 0 0 25px rgba(212, 175, 55, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 8;
+            text-align: center;
+            padding: 14px;
+        }
+
+        .rodoslov-tamga-title {
+            font-family: 'Georgia', serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #78350f;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .rodoslov-tamgas-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin: 6px 0;
+        }
+
+        .rodoslov-tamga-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rodoslov-tamga-symbol {
+            font-size: 26px;
+            font-weight: 900;
+            color: #b45309;
+            line-height: 1;
+            font-family: 'Georgia', serif;
+        }
+
+        .rodoslov-tamga-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: #451a03;
+            margin-top: 3px;
+        }
+
+        .rodoslov-tamga-uran {
+            font-size: 9px;
+            font-style: italic;
+            color: #92400e;
+        }
+
+        .rodoslov-ribbon {
+            position: absolute;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 13.5px;
+            color: #2b180d;
+            box-shadow: 0 4px 14px rgba(60, 35, 15, 0.14);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+            white-space: nowrap;
+            z-index: 6;
+            border: 1.5px solid #b8860b;
+            background: linear-gradient(180deg, #ffffff 0%, #fefcf3 60%, #faecd0 100%);
+        }
+
+        .rodoslov-ribbon:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 24px rgba(184, 134, 11, 0.35);
+            border-color: #78350f;
+            z-index: 25;
+        }
+
+        .rodoslov-ribbon.is-deceased {
+            background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 60%, #fde68a 100%);
+            border-color: #d97706;
+        }
+
+        .rodoslov-ribbon.is-focal {
+            border: 2px solid #b45309;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.4), 0 8px 22px rgba(92, 58, 33, 0.25);
+            background: linear-gradient(180deg, #fefce8 0%, #fef08a 60%, #fde047 100%);
+            font-weight: 700;
+        }
+
+        .rodoslov-ribbon.is-wife {
+            background: linear-gradient(180deg, #fff5f7 0%, #fdf2f4 60%, #fce7eb 100%);
+            border-color: #db2777;
+        }
+
+        .rodoslov-ribbon.is-daughter {
+            background: linear-gradient(180deg, #ffffff 0%, #fdf4f7 60%, #fce7f3 100%);
+            border-color: #ec4899;
+        }
+
+        .rodoslov-ribbon.is-son {
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 60%, #dcfce7 100%);
+            border-color: #16a34a;
+        }
+
+        .rodoslov-rings-badge {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 7;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+
+        .rodoslov-marriage-date {
+            font-family: 'Georgia', serif;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: #854d0e;
+            background: #fefce8;
+            border: 1px solid #ca8a04;
+            padding: 1px 6px;
+            border-radius: 9999px;
+            margin-top: 2px;
+            white-space: nowrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .rodoslov-tier-label {
+            position: absolute;
+            left: 35px;
+            font-family: 'Georgia', serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #78350f;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: rgba(254, 243, 199, 0.85);
+            padding: 3px 10px;
+            border-left: 3px solid #b8860b;
+            border-radius: 0 4px 4px 0;
+            pointer-events: none;
+            z-index: 4;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .rodoslov-tier-line {
+            position: absolute;
+            left: 230px;
+            right: 35px;
+            height: 1px;
+            border-top: 1px dashed rgba(184, 134, 11, 0.28);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .rodoslov-zoom-toolbar {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(24, 20, 16, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+
+        .rodoslov-zoom-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            background: #291e14;
+            color: #fef08a;
+            border: 1px solid #78350f;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s ease;
+        }
+
+        .rodoslov-zoom-btn:hover {
+            background: #d4af37;
+            color: #1a0f00;
+            border-color: #fef08a;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -1692,10 +2042,47 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
             </div>
 
             <!-- ========================================================
-                 2. «3D ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІ (THREE.JS / WEBGL FIRST-PERSON)
+                 2. «ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІ (РОДОСЛОВ АҒАШ-СХЕМА ЖӘНЕ 3D THREE.JS)
                  ======================================================== -->
             <div class="forest-view" id="forestView" style="display:none; width:100%; height:100%; position:absolute; top:0; left:0; z-index:15;">
-                <div id="forest3dMount" style="width:100%; height:100%; position:relative; overflow:hidden;"></div>
+                <!-- Переключатель подрежимов: Иллюстрированный Родослов / 3D Орман -->
+                <div class="forest-submode-bar" id="forestSubmodeBar">
+                    <button type="button" class="forest-submode-btn active" id="btnSubmodeRodoslov" onclick="switchForestSubmode('rodoslov')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        <span data-i18n="forest_submode_rodoslov">Шежіре-Ағаш (Rodoslov)</span>
+                    </button>
+                    <button type="button" class="forest-submode-btn" id="btnSubmode3D" onclick="switchForestSubmode('3d')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M12 2L5 12h4l-3 8h12l-3-8h4L12 2z"/><line x1="12" y1="20" x2="12" y2="24"/></svg>
+                        <span data-i18n="forest_submode_3d">3D Шежіре-Орман</span>
+                    </button>
+                </div>
+
+                <!-- 2.1 Иллюстрированное Родословное Древо-Схема (Стиль Rodoslov Obitelji на чистом светлом фоне) -->
+                <div id="forestRodoslovMount" class="rodoslov-mount" style="display:block;">
+                    <div class="rodoslov-panzoom-world" id="rodoslovWorld">
+                        <div class="rodoslov-card-canvas" id="rodoslovCanvas">
+                            <!-- SVG Дерево, стволы, ветви и орнаменты отрисовываются через JS -->
+                        </div>
+                    </div>
+                    <!-- Панель управления масштабом Родословной -->
+                    <div class="rodoslov-zoom-toolbar">
+                        <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovZoom(1.2)" title="Жақындату / Приблизить">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovZoom(0.8)" title="Алыстату / Отдалить">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovFitTree()" title="Бүкіл ағаш / Обзор">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button type="button" class="rodoslov-zoom-btn" onclick="rodoslovFocusFocal()" title="Жандосқа бару / К фокусу">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2.2 3D Шежіре-Орман на Three.js / WebGL -->
+                <div id="forest3dMount" style="width:100%; height:100%; position:relative; overflow:hidden; display:none;"></div>
                 <div id="forestTreesContainer" style="display:none;"></div>
             </div>
 
@@ -2400,6 +2787,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 btn_return_real: "🌳 Негізгі базаға оралу",
                 scope_focal: "Окрестность",
                 scope_full: "Барлық шежіре",
+                forest_submode_rodoslov: "Шежіре-Ағаш (Rodoslov)",
+                forest_submode_3d: "3D Шежіре-Орман",
+                rodoslov_paternal_trunk: "Әке жағы діңгегі: Керей руы",
+                rodoslov_maternal_trunk: "Аналар мен келіндер: Жағалбайлы, Қоңырат",
+                rodoslov_maiden_prefix: "қыз кезінде:",
                 btn_focus_here: "Осы адамға бағыттау / Фокус",
                 btn_set_me: "★ Бұл мен (Өз аккаунтыма байлау)",
             },
@@ -2471,6 +2863,11 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
                 btn_return_real: "🌳 Вернуться к реальной базе",
                 scope_focal: "Окрестность",
                 scope_full: "Все древо (270)",
+                forest_submode_rodoslov: "Шежіре-Ағаш (Rodoslov)",
+                forest_submode_3d: "3D Шежіре-Орман",
+                rodoslov_paternal_trunk: "Отцовский ствол: род Керей",
+                rodoslov_maternal_trunk: "Материнский ствол: роды Жагалбайлы, Конырат",
+                rodoslov_maiden_prefix: "урожд.",
                 btn_focus_here: "Фокус на выбранном",
                 btn_set_me: "★ Это я (Привязать аккаунт)",
             }
@@ -2940,9 +3337,505 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
 
         // ========================================================
-        // 2. «3D ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІН ҚҰРУ (THREE.JS / WEBGL)
+        // ========================================================
+        // 2. «ШЕЖІРЕ-ОРМАН» КӨРКЕМ РЕЖИМІ (RODOSLOV & 3D WEBGL)
         // ========================================================
         let forest3DApp = null;
+        let currentForestSubmode = 'rodoslov';
+        let rodoslovScale = 0.55;
+        let rodoslovPanX = 0;
+        let rodoslovPanY = 0;
+        let isRodoslovDragging = false;
+        let rodoslovDragStartX = 0;
+        let rodoslovDragStartY = 0;
+
+        function switchForestSubmode(submode) {
+            currentForestSubmode = submode;
+            const btnR = document.getElementById('btnSubmodeRodoslov');
+            const btn3D = document.getElementById('btnSubmode3D');
+            const mountR = document.getElementById('forestRodoslovMount');
+            const mount3D = document.getElementById('forest3dMount');
+
+            if (btnR) btnR.classList.toggle('active', submode === 'rodoslov');
+            if (btn3D) btn3D.classList.toggle('active', submode === '3d');
+
+            if (submode === 'rodoslov') {
+                if (mountR) mountR.style.display = 'block';
+                if (mount3D) mount3D.style.display = 'none';
+                renderRodoslovView();
+            } else {
+                if (mountR) mountR.style.display = 'none';
+                if (mount3D) mount3D.style.display = 'block';
+                renderForest3DView();
+            }
+        }
+
+        function updateRodoslovTransform() {
+            const world = document.getElementById('rodoslovWorld');
+            if (!world) return;
+            world.style.transform = `translate(${rodoslovPanX}px, ${rodoslovPanY}px) scale(${rodoslovScale})`;
+        }
+
+        function rodoslovZoom(factor, centerX, centerY) {
+            const mount = document.getElementById('forestRodoslovMount');
+            if (!mount) return;
+            const rect = mount.getBoundingClientRect();
+            const cx = (centerX !== undefined) ? centerX : rect.width / 2;
+            const cy = (centerY !== undefined) ? centerY : rect.height / 2;
+
+            const oldScale = rodoslovScale;
+            let newScale = rodoslovScale * factor;
+            newScale = Math.max(0.22, Math.min(2.2, newScale));
+
+            rodoslovPanX = cx - (cx - rodoslovPanX) * (newScale / oldScale);
+            rodoslovPanY = cy - (cy - rodoslovPanY) * (newScale / oldScale);
+            rodoslovScale = newScale;
+
+            updateRodoslovTransform();
+        }
+
+        function rodoslovFitTree() {
+            const mount = document.getElementById('forestRodoslovMount');
+            if (!mount) return;
+            const rect = mount.getBoundingClientRect();
+            const canvasW = 3200;
+            const canvasH = 2400;
+
+            const scaleX = rect.width / canvasW;
+            const scaleY = rect.height / canvasH;
+            rodoslovScale = Math.min(scaleX, scaleY) * 0.95;
+            rodoslovScale = Math.max(0.22, Math.min(1.2, rodoslovScale));
+
+            rodoslovPanX = (rect.width - canvasW * rodoslovScale) / 2;
+            rodoslovPanY = (rect.height - canvasH * rodoslovScale) / 2;
+
+            updateRodoslovTransform();
+        }
+
+        function rodoslovFocusFocal() {
+            const mount = document.getElementById('forestRodoslovMount');
+            if (!mount) return;
+            const rect = mount.getBoundingClientRect();
+            rodoslovScale = 1.0;
+            // Фокальді жұп (Жандос & Асила) шамамен (1600, 580) маңында орналасқан
+            rodoslovPanX = rect.width / 2 - 1600 * rodoslovScale;
+            rodoslovPanY = rect.height / 2 - 580 * rodoslovScale;
+            updateRodoslovTransform();
+        }
+
+        function setupRodoslovEvents() {
+            const mount = document.getElementById('forestRodoslovMount');
+            if (!mount || mount.getAttribute('data-events-bound') === 'true') return;
+            mount.setAttribute('data-events-bound', 'true');
+
+            mount.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.rodoslov-ribbon') || e.target.closest('.rodoslov-zoom-toolbar')) {
+                    return;
+                }
+                isRodoslovDragging = true;
+                rodoslovDragStartX = e.clientX - rodoslovPanX;
+                rodoslovDragStartY = e.clientY - rodoslovPanY;
+                mount.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (!isRodoslovDragging) return;
+                rodoslovPanX = e.clientX - rodoslovDragStartX;
+                rodoslovPanY = e.clientY - rodoslovDragStartY;
+                updateRodoslovTransform();
+            });
+
+            window.addEventListener('mouseup', function() {
+                if (isRodoslovDragging) {
+                    isRodoslovDragging = false;
+                    if (mount) mount.style.cursor = 'grab';
+                }
+            });
+
+            mount.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                const factor = (e.deltaY < 0) ? 1.12 : 0.89;
+                const rect = mount.getBoundingClientRect();
+                rodoslovZoom(factor, e.clientX - rect.left, e.clientY - rect.top);
+            }, { passive: false });
+
+            // Touch-басқару
+            let touchStartX = 0, touchStartY = 0;
+            mount.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX - rodoslovPanX;
+                    touchStartY = e.touches[0].clientY - rodoslovPanY;
+                }
+            });
+            mount.addEventListener('touchmove', function(e) {
+                if (e.touches.length === 1) {
+                    e.preventDefault();
+                    rodoslovPanX = e.touches[0].clientX - touchStartX;
+                    rodoslovPanY = e.touches[0].clientY - touchStartY;
+                    updateRodoslovTransform();
+                }
+            }, { passive: false });
+        }
+
+        function renderRodoslovView() {
+            const canvas = document.getElementById('rodoslovCanvas');
+            if (!canvas || !treeData || !treeData.persons) return;
+
+            if (canvas.getAttribute('data-rendered') === 'true') {
+                return;
+            }
+
+            const persons = treeData.persons;
+            const marriages = treeData.marriages || [];
+            const personMap = new Map();
+            persons.forEach(p => personMap.set(p.id, p));
+
+            const spouseMap = new Map();
+            marriages.forEach(m => {
+                if (m.husband_id && m.wife_id) {
+                    spouseMap.set(m.husband_id, { spouseId: m.wife_id, marriage: m });
+                    spouseMap.set(m.wife_id, { spouseId: m.husband_id, marriage: m });
+                }
+            });
+
+            let focalId = selectedPersonId || userPersonId;
+            let focal = focalId ? personMap.get(focalId) : null;
+            if (!focal) {
+                focal = persons.find(p => p.id === 6 || p.gedcom_id === '@I6@' || (p.first_name && p.first_name.includes('Жандос'))) || persons[0];
+            }
+
+            let html = '';
+
+            // 1. Бұрыштық қазақи ою-өрнектер (SVG)
+            const kazakhCornerSvg = `
+                <svg viewBox="0 0 100 100" fill="none" stroke="#b8860b" stroke-width="2.5">
+                    <path d="M10 10 H50 C60 10 70 20 70 30 C70 40 60 45 50 45 C40 45 35 35 35 25" />
+                    <path d="M10 10 V50 C10 60 20 70 30 70 C40 70 45 60 45 50 C45 40 35 35 25 35" />
+                    <circle cx="10" cy="10" r="4" fill="#b8860b" />
+                    <path d="M15 15 L30 30" stroke-width="1.5" />
+                </svg>
+            `;
+            html += `<div class="rodoslov-corner-kazakh top-left">${kazakhCornerSvg}</div>`;
+            html += `<div class="rodoslov-corner-kazakh top-right">${kazakhCornerSvg}</div>`;
+            html += `<div class="rodoslov-corner-kazakh bottom-left">${kazakhCornerSvg}</div>`;
+            html += `<div class="rodoslov-corner-kazakh bottom-right">${kazakhCornerSvg}</div>`;
+
+            // 2. Жоғарғы тақырыптық баннер
+            const titleText = currentLang === 'ru' ? 'РОДОСЛОВНОЕ ДРЕВО СЕМЬИ АЛТЫБАЕВЫХ' : 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕ-АҒАШЫ';
+            const subText = 'Орта жүз • Керей (Ашамай) • Көшебе • Бұзау • Шортан • Қосақ • Кенен • Алтыбай';
+            html += `
+                <div class="rodoslov-title-banner">
+                    <div class="rodoslov-title-text">${titleText}</div>
+                    <div class="rodoslov-title-sub">${subText}</div>
+                </div>
+            `;
+
+            // 3. Орталық Ата таңбалары картушы (Tamga Cartouche)
+            html += `
+                <div class="rodoslov-tamga-cartouche">
+                    <div class="rodoslov-tamga-title">${currentLang === 'ru' ? 'Священные тамги родов' : 'Қасиетті ата таңбалары'}</div>
+                    <div class="rodoslov-tamgas-row">
+                        <div class="rodoslov-tamga-item" title="Род Керей (Отцовский ствол)">
+                            <div class="rodoslov-tamga-symbol">✕</div>
+                            <div class="rodoslov-tamga-name">КЕРЕЙ</div>
+                            <div class="rodoslov-tamga-uran">«Ошыбай!»</div>
+                        </div>
+                        <div class="rodoslov-tamga-item" title="Род Жағалбайлы (Материнский ствол)">
+                            <div class="rodoslov-tamga-symbol">⊥</div>
+                            <div class="rodoslov-tamga-name">ЖАҒАЛБАЙЛЫ</div>
+                            <div class="rodoslov-tamga-uran">«Малатау!»</div>
+                        </div>
+                        <div class="rodoslov-tamga-item" title="Род Қоңырат (Род сватов)">
+                            <div class="rodoslov-tamga-symbol">П</div>
+                            <div class="rodoslov-tamga-name">ҚОҢЫРАТ</div>
+                            <div class="rodoslov-tamga-uran">«Алатау!»</div>
+                        </div>
+                    </div>
+                    <div style="font-size:10px; color:#78350f; font-style:italic; margin-top:4px;">
+                        ${currentLang === 'ru' ? 'Единство ветвей и поколений' : 'Бірлік пен береке діңгегі'}
+                    </div>
+                </div>
+            `;
+
+            // 4. Ярустар (Generation Tiers)
+            const tierDefs = [
+                { tier: 7, y: 220, label: currentLang === 'ru' ? '7-ЯРУС: ЖАС ӨРКЕН (БАЛАЛАР)' : '7-ЯРУС: ЖАС ӨРКЕН (БАЛАЛАР)' },
+                { tier: 6, y: 480, label: currentLang === 'ru' ? '6-ЯРУС: ГЛАВНЫЙ ОЧАГ (ЖАНДОС И АСИЛА)' : '6-ЯРУС: БАСТЫ ШАҢЫРАҚ (ЖАНДОС ПЕН АСИЛА)' },
+                { tier: 5, y: 740, label: currentLang === 'ru' ? '5-ЯРУС: ПОКОЛЕНИЕ РОДИТЕЛЕЙ (ГАБИТ И МЕНСЛУ)' : '5-ЯРУС: АТА-АНА БУЫНЫ (ҒАБИТ ПЕН МЕНСЛУ)' },
+                { tier: 4, y: 1000, label: currentLang === 'ru' ? '4-ЯРУС: СЕМЬЯ ГАНИ И РАУШАН' : '4-ЯРУС: ҒАНИ МЕН РАУШАН ӘУЛЕТІ' },
+                { tier: 3, y: 1260, label: currentLang === 'ru' ? '3-ЯРУС: ПОКОЛЕНИЕ ШАМСИДЕНА' : '3-ЯРУС: ШАМСИДЕН БАБА БУЫНЫ' },
+                { tier: 2, y: 1520, label: currentLang === 'ru' ? '2-ЯРУС: РОД АЛТЫБАЯ' : '2-ЯРУС: АЛТЫБАЙ БАБА ӘУЛЕТІ' },
+                { tier: 1, y: 1780, label: currentLang === 'ru' ? '1-ЯРУС: КОРНИ РОДА КЕРЕЙ' : '1-ЯРУС: КЕРЕЙ БАБА ЖӘНЕ ТҮП ТАМЫР' },
+            ];
+
+            tierDefs.forEach(td => {
+                html += `<div class="rodoslov-tier-label" style="top:${td.y - 12}px;">${td.label}</div>`;
+                html += `<div class="rodoslov-tier-line" style="top:${td.y}px;"></div>`;
+            });
+
+            // 5. Көркем ағаш суреті (SVG Дерево, корни, два ствола, схождение в крону)
+            let svgHtml = `
+                <svg class="rodoslov-tree-svg" width="3000" height="2200" viewBox="0 0 3000 2200">
+                    <defs>
+                        <linearGradient id="trunkLeftGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#3d2212" />
+                            <stop offset="50%" stop-color="#6d3b19" />
+                            <stop offset="100%" stop-color="#4a2510" />
+                        </linearGradient>
+                        <linearGradient id="trunkRightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#4a2810" />
+                            <stop offset="50%" stop-color="#7c431d" />
+                            <stop offset="100%" stop-color="#3d200e" />
+                        </linearGradient>
+                        <linearGradient id="crownBranchGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#5c3014" />
+                            <stop offset="100%" stop-color="#8a4d22" />
+                        </linearGradient>
+                        <radialGradient id="soilGrad" cx="50%" cy="100%" r="80%">
+                            <stop offset="0%" stop-color="#2a180d" stop-opacity="0.35" />
+                            <stop offset="100%" stop-color="#2a180d" stop-opacity="0" />
+                        </radialGradient>
+                    </defs>
+
+                    <!-- Топырақ және тамыр қабаты -->
+                    <ellipse cx="1500" cy="2160" rx="1400" ry="120" fill="url(#soilGrad)" />
+
+                    <!-- ЛЕВЫЙ СТВОЛ: РОД КЕРЕЙ (ӘКЕ ЖАҒЫ) -->
+                    <path d="M750 2150 C700 2050 620 1950 560 1880" stroke="#4a2810" stroke-width="24" stroke-linecap="round" fill="none" />
+                    <path d="M750 2150 C790 2070 860 1980 920 1900" stroke="#5c3315" stroke-width="20" stroke-linecap="round" fill="none" />
+                    <path d="M750 2150 C720 2000 740 1850 780 1720" stroke="url(#trunkLeftGrad)" stroke-width="70" stroke-linecap="round" fill="none" />
+                    <path d="M780 1720 C820 1560 890 1420 1020 1320" stroke="url(#trunkLeftGrad)" stroke-width="58" stroke-linecap="round" fill="none" />
+                    <path d="M1020 1320 C1140 1240 1300 1180 1420 1140" stroke="url(#trunkLeftGrad)" stroke-width="46" stroke-linecap="round" fill="none" />
+
+                    <!-- ПРАВЫЙ СТВОЛ: РОДЫ ЖАҒАЛБАЙЛЫ И ҚОҢЫРАТ (АНАЛАР МЕН КЕЛІНДЕР) -->
+                    <path d="M2250 2150 C2310 2050 2380 1950 2440 1880" stroke="#4a2810" stroke-width="24" stroke-linecap="round" fill="none" />
+                    <path d="M2250 2150 C2190 2070 2120 1980 2060 1900" stroke="#5c3315" stroke-width="20" stroke-linecap="round" fill="none" />
+                    <path d="M2250 2150 C2280 2000 2250 1850 2200 1720" stroke="url(#trunkRightGrad)" stroke-width="70" stroke-linecap="round" fill="none" />
+                    <path d="M2200 1720 C2160 1560 2090 1420 1960 1320" stroke="url(#trunkRightGrad)" stroke-width="58" stroke-linecap="round" fill="none" />
+                    <path d="M1960 1320 C1840 1240 1680 1180 1560 1140" stroke="url(#trunkRightGrad)" stroke-width="46" stroke-linecap="round" fill="none" />
+
+                    <!-- СХОЖДЕНИЕ В ОБЩУЮ КРОНУ (ШАҢЫРАҚ) -->
+                    <path d="M1420 1140 C1460 1050 1480 940 1480 820" stroke="url(#crownBranchGrad)" stroke-width="42" stroke-linecap="round" fill="none" />
+                    <path d="M1560 1140 C1530 1050 1510 940 1500 820" stroke="url(#crownBranchGrad)" stroke-width="42" stroke-linecap="round" fill="none" />
+                    <path d="M1490 820 C1490 680 1490 560 1490 480" stroke="url(#crownBranchGrad)" stroke-width="34" stroke-linecap="round" fill="none" />
+
+                    <!-- БҰТАҚТАР: 5-ЯРУС (ҒАБИТ ЖӘНЕ МЕНСЛУ) -->
+                    <path d="M1490 820 C1400 780 1300 760 1200 750" stroke="url(#crownBranchGrad)" stroke-width="24" stroke-linecap="round" fill="none" />
+                    <path d="M1490 820 C1580 780 1680 760 1780 750" stroke="url(#crownBranchGrad)" stroke-width="24" stroke-linecap="round" fill="none" />
+
+                    <!-- БҰТАҚТАР: 6-ЯРУС (ЖАНДОС ЖӘНЕ АСИЛА) -->
+                    <path d="M1490 560 C1420 520 1350 500 1280 490" stroke="url(#crownBranchGrad)" stroke-width="22" stroke-linecap="round" fill="none" />
+                    <path d="M1490 560 C1560 520 1630 500 1700 490" stroke="url(#crownBranchGrad)" stroke-width="22" stroke-linecap="round" fill="none" />
+
+                    <!-- БҰТАҚТАР: 7-ЯРУС (БАЛАЛАР: АҚНҰР, ЖАНСАЯ, АЙЗЕРЕ) -->
+                    <path d="M1490 480 C1430 380 1350 300 1280 240" stroke="url(#crownBranchGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
+                    <path d="M1490 480 C1490 380 1490 310 1490 240" stroke="url(#crownBranchGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
+                    <path d="M1490 480 C1550 380 1630 300 1700 240" stroke="url(#crownBranchGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
+
+                    <!-- БҰТАҚТАР: 4-ЯРУС (ҒАНИ ЖӘНЕ РАУШАН) -->
+                    <path d="M1020 1320 C1080 1180 1180 1080 1280 1010" stroke="url(#trunkLeftGrad)" stroke-width="26" stroke-linecap="round" fill="none" />
+                    <path d="M1960 1320 C1900 1180 1800 1080 1700 1010" stroke="url(#trunkRightGrad)" stroke-width="26" stroke-linecap="round" fill="none" />
+
+                    <!-- БҰТАҚТАР: 3-ЯРУС (ШАМСИДЕН) -->
+                    <path d="M780 1720 C840 1520 980 1390 1120 1270" stroke="url(#trunkLeftGrad)" stroke-width="30" stroke-linecap="round" fill="none" />
+
+                    <!-- БҰТАҚТАР: 2-ЯРУС (АЛТЫБАЙ БАБА) -->
+                    <path d="M750 1850 C800 1720 920 1620 1060 1530" stroke="url(#trunkLeftGrad)" stroke-width="34" stroke-linecap="round" fill="none" />
+
+                    <!-- СТИЛИЗОВАЛҒАН ҚАЗАҚИ ӨРНЕКТЕР (ҚОШҚАР МҮЙІЗ) ДІҢГЕКТЕРДІҢ БОЙЫНДА -->
+                    <path d="M750 2000 Q780 1970 810 1990 T840 2020 Q820 2040 790 2020" fill="none" stroke="#d4af37" stroke-width="2.5" opacity="0.65" />
+                    <path d="M2250 2000 Q2220 1970 2190 1990 T2160 2020 Q2180 2040 2210 2020" fill="none" stroke="#d4af37" stroke-width="2.5" opacity="0.65" />
+                    <path d="M1490 920 Q1460 900 1460 880 T1490 860 Q1520 880 1520 900" fill="none" stroke="#d4af37" stroke-width="2" opacity="0.75" />
+
+                    <!-- ТҮП ТАМЫРЛАРДЫҢ СИПАТТАМАСЫ -->
+                    <text x="750" y="2185" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#78350f" text-anchor="middle" letter-spacing="1">
+                        ${currentLang === 'ru' ? 'ӘКЕ ЖАҒЫ: КЕРЕЙ РУЫ (✕ ОШЫБАЙ!)' : 'ӘКЕ ЖАҒЫ: КЕРЕЙ РУЫ (✕ ОШЫБАЙ!)'}
+                    </text>
+                    <text x="2250" y="2185" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#78350f" text-anchor="middle" letter-spacing="1">
+                        ${currentLang === 'ru' ? 'АНАЛАР МЕН КЕЛІНДЕР: ЖАҒАЛБАЙЛЫ (⊥) & ҚОҢЫРАТ (П)' : 'АНАЛАР МЕН КЕЛІНДЕР: ЖАҒАЛБАЙЛЫ (⊥) & ҚОҢЫРАТ (П)'}
+                    </text>
+                </svg>
+            `;
+            html += svgHtml;
+
+            // Лента-свиток қалыбын жасау
+            function renderRibbonHtml(p, x, y, options = {}) {
+                const isDeceased = p.is_deceased || (p.death_year && p.death_year > 0);
+                const isMale = (p.gender === 'M');
+                const isFocal = (p.id === focal.id);
+                const isWife = options.isWife;
+                const isDaughter = options.isDaughter;
+                const isSon = options.isSon;
+
+                let cls = 'rodoslov-ribbon';
+                if (isFocal) cls += ' is-focal';
+                else if (isDeceased) cls += ' is-deceased';
+                else if (isWife) cls += ' is-wife';
+                else if (isDaughter) cls += ' is-daughter';
+                else if (isSon) cls += ' is-son';
+
+                // Векторлық белгіше (Strictly SVG / typography - ZERO emojis!)
+                let iconSvg = '';
+                if (isFocal) {
+                    iconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#ca8a04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+                } else if (isDeceased) {
+                    iconSvg = `<span style="font-weight:900; color:#b45309; font-size:15px; line-height:1;">†</span>`;
+                } else if (isDaughter || isWife) {
+                    iconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#db2777"><circle cx="12" cy="12" r="3"/><path d="M12 2a4 4 0 0 1 4 4c0 2-4 6-4 6s-4-4-4-6a4 4 0 0 1 4-4zm0 20a4 4 0 0 1-4-4c0-2 4-6 4-6s4 4 4 6a4 4 0 0 1-4 4zm10-10a4 4 0 0 1-4 4c-2 0-6-4-6-4s4-4 6-4a4 4 0 0 1 4 4zM2 12a4 4 0 0 1 4-4c2 0 6 4 6 4s-4 4-6 4a4 4 0 0 1-4-4z"/></svg>`;
+                } else {
+                    iconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#16a34a"><path d="M11 20A7 7 0 0 1 4 13C4 8.5 7.5 4 13 3c4 0 7 2 7 6 0 5-3.5 11-9 11z"/><path d="M11 20v-5"/></svg>`;
+                }
+
+                let years = '';
+                if (p.birth_year) {
+                    years += `* ${p.birth_year}`;
+                }
+                if (p.death_year) {
+                    years += (years ? ', ' : '') + `† ${p.death_year}`;
+                }
+
+                let maidenInfo = '';
+                if (isWife) {
+                    const mName = p.maiden_name || (p.clan_ru ? (p.clan_ru + ' қызы') : '');
+                    if (mName && mName !== p.last_name) {
+                        const prefix = currentLang === 'ru' ? 'урожд.' : 'қыз кезінде:';
+                        maidenInfo = ` <span style="font-size:11px; color:#9d174d; font-style:italic;">(${prefix} ${mName})</span>`;
+                    }
+                }
+
+                const fullName = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+                const titleTip = `${fullName} (${years}) — ${currentLang === 'ru' ? 'Кликните для профиля' : 'Толық көру үшін басыңыз'}`;
+
+                return `
+                    <div class="${cls}" style="left:${x}px; top:${y}px;" onclick="selectPerson(${p.id})" title="${titleTip}">
+                        ${iconSvg}
+                        <strong>${fullName}</strong>
+                        ${maidenInfo}
+                        ${years ? `<span style="font-size:11.5px; opacity:0.85; margin-left:4px;">(${years})</span>` : ''}
+                    </div>
+                `;
+            }
+
+            function renderWeddingRingsBadge(x, y, yearText) {
+                return `
+                    <div class="rodoslov-rings-badge" style="left:${x}px; top:${y}px;">
+                        <svg class="rodoslov-rings-icon" viewBox="0 0 40 24" fill="none" stroke="#ca8a04" stroke-width="2.2">
+                            <circle cx="14" cy="12" r="9" />
+                            <circle cx="26" cy="12" r="9" />
+                        </svg>
+                        ${yearText ? `<div class="rodoslov-marriage-date">${yearText}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            // Нақты тұлғаларды ярустар бойынша орналастыру
+            // 7-ЯРУС: Жандостың қыздары (Ақнұр, Жансая, Айзере)
+            const children = persons.filter(p => p.father_id === 6 || p.mother_id === 6 || p.father_id === 24 || p.mother_id === 24);
+            children.sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0));
+
+            const tier7Y = 220;
+            const childrenStartX = 1500 - ((children.length - 1) * 220) / 2;
+            children.forEach((c, idx) => {
+                const isDaughter = (c.gender === 'F');
+                const cx = childrenStartX + idx * 220;
+                html += renderRibbonHtml(c, cx - 100, tier7Y, { isDaughter: isDaughter, isSon: !isDaughter });
+            });
+
+            // 6-ЯРУС: Жандос пен Асила және бауырлары
+            const tier6Y = 480;
+            const zhandosX = 1350;
+            html += renderRibbonHtml(focal, zhandosX - 120, tier6Y, { isSon: true });
+
+            const asila = personMap.get(24) || (spouseMap.get(focal.id) ? personMap.get(spouseMap.get(focal.id).spouseId) : null);
+            if (asila) {
+                const asilaX = 1650;
+                html += renderRibbonHtml(asila, asilaX - 80, tier6Y, { isWife: true });
+                html += renderWeddingRingsBadge(1500, tier6Y + 16, currentLang === 'ru' ? 'неке: 2009 ж.' : 'неке: 2009 ж.');
+            }
+
+            const siblings = persons.filter(p => p.id !== focal.id && (p.father_id === 1 || p.mother_id === 2));
+            siblings.sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0));
+            const sibStartX = 900;
+            siblings.forEach((s, idx) => {
+                const sx = (idx < 2) ? (sibStartX - idx * 240) : (1880 + (idx - 2) * 240);
+                html += renderRibbonHtml(s, sx, tier6Y, { isDaughter: (s.gender === 'F'), isSon: (s.gender === 'M') });
+            });
+
+            // 5-ЯРУС: Ата-ана (Ғабит пен Менслу) және Ғабиттің бауырлары
+            const tier5Y = 740;
+            const gabit = personMap.get(1);
+            const menslu = personMap.get(2);
+            if (gabit) {
+                html += renderRibbonHtml(gabit, 1340 - 120, tier5Y, { isSon: true });
+            }
+            if (menslu) {
+                html += renderRibbonHtml(menslu, 1660 - 80, tier5Y, { isWife: true });
+                html += renderWeddingRingsBadge(1500, tier5Y + 16, currentLang === 'ru' ? 'неке: 1979 ж.' : 'неке: 1979 ж.');
+            }
+
+            const gabitSiblings = persons.filter(p => p.id !== 1 && p.father_id === 7);
+            gabitSiblings.slice(0, 4).forEach((gs, idx) => {
+                const gx = (idx < 2) ? (920 - idx * 240) : (1880 + (idx - 2) * 240);
+                html += renderRibbonHtml(gs, gx, tier5Y, { isDaughter: (gs.gender === 'F'), isSon: (gs.gender === 'M') });
+            });
+
+            // 4-ЯРУС: Ата-әже (Ғани мен Раушан)
+            const tier4Y = 1000;
+            const gani = personMap.get(7);
+            const raushan = personMap.get(8);
+            if (gani) {
+                html += renderRibbonHtml(gani, 1340 - 120, tier4Y, { isSon: true });
+            }
+            if (raushan) {
+                html += renderRibbonHtml(raushan, 1660 - 80, tier4Y, { isWife: true });
+                html += renderWeddingRingsBadge(1500, tier4Y + 16, currentLang === 'ru' ? 'неке: 1952 ж.' : 'неке: 1952 ж.');
+            }
+
+            // 3-ЯРУС: Шамсиден баба мен Сұлушаш
+            const tier3Y = 1260;
+            const shamsiden = personMap.get(63);
+            const shamsidenSpouse = personMap.get(64);
+            if (shamsiden) {
+                html += renderRibbonHtml(shamsiden, 1340 - 120, tier3Y, { isSon: true });
+            }
+            if (shamsidenSpouse) {
+                html += renderRibbonHtml(shamsidenSpouse, 1660 - 80, tier3Y, { isWife: true });
+                html += renderWeddingRingsBadge(1500, tier3Y + 16, currentLang === 'ru' ? 'неке: 1926 ж.' : 'неке: 1926 ж.');
+            }
+
+            // 2-ЯРУС: Алтыбай баба Кененұлы мен бәйбішесі
+            const tier2Y = 1520;
+            const altybay = personMap.get(65);
+            const altybaySpouse = personMap.get(66);
+            if (altybay) {
+                html += renderRibbonHtml(altybay, 1340 - 140, tier2Y, { isSon: true });
+            }
+            if (altybaySpouse) {
+                html += renderRibbonHtml(altybaySpouse, 1660 - 60, tier2Y, { isWife: true });
+                html += renderWeddingRingsBadge(1500, tier2Y + 16, currentLang === 'ru' ? 'неке: 1890 ж.' : 'неке: 1890 ж.');
+            }
+
+            // 1-ЯРУС: Түп аталар шежіресі (Керей -> Ашамайлы -> Көшебе -> Бұзау -> Шортан -> Қосақ -> Кенен)
+            const tier1Y = 1780;
+            const rootLineageIds = [165, 239, 240, 241, 242, 243, 249];
+            rootLineageIds.forEach((rid, idx) => {
+                const rp = personMap.get(rid);
+                if (rp) {
+                    const rx = 360 + idx * 175;
+                    const ry = tier1Y + (idx % 2 === 0 ? 0 : 38);
+                    html += renderRibbonHtml(rp, rx, ry, { isSon: true });
+                }
+            });
+
+            canvas.innerHTML = html;
+            canvas.setAttribute('data-rendered', 'true');
+
+            setupRodoslovEvents();
+
+            setTimeout(() => {
+                rodoslovFitTree();
+            }, 50);
+        }
 
         function renderForest3DView() {
             const mount = document.getElementById('forest3dMount');
@@ -2971,7 +3864,7 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         }
 
         function renderForestView() {
-            renderForest3DView();
+            switchForestSubmode(currentForestSubmode);
         }
 
         function viewInEditingMode(personId) {
@@ -3403,6 +4296,10 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
 
         // ШЕЖІРЕ-ОРМАННЫҢ ЖОҒАРҒЫ КРОНАСЫНА БАРУ (ТІРІЛЕР ЖОҒАРЫДА)
         function flyToCrown() {
+            if (currentMode === 'forest' && currentForestSubmode === 'rodoslov') {
+                rodoslovFocusFocal();
+                return;
+            }
             // Керей ағашының кронасы орталықта орналасқан
             flyTo(2800, 750, 0.85);
         }
@@ -3416,14 +4313,26 @@ $conceptArt = $conceptArtUrl ?? '/assets/img/shezhire_living_forest_concept.jpg'
         // МАСШТАБ БАТЫРМАЛАРЫ
         // ========================================================
         function zoomIn() {
+            if (currentMode === 'forest' && currentForestSubmode === 'rodoslov') {
+                rodoslovZoom(1.25);
+                return;
+            }
             scale = Math.min(scale * 1.25, 2.5);
             updateTransform();
         }
         function zoomOut() {
+            if (currentMode === 'forest' && currentForestSubmode === 'rodoslov') {
+                rodoslovZoom(0.8);
+                return;
+            }
             scale = Math.max(scale / 1.25, 0.3);
             updateTransform();
         }
         function resetZoom() {
+            if (currentMode === 'forest' && currentForestSubmode === 'rodoslov') {
+                rodoslovFitTree();
+                return;
+            }
             scale = 1.0;
             flyToSelf();
         }

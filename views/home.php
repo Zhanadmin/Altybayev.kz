@@ -33,19 +33,39 @@ require __DIR__ . '/layout/master_start.php';
 ?>
 
 <div class="hm">
-    <!-- Приветствие -->
-    <div class="ds-page-head">
-        <div>
-            <h1><?= htmlspecialchars(I18n::t('welcome_heading')) ?>, <?= htmlspecialchars($userName) ?>!</h1>
-            <p class="sub hm-intro">
-                <?= $lang === 'ru'
-                    ? 'Добро пожаловать в закрытую систему родословной. Здесь бережно сохраняется преемственность поколений, история семьи, памятные даты и воспоминания.'
-                    : 'Әулет шежіресінің жабық отбасылық порталына қош келдіңіз. Мұнда ата-бабалар тарихы, ұрпақтар сабақтастығы, естеліктер мен маңызды күндер сақталады.' ?>
-            </p>
-            <?php if ($youAreText !== ''): ?>
-                <span class="badge badge-accent hm-you"><?= htmlspecialchars($youAreText) ?></span>
-            <?php endif; ?>
-        </div>
+    <!-- TASK-012: титульный лист семейной книги — крона, лента с названием, приветствие -->
+    <section class="island title-page">
+        <svg class="orn orn-corner tl" aria-hidden="true" focusable="false"><use href="#o-corner"/></svg>
+        <svg class="orn orn-corner tr" aria-hidden="true" focusable="false"><use href="#o-corner"/></svg>
+        <svg class="orn orn-corner bl" aria-hidden="true" focusable="false"><use href="#o-corner"/></svg>
+        <svg class="orn orn-corner br" aria-hidden="true" focusable="false"><use href="#o-corner"/></svg>
+        <!-- маленькая крона: ствол, ветви, три тюльпана -->
+        <svg class="crown" viewBox="0 0 520 150" aria-hidden="true" focusable="false">
+            <path d="M252,150 C254,120 256,98 258,80 L262,80 C264,98 266,120 268,150 Z" fill="currentColor"/>
+            <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round">
+                <path d="M260,96 C220,82 170,74 110,74"/><path d="M260,96 C300,82 350,74 410,74"/>
+                <path d="M259,84 C240,62 214,46 188,38"/><path d="M261,84 C280,62 306,46 332,38"/><path d="M260,80 V30"/>
+            </g>
+            <g>
+                <use href="#m-leaf" x="96" y="56" width="28" height="18" transform="rotate(-160 110 65)"/><use href="#m-leaf" x="122" y="66" width="26" height="16" transform="rotate(30 135 74)"/>
+                <use href="#m-leaf" x="150" y="58" width="26" height="16" transform="rotate(-140 163 66)"/><use href="#m-leaf" x="398" y="56" width="28" height="18" transform="rotate(-20 412 65)"/>
+                <use href="#m-leaf" x="372" y="66" width="26" height="16" transform="rotate(150 385 74)"/><use href="#m-leaf" x="344" y="58" width="26" height="16" transform="rotate(-40 357 66)"/>
+                <use href="#m-leafG" x="196" y="76" width="22" height="14" transform="rotate(160 207 83)"/><use href="#m-leafG" x="302" y="76" width="22" height="14" transform="rotate(20 313 83)"/>
+                <use href="#m-leaf" x="200" y="40" width="22" height="14" transform="rotate(-150 211 47)"/><use href="#m-leaf" x="298" y="40" width="22" height="14" transform="rotate(-30 309 47)"/>
+            </g>
+            <use href="#o-tulip" x="172" y="0" width="34" height="68"/><use href="#o-tulip" x="243" y="-8" width="34" height="68"/><use href="#o-tulip" x="314" y="0" width="34" height="68"/>
+        </svg>
+        <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg"><?= htmlspecialchars($siteTitle) ?></h1></div>
+        <p class="lead"><?= htmlspecialchars(I18n::t('welcome_heading')) ?>, <?= htmlspecialchars($userName) ?>!</p>
+        <p class="hm-intro">
+            <?= $lang === 'ru'
+                ? 'Добро пожаловать в закрытую систему родословной. Здесь бережно сохраняется преемственность поколений, история семьи, памятные даты и воспоминания.'
+                : 'Әулет шежіресінің жабық отбасылық порталына қош келдіңіз. Мұнда ата-бабалар тарихы, ұрпақтар сабақтастығы, естеліктер мен маңызды күндер сақталады.' ?>
+        </p>
+        <?php if ($youAreText !== ''): ?>
+            <span class="badge badge-you hm-you"><?= htmlspecialchars($youAreText) ?></span>
+        <?php endif; ?>
+        <hr class="oyu-rule">
         <div class="actions">
             <a href="/persons" class="btn">
                 <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><?= htmlspecialchars(I18n::t('nav_persons')) ?>
@@ -54,28 +74,32 @@ require __DIR__ . '/layout/master_start.php';
                 <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= $lang === 'ru' ? 'Открыть шежире' : 'Шежірені ашу' ?>
             </a>
         </div>
-    </div>
+    </section>
 
-    <!-- Жылдам сілтемелер (Быстрые ссылки) -->
-    <div class="grid grid-stats">
-        <a href="/persons" class="island stat hm-link">
-            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><?= htmlspecialchars(I18n::t('nav_persons')) ?></div>
+    <!-- Жылдам сілтемелер (Быстрые ссылки) — «листы» книги -->
+    <div class="hm-stats">
+        <a href="/persons" class="stat-leaf hm-link">
+            <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>
             <div class="value">270</div>
+            <div class="label"><?= htmlspecialchars(I18n::t('nav_persons')) ?></div>
             <div class="note"><?= $lang === 'ru' ? 'человек, поиск, карточки' : 'тұлға, іздеу, парақшалар' ?></div>
         </a>
-        <a href="/families" class="island stat hm-link">
-            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-family"/></svg><?= htmlspecialchars(I18n::t('nav_families')) ?></div>
+        <a href="/families" class="stat-leaf hm-link">
+            <svg class="ic" aria-hidden="true"><use href="#i-family"/></svg>
             <div class="value">71</div>
+            <div class="label"><?= htmlspecialchars(I18n::t('nav_families')) ?></div>
             <div class="note"><?= $lang === 'ru' ? 'семья, союзы и дети' : 'шаңырақ, некелер және балалар' ?></div>
         </a>
-        <a href="/tree" class="island stat hm-link">
-            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= htmlspecialchars(I18n::t('nav_tree')) ?></div>
+        <a href="/tree" class="stat-leaf hm-link">
+            <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>
             <div class="value hm-value-text">Өңдеу · Орман</div>
+            <div class="label"><?= htmlspecialchars(I18n::t('nav_tree')) ?></div>
             <div class="note"><?= $lang === 'ru' ? 'Виды: Өңдеу, Шежіре-Орман' : 'Өңдеу және Шежіре-Орман түрлері' ?></div>
         </a>
-        <a href="/dates" class="island stat hm-link">
-            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><?= htmlspecialchars(I18n::t('nav_dates')) ?></div>
+        <a href="/dates" class="stat-leaf hm-link">
+            <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
             <div class="value hm-value-text">Жеті ата</div>
+            <div class="label"><?= htmlspecialchars(I18n::t('nav_dates')) ?></div>
             <div class="note"><?= $lang === 'ru' ? 'Дни рождения, годовщины, Жеті ата' : 'Туған күндер, ас беру, Жеті ата' ?></div>
         </a>
     </div>
@@ -84,15 +108,18 @@ require __DIR__ . '/layout/master_start.php';
     <div class="grid grid-2 hm-lists">
 
         <!-- 1. Дни рождения -->
-        <section class="island">
-            <div class="island-head">
-                <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
+        <section class="island page">
+            <div class="sec-title">
+                <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
                 <h3><?= htmlspecialchars(I18n::t('upcoming_birthdays')) ?></h3>
                 <a href="/dates" class="more"><?= $lang === 'ru' ? 'Все даты' : 'Барлығы' ?></a>
             </div>
 
             <?php if (empty($birthdays)): ?>
-                <div class="hm-empty"><?= htmlspecialchars(I18n::t('no_upcoming_birthdays')) ?></div>
+                <div class="empty-state compact">
+                    <svg viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
+                    <p><?= htmlspecialchars(I18n::t('no_upcoming_birthdays')) ?></p>
+                </div>
             <?php else: ?>
                 <div class="list">
                     <?php foreach (array_slice($birthdays, 0, 5) as $b):
@@ -130,15 +157,18 @@ require __DIR__ . '/layout/master_start.php';
         </section>
 
         <!-- 2. Памятные даты предков -->
-        <section class="island">
-            <div class="island-head">
-                <svg class="ic" aria-hidden="true"><use href="#i-history"/></svg>
+        <section class="island page">
+            <div class="sec-title">
+                <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
                 <h3><?= htmlspecialchars(I18n::t('memorial_anniversaries')) ?></h3>
                 <a href="/dates" class="more"><?= $lang === 'ru' ? 'Все даты' : 'Барлығы' ?></a>
             </div>
 
             <?php if (empty($anniversaries)): ?>
-                <div class="hm-empty"><?= htmlspecialchars(I18n::t('no_memorial_dates')) ?></div>
+                <div class="empty-state compact">
+                    <svg viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
+                    <p><?= htmlspecialchars(I18n::t('no_memorial_dates')) ?></p>
+                </div>
             <?php else: ?>
                 <div class="list">
                     <?php foreach (array_slice($anniversaries, 0, 5) as $a):

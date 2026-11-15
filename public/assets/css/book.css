@@ -305,11 +305,73 @@ h1, h2, h3, .book { font-family: var(--font-book); letter-spacing: 0; }
 .kin-group .kin-title .ic { width: 16px; height: 16px; }
 .couple-rings { width: 34px; height: 22px; flex-shrink: 0; }
 
+/* ---------- Ою-уголки островов и карточек (часть 3) ----------
+   Два уголка по диагонали (левый верх и правый низ) — сдержанно. Фоновыми слоями, а не элементами:
+   ничего не добавляется в разметку и не перекрывает клики. 18 px от края 2 px — помещаются в поля острова (20 px). */
+:root {
+    --oyu-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M3 20V3H20M7 15V7H15M7 7C10 14 15 15 17 12C18.5 9.5 16 8 14.5 9.5' fill='none' stroke='%23b8862a' stroke-opacity='.55' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+    --oyu-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath transform='matrix(-1 0 0 -1 28 28)' d='M3 20V3H20M7 15V7H15M7 7C10 14 15 15 17 12C18.5 9.5 16 8 14.5 9.5' fill='none' stroke='%23b8862a' stroke-opacity='.55' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+    --oyu-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath transform='matrix(-1 0 0 1 28 0)' d='M3 20V3H20M7 15V7H15M7 7C10 14 15 15 17 12C18.5 9.5 16 8 14.5 9.5' fill='none' stroke='%23b8862a' stroke-opacity='.55' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+    --oyu-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath transform='matrix(1 0 0 -1 0 28)' d='M3 20V3H20M7 15V7H15M7 7C10 14 15 15 17 12C18.5 9.5 16 8 14.5 9.5' fill='none' stroke='%23b8862a' stroke-opacity='.55' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+/* :where() — специфичность как у .island, чтобы собственный фон страницы (если задан) оставался главным.
+   Титульный лист и страница книги рисуют свои уголки (.orn-corner), им фоновые не нужны. */
+.island:where(:not(.title-page):not(.book-page):not(.toolbar)) {
+    background:
+        var(--oyu-tl) left 2px top 2px / 18px 18px no-repeat,
+        var(--oyu-br) right 2px bottom 2px / 18px 18px no-repeat,
+        var(--c-island);
+}
+
+/* ---------- Главная (часть 3) ---------- */
+.title-page .lead { margin-top: 18px; color: var(--c-text); font-size: 22px; font-weight: 600; }
+.title-page .hm-intro { max-width: 640px; margin: 6px auto 0; color: var(--c-text-2); line-height: 1.6; }
+.title-page .hm-you { margin-top: 12px; }
+.title-page .oyu-rule { max-width: 280px; margin: 16px auto 0; }
+.title-page h1.ribbon { font-size: clamp(22px, 4.2vw, 36px); line-height: 1.15; }
+.hm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 12px; }
+.stat-leaf.hm-link {
+    display: block; color: var(--c-text); text-decoration: none;
+    background: var(--oyu-tl) left 4px top 4px / 18px 18px no-repeat, var(--oyu-br) right 4px bottom 4px / 18px 18px no-repeat, var(--c-island);
+}
+.stat-leaf .value.hm-value-text { font-size: 24px; line-height: 1.15; }
+.stat-leaf .note { font-size: var(--fs-xs); color: var(--c-text-3); margin-top: 4px; }
+.empty-state.compact { padding: 8px 8px 4px; }
+.empty-state.compact svg { width: 112px; height: 72px; }
+.empty-state.compact p { margin-bottom: 0; }
+
+/* ---------- Вход и «Нет доступа»: лист книги (часть 3) ---------- */
+.au-body { background: var(--oyu-bg), var(--paper), var(--c-bg); background-attachment: fixed; }
+.au-card {
+    font-family: var(--font-sans);
+    background:
+        var(--oyu-tl) left 6px top 6px / 30px 30px no-repeat,
+        var(--oyu-tr) right 6px top 6px / 30px 30px no-repeat,
+        var(--oyu-bl) left 6px bottom 6px / 30px 30px no-repeat,
+        var(--oyu-br) right 6px bottom 6px / 30px 30px no-repeat,
+        var(--c-island);
+    border-color: var(--c-border-strong);
+}
+.au-card h1 { font-family: var(--font-book); font-size: 34px; font-weight: 600; letter-spacing: 0; line-height: 1.15; }
+.au-sub { font-family: var(--font-book); font-style: italic; font-size: 19px; margin-top: 4px; }
+.au-card .oyu-rule { max-width: 220px; margin: 12px auto 0; }
+.au-card .oyu-rule + .au-email, .au-card .oyu-rule + .au-message { margin-top: var(--sp-5); }
+.au-mark { background: transparent; border: 1.5px solid var(--c-accent); border-radius: 50%; color: var(--c-accent-text);
+    box-shadow: inset 0 0 0 4px var(--c-island), inset 0 0 0 5px var(--c-accent-soft); }
+.au-mark-danger { border-color: var(--c-danger); color: var(--c-danger);
+    box-shadow: inset 0 0 0 4px var(--c-island), inset 0 0 0 5px var(--c-danger-soft); }
+@media (max-width: 480px) {
+    .au-card { background-size: 22px 22px;
+        background-position: left 3px top 3px, right 3px top 3px, left 3px bottom 3px, right 3px bottom 3px; }
+}
+.au-foot { font-family: var(--font-book); font-style: italic; font-size: 14px; }
+
 /* ---------- Телефон ---------- */
 @media (max-width: 900px) {
     .orn-corner { width: 44px; height: 44px; }
     .ds-page-head h1 { font-size: 32px; }
     .sec-title .orn-branch { display: none; }
+    .sec-title h2, .sec-title h3 { white-space: normal; min-width: 0; font-size: 21px; }
 }
 .crown, .empty-state svg, .photo-frame svg.wreath { color: var(--c-bark); }
 @media (max-width: 480px) {

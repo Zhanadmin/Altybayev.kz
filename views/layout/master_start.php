@@ -101,7 +101,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <!-- TASK-012: заголовки — Cormorant Garamond, текст — PT Sans (обе с казахскими буквами ә ғ қ ң ө ұ ү һ і) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
-    <link rel="stylesheet" href="/assets/css/book.css?v=1">
+    <link rel="stylesheet" href="/assets/css/book.css?v=2">
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
         .ds-clan-switch { cursor: pointer; }
@@ -197,6 +197,14 @@ $dsThemeReady = !empty($dsThemeReady);
             <circle cx="-7" cy="0" r="10" stroke="url(#gGold)" stroke-width="3.4"/><circle cx="7" cy="0" r="10" stroke="url(#gGold)" stroke-width="3.4"/>
             <path d="M7,-10 A10,10 0 0 1 15,-6" stroke="#fff4cf" stroke-width="1.1"/></g>
             <path d="M7,-15 L10,-11.5 L7,-8.5 L4,-11.5 Z" fill="#fffaf0" stroke="#a88232" stroke-width=".9"/></symbol>
+        <!-- росток (пустой экран) -->
+        <symbol id="o-sprout" viewBox="0 0 140 90">
+            <path d="M20,70 C50,64 90,64 120,70" fill="none" stroke="#b5bd8c" stroke-width="2" stroke-linecap="round"/>
+            <path d="M70,70 C70,56 69,46 70,34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <use href="#m-leaf" x="70" y="26" width="30" height="20" transform="rotate(-30 85 36)"/>
+            <use href="#m-leaf" x="40" y="30" width="30" height="20" transform="rotate(-150 55 40)"/>
+            <circle cx="70" cy="30" r="3" fill="#f3b3bd"/>
+        </symbol>
         <!-- тюльпан (большой) -->
         <symbol id="o-tulip" viewBox="-20 -78 40 80">
             <path d="M0,0 C-2,-18 1,-34 0,-46" fill="none" stroke="#5f8a34" stroke-width="2.6" stroke-linecap="round"/>

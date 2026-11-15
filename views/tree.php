@@ -27,7 +27,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <!-- TASK-013 (шаг 9): шрифты и слой «Шежіре-кітап», как на остальных страницах -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
+    <link rel="stylesheet" href="/assets/css/book.css?v=6">
     <style>
         :root {
             --bg-canvas: #090e17;
@@ -2884,6 +2887,242 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             .tree-legend { display: none !important; }
         }
     </style>
+    <style>
+        /* ========================================================
+           TASK-013 (шаг 9): «Өңдеу» и «Тізім» — в стиле семейной книги Шежіре-Орман (book.css):
+           пергамент с ою-өрнек, имя на ленте, лист / тюльпан, золото у ушедших, кольца у пар, уголки қошқар мүйіз.
+           Только внешний вид. Ширина карточки (250 px), отступы и позиции — прежние: их считает TreeLayoutService.
+           ======================================================== */
+        body { background: var(--oyu-bg), var(--paper), var(--c-bg); background-attachment: fixed; }
+
+        /* шапка: лист книги с бордюром ою снизу */
+        header.tree-nav {
+            background: var(--oyu-band) left 16px bottom 1px / 32px 15px repeat-x, var(--c-island);
+            border-color: var(--c-border-strong);
+            padding-bottom: 16px;
+        }
+        .brand-title { font-family: var(--font-book); font-size: 21px; font-weight: 700; letter-spacing: 0; }
+        header.tree-nav .mode-btn.active, header.tree-nav .scope-btn.active, header.tree-nav .lang-btn.active {
+            background: var(--c-island);
+            color: var(--c-accent-text);
+            font-weight: 700;
+            box-shadow: 0 0 0 1px var(--c-accent);
+        }
+        header.tree-nav .mode-btn.active svg { color: var(--c-leaf); }
+        .tf-g-m { background: var(--c-leaf); }
+        .tf-g-f { background: var(--c-tulip); }
+
+        /* холст: пергамент с едва заметным қошқар мүйіз, двойная рамка как у страниц книги */
+        .canvas-container {
+            background-color: var(--c-island-2);
+            background-image: var(--oyu-bg), var(--paper);
+            background-size: auto, auto;
+            border-color: var(--c-border-strong);
+            box-shadow: inset 0 0 0 5px var(--c-island-2), inset 0 0 0 6px var(--c-border), var(--shadow-island);
+        }
+
+        /* карточка — маленький лист книги: уголки ою, полоса сверху листом / тюльпаном */
+        .person-card {
+            border-color: var(--c-border-strong);
+            background:
+                var(--oyu-tl) left 2px top 2px / 16px 16px no-repeat,
+                var(--oyu-br) right 2px bottom 2px / 16px 16px no-repeat,
+                var(--c-island);
+        }
+        .person-card.male { border-top: 3px solid var(--c-leaf); }
+        .person-card.female { border-top: 3px solid var(--c-tulip); }
+        .person-card.male.is-self, .person-card.male.selected { border-top: 3px solid var(--c-leaf); }
+        .person-card.female.is-self, .person-card.female.selected { border-top: 3px solid var(--c-tulip); }
+        .person-card.deceased {
+            border-color: var(--c-accent);
+            background:
+                var(--oyu-tl) left 2px top 2px / 16px 16px no-repeat,
+                var(--oyu-br) right 2px bottom 2px / 16px 16px no-repeat,
+                linear-gradient(180deg, var(--c-island) 0%, var(--c-accent-soft) 100%);
+        }
+        .person-card.deceased.male, .person-card.deceased.female { border-top-color: var(--c-accent); }
+        /* значок пола в правом верхнем углу: ұл — лист, қыз — тюльпан, марқұм — золото. Не ловит клики. */
+        .person-card.male::after, .person-card.female::after {
+            content: "";
+            position: absolute;
+            top: -11px;
+            right: 14px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--c-island) center / 15px 15px no-repeat;
+            border: 1px solid var(--c-border-strong);
+            pointer-events: none;
+        }
+        .person-card.male::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -14 28 28'%3E%3Cg transform='translate(-10,6) rotate(-40) scale(.8)'%3E%3Cpath d='M0,0 C5,-9 17,-12 28,-4 C19,5 7,6 0,0 Z' fill='%235f8a34'/%3E%3Cpath d='M1,0 C9,-4 17,-5 26,-4' fill='none' stroke='%233d621f' stroke-width='1.1'/%3E%3C/g%3E%3C/svg%3E"); }
+        .person-card.female::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-9 -14 18 24'%3E%3Cpath d='M0,9 L0,0' stroke='%235f8a34' stroke-width='1.8'/%3E%3Cpath d='M-5.5,-1 C-6.5,-7 -3.5,-11 0,-12 C3.5,-11 6.5,-7 5.5,-1 C3,1.2 -3,1.2 -5.5,-1 Z' fill='%23e88b98'/%3E%3Cpath d='M0,0 C-3,-3.5 -3,-8 0,-12 C3,-8 3,-3.5 0,0 Z' fill='%23cf5b6d'/%3E%3C/svg%3E"); }
+        .person-card.deceased.male::after { border-color: var(--c-accent); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -14 28 28'%3E%3Cg transform='translate(-10,6) rotate(-40) scale(.8)'%3E%3Cpath d='M0,0 C5,-9 17,-12 28,-4 C19,5 7,6 0,0 Z' fill='%23c99a35'/%3E%3Cpath d='M1,0 C9,-4 17,-5 26,-4' fill='none' stroke='%238a5f12' stroke-width='1.1'/%3E%3C/g%3E%3C/svg%3E"); }
+        .person-card.deceased.female::after { border-color: var(--c-accent); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-9 -14 18 24'%3E%3Cpath d='M0,9 L0,0' stroke='%238a6a2a' stroke-width='1.8'/%3E%3Cpath d='M-5.5,-1 C-6.5,-7 -3.5,-11 0,-12 C3.5,-11 6.5,-7 5.5,-1 C3,1.2 -3,1.2 -5.5,-1 Z' fill='%23e7c062'/%3E%3Cpath d='M0,0 C-3,-3.5 -3,-8 0,-12 C3,-8 3,-3.5 0,0 Z' fill='%23b8862a'/%3E%3C/svg%3E"); }
+
+        /* имя на ленте-свитке; у ушедших — золотая лента */
+        .card-name {
+            display: block;
+            width: fit-content;
+            max-width: 100%;
+            font-family: var(--font-book);
+            font-size: 14.5px;
+            font-weight: 700;
+            line-height: 1.15;
+            padding: 0 8px;
+            color: var(--c-text);
+            background: linear-gradient(180deg, var(--ribbon-a), var(--ribbon-b));
+            border-top: 1px solid var(--ribbon-line);
+            border-bottom: 1px solid var(--ribbon-line);
+        }
+        .person-card.deceased .card-name {
+            background: linear-gradient(180deg, var(--gold-a), var(--gold-b));
+            border-color: var(--gold-line);
+            color: #3b2914;
+        }
+        [data-theme="dark"] .person-card.deceased .card-name { color: #20170a; }
+        @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .person-card.deceased .card-name { color: #20170a; } }
+        /* размеры шрифта почти прежние: карточка не должна выйти за CARD_HEIGHT = 120 (Cormorant мельче PT Sans при том же px) */
+        .card-maiden { font-family: var(--font-book); font-style: italic; font-size: 11.5px; color: var(--c-tulip); }
+        .card-years { font-family: var(--font-book); font-size: 12.5px; color: var(--c-text-2); margin-top: 2px; }
+        .person-card.deceased .card-years { color: var(--c-accent-text); }
+        .card-avatar { font-family: var(--font-book); font-size: 17px; font-weight: 700; }
+        .person-card.male .card-avatar { background: var(--c-leaf-soft); color: var(--c-leaf); border-color: var(--c-leaf); }
+        .person-card.female .card-avatar { background: var(--c-tulip-soft); color: var(--c-tulip); border-color: var(--c-tulip); }
+        .person-card.deceased .card-avatar {
+            background: var(--c-accent-soft);
+            color: var(--c-accent-text);
+            border-color: var(--c-accent);
+            box-shadow: 0 0 0 2px var(--c-island), 0 0 0 3px var(--c-accent);
+        }
+        .card-kinship-badge { font-family: var(--font-book); font-style: italic; font-size: 12px; background: transparent; border-color: var(--c-border-strong); }
+        .card-kinship-badge.active-rel { background: var(--c-accent-soft); }
+        .card-clan-tag, .zhurt-pill { font-family: var(--font-book); font-size: 11.5px; }
+        header.tree-nav .theme-toggle { border-color: transparent; }
+        .kin-mark { background: var(--c-leaf); }
+        .legend-dot.lg-m { background: var(--c-leaf); }
+        .legend-dot.lg-f { background: var(--c-tulip); }
+        .legend-dot.lg-l { background: var(--c-leaf); }
+
+        /* кольца у пар — золото */
+        .marriage-edge-badge {
+            border: 1.5px solid var(--c-accent);
+            color: var(--c-accent-text);
+            background: var(--c-island);
+            box-shadow: 0 0 0 2px var(--c-island), var(--shadow-island);
+        }
+        svg.connections-layer line { stroke: var(--c-bark); }
+        svg.connections-layer line[stroke-dasharray] { stroke: var(--c-accent); }
+
+        /* ореол семьи и плашка пары */
+        .family-aura { border: 1.5px dashed var(--c-accent); opacity: .9; }
+        .family-aura-label { font-family: var(--font-book); font-style: italic; font-size: 14px; font-weight: 600; color: var(--c-accent-text); border-color: var(--c-accent); }
+        .couple-unit-plate {
+            background:
+                var(--oyu-tl) left 3px top 3px / 16px 16px no-repeat,
+                var(--oyu-br) right 3px bottom 3px / 16px 16px no-repeat,
+                var(--c-island-2);
+            border-color: var(--c-border-strong);
+        }
+
+        /* кнопки на холсте */
+        .btn-branch-expand { font-family: var(--font-book); font-size: 13px; border-color: var(--c-accent); color: var(--c-accent-text); }
+        .radial-btn { border-color: var(--c-accent); }
+        .zoom-controls, .tree-legend { border-color: var(--c-border-strong); }
+        .tree-legend { font-family: var(--font-book); font-size: 13.5px; }
+        .tree-empty-state h2 { font-family: var(--font-book); font-size: 26px; }
+
+        /* боковая панель и окна — листы книги */
+        .side-name { font-family: var(--font-book); font-size: 23px; letter-spacing: 0; }
+        .side-sub-title { font-family: var(--font-book); font-style: italic; font-size: 14px; text-transform: none; letter-spacing: 0; }
+        aside.side-profile-panel {
+            background:
+                var(--oyu-tl) left 6px top 6px / 22px 22px no-repeat,
+                var(--oyu-br) right 6px bottom 6px / 22px 22px no-repeat,
+                var(--c-island);
+            border-color: var(--c-border-strong);
+        }
+        #editPersonModal .modal-card, #marriageModal .modal-card, #ushZhurtModal .modal-card, #addPersonModal .modal-card {
+            background:
+                var(--oyu-tl) left 6px top 6px / 22px 22px no-repeat,
+                var(--oyu-br) right 6px bottom 6px / 22px 22px no-repeat,
+                var(--c-island);
+            border-color: var(--c-border-strong);
+        }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .modal-header h3 { font-family: var(--font-book); font-size: 22px; font-weight: 700; }
+        :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit { background: var(--c-bark); border-color: var(--c-bark); color: #fffbf2; }
+        [data-theme="dark"] :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit { background: var(--c-accent); border-color: var(--c-accent); color: #20170a; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit { background: var(--c-accent); border-color: var(--c-accent); color: #20170a; }
+        }
+        #ushZhurtTabButtons button { font-family: var(--font-book); font-size: 15px; }
+        #ushZhurtTabButtons button.active { color: var(--c-accent-text); box-shadow: 0 0 0 1px var(--c-accent); }
+        .uz-fam > summary { font-family: var(--font-book); font-size: 16px; }
+
+        /* «Тізім»: летопись — книжные заголовки, пунктир строк, лист / тюльпан */
+        .list-view-container { background: var(--oyu-tl) left 8px top 8px / 24px 24px no-repeat, var(--oyu-br) right 8px bottom 8px / 24px 24px no-repeat, var(--c-island); border-color: var(--c-border-strong); }
+        .list-table th { font-family: var(--font-book); font-style: italic; font-size: 14.5px; background: transparent; border-bottom: 2px solid var(--c-border-strong); }
+        .list-table td { border-bottom: 1px dashed var(--c-border); }
+        .lt-name { font-family: var(--font-book); font-size: 16.5px; font-weight: 700; }
+        .list-avatar { font-family: var(--font-book); font-size: 13px; }
+        .list-avatar.male { background: var(--c-leaf-soft); color: var(--c-leaf); border-color: var(--c-leaf); }
+        .list-avatar.female { background: var(--c-tulip-soft); color: var(--c-tulip); border-color: var(--c-tulip); }
+        .list-avatar.deceased { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); }
+        .gender-badge-m { color: var(--c-leaf); }
+        .gender-badge-f { color: var(--c-tulip); }
+        .lt-ush-card-title { font-family: var(--font-book); font-size: 17px; }
+        .lt-ush-title-name { font-family: var(--font-book); font-size: 18px; }
+        .lt-ush-card { border-color: var(--c-border-strong); }
+        .lt-ush-card-head { border-bottom: 0; background: var(--oyu-band) left 10px bottom 0 / 32px 15px repeat-x, var(--c-island); padding-bottom: 18px; }
+        .lt-ush-person-name { font-family: var(--font-book); font-size: 14.5px; }
+        .kin-term-badge { font-family: var(--font-book); font-style: italic; font-size: 12.5px; }
+        .kin-term-badge.male, .uz-avatar-mini.male { background: var(--c-leaf-soft); color: var(--c-leaf); }
+        .uz-avatar-mini.male { border-color: var(--c-leaf); }
+        .kin-term-badge.female, .uz-avatar-mini.female { background: var(--c-tulip-soft); color: var(--c-tulip); }
+        .uz-avatar-mini.female { border-color: var(--c-tulip); }
+        .uz-dot { background: var(--c-leaf); }
+        .uz-dot.f { background: var(--c-tulip); }
+        .lt-ush-summary-pill.oz { border-left-color: var(--c-leaf); }
+        .lt-ush-summary-pill.kaiyn, .lt-ush-summary-pill.torkin { border-left-color: var(--c-tulip); }
+
+        /* Старые тёмные окна (словарь терминов, «Жеті ата», медиа) — тоже листы книги.
+           Цвета у них в атрибутах style, поэтому перекрываем по подстроке и с !important; разметку не трогаем. */
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) { background: var(--c-overlay); backdrop-filter: none; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .modal-card {
+            font-family: var(--font-sans);
+            background:
+                var(--oyu-tl) left 6px top 6px / 22px 22px no-repeat,
+                var(--oyu-br) right 6px bottom 6px / 22px 22px no-repeat,
+                var(--c-island);
+            color: var(--c-text);
+            border: 1px solid var(--c-border-strong);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-modal);
+        }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .modal-header { border-bottom: 1px solid var(--c-border); }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .modal-header h3 { font-family: var(--font-book); font-size: 22px; font-weight: 700; color: var(--c-text); }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .modal-footer { border-top: 1px solid var(--c-border); }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .close-panel-btn { color: var(--c-text-2); background: transparent; border: 0; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .form-group label { color: var(--c-text-2); font-weight: 600; font-size: 12px; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) :is(.form-input, .form-select, .form-textarea) {
+            font-family: inherit; background: var(--c-island); border: 1px solid var(--c-border-strong); color: var(--c-text); border-radius: var(--r-sm); user-select: text;
+        }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) :is(.form-input, .form-select, .form-textarea):focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-focus); }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .btn-modal-cancel { font-family: inherit; background: var(--c-island); border: 1px solid var(--c-border-strong); color: var(--c-text); border-radius: var(--r-sm); }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .btn-modal-submit { font-family: inherit; background: var(--c-bark); border: 1px solid var(--c-bark); color: #fffbf2; border-radius: var(--r-sm); box-shadow: none; }
+        [data-theme="dark"] :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .btn-modal-submit { background: var(--c-accent); border-color: var(--c-accent); color: #20170a; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) .btn-modal-submit { background: var(--c-accent); border-color: var(--c-accent); color: #20170a; }
+        }
+        #addMediaModal .lang-btn { background: var(--c-island-2); color: var(--c-text-2); border: 1px solid var(--c-border); border-radius: var(--r-pill); font-family: inherit; }
+        #addMediaModal .lang-btn.active { background: var(--c-island); color: var(--c-accent-text); border-color: var(--c-accent); font-weight: 700; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) [style*="color:#94a3b8"] { color: var(--c-text-3) !important; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) [style*="color:#cbd5e1"] { color: var(--c-text-2) !important; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) :is([style*="color:#fef08a"], [style*="color:#d4af37"]) { color: var(--c-accent-text) !important; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) [style*="rgba(255,255,255,0.0"] { background: var(--c-island-2) !important; border-color: var(--c-border) !important; }
+        :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) [style*="border:1px solid #334155"] { border-color: var(--c-border) !important; }
+        #kinshipDictModal .modal-body [style*="font-weight:700; color:#fef08a"] { font-family: var(--font-book); font-size: 16px !important; }
+        #kinshipDictModal .modal-body [style*="rgba(212,175,55,0.15)"] { background: var(--c-accent-soft) !important; border-color: transparent !important; font-family: var(--font-book); font-style: italic; }
+    </style>
 </head>
 <body>
     <!-- TASK-008: линейные иконки шапки -->
@@ -4159,7 +4398,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div class="card-info">
                             <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
                             ${node.maiden_name ? `<div class="card-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
-                            <div class="card-years">${isDeceased ? `${node.birth_year || '—'} — ${node.death_year || '†'}` : `${node.birth_year || '—'}`}</div>
+                            <div class="card-years">${lifeHtml(node, '—')}</div>
                         </div>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:2px;">
@@ -4270,6 +4509,69 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
         }
 
+        // TASK-013 (шаг 10): у живых — возраст «38 жас / 38 лет», у ушедших — годы жизни и «73 жыл ғұмыр / прожил 73 года».
+        // Полная дата — в подсказке (title). Строится только из чисел, поэтому безопасна для innerHTML.
+        function lifeParts(date, year) {
+            const raw = (date == null ? '' : String(date)).trim();
+            let m;
+            if (raw && raw !== '0000-00-00') {
+                if ((m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)) && +m[2] > 0 && +m[3] > 0) return [+m[1], +m[2], +m[3]];
+                if ((m = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/))) return [+m[3], +m[2], +m[1]];
+                if ((m = raw.match(/^(\d{4})/))) return [+m[1], null, null];
+            }
+            const y = parseInt(year, 10);
+            return y > 0 ? [y, null, null] : null;
+        }
+        function yearsBetween(a, b) {
+            let n = b[0] - a[0];
+            if (a[1] != null && b[1] != null && (b[1] < a[1] || (b[1] === a[1] && b[2] < a[2]))) n--;
+            return n;
+        }
+        function ruYears(n) {
+            const m10 = n % 10, m100 = n % 100;
+            if (m10 === 1 && m100 !== 11) return n + ' год';
+            if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return n + ' года';
+            return n + ' лет';
+        }
+        function lifeDateText(pt, ru) {
+            const mRu = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+            const mKk = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+            if (pt[1] && pt[2] && pt[1] <= 12) return ru ? `${pt[2]} ${mRu[pt[1]-1]} ${pt[0]}` : `${pt[0]} жылғы ${pt[2]} ${mKk[pt[1]-1]}`;
+            return ru ? `${pt[0]} г.` : `${pt[0]} жыл`;
+        }
+        function lifeLabel(p) {
+            const ru = currentLang === 'ru';
+            const birth = lifeParts(p.birth_date, p.birth_year);
+            const death = lifeParts(p.death_date, p.death_year);
+            const deceased = (p.is_deceased == 1) || !!death;
+            const tp = [];
+            if (birth) tp.push((ru ? 'Дата рождения: ' : 'Туған күні: ') + lifeDateText(birth, ru));
+            if (deceased && death) tp.push((ru ? 'Дата ухода: ' : 'Қайтыс болған күні: ') + lifeDateText(death, ru));
+            const title = tp.join(' · ');
+            if (deceased) {
+                if (!birth && !death) return { short: '', title: '' };
+                let s = (birth ? birth[0] : '?') + '–' + (death ? death[0] : '?');
+                if (birth && death) {
+                    const n = yearsBetween(birth, death);
+                    if (n >= 0 && n <= 130) {
+                        const verb = p.gender === 'F' ? 'прожила' : (p.gender === 'M' ? 'прожил' : 'прожил(а)');
+                        s += ru ? ` · ${verb} ${ruYears(n)}` : ` · ${n} жыл ғұмыр`;
+                    }
+                }
+                return { short: s, title, deceased: true };
+            }
+            if (!birth) return { short: '', title: '' };
+            const d = new Date();
+            const n = yearsBetween(birth, [d.getFullYear(), d.getMonth() + 1, d.getDate()]);
+            if (n < 0 || n > 130) return { short: String(birth[0]), title };
+            return { short: (birth[1] == null ? '≈' : '') + (ru ? ruYears(n) : n + ' жас'), title };
+        }
+        function lifeHtml(p, fallback) {
+            const l = lifeLabel(p);
+            if (!l.short) return fallback == null ? '' : fallback;
+            return `<span class="life-age" title="${l.title}">${l.short}</span>`;
+        }
+
         // Резервный расчет координат при отсутствии layout от сервера
         function fallbackLayout(persons, marriages) {
             return persons.map((p, idx) => ({
@@ -4279,7 +4581,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 gender: p.gender,
                 clan_ru: p.clan_ru,
                 birth_year: p.birth_year,
+                birth_date: p.birth_date,
                 death_year: p.death_year,
+                death_date: p.death_date,
                 is_deceased: p.is_deceased,
                 x: 1000 + (idx % 8) * 310,
                 y: 300 + Math.floor(idx / 8) * 220,
@@ -5682,7 +5986,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 ${p.maiden_name ? `<div class="lt-sub is-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
                                 <div class="lt-sub lt-sub-opt xl">${clanLbl}</div>
                                 <div class="lt-sub lt-sub-opt lg">${genderLbl}</div>
-                                <div class="lt-sub lt-sub-opt md">${p.years_display || '—'}</div>
+                                <div class="lt-sub lt-sub-opt md">${lifeHtml(p, p.years_display || '—')}</div>
                                 ${(p.father_name || p.mother_name) ? `<div class="lt-sub lt-sub-opt lg">${[p.father_name, p.mother_name].filter(Boolean).join(' / ')}</div>` : ''}
                                 ${spouseSub ? `<div class="lt-sub lt-sub-opt xl">${currentLang === 'ru' ? 'Супруг(а)' : 'Жұбайы'}: ${spouseSub}</div>` : ''}
                                 ${(kin && kin.zhurt) ? `<div class="lt-sub lt-sub-opt md">${kin.zhurt}</div>` : ''}
@@ -5696,7 +6000,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <span class="clan-pill" title="${clanLbl}">${clanLbl}</span>
                     </td>
                     <td class="lt-col-md" style="white-space:nowrap;">
-                        ${p.years_display || '—'}
+                        ${lifeHtml(p, p.years_display || '—')}
                     </td>
                     <td class="lt-col-lg lt-small">
                         ${parentsHtml}
@@ -5831,7 +6135,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 <span class="clan-pill">${uzEsc(p.clan_ru || 'белгісіз')}</span>
                             </div>
                             <div class="lt-sub">
-                                ${currentLang === 'ru' ? 'Годы жизни:' : 'Өмір сүрген жылдары:'} <strong>${p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')}</strong>
+                                ${(isDeceased || lifeLabel(p).deceased) ? (currentLang === 'ru' ? 'Годы жизни:' : 'Өмір сүрген жылдары:') : (currentLang === 'ru' ? 'Возраст:' : 'Жасы:')} <strong>${lifeHtml(p, uzEsc(p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')))}</strong>
                                 <span style="margin: 0 6px; color: var(--c-border-strong);">•</span>
                                 ${currentLang === 'ru' ? 'Клик по родственнику в любой таблице — переход к нему в списке' : 'Кез келген кестедегі туысқанға басу — оның Үш жұртына көшу'}
                             </div>
@@ -5930,7 +6234,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 </div>
                             </td>
                             <td class="lt-ush-col-years">
-                                <span class="lt-ush-years-text">${uzEsc(years)}</span>
+                                <span class="lt-ush-years-text">${lifeHtml(p, uzEsc(years))}</span>
                             </td>
                             <td class="lt-ush-col-term">
                                 <span class="kin-term-badge ${isM ? 'male' : 'female'}">${uzEsc(term)}</span>
@@ -6143,10 +6447,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const indent = depth * 16;
             let coupleTitle = '';
             if (h) {
-                coupleTitle += `<span class="uz-person"><strong>${h.full_name}</strong> <span class="uz-meta">${h.birth_year ? `(${h.birth_year})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
+                coupleTitle += `<span class="uz-person"><strong>${h.full_name}</strong> <span class="uz-meta">${lifeLabel(h).short ? `(${lifeHtml(h)})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (w) {
-                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${w.full_name}</strong> <span class="uz-meta">${w.birth_year ? `(${w.birth_year})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
+                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${w.full_name}</strong> <span class="uz-meta">${lifeLabel(w).short ? `(${lifeHtml(w)})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (!coupleTitle) coupleTitle = (currentLang === 'ru' ? 'Семья' : 'Отбасы');
 
@@ -6156,7 +6460,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 childrenHtml = children.map(c => {
                     const cIcon = `<span class="uz-dot ${c.gender === 'F' ? 'f' : ''}"></span>`;
                     const cClan = c.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз');
-                    const cYears = c.birth_year ? `(${c.birth_year})` : '';
+                    const cYears = lifeLabel(c).short ? `(${lifeHtml(c)})` : '';
                     let nested = '';
                     if (c.families && c.families.length > 0) {
                         nested = c.families.map(cf => renderUshZhurtFolderHtml(cf, depth + 1)).join('');

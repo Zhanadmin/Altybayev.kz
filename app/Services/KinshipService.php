@@ -1428,7 +1428,9 @@ class KinshipService
                 'maiden_name' => $p['maiden_name'] ?? null,
                 'gender' => $p['gender'] ?? 'M',
                 'birth_year' => $bYear,
+                'birth_date' => $p['birth_date'] ?? null, // TASK-013 (шаг 10): для возраста «38 жас»
                 'death_year' => $dYear,
+                'death_date' => $p['death_date'] ?? null,
                 'years_display' => $yearsDisplay,
                 'is_deceased' => $isDeceased,
                 'clan_ru' => $p['clan_ru'] ?? 'белгісіз',

@@ -587,11 +587,34 @@ class TreeLayoutService
             }
         }
 
+        // TASK-013: замужняя дочь «переходит» в семью мужа. Если её пара (муж + она) видна и родители мужа
+        // тоже на древе — пару ставим под родителями мужа; в родной семье от неё остаётся только линия-след.
+        $uzatylganUnits = []; // personId жены => unitId, где её основное место у мужа
+        foreach ($units as $uId => $u) {
+            if (count($u['members']) < 2) continue;
+            $hId = $u['members'][0];
+            if (($personsById[$hId]['gender'] ?? '') !== 'M') continue;
+            $hParents = $parentsMap[$hId] ?? [];
+            $hParentsVisible = (!empty($hParents['father']) && isset($personToUnitMap[$hParents['father']]))
+                || (!empty($hParents['mother']) && isset($personToUnitMap[$hParents['mother']]));
+            if (!$hParentsVisible) continue;
+            foreach (array_slice($u['members'], 1) as $wId) {
+                $mDetail = $marriageDetails["{$hId}_{$wId}"] ?? null;
+                $isDiv = $mDetail && ((($mDetail['status'] ?? '') === 'divorced') || !empty($mDetail['divorce_date']));
+                if (!$isDiv) {
+                    $uzatylganUnits[$wId] = $uId;
+                }
+            }
+        }
+
         // 2. Связывание родительских и дочерних юнитов
         foreach ($units as $uId => &$u) {
             $childrenUnitList = [];
             foreach ($u['members'] as $memId) {
                 foreach ($childrenMap[$memId] ?? [] as $cId) {
+                    if (isset($uzatylganUnits[$cId])) {
+                        continue; // ұзатылған: её место — у мужа, линия к родителям рисуется в buildEdges
+                    }
                     if (isset($personToUnitMap[$cId])) {
                         $cuId = $personToUnitMap[$cId];
                         if (!in_array($cuId, $childrenUnitList, true) && $cuId !== $uId) {

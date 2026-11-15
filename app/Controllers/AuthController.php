@@ -185,8 +185,20 @@ class AuthController
             \App\Core\I18n::setLang($code);
         }
 
-        $ref = $request->get('ref', $_SERVER['HTTP_REFERER'] ?? '/');
-        if (!str_starts_with($ref, '/') && !str_contains($ref, 'altybayev.kz') && !str_contains($ref, 'localhost')) {
+        // TASK-014: только локальный путь (без //host, \host и чужих доменов) — защита от открытого редиректа
+        $ref = $request->get('ref');
+        if (!is_string($ref) || $ref === '') {
+            $referer = (string)($_SERVER['HTTP_REFERER'] ?? '');
+            $refHost = strtolower((string)parse_url($referer, PHP_URL_HOST));
+            $ownHost = strtolower((string)preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
+            $ref = '/';
+            if ($refHost !== '' && $refHost === $ownHost) {
+                $path = (string)parse_url($referer, PHP_URL_PATH);
+                $query = (string)parse_url($referer, PHP_URL_QUERY);
+                $ref = ($path !== '' ? $path : '/') . ($query !== '' ? '?' . $query : '');
+            }
+        }
+        if (!preg_match('#^/(?![/\\\\])#', $ref) || preg_match('/[\x00-\x1F]/', $ref)) {
             $ref = '/';
         }
 

@@ -10,8 +10,12 @@ use App\Core\Router;
 
 $router = new Router();
 
-// 1. Главная страница (доступна только авторизованным пользователям, иначе редирект на /login)
-$router->get('/', 'App\Controllers\HomeController@index', ['auth']);
+// 1. Главная страница: гостю — название и кнопка входа (TASK-014: Google проверяет домашнюю страницу), члену семьи — шежіре
+$router->get('/', 'App\Controllers\HomeController@index');
+
+// TASK-014: публичные страницы для Google OAuth (без входа)
+$router->get('/privacy', 'App\Controllers\LegalController@privacy');
+$router->get('/terms', 'App\Controllers\LegalController@terms');
 
 // 2. Интерактивное древо (MyHeritage + Шежіре-Орман / Лес)
 $router->get('/tree', 'App\Controllers\TreeController@index', ['auth']);
@@ -26,6 +30,9 @@ $router->get('/admin', 'App\Controllers\AdminController@index', ['auth', 'admin'
 $router->get('/lang/{code}', 'App\Controllers\AuthController@switchLanguage');
 $router->post('/api/photo/upload', 'App\Controllers\PhotoUploadController@upload', ['auth']);
 $router->post('/api/admin/user/role', 'App\Controllers\AdminController@updateUserRole', ['auth', 'admin']);
+$router->post('/api/admin/invitations/create', 'App\Controllers\AdminController@createInvitation', ['auth', 'admin']);
+$router->post('/api/admin/invitations/role', 'App\Controllers\AdminController@updateInvitationRole', ['auth', 'admin']);
+$router->post('/api/admin/invitations/revoke', 'App\Controllers\AdminController@revokeInvitation', ['auth', 'admin']);
 $router->post('/api/history/rollback', 'App\Controllers\HistoryController@rollback', ['auth', 'admin']);
 
 // 3. Маршруты авторизации и аутентификации через Google

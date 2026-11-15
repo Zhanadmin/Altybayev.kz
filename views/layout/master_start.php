@@ -101,7 +101,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <!-- TASK-012: заголовки — Cormorant Garamond, текст — PT Sans (обе с казахскими буквами ә ғ қ ң ө ұ ү һ і) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
-    <link rel="stylesheet" href="/assets/css/book.css?v=5">
+    <link rel="stylesheet" href="/assets/css/book.css?v=6">
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
         .ds-clan-switch { cursor: pointer; }
@@ -182,15 +182,28 @@ $dsThemeReady = !empty($dsThemeReady);
             <use href="#m-leaf" x="122" y="-1" width="18" height="12" transform="rotate(-15 131 5)"/>
             <circle cx="64" cy="15" r="2.4" fill="#f3b3bd"/><circle cx="112" cy="11" r="2.2" fill="#e3b343"/>
         </symbol>
-        <!-- қошқар мүйіз -->
-        <symbol id="o-horn" viewBox="-56 -44 112 68"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-            <path d="M0,0 C0,-26 22,-40 40,-30 C54,-22 50,-4 36,-4 C26,-4 24,-16 32,-18"/>
-            <path d="M0,0 C0,-26 -22,-40 -40,-30 C-54,-22 -50,-4 -36,-4 C-26,-4 -24,-16 -32,-18"/>
-            <path d="M0,0 L0,20 M-7,13 L0,20 L7,13"/></g></symbol>
-        <!-- угол листа: мүйіз + веточка -->
-        <symbol id="o-corner" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-            <path d="M4,40 V4 H40"/><path d="M10,34 V10 H34"/>
-            <path d="M10,10 C16,24 26,26 30,20 C33,15 28,11 24,14"/></g></symbol>
+        <!-- TASK-013: ою-өрнек по согласованному листу-образцу (task-013-oyu-obrazec.html), тонкая линия -->
+        <!-- қошқар мүйіз: парные рога-спирали наружу, короткий стебель -->
+        <symbol id="o-horn" viewBox="10 22 100 60"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M60,64 C60,40 42,26 27,33 C13,40 15,61 31,61 C42,61 44,47 35,45"/>
+            <path d="M60,64 C60,40 78,26 93,33 C107,40 105,61 89,61 C78,61 76,47 85,45"/>
+            <path d="M60,64 L60,80"/></g>
+            <circle cx="60" cy="64" r="2.6" fill="currentColor"/></symbol>
+        <!-- угол листа: рамка с закруглением и завитки қошқар мүйіз -->
+        <symbol id="o-corner" viewBox="0 0 60 60"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M6,54 L6,22 C6,10 14,6 24,6 L54,6"/>
+            <path d="M14,46 C14,30 22,22 30,22 C38,22 40,32 33,33 C29,34 28,29 31,28"/>
+            <path d="M14,46 C10,46 9,42 12,41"/>
+            <path d="M46,14 C30,14 22,22 22,30"/>
+            <path d="M46,14 C46,10 42,9 41,12"/></g></symbol>
+        <!-- розетка: четыре қошқар мүйіз вокруг центра (симметрия текемет) -->
+        <symbol id="o-rosette" viewBox="0 0 120 120"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <path id="o-rosette-arm" d="M60,60 L60,40 M60,40 C60,28 50,22 42,26 C35,30 37,40 45,40 C50,40 51,34 47,33 M60,40 C60,28 70,22 78,26 C85,30 83,40 75,40 C70,40 69,34 73,33"/>
+            <use href="#o-rosette-arm" transform="rotate(90 60 60)"/>
+            <use href="#o-rosette-arm" transform="rotate(180 60 60)"/>
+            <use href="#o-rosette-arm" transform="rotate(270 60 60)"/>
+            <circle cx="60" cy="60" r="5"/></g>
+            <circle cx="60" cy="60" r="1.8" fill="currentColor"/></symbol>
         <!-- кольца у пар -->
         <symbol id="o-rings" viewBox="-22 -15 44 30"><g fill="none" stroke-linecap="round">
             <circle cx="-7" cy="1.5" r="10" stroke="#5b4214" stroke-width="4" opacity=".2"/><circle cx="8" cy="1.5" r="10" stroke="#5b4214" stroke-width="4" opacity=".2"/>

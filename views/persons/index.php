@@ -138,7 +138,11 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
 
         $birthDisp = !empty($p['birth_date']) ? I18n::formatDate($p['birth_date']) : ($p['birth_year'] ? I18n::formatDate($p['birth_year']) : '—');
         $deathDisp = !empty($p['death_date']) ? I18n::formatDate($p['death_date']) : ($p['death_year'] ? I18n::formatDate($p['death_year']) : '†');
-        $yearsDisp = $isDeceased ? "{$birthDisp} — {$deathDisp}" : $birthDisp;
+        $yearsFull = $isDeceased ? "{$birthDisp} — {$deathDisp}" : $birthDisp;
+        // TASK-013 (шаг 10): в таблице у живых — возраст, у ушедших — годы жизни и сколько прожил; полная дата — в подсказке
+        $lifeL = I18n::lifeLabel($p);
+        $yearsDisp = $lifeL['short'] !== '' ? $lifeL['short'] : $yearsFull;
+        $yearsTitle = $lifeL['title'] !== '' ? $lifeL['title'] : $yearsFull;
 
         $kin = $p['kinship'] ?? null;
         $genderText = I18n::t($isMale ? 'filter_gender_m' : 'filter_gender_f');
@@ -183,7 +187,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             <td class="col-opt-xl clip"><span class="badge" title="<?= htmlspecialchars($clanText) ?>"><?= htmlspecialchars($clanText) ?></span></td>
 
             <!-- Жылдары -->
-            <td class="clip pp-years col-opt-md" title="<?= htmlspecialchars($yearsDisp) ?>"><?= htmlspecialchars($yearsDisp) ?></td>
+            <td class="clip pp-years col-opt-md" title="<?= htmlspecialchars($yearsTitle) ?>"><?= htmlspecialchars($yearsDisp) ?></td>
 
             <!-- Ата-анасы -->
             <td class="col-opt-lg pp-rel">

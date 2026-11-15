@@ -17,6 +17,11 @@ class HomeController
      */
     public function index(Request $request): void
     {
+        // TASK-014: гость видит название сайта и кнопку входа (без редиректа — Google проверяет главную)
+        if (!Auth::check()) {
+            Response::view('login', ['error' => null, 'isHome' => true]);
+        }
+
         $user = Auth::user();
         $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : 6;
 

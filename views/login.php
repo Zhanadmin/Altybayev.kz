@@ -5,8 +5,10 @@ use App\Core\I18n;
 
 /**
  * @var string|null $error
+ * @var bool|null $isHome  TASK-014: страница показана гостю на главной «/»
  */
 $lang = I18n::lang();
+$langRef = !empty($isHome) ? '/' : '/login';
 $siteTitle = I18n::siteTitle();
 $pageTitle = ($lang === 'ru') ? "{$siteTitle} — Вход в систему" : "{$siteTitle} — Жүйеге кіру";
 ?>
@@ -30,7 +32,11 @@ $pageTitle = ($lang === 'ru') ? "{$siteTitle} — Вход в систему" : 
     <!-- TASK-012: шрифты с казахскими буквами и слой «Шежіре-кітап» -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
-    <link rel="stylesheet" href="/assets/css/book.css?v=3">
+    <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <style>
+        .au-legal { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: var(--sp-4, 16px); font-size: 14px; }
+        .au-legal a { text-decoration: underline; text-underline-offset: 3px; }
+    </style>
 </head>
 <body class="au-body">
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -44,8 +50,8 @@ $pageTitle = ($lang === 'ru') ? "{$siteTitle} — Вход в систему" : 
     <!-- Язык и тема -->
     <div class="au-top">
         <div class="seg" role="group" aria-label="<?= $lang === 'ru' ? 'Язык' : 'Тіл' ?>">
-            <a href="/lang/kk?ref=/login" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
-            <a href="/lang/ru?ref=/login" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
+            <a href="/lang/kk?ref=<?= $langRef ?>" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
+            <a href="/lang/ru?ref=<?= $langRef ?>" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
                 aria-label="<?= $lang === 'ru' ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
@@ -105,6 +111,13 @@ $pageTitle = ($lang === 'ru') ? "{$siteTitle} — Вход в систему" : 
                 <strong><?= $lang === 'ru' ? 'Закрытая родословная:' : 'Жабық отбасылық шежіре:' ?></strong><br>
                 <?= $lang === 'ru' ? 'Доступ открыт только для приглашенных членов семьи.' : 'Қолжетімділік тек шақырылған отбасы мүшелеріне ашық.' ?>
             </div>
+        </div>
+
+        <!-- TASK-014: ссылки для проверки Google OAuth -->
+        <div class="au-legal">
+            <a href="/privacy"><?= $lang === 'ru' ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
+            <span aria-hidden="true">·</span>
+            <a href="/terms"><?= $lang === 'ru' ? 'Условия' : 'Шарттар' ?></a>
         </div>
 
         <div class="au-foot">altybayev.kz &bull; 2026</div>

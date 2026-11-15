@@ -70,7 +70,7 @@ require __DIR__ . '/../layout/master_start.php';
                         $w = $f['wife'];
                         $children = $f['children'];
                     ?>
-                        <article class="island fm-card<?= $isAncestors ? ' fm-ancestors' : '' ?>">
+                        <article class="island fm-card<?= $isAncestors ? ' fm-ancestors' : '' ?>" id="fam-<?= (int)$m['id'] ?>">
                             <div class="fm-card-head">
                                 <span class="small muted">#<?= $idx + 1 ?> (ID <?= (int)$m['id'] ?>)</span>
                                 <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">
@@ -92,7 +92,7 @@ require __DIR__ . '/../layout/master_start.php';
                                         <a href="/person/<?= (int)$h['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['h_name']) ?>"><?= htmlspecialchars($f['h_name']) ?></a>
                                         <div class="small muted">
                                             <?= $h['clan_ru'] ? htmlspecialchars($h['clan_ru']) : '' ?>
-                                            <?= $h['birth_year'] ? ' · ' . htmlspecialchars((string)$h['birth_year']) . ' ж.т.' : '' ?>
+                                            <?php $hl = I18n::lifeLabel($h); if ($hl['short'] !== ''): ?> · <span title="<?= htmlspecialchars($hl['title']) ?>"><?= htmlspecialchars($hl['short']) ?></span><?php endif; ?>
                                         </div>
                                     <?php else: ?>
                                         <span class="muted">Белгісіз</span>
@@ -108,7 +108,8 @@ require __DIR__ . '/../layout/master_start.php';
                                         <?php if (!empty($w['maiden_name'])): ?>
                                             <div class="small muted">(<?= $lang === 'ru' ? 'урожд.' : 'қыз кезінде:' ?> <?= htmlspecialchars($w['maiden_name']) ?>)</div>
                                         <?php endif; ?>
-                                        <div class="small muted"><?= $w['birth_year'] ? htmlspecialchars((string)$w['birth_year']) . ' ж.т.' : '' ?></div>
+                                        <?php $wl = I18n::lifeLabel($w); ?>
+                                        <div class="small muted"><?php if ($wl['short'] !== ''): ?><span title="<?= htmlspecialchars($wl['title']) ?>"><?= htmlspecialchars($wl['short']) ?></span><?php endif; ?></div>
                                     <?php else: ?>
                                         <span class="muted">Белгісіз</span>
                                     <?php endif; ?>
@@ -136,12 +137,23 @@ require __DIR__ . '/../layout/master_start.php';
                                     <div class="small muted"><?= $lang === 'ru' ? 'Общие дети не зарегистрированы' : 'Ортақ балалар тіркелмеген' ?></div>
                                 <?php else: ?>
                                     <div class="pc-tags">
-                                        <?php foreach ($children as $c): ?>
+                                        <?php foreach ($children as $c):
+                                            if (!empty($c['uzatylgan'])):
+                                                $uz = $c['uzatylgan'];
+                                                $uzFam = (string)($uz['family'] ?? '');
+                                        ?>
+                                            <a href="/families#fam-<?= (int)$uz['marriage_id'] ?>" class="badge pc-tag fm-uzatylgan"
+                                               title="<?= htmlspecialchars($lang === 'ru' ? 'Выдана замуж — её место в семье мужа' : 'Ұзатылған — орны күйеуінің шаңырағында') ?>">
+                                                <svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg>
+                                                <?= htmlspecialchars($c['first_name']) ?>
+                                                <span><?= $lang === 'ru' ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
+                                            </a>
+                                        <?php continue; endif; ?>
                                             <a href="/person/<?= (int)$c['id'] ?>" class="badge pc-tag" title="<?= ($c['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?>">
                                                 <svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= ($c['gender'] === 'M') ? 'g-m' : 'g-f' ?>"/></svg>
                                                 <?= htmlspecialchars($c['first_name']) ?>
-                                                <?php if (!empty($c['birth_year'])): ?>
-                                                    <span><?= htmlspecialchars((string)$c['birth_year']) ?></span>
+                                                <?php $cl = I18n::lifeLabel($c); if ($cl['short'] !== ''): ?>
+                                                    <span title="<?= htmlspecialchars($cl['title']) ?>"><?= htmlspecialchars($cl['short']) ?></span>
                                                 <?php endif; ?>
                                             </a>
                                         <?php endforeach; ?>

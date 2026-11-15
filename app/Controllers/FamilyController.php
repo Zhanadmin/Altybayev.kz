@@ -27,7 +27,7 @@ class FamilyController
 
         // 1. Получаем все персоны в ассоциативный массив
         $personsById = [];
-        $pStmt = $db->query("SELECT id, first_name, last_name, maiden_name, middle_name, gender, birth_year, is_deceased, clan_ru, avatar_path FROM persons WHERE is_deleted = 0");
+        $pStmt = $db->query("SELECT id, first_name, last_name, maiden_name, middle_name, gender, birth_year, birth_date, death_year, death_date, is_deceased, clan_ru, avatar_path FROM persons WHERE is_deleted = 0");
         foreach ($pStmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
             $personsById[$p['id']] = $p;
         }
@@ -42,10 +42,29 @@ class FamilyController
 
         // 3. Получаем всех детей для пар
         $childrenByCouple = [];
-        $cStmt = $db->query("SELECT id, first_name, last_name, middle_name, gender, birth_year, father_id, mother_id FROM persons WHERE is_deleted = 0 AND father_id IS NOT NULL AND mother_id IS NOT NULL");
+        $cStmt = $db->query("SELECT id, first_name, last_name, middle_name, gender, birth_year, birth_date, death_year, death_date, is_deceased, father_id, mother_id FROM persons WHERE is_deleted = 0 AND father_id IS NOT NULL AND mother_id IS NOT NULL");
         foreach ($cStmt->fetchAll(PDO::FETCH_ASSOC) as $child) {
             $key = "{$child['father_id']}_{$child['mother_id']}";
             $childrenByCouple[$key][] = $child;
+        }
+
+        // TASK-013: замужняя дочь «переходит» в семью мужа — в семье родителей она только след «ұзатылған»
+        $uzatylganByWife = [];
+        foreach ($marriages as $m) {
+            $wId = (int)($m['wife_id'] ?? 0);
+            $hId = (int)($m['husband_id'] ?? 0);
+            $mStatus = $m['status'] ?? (!empty($m['is_current']) ? 'married' : 'divorced');
+            if ($wId <= 0 || $hId <= 0 || $mStatus !== 'married' || !empty($m['divorce_date']) || !isset($personsById[$hId])) {
+                continue;
+            }
+            $hp = $personsById[$hId];
+            $uzatylganByWife[$wId] = [
+                'husband_id'  => $hId,
+                'marriage_id' => (int)$m['id'],
+                'family'      => trim((string)($hp['last_name'] ?? '')) !== ''
+                    ? trim((string)$hp['last_name'])
+                    : trim((string)($hp['clan_ru'] ?? '')),
+            ];
         }
 
         $families = [];
@@ -95,6 +114,12 @@ class FamilyController
                 }
                 return ((int)$cA['id']) <=> ((int)$cB['id']);
             });
+            foreach ($children as &$child) {
+                $child['uzatylgan'] = ($child['gender'] ?? '') === 'F'
+                    ? ($uzatylganByWife[(int)$child['id']] ?? null)
+                    : null;
+            }
+            unset($child);
 
             // Определение старшинства и поколения
             $hYear = (int)($husband['birth_year'] ?? 0);

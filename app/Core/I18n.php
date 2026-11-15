@@ -261,6 +261,107 @@ class I18n
     }
 
     /**
+     * TASK-013 (шаг 10): разбор даты рождения/смерти в [год, месяц, день] (месяц/день — null, если неизвестны).
+     */
+    private static function lifeParts(mixed $date, mixed $year): ?array
+    {
+        $raw = trim((string)($date ?? ''));
+        if ($raw !== '' && $raw !== '0000-00-00') {
+            if (preg_match('/^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/', $raw, $m) && (int)$m[2] > 0 && (int)$m[3] > 0) {
+                return [(int)$m[1], (int)$m[2], (int)$m[3]];
+            }
+            if (preg_match('/^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})/', $raw, $m)) {
+                return [(int)$m[3], (int)$m[2], (int)$m[1]];
+            }
+            if (preg_match('/^([0-9]{4})/', $raw, $m)) {
+                return [(int)$m[1], null, null];
+            }
+        }
+        $y = (int)($year ?? 0);
+        return $y > 0 ? [$y, null, null] : null;
+    }
+
+    /** Полных лет между двумя датами; если день/месяц неизвестны — по годам (приблизительно). */
+    private static function yearsBetween(array $from, array $to): int
+    {
+        $n = $to[0] - $from[0];
+        if ($from[1] !== null && $to[1] !== null) {
+            if ($to[1] < $from[1] || ($to[1] === $from[1] && (int)$to[2] < (int)$from[2])) {
+                $n--;
+            }
+        }
+        return $n;
+    }
+
+    /** Русское склонение: 1 год, 2 года, 5 лет. */
+    public static function ruYears(int $n): string
+    {
+        $m10 = $n % 10;
+        $m100 = $n % 100;
+        if ($m10 === 1 && $m100 !== 11) return "{$n} год";
+        if ($m10 >= 2 && $m10 <= 4 && ($m100 < 12 || $m100 > 14)) return "{$n} года";
+        return "{$n} лет";
+    }
+
+    /**
+     * TASK-013 (шаг 10): короткая подпись «возраст / годы жизни» для карточек, лент и таблиц.
+     * Живой: «38 жас» / «38 лет» (если известен только год — «≈38 жас»).
+     * Ушедший: «1932–2005 · 73 жыл ғұмыр» / «1932–2005 · прожил 73 года».
+     * Возвращает ['short' => подпись, 'title' => полная дата для подсказки]; пустые строки, если данных нет.
+     */
+    public static function lifeLabel(array $p, ?string $lang = null, ?string $today = null): array
+    {
+        $lang = $lang ?? self::lang();
+        $ru = ($lang === 'ru');
+        $birth = self::lifeParts($p['birth_date'] ?? null, $p['birth_year'] ?? null);
+        $death = self::lifeParts($p['death_date'] ?? null, $p['death_year'] ?? null);
+        $deceased = !empty($p['is_deceased']) || $death !== null;
+
+        // Подсказка строится из разобранных частей (а не из сырой строки — «0000-00-00» не попадёт)
+        $partsDate = static fn(array $pt): string => $pt[1] !== null
+            ? sprintf('%04d-%02d-%02d', $pt[0], $pt[1], (int)$pt[2])
+            : (string)$pt[0];
+        $titleParts = [];
+        if ($birth) {
+            $titleParts[] = ($ru ? 'Дата рождения: ' : 'Туған күні: ') . self::formatDate($partsDate($birth), $lang);
+        }
+        if ($deceased && $death) {
+            $titleParts[] = ($ru ? 'Дата ухода: ' : 'Қайтыс болған күні: ') . self::formatDate($partsDate($death), $lang);
+        }
+        $title = implode(' · ', $titleParts);
+
+        if ($deceased) {
+            if (!$birth && !$death) return ['short' => '', 'title' => '', 'deceased' => true];
+            $span = ($birth ? $birth[0] : '?') . '–' . ($death ? $death[0] : '?');
+            if ($birth && $death) {
+                $n = self::yearsBetween($birth, $death);
+                if ($n >= 0 && $n <= 130) {
+                    if ($ru) {
+                        $g = $p['gender'] ?? '';
+                        $verb = $g === 'F' ? 'прожила' : ($g === 'M' ? 'прожил' : 'прожил(а)');
+                        $span .= " · {$verb} " . self::ruYears($n);
+                    } else {
+                        $span .= " · {$n} жыл ғұмыр";
+                    }
+                }
+            }
+            return ['short' => $span, 'title' => $title, 'deceased' => true];
+        }
+
+        if (!$birth) return ['short' => '', 'title' => '', 'deceased' => false];
+        $ts = $today !== null ? strtotime($today) : false;
+        if ($ts === false) $ts = time();
+        $now = [(int)date('Y', $ts), (int)date('n', $ts), (int)date('j', $ts)];
+        $n = self::yearsBetween($birth, $now);
+        if ($n < 0 || $n > 130) {
+            return ['short' => (string)$birth[0], 'title' => $title, 'deceased' => false];
+        }
+        $approx = $birth[1] === null ? '≈' : '';
+        $short = $approx . ($ru ? self::ruYears($n) : "{$n} жас");
+        return ['short' => $short, 'title' => $title, 'deceased' => false];
+    }
+
+    /**
      * Словарь локализации интерфейса
      */
     public static function getDictionary(): array

@@ -13,7 +13,47 @@ class Auth
      */
     public static function user(): ?array
     {
+        self::syncWithDatabase();
         return Session::get(self::SESSION_USER_KEY);
+    }
+
+    private static bool $synced = false;
+
+    /**
+     * TASK-014: раз за запрос сверяем сессию с БД — отозванный (is_active = 0) или удалённый
+     * пользователь выходит сразу, смена роли действует без перелогина.
+     * При ошибке БД сессия не трогается (публичные страницы не должны падать).
+     */
+    private static function syncWithDatabase(): void
+    {
+        if (self::$synced) {
+            return;
+        }
+        self::$synced = true;
+
+        $sessionUser = Session::get(self::SESSION_USER_KEY);
+        if (!$sessionUser || empty($sessionUser['id'])) {
+            return;
+        }
+
+        try {
+            $stmt = Database::getConnection()->prepare('SELECT role, is_active, person_id FROM users WHERE id = ? LIMIT 1');
+            $stmt->execute([(int)$sessionUser['id']]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        if (!$row || (int)$row['is_active'] !== 1) {
+            Session::remove(self::SESSION_USER_KEY);
+            return;
+        }
+
+        $sessionUser['role'] = $row['role'] ?: 'viewer';
+        if (!empty($row['person_id'])) {
+            $sessionUser['person_id'] = (int)$row['person_id'];
+        }
+        Session::set(self::SESSION_USER_KEY, $sessionUser);
     }
 
     /**
@@ -80,6 +120,12 @@ class Auth
      */
     public static function login(array $user): void
     {
+        // TASK-014: новый идентификатор сессии после входа (защита от session fixation)
+        Session::start();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+        self::$synced = true;
         Session::set(self::SESSION_USER_KEY, [
             'id'         => (int)$user['id'],
             'email'      => $user['email'],

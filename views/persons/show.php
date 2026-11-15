@@ -29,9 +29,18 @@ $pcInitials = static function (array $p): string {
     $i = mb_substr((string)($p['first_name'] ?? ''), 0, 1) . mb_substr((string)($p['last_name'] ?? ''), 0, 1);
     return $i !== '' ? $i : 'Ш';
 };
-$pcYear = static function ($y): string {
-    return !empty($y) ? ((string)$y . ' ж.т.') : '';
+// TASK-013 (шаг 10): у живых — возраст («38 жас»), у ушедших — годы жизни и сколько прожил; полная дата — в подсказке
+$pcYear = static function (array $row): string {
+    return I18n::lifeLabel($row)['short'];
 };
+$pcLifeMeta = static function (array $row, string $prefix = ''): string {
+    $l = I18n::lifeLabel($row);
+    if ($l['short'] === '') return '';
+    return $prefix . '<span class="pc-age" title="' . htmlspecialchars($l['title']) . '">' . htmlspecialchars($l['short']) . '</span>';
+};
+$heroLife = I18n::lifeLabel($person);
+// В шапке полные даты уже есть — у ушедшего добавляем только «73 жыл ғұмыр»
+$heroAge = !empty($heroLife['deceased']) ? (string)(explode(' · ', $heroLife['short'], 2)[1] ?? '') : $heroLife['short'];
 
 require __DIR__ . '/../layout/master_start.php';
 ?>
@@ -65,7 +74,7 @@ require __DIR__ . '/../layout/master_start.php';
             </svg>
         </div>
         <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg<?= $isDeceased ? ' gold' : '' ?>"><?= htmlspecialchars($fullName) ?></h1></div>
-        <div class="years"><b><?= htmlspecialchars($birthDisp) ?><?= $isDeceased ? ' — ' . htmlspecialchars($deathDisp) : '' ?></b></div>
+        <div class="years"><b><?= htmlspecialchars($birthDisp) ?><?= $isDeceased ? ' — ' . htmlspecialchars($deathDisp) : '' ?></b><?php if ($heroAge !== ''): ?> · <span class="pc-age"><?= htmlspecialchars($heroAge) ?></span><?php endif; ?></div>
         <?php if (!empty($person['birth_place'])): ?>
             <div class="place"><?= htmlspecialchars((string)$person['birth_place']) ?></div>
         <?php endif; ?>
@@ -208,7 +217,7 @@ require __DIR__ . '/../layout/master_start.php';
                                         <span>
                                             <span class="meta"><?= htmlspecialchars($par['label']) ?></span>
                                             <span class="name"><?= htmlspecialchars($ppName) ?></span>
-                                            <?php if (!empty($pp['birth_year'])): ?><span class="meta"><?= htmlspecialchars($pcYear($pp['birth_year'])) ?></span><?php endif; ?>
+                                            <?php if ($pcYear($pp) !== ''): ?><span class="meta"><?= $pcLifeMeta($pp) ?></span><?php endif; ?>
                                         </span>
                                     </a>
                                 <?php else: ?>
@@ -272,7 +281,7 @@ require __DIR__ . '/../layout/master_start.php';
                                 <span class="avatar<?= $chIsMale ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($ch)) ?></span>
                                 <span>
                                     <span class="name" title="<?= htmlspecialchars($chName) ?>"><?= htmlspecialchars($chName) ?></span>
-                                    <span class="meta"><?= $chIsMale ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?><?= !empty($ch['birth_year']) ? ' · ' . htmlspecialchars($pcYear($ch['birth_year'])) : '' ?></span>
+                                    <span class="meta"><?= $chIsMale ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?><?= $pcLifeMeta($ch, ' · ') ?></span>
                                 </span>
                             </a>
                         <?php endforeach; ?>
@@ -293,7 +302,7 @@ require __DIR__ . '/../layout/master_start.php';
                                 <span class="avatar<?= $sibIsMale ? ' is-m' : ' is-f' ?><?= !empty($sib['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sib)) ?></span>
                                 <span>
                                     <span class="name" title="<?= htmlspecialchars($sibName) ?>"><?= htmlspecialchars($sibName) ?></span>
-                                    <span class="meta"><?= $sibIsMale ? ($lang === 'ru' ? 'Брат' : 'Бауыры') : ($lang === 'ru' ? 'Сестра' : 'Қарындасы/Әпкесі') ?><?= !empty($sib['birth_year']) ? ' · ' . htmlspecialchars($pcYear($sib['birth_year'])) : '' ?></span>
+                                    <span class="meta"><?= $sibIsMale ? ($lang === 'ru' ? 'Брат' : 'Бауыры') : ($lang === 'ru' ? 'Сестра' : 'Қарындасы/Әпкесі') ?><?= $pcLifeMeta($sib, ' · ') ?></span>
                                 </span>
                             </a>
                         <?php endforeach; ?>
@@ -413,7 +422,7 @@ require __DIR__ . '/../layout/master_start.php';
                                                                     <span class="avatar<?= (($ch['gender'] ?? '') === 'M') ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars(mb_substr((string)($ch['first_name'] ?? ''), 0, 1) . mb_substr((string)($ch['last_name'] ?? ''), 0, 1) ?: 'Ш') ?></span>
                                                                     <span>
                                                                         <span class="name"><?= htmlspecialchars($chName) ?></span>
-                                                                        <span class="meta"><?= ($ch['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?><?= !empty($ch['birth_year']) ? ' · ' . htmlspecialchars((string)$ch['birth_year']) : '' ?></span>
+                                                                        <span class="meta"><?= ($ch['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?><?= is_array($ch) ? $pcLifeMeta($ch, ' · ') : '' ?></span>
                                                                     </span>
                                                                 </a>
                                                                 <?php if (!empty($chKin['term_kk'])): ?>

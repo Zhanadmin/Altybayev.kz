@@ -2,6 +2,12 @@
 declare(strict_types=1);
 ?>
                 </div>
+                <!-- TASK-014: подвал со ссылками на политику и условия -->
+                <footer class="ds-legal-foot" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:24px 0 8px;font-size:13px;opacity:.75;">
+                    <a href="/privacy"><?= \App\Core\I18n::lang() === 'ru' ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
+                    <span aria-hidden="true">·</span>
+                    <a href="/terms"><?= \App\Core\I18n::lang() === 'ru' ? 'Условия' : 'Шарттар' ?></a>
+                </footer>
             </main>
         </div>
     </div>

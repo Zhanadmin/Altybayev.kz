@@ -110,6 +110,10 @@ class GoogleOAuthService
         if ($infoHttpCode !== 200 || empty($userInfo['email'])) {
             throw new RuntimeException("Google профиль мәліметтерін алу мүмкін болмады");
         }
+        // TASK-014: доступ даётся по e-mail из приглашения — e-mail должен быть подтверждён Google
+        if (isset($userInfo['email_verified']) && $userInfo['email_verified'] !== true && $userInfo['email_verified'] !== 'true') {
+            throw new RuntimeException("Google e-mail расталмаған / e-mail не подтверждён");
+        }
 
         return [
             'google_id'  => $userInfo['sub'] ?? '',

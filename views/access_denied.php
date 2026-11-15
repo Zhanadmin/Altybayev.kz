@@ -32,7 +32,11 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
     <!-- TASK-012: шрифты с казахскими буквами и слой «Шежіре-кітап» -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
-    <link rel="stylesheet" href="/assets/css/book.css?v=3">
+    <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <style>
+        .au-legal { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: var(--sp-4, 16px); font-size: 14px; }
+        .au-legal a { text-decoration: underline; text-underline-offset: 3px; }
+    </style>
 </head>
 <body class="au-body">
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -83,6 +87,12 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
                         ? "Для данного email еще нет активного приглашения. Портал «{$siteTitle}» является закрытым семейным ресурсом. Если вы являетесь членом семьи, свяжитесь с администратором для получения приглашения."
                         : "Бұл электрондық поштаға шақыру жіберілмеген. «{$siteTitle}» порталы жабық отбасылық дерекқор болып табылады. Егер сіз осы әулеттің мүшесі болсаңыз, әкімшіге хабарласып, шақыру алыңыз.") ?>
                 </p>
+                <!-- TASK-014: вежливая подсказка, к кому обратиться -->
+                <p>
+                    <strong><?= $lang === 'ru' ? 'Попросите приглашение у Жандоса' : 'Жандостан шақыру сұраңыз' ?></strong>
+                    — <?= $lang === 'ru' ? 'напишите ему, с какого Gmail вы входите' : 'қай Gmail арқылы кіретініңізді жазыңыз' ?>:
+                    <a href="mailto:zhandos.alt06@gmail.com">zhandos.alt06@gmail.com</a>
+                </p>
             <?php endif; ?>
         </div>
 
@@ -93,6 +103,12 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
             <a href="/logout" class="btn">
                 <?= $lang === 'ru' ? 'На главную входа' : 'Басты кіру бетіне оралу' ?>
             </a>
+        </div>
+
+        <div class="au-legal">
+            <a href="/privacy"><?= $lang === 'ru' ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
+            <span aria-hidden="true">·</span>
+            <a href="/terms"><?= $lang === 'ru' ? 'Условия' : 'Шарттар' ?></a>
         </div>
 
         <div class="au-foot">altybayev.kz &bull; 2026</div>

@@ -15,7 +15,7 @@ $allEvents = $allEvents ?? [];
 $daysAhead = (int)($daysAhead ?? 90);
 
 // TASK-008: линейные иконки вместо эмодзи по типу события
-$dtIcons = ['birthday' => 'calendar', 'death_anniversary' => 'history', 'wedding' => 'family'];
+$dtIcons = ['birthday' => 'calendar', 'death_anniversary' => 'candle', 'wedding' => 'family'];
 
 require __DIR__ . '/../layout/master_start.php';
 ?>
@@ -64,7 +64,7 @@ require __DIR__ . '/../layout/master_start.php';
 
     <?php if (empty($allEvents)): ?>
         <div class="island pp-empty">
-            <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
+            <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
             <b><?= $lang === 'ru' ? "На ближайшие {$daysAhead} дней событий не найдено" : "Алдағы {$daysAhead} күнге белгіленген даталар жоқ" ?></b>
             <a href="/dates?days=365" class="btn btn-sm">
                 <?= $lang === 'ru' ? 'Посмотреть события на целый год' : 'Бүкіл 1 жылдың оқиғаларын көру' ?>
@@ -104,7 +104,7 @@ require __DIR__ . '/../layout/master_start.php';
 
                     <div class="person dt-person">
                         <?php if ($type === 'wedding'): ?>
-                            <span class="avatar"><svg class="ic" aria-hidden="true"><use href="#i-family"/></svg></span>
+                            <span class="avatar dt-rings"><svg class="couple-rings" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg></span>
                         <?php elseif ($avatarPath): ?>
                             <span class="avatar<?= $dtG ?><?= $type === 'death_anniversary' ? ' deceased' : '' ?>"><img src="<?= htmlspecialchars($avatarPath) ?>" alt="<?= htmlspecialchars($ev['full_name'] ?? '') ?>"></span>
                         <?php else: ?>
@@ -119,7 +119,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php else: ?>
                                         <?= htmlspecialchars($ev['husband']['first_name'] ?? '—') ?>
                                     <?php endif; ?>
-                                    <span class="muted">&amp;</span>
+                                    <span class="muted dt-and">&amp;</span>
                                     <?php if (!empty($ev['wife_id'])): ?>
                                         <a href="/person/<?= (int)$ev['wife_id'] ?>" class="dt-link"><?= htmlspecialchars(trim(($ev['wife']['first_name'] ?? '') . ' ' . ($ev['wife']['last_name'] ?? ''))) ?></a>
                                     <?php else: ?>

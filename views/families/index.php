@@ -45,7 +45,7 @@ require __DIR__ . '/../layout/master_start.php';
     <!-- Сетка семей с группировкой по поколениям -->
     <?php if (empty($families)): ?>
         <div class="island pp-empty">
-            <svg class="ic" aria-hidden="true"><use href="#i-family"/></svg>
+            <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
             <b><?= $lang === 'ru' ? 'Семьи не найдены' : 'Шаңырақтар табылмады' ?></b>
             <span class="muted small"><?= $lang === 'ru' ? 'Попробуйте изменить параметры поиска' : 'Іздеу параметрлерін өзгертіп көріңіз' ?></span>
         </div>
@@ -56,10 +56,10 @@ require __DIR__ . '/../layout/master_start.php';
             $isAncestors = ($gKey === 'ancestors');
         ?>
             <section class="fm-group">
-                <div class="island-head">
-                    <svg class="ic<?= $isAncestors ? ' pc-accent' : '' ?>" aria-hidden="true"><use href="#i-<?= $isAncestors ? 'tamga' : 'family' ?>"/></svg>
-                    <h3><?= htmlspecialchars($gTitle) ?></h3>
-                    <span class="badge more"><?= count($group['families']) ?> <?= $lang === 'ru' ? 'союзов' : 'шаңырақ' ?></span>
+                <div class="island-head fm-gen-head">
+                    <span class="ribbon-wrap"><h3 class="ribbon ribbon-sm<?= $isAncestors ? ' gold' : '' ?>"><?= htmlspecialchars($gTitle) ?></h3></span>
+                    <span class="badge pp-group-count"><?= count($group['families']) ?> <?= $lang === 'ru' ? 'союзов' : 'шаңырақ' ?></span>
+                    <span class="pp-gen-line" aria-hidden="true"></span>
                 </div>
 
                 <div class="fm-grid">
@@ -87,7 +87,7 @@ require __DIR__ . '/../layout/master_start.php';
                             <!-- Супруги (Пара) -->
                             <div class="fm-pair">
                                 <div class="island-sub fm-spouse is-m">
-                                    <div class="pc-label"><?= $lang === 'ru' ? 'Муж' : 'Отағасы' ?></div>
+                                    <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-m"/></svg><?= $lang === 'ru' ? 'Муж' : 'Отағасы' ?></div>
                                     <?php if ($h): ?>
                                         <a href="/person/<?= (int)$h['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['h_name']) ?>"><?= htmlspecialchars($f['h_name']) ?></a>
                                         <div class="small muted">
@@ -99,8 +99,10 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php endif; ?>
                                 </div>
 
+                                <svg class="couple-rings fm-rings<?= $isMarried ? '' : ' is-apart' ?>" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
+
                                 <div class="island-sub fm-spouse is-f">
-                                    <div class="pc-label"><?= $lang === 'ru' ? 'Жена' : 'Отанасы' ?></div>
+                                    <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg><?= $lang === 'ru' ? 'Жена' : 'Отанасы' ?></div>
                                     <?php if ($w): ?>
                                         <a href="/person/<?= (int)$w['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['w_name']) ?>"><?= htmlspecialchars($f['w_name']) ?></a>
                                         <?php if (!empty($w['maiden_name'])): ?>
@@ -136,7 +138,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <div class="pc-tags">
                                         <?php foreach ($children as $c): ?>
                                             <a href="/person/<?= (int)$c['id'] ?>" class="badge pc-tag" title="<?= ($c['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?>">
-                                                <span class="g-dot <?= ($c['gender'] === 'M') ? 'is-m' : 'is-f' ?>" aria-hidden="true"></span>
+                                                <svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= ($c['gender'] === 'M') ? 'g-m' : 'g-f' ?>"/></svg>
                                                 <?= htmlspecialchars($c['first_name']) ?>
                                                 <?php if (!empty($c['birth_year'])): ?>
                                                     <span><?= htmlspecialchars((string)$c['birth_year']) ?></span>

@@ -418,6 +418,53 @@ h1, h2, h3, .book { font-family: var(--font-book); letter-spacing: 0; }
     .pc-book .actions .btn { flex: 1 1 auto; }
 }
 
+/* ---------- Общее для разделов (часть 6): бордюр ою под заголовком страницы ---------- */
+.ds-page-head > div:first-child::after { content: ""; display: block; height: 10px; max-width: 224px; margin-top: 10px; background: var(--oyu-band) repeat-x left center / 28px 10px; opacity: .8; }
+.hm-empty { font-family: var(--font-book); font-style: italic; font-size: 17px; }
+
+/* ---------- Отбасылар (часть 6): поколения на лентах, пара с кольцами ---------- */
+.fm-gen-head { gap: 10px; flex-wrap: nowrap; }
+.fm-gen-head h3.ribbon { margin: 0 16px; font-size: 18px; font-weight: 600; white-space: nowrap; }
+.fm-ancestors { border-color: var(--c-accent); }
+.fm-card-head .small { font-family: var(--font-book); font-style: italic; }
+.fm-pair { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 8px; }
+.fm-rings { width: 34px; height: 22px; align-self: center; }
+.fm-rings.is-apart { opacity: .4; }
+.fm-spouse .pc-label { display: flex; align-items: center; gap: 4px; font-family: var(--font-book); font-style: italic; font-size: 14px; text-transform: none; letter-spacing: 0; }
+.fm-spouse .pc-label .gmark { width: 14px; height: 14px; }
+.fm-name { font-family: var(--font-book); font-size: 18px; font-weight: 700; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.fm .pc-sub-title { font-family: var(--font-book); font-style: italic; }
+.fm .pc-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-book); font-size: 16px; font-weight: 600; }
+.fm .pc-tag .gmark { width: 13px; height: 13px; }
+.fm-foot { border-top: 1px dashed var(--c-border-strong); }
+@media (max-width: 480px) {
+    .fm-pair { grid-template-columns: 1fr; }
+    .fm-rings { justify-self: center; }
+    .fm-gen-head { flex-wrap: wrap; }
+    .fm-gen-head h3.ribbon { white-space: normal; font-size: 16px; }
+    .fm-gen-head .pp-gen-line { display: none; }
+}
+
+/* ---------- Есте қаларлық күндер (часть 6) ---------- */
+.dt-card-head .badge { gap: 4px; }
+.dt-today { border-color: var(--c-accent); background: linear-gradient(var(--c-accent-soft), var(--c-island) 70%); }
+.dt-link.name, .dt-names { font-family: var(--font-book); font-size: 19px; font-weight: 700; }
+.dt-and { font-family: var(--font-book); font-style: italic; margin: 0 2px; }
+.dt-what { font-family: var(--font-book); font-style: italic; font-size: 16px; }
+.dt-rings { background: transparent; border-color: var(--c-accent); }
+.dt-rings .couple-rings { width: 28px; height: 19px; }
+.dt-foot { border-top: 1px dashed var(--c-border-strong); }
+.dt-date { font-family: var(--font-book); font-size: 16px; }
+
+/* ---------- Тарих (часть 6) ---------- */
+.hs-empty .pp-sprout { display: block; width: 120px; height: 78px; margin: 0 auto 6px; color: var(--c-bark); }
+.hs-empty b { display: block; font-family: var(--font-book); font-size: 20px; font-style: normal; color: var(--c-text); }
+.hs-table td.col-opt-md b { font-family: var(--font-book); font-size: 16px; }
+
+/* ---------- Әкімшілік (часть 6): заголовки разделов книжным шрифтом ---------- */
+.ad-head h3 { font-family: var(--font-book); }
+.ad-head > .ic { color: var(--c-accent-text); }
+
 /* ---------- Телефон ---------- */
 @media (max-width: 900px) {
     .orn-corner { width: 44px; height: 44px; }

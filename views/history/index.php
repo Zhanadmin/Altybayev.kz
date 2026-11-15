@@ -62,8 +62,9 @@ require __DIR__ . '/../layout/master_start.php';
                 <tbody>
                     <?php if (empty($logs)): ?>
                         <tr>
-                            <td colspan="7" class="hm-empty">
-                                <?= $lang === 'ru' ? 'Записи аудита отсутствуют' : 'Өзгертулер журналы бос' ?>
+                            <td colspan="7" class="hm-empty hs-empty">
+                                <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
+                                <b><?= $lang === 'ru' ? 'Записи аудита отсутствуют' : 'Өзгертулер журналы бос' ?></b>
                             </td>
                         </tr>
                     <?php else: ?>

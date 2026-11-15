@@ -361,7 +361,7 @@ require __DIR__ . '/../layout/master_start.php';
                     </div>
 
                     <?php
-                    $renderZhurtPane = function (array $zhurtData, string $paneId, bool $isActive) use ($lang, $person) {
+                    $renderZhurtPane = function (array $zhurtData, string $paneId, bool $isActive) use ($lang, $person, $pcLifeMeta) {
                         ?>
                         <div id="zhurtPane_<?= htmlspecialchars($paneId) ?>" style="display: <?= $isActive ? 'block' : 'none' ?>;">
                             <?php if (empty($zhurtData['families']) && empty($zhurtData['standalone'])): ?>

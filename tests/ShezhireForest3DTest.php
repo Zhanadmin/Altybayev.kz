@@ -51,13 +51,16 @@ $jsCheck = shell_exec("node --check \"{$forest3dJs}\" 2>&1");
 assertCheck(empty(trim((string)$jsCheck)), 'Синтаксис shezhire-forest-3d.js валиден (node --check OK)');
 
 $forestContent = file_get_contents($forest3dJs);
-assertCheck(strpos($forestContent, 'ShezhireAudioEngine') !== false, 'ShezhireAudioEngine (Web Audio API) реализован');
-assertCheck(strpos($forestContent, 'ShezhireAtmosphere') !== false, 'ShezhireAtmosphere (Скайбокс, God Rays, туман) реализован');
-assertCheck(strpos($forestContent, 'ShezhireTerrain') !== false, 'ShezhireTerrain (Холмы, трава, цветы) реализован');
-assertCheck(strpos($forestContent, 'ShezhireTreeGenerator') !== false, 'ShezhireTreeGenerator (Байтерек Керей и рощи) реализован');
-assertCheck(strpos($forestContent, 'ShezhireControls') !== false, 'ShezhireControls (First-Person PointerLock + Orbit + Touch) реализован');
-assertCheck(strpos($forestContent, 'ShezhireRaycaster') !== false, 'ShezhireRaycaster (Интерактивный прицел и карточки) реализован');
+// TASK-016: лес переделан — дерево = род по отцу, линии = только браки (старые аудио/атмосфера убраны)
+assertCheck(strpos($forestContent, 'function buildForestModel') !== false, 'buildForestModel (модель леса из данных) реализован');
+assertCheck(strpos($forestContent, 'class ForestCamera') !== false, 'ForestCamera (мышь, клавиши, тач) реализован');
+assertCheck(strpos($forestContent, 'showIntro') !== false, 'Подсказка при входе реализована');
+assertCheck(strpos($forestContent, 'focusMine') !== false, 'Кнопка «Показать мой род» реализована');
+assertCheck(strpos($forestContent, '/api/person/ush-zhurt') !== false, 'Карточка человека с үш жұрт реализована');
+assertCheck(strpos($forestContent, 'Math.random') === false, 'Нет случайных линий и случайной раскладки');
 assertCheck(strpos($forestContent, 'ShezhireForest3D') !== false, 'ShezhireForest3D экспорт доступен');
+$modelTest = shell_exec('node "' . __DIR__ . '/Task016Forest3DModelTest.js" 2>&1');
+assertCheck(strpos((string)$modelTest, '[SUCCESS]') !== false, 'Модель леса: tests/Task016Forest3DModelTest.js пройден');
 
 // 3. Проверка интеграции в views/tree.php
 echo "\n3. Проверка интеграции в views/tree.php:\n";

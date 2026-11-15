@@ -457,6 +457,51 @@ class TreeLayoutService
             }
         }
 
+        // TASK-015: корни без видимых родителей (напр. родители жены) стартуют с 0 и оставались
+        // в одном ряду с самыми дальними предками (родителями мамы). Опускаем такую пару
+        // непосредственно над её ребёнком с самым ранним поколением: поколение = min(дети) - 1.
+        $visibleSet = array_flip($visibleIds);
+        for ($iter = 0; $iter < 25; $iter++) {
+            $changed = false;
+            foreach ($visibleIds as $id) {
+                if (!empty($parentsMap[$id]['father']) && isset($visibleSet[$parentsMap[$id]['father']])) continue;
+                if (!empty($parentsMap[$id]['mother']) && isset($visibleSet[$parentsMap[$id]['mother']])) continue;
+
+                // Пара/группа супругов: все без видимых родителей
+                $group = [$id];
+                $ok = true;
+                foreach ($spousesMap[$id] ?? [] as $spId) {
+                    if (!isset($visibleSet[$spId])) continue;
+                    if ((!empty($parentsMap[$spId]['father']) && isset($visibleSet[$parentsMap[$spId]['father']]))
+                        || (!empty($parentsMap[$spId]['mother']) && isset($visibleSet[$parentsMap[$spId]['mother']]))) {
+                        $ok = false;
+                        break;
+                    }
+                    $group[] = $spId;
+                }
+                if (!$ok) continue;
+
+                $minChild = null;
+                foreach ($group as $gId) {
+                    foreach ($childrenMap[$gId] ?? [] as $cId) {
+                        if (isset($visibleSet[$cId])) {
+                            $minChild = ($minChild === null) ? $generations[$cId] : min($minChild, $generations[$cId]);
+                        }
+                    }
+                }
+                if ($minChild === null) continue;
+
+                $target = $minChild - 1;
+                foreach ($group as $gId) {
+                    if ($generations[$gId] < $target) {
+                        $generations[$gId] = $target;
+                        $changed = true;
+                    }
+                }
+            }
+            if (!$changed) break;
+        }
+
         return $generations;
     }
 

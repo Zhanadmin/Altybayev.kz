@@ -4930,16 +4930,31 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const mount = document.getElementById('forest3dMount');
             if (!mount) return;
 
-            if (typeof ShezhireForest3D !== 'undefined') {
+            if (typeof ShezhireForest3D !== 'undefined' && typeof THREE !== 'undefined') {
+                // TASK-016: лес родов — дерево = род по отцу, линии = только браки
                 if (!forest3DApp) {
+                    try {
                     forest3DApp = new ShezhireForest3D({
                         container: mount,
                         treeData: treeData,
+                        lang: currentLang,
+                        userPersonId: (treeData && treeData.user_person_id) || userPersonId,
                         onPersonSelect: function(person) {
                             selectPerson(person.id);
+                        },
+                        onOpenUshZhurt: function(personId) {
+                            openUshZhurtModal(personId);
                         }
                     });
+                    } catch (e) {
+                        console.error('ShezhireForest3D:', e);
+                        forest3DApp = null;
+                    }
                 } else {
+                    if (typeof forest3DApp.setLang === 'function') forest3DApp.setLang(currentLang);
+                    if (forest3DApp.treeData !== treeData && typeof forest3DApp.setData === 'function') {
+                        forest3DApp.setData(treeData);
+                    }
                     forest3DApp.onWindowResize();
                 }
             } else {

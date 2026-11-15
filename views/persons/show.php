@@ -38,30 +38,46 @@ require __DIR__ . '/../layout/master_start.php';
 
 <div class="pc">
 
-    <!-- Заголовок карточки: фото, имя, статус, действия -->
-    <div class="ds-page-head pc-head">
-        <div class="pc-head-main">
-            <div class="avatar avatar-lg pc-avatar<?= $isMale ? ' is-m' : ' is-f' ?><?= $isDeceased ? ' deceased' : '' ?>">
+    <!-- TASK-012: заголовок карточки — страница семейной книги: фото в рисованной рамке, имя на ленте, годы, действия -->
+    <div class="island book-page pc-book">
+        <svg class="orn orn-corner tl" aria-hidden="true"><use href="#o-corner"/></svg><svg class="orn orn-corner tr" aria-hidden="true"><use href="#o-corner"/></svg>
+        <svg class="orn orn-corner bl" aria-hidden="true"><use href="#o-corner"/></svg><svg class="orn orn-corner br" aria-hidden="true"><use href="#o-corner"/></svg>
+        <div class="photo-frame">
+            <div class="oval<?= $isMale ? ' is-m' : ' is-f' ?><?= $isDeceased ? ' deceased' : '' ?>">
                 <?php if (!empty($person['avatar_path'])): ?>
                     <img id="personAvatarImg" src="<?= htmlspecialchars((string)$person['avatar_path']) ?>" alt="<?= htmlspecialchars($fullName) ?>">
                 <?php else: ?>
                     <span id="personAvatarImg"><?= htmlspecialchars($initials ?: 'Ш') ?></span>
                 <?php endif; ?>
             </div>
-            <div class="pc-head-text">
-                <h1><?= htmlspecialchars($fullName) ?></h1>
-                <div class="sub pc-head-sub">
-                    <?php if ($isDeceased): ?>
-                        <span class="badge badge-accent"><?= $lang === 'ru' ? 'Ушедший(ая) предок' : 'Уақыттан озған баба' ?></span>
-                    <?php else: ?>
-                        <span class="badge badge-success"><span class="pc-dot" aria-hidden="true"></span><?= $lang === 'ru' ? 'Живущий(ая) родственник' : 'Тірі ұрпақ' ?></span>
-                    <?php endif; ?>
-                    <span><?= htmlspecialchars($birthDisp) ?><?= $isDeceased ? ' — ' . htmlspecialchars($deathDisp) : '' ?></span>
-                    <?php if (!empty($person['maiden_name'])): ?>
-                        <span>· <?= $lang === 'ru' ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
+            <!-- рисованная рамка: мүйіз сверху, венок из листьев снизу (у марқұм — золотые листья) -->
+            <svg class="wreath" viewBox="0 0 168 196" aria-hidden="true" focusable="false">
+                <use href="#o-horn" x="62" y="-8" width="44" height="26" class="pc-horn"/>
+                <path d="M40,150 C52,178 74,188 84,190 C94,188 116,178 128,150" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <?php $leafId = $isDeceased ? '#m-leafG' : '#m-leaf'; ?>
+                <use href="<?= $leafId ?>" x="34" y="150" width="22" height="14" transform="rotate(-120 45 157)"/>
+                <use href="<?= $leafId ?>" x="46" y="166" width="22" height="14" transform="rotate(-150 57 173)"/>
+                <use href="<?= $leafId ?>" x="60" y="176" width="20" height="13" transform="rotate(-170 70 182)"/>
+                <use href="<?= $leafId ?>" x="112" y="150" width="22" height="14" transform="rotate(-60 123 157)"/>
+                <use href="<?= $leafId ?>" x="100" y="166" width="22" height="14" transform="rotate(-30 111 173)"/>
+                <use href="<?= $leafId ?>" x="88" y="176" width="20" height="13" transform="rotate(-10 98 182)"/>
+                <circle cx="84" cy="190" r="4" fill="#f3b3bd"/><circle cx="84" cy="190" r="1.6" fill="#e3b343"/>
+            </svg>
+        </div>
+        <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg<?= $isDeceased ? ' gold' : '' ?>"><?= htmlspecialchars($fullName) ?></h1></div>
+        <div class="years"><b><?= htmlspecialchars($birthDisp) ?><?= $isDeceased ? ' — ' . htmlspecialchars($deathDisp) : '' ?></b></div>
+        <?php if (!empty($person['birth_place'])): ?>
+            <div class="place"><?= htmlspecialchars((string)$person['birth_place']) ?></div>
+        <?php endif; ?>
+        <div class="chips">
+            <?php if ($isDeceased): ?>
+                <span class="badge badge-accent"><?= $lang === 'ru' ? 'Ушедший(ая) предок' : 'Уақыттан озған баба' ?></span>
+            <?php else: ?>
+                <span class="badge badge-leaf"><svg class="gmark" aria-hidden="true"><use href="<?= $isMale ? '#g-m' : '#g-f' ?>"/></svg><?= $lang === 'ru' ? 'Живущий(ая) родственник' : 'Тірі ұрпақ' ?></span>
+            <?php endif; ?>
+            <?php if (!empty($person['maiden_name'])): ?>
+                <span class="badge"><?= $lang === 'ru' ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
+            <?php endif; ?>
         </div>
 
         <div class="actions">
@@ -123,7 +139,7 @@ require __DIR__ . '/../layout/master_start.php';
 
             <!-- Краткая информация о роде -->
             <div class="island">
-                <div class="island-head"><h3><?= $lang === 'ru' ? 'Родовая принадлежность (Ру)' : 'Рулық мәліметі' ?></h3></div>
+                <div class="island-head pc-kin-head"><svg class="orn orn-horn pc-horn-sm" aria-hidden="true"><use href="#o-horn"/></svg><h3><?= $lang === 'ru' ? 'Родовая принадлежность (Ру)' : 'Рулық мәліметі' ?></h3></div>
                 <dl class="props pc-props-tight">
                     <dt><?= $lang === 'ru' ? 'Род (Ру)' : 'Руы' ?></dt>
                     <dd><?= htmlspecialchars((string)($person['clan_ru'] ?: ($lang === 'ru' ? 'не указан' : 'белгісіз'))) ?></dd>
@@ -142,7 +158,7 @@ require __DIR__ . '/../layout/master_start.php';
 
             <!-- Основные даты и места, биография -->
             <div class="island">
-                <div class="island-head"><h3><?= htmlspecialchars(I18n::t('personal_info')) ?></h3></div>
+                <div class="island-head pc-kin-head"><svg class="orn orn-branch pc-branch" aria-hidden="true"><use href="#o-branch"/></svg><h3><?= htmlspecialchars(I18n::t('personal_info')) ?></h3></div>
                 <dl class="props">
                     <dt><?= htmlspecialchars(I18n::t('field_birth_date')) ?></dt>
                     <dd><?= htmlspecialchars($birthDisp) ?></dd>
@@ -178,7 +194,7 @@ require __DIR__ . '/../layout/master_start.php';
             <!-- Ата-анасы мен ерлі-зайыптылары -->
             <div class="grid pc-grid-2">
                 <div class="island">
-                    <div class="island-head"><h3><?= htmlspecialchars(I18n::t('parents_title')) ?></h3></div>
+                    <div class="island-head pc-kin-head"><svg class="gmark" aria-hidden="true"><use href="#g-m"/></svg><h3><?= htmlspecialchars(I18n::t('parents_title')) ?></h3></div>
                     <div class="list">
                         <?php foreach ([['p' => $father, 'label' => I18n::t('father_label'), 'none' => ($lang === 'ru' ? 'Не указан' : 'Көрсетілмеген')],
                                         ['p' => $mother, 'label' => I18n::t('mother_label'), 'none' => ($lang === 'ru' ? 'Не указана' : 'Көрсетілмеген')]] as $par): ?>
@@ -210,7 +226,7 @@ require __DIR__ . '/../layout/master_start.php';
                 </div>
 
                 <div class="island">
-                    <div class="island-head"><h3><?= htmlspecialchars(I18n::t('spouses_title')) ?></h3><span class="more"><?= count($spouses) ?></span></div>
+                    <div class="island-head pc-kin-head"><svg class="couple-rings" aria-hidden="true"><use href="#o-rings"/></svg><h3><?= htmlspecialchars(I18n::t('spouses_title')) ?></h3><span class="more"><?= count($spouses) ?></span></div>
                     <?php if (empty($spouses)): ?>
                         <div class="muted"><?= $lang === 'ru' ? 'Сведения о браке отсутствуют' : 'Неке туралы мәлімет жоқ' ?></div>
                     <?php else: ?>
@@ -243,7 +259,7 @@ require __DIR__ . '/../layout/master_start.php';
 
             <!-- Балалары (Дети) -->
             <div class="island">
-                <div class="island-head"><h3><?= htmlspecialchars(I18n::t('children_title')) ?></h3><span class="more"><?= count($children) ?></span></div>
+                <div class="island-head pc-kin-head"><svg class="orn pc-sprout" aria-hidden="true"><use href="#o-sprout"/></svg><h3><?= htmlspecialchars(I18n::t('children_title')) ?></h3><span class="more"><?= count($children) ?></span></div>
                 <?php if (empty($children)): ?>
                     <div class="muted"><?= $lang === 'ru' ? 'Дети не зарегистрированы' : 'Балалары тіркелмеген' ?></div>
                 <?php else: ?>
@@ -267,7 +283,7 @@ require __DIR__ . '/../layout/master_start.php';
             <!-- Бауырлары (Братья и сёстры) -->
             <?php if (!empty($siblings)): ?>
                 <div class="island">
-                    <div class="island-head"><h3><?= htmlspecialchars(I18n::t('brothers_sisters')) ?></h3><span class="more"><?= count($siblings) ?></span></div>
+                    <div class="island-head pc-kin-head"><svg class="gmark" aria-hidden="true"><use href="#g-f"/></svg><h3><?= htmlspecialchars(I18n::t('brothers_sisters')) ?></h3><span class="more"><?= count($siblings) ?></span></div>
                     <div class="pc-people">
                         <?php foreach ($siblings as $sib):
                             $sibIsMale = ($sib['gender'] === 'M');
@@ -356,7 +372,7 @@ require __DIR__ . '/../layout/master_start.php';
                                                     <?php else: ?>
                                                         <span class="muted">Белгісіз</span>
                                                     <?php endif; ?>
-                                                    <span class="pc-plus">+</span>
+                                                    <svg class="couple-rings pc-plus" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
                                                     <?php if ($w): ?>
                                                         <a href="/person/<?= (int)$w['id'] ?>"><?= htmlspecialchars($wName) ?></a>
                                                         <?php if (!empty($fam['wife_kinship']['term_kk'])): ?>

@@ -395,6 +395,29 @@ h1, h2, h3, .book { font-family: var(--font-book); letter-spacing: 0; }
     .pp-gen-line { display: none; }
 }
 
+/* ---------- Карточка человека (часть 5): лист книги, рамка по полу, группы родни ---------- */
+.pc-book .photo-frame .oval.is-f { background: var(--c-tulip-soft); color: var(--c-tulip); }
+.pc-book .photo-frame .oval.deceased { background: var(--c-accent-soft); color: var(--c-accent-text); }
+.pc-book .photo-frame .oval > span { line-height: 1; }
+.pc-book .wreath .pc-horn { color: var(--c-accent); }
+.pc-book h1.ribbon { overflow-wrap: anywhere; }
+.pc-book .ribbon-wrap { margin-top: 8px; }
+.pc-book .chips .badge { gap: 4px; }
+.pc-book .chips .gmark { width: 14px; height: 14px; }
+.pc-kin-head { gap: 8px; }
+.pc-kin-head .gmark { width: 18px; height: 18px; }
+.pc-kin-head .couple-rings { width: 30px; height: 20px; }
+.pc-kin-head .pc-sprout { width: 34px; height: 22px; color: var(--c-bark); }
+.pc-kin-head .pc-branch { width: 56px; height: 18px; flex: 0 0 auto; }
+.pc-kin-head .orn-horn.pc-horn-sm { width: 30px; height: 20px; }
+.pc-family-names .pc-plus { width: 26px; height: 17px; }
+.pc-family summary { font-family: var(--font-book); font-size: 17px; }
+.pc-family-names a { font-weight: 700; }
+@media (max-width: 480px) {
+    .pc-book { padding: 26px 14px 20px; }
+    .pc-book .actions .btn { flex: 1 1 auto; }
+}
+
 /* ---------- Телефон ---------- */
 @media (max-width: 900px) {
     .orn-corner { width: 44px; height: 44px; }

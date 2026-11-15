@@ -208,7 +208,19 @@ class FamilyController
         }
         unset($group);
 
+        // TASK-018: число фото/видео в альбомах семьи (если миграция альбомов уже применена)
+        $albumCounts = [];
+        try {
+            $albumSvc = new \App\Services\AlbumService($db);
+            if ($albumSvc->isReady()) {
+                $albumCounts = $albumSvc->mediaCountByFamily();
+            }
+        } catch (\Throwable $e) {
+            $albumCounts = [];
+        }
+
         Response::view('families/index', [
+            'albumCounts'      => $albumCounts,
             'user'             => $user,
             'userPersonId'     => $userPersonId,
             'families'         => $families,

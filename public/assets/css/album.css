@@ -1,0 +1,99 @@
+/* TASK-018: фотоальбомы семей и мероприятий — на переменных дизайн-системы (светлая и тёмная тема) */
+
+.al-head-orn { width: 92px; height: 54px; color: var(--c-accent); opacity: .55; flex: none; }
+.al-meta { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin-top: var(--sp-2); color: var(--c-text-2); font-size: var(--fs-sm); }
+.al-meta .ic { width: 16px; height: 16px; }
+.al-desc { margin-top: var(--sp-3); color: var(--c-text); white-space: pre-line; max-width: 72ch; }
+.al-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-2); }
+.al-chips a.badge { text-decoration: none; }
+
+/* Карточки альбомов / мероприятий */
+.al-cards { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.al-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; text-decoration: none; color: inherit; transition: transform .15s ease, box-shadow .15s ease; }
+.al-card:hover { transform: translateY(-2px); }
+.al-card:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+.al-cover { position: relative; aspect-ratio: 4 / 3; background: var(--c-island-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.al-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.al-cover .al-cover-orn { width: 46%; height: 46%; color: var(--c-accent); opacity: .45; }
+.al-cover .al-count { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,.55); color: #fff; border-radius: 999px; padding: 2px 10px; font-size: var(--fs-xs); font-weight: 600; }
+.al-card-body { padding: var(--sp-3) var(--sp-4) var(--sp-4); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.al-card-body b { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.25rem; line-height: 1.15; overflow-wrap: anywhere; }
+.al-card-body .small { color: var(--c-text-2); }
+.al-card.is-new { border: 2px dashed var(--c-border-strong); background: transparent; box-shadow: none; align-items: center; justify-content: center; min-height: 200px; gap: var(--sp-2); color: var(--c-text-2); cursor: pointer; font: inherit; }
+.al-card.is-new .ic { width: 30px; height: 30px; }
+
+/* Панель загрузки */
+.al-drop { border: 2px dashed var(--c-border-strong); border-radius: var(--r-lg, 16px); padding: var(--sp-5, 24px) var(--sp-4); text-align: center; color: var(--c-text-2); transition: background .15s, border-color .15s; }
+.al-drop.is-over { background: var(--c-accent-soft); border-color: var(--c-accent); }
+.al-drop .ic { width: 34px; height: 34px; color: var(--c-accent); }
+.al-drop b { display: block; color: var(--c-text); margin: 6px 0 2px; }
+.al-drop .btn { margin-top: var(--sp-3); }
+.al-upload-opts { display: grid; gap: var(--sp-3); grid-template-columns: 1fr 180px; margin-top: var(--sp-3); }
+@media (max-width: 640px) { .al-upload-opts { grid-template-columns: 1fr; } }
+
+.al-queue { display: flex; flex-direction: column; gap: 6px; margin-top: var(--sp-3); }
+.al-q { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; font-size: var(--fs-sm); }
+.al-q .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-q .st { color: var(--c-text-2); font-variant-numeric: tabular-nums; }
+.al-q.is-err .st { color: var(--c-danger); white-space: normal; }
+.al-q.is-ok .st { color: var(--c-success); }
+.al-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--c-island-2); overflow: hidden; }
+.al-bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--c-accent), #c99a35); transition: width .2s; }
+.al-q.is-err .al-bar > i { background: var(--c-danger); }
+
+/* Сетка превью */
+.al-grid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+@media (max-width: 520px) { .al-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; } }
+.al-tile { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--c-island-2); cursor: zoom-in; display: block; width: 100%; }
+@media (max-width: 520px) { .al-tile { border-radius: 4px; } }
+.al-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s; }
+.al-tile:hover img { transform: scale(1.04); }
+.al-tile:focus-visible { outline: 3px solid var(--c-accent); outline-offset: 2px; }
+.al-tile .al-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.al-tile .al-play span { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; }
+.al-tile .al-play svg { width: 20px; height: 20px; fill: #fff; margin-left: 3px; }
+.al-tile .al-dur { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; border-radius: 6px; padding: 1px 6px; }
+.al-tile .al-noposter { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--c-text-3); }
+.al-tile .al-noposter .ic { width: 36px; height: 36px; }
+
+/* Полноэкранный просмотр */
+.al-lb { position: fixed; inset: 0; z-index: 1000; background: rgba(12, 12, 11, .96); display: none; flex-direction: column; color: #f1efe8; overscroll-behavior: contain; }
+.al-lb-vidmsg { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); background: rgba(0,0,0,.7); color: #fff; padding: 8px 14px; border-radius: 10px; font-size: var(--fs-sm); text-align: center; max-width: 90%; }
+.al-lb-vidmsg a { color: #f3d58c; }
+.al-lb.is-open { display: flex; }
+.al-lb-top { display: flex; align-items: center; gap: 6px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); }
+.al-lb-top .spacer { flex: 1; }
+.al-lb-top .al-lb-count { font-size: var(--fs-sm); opacity: .75; font-variant-numeric: tabular-nums; }
+.al-lb .btn-lb { background: rgba(255,255,255,.08); color: #f1efe8; border: 0; border-radius: 999px; min-width: 40px; height: 40px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; text-decoration: none; font: inherit; font-size: var(--fs-sm); }
+.al-lb .btn-lb:hover { background: rgba(255,255,255,.18); }
+.al-lb .btn-lb .ic { width: 20px; height: 20px; }
+.al-lb .btn-lb.danger:hover { background: rgba(215, 90, 80, .35); }
+.al-lb-stage { touch-action: none; overscroll-behavior: contain; }
+.al-lb-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
+.al-lb-stage img, .al-lb-stage video { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; transition: transform .2s ease; }
+.al-lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 64px; border: 0; background: rgba(255,255,255,.06); color: #fff; cursor: pointer; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.al-lb-nav:hover { background: rgba(255,255,255,.16); }
+.al-lb-nav .ic { width: 26px; height: 26px; }
+.al-lb-nav.prev { left: 10px; }
+.al-lb-nav.next { right: 10px; }
+@media (hover: none) { .al-lb-nav { display: none; } }
+.al-lb-info { padding: 10px 16px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); max-height: 34vh; overflow: auto; }
+.al-lb-info .cap { font-size: var(--fs-md); white-space: pre-line; }
+.al-lb-info .sub { font-size: var(--fs-xs); opacity: .7; margin-top: 4px; }
+.al-lb-info .ppl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.al-lb-info .ppl a { color: #f1efe8; background: rgba(255,255,255,.1); border-radius: 999px; padding: 3px 10px; font-size: var(--fs-xs); text-decoration: none; }
+.al-lb-info .ppl a:hover { background: rgba(255,255,255,.2); }
+
+/* Выбор людей (чипы) */
+.al-picker { display: flex; flex-direction: column; gap: 6px; }
+.al-picker .al-picked { display: flex; flex-wrap: wrap; gap: 6px; }
+.al-picker .al-picked .badge { gap: 4px; }
+.al-picker .al-picked button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0 0 0 2px; font-size: 14px; line-height: 1; }
+
+.al-empty { text-align: center; padding: var(--sp-6, 32px) var(--sp-4); color: var(--c-text-2); }
+.al-empty svg { width: 140px; height: 90px; color: var(--c-accent); }
+.al-note { font-size: var(--fs-xs); color: var(--c-text-3); }
+.al-section-title { display: flex; align-items: center; gap: var(--sp-2); margin: var(--sp-5, 24px) 0 var(--sp-3); }
+.al-section-title h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; font-weight: 600; }
+.al-section-title .line { flex: 1; height: 1px; background: var(--c-border); }
+.al-fam-btn { margin-left: auto; }

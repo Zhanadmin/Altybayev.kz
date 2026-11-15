@@ -164,6 +164,20 @@ require __DIR__ . '/../layout/master_start.php';
                         ?>
                             <span class="badge" title="<?= htmlspecialchars($kinshipText) ?>"><?= htmlspecialchars($kinshipText) ?></span>
                         <?php endif; ?>
+                        <?php
+                            // TASK-018: «Создать мероприятие» из даты — откроется форма с заполненным названием, датой и участниками
+                            $evKind = ['birthday' => 'birthday', 'death_anniversary' => 'memorial', 'wedding' => 'wedding'][$type] ?? 'other';
+                            $evQuery = ['kind' => $evKind, 'date' => (string)($ev['event_date'] ?? '')];
+                            if ($type === 'wedding') {
+                                $evQuery['marriage_id'] = (int)($ev['marriage_id'] ?? 0);
+                            } else {
+                                $evQuery['person_id'] = (int)($ev['person_id'] ?? 0);
+                            }
+                        ?>
+                        <a class="btn btn-sm btn-ghost" href="/events?<?= htmlspecialchars(http_build_query($evQuery)) ?>"
+                           data-tip="<?= $lang === 'ru' ? 'Создать мероприятие с фотоальбомом' : 'Фотоальбомы бар іс-шара құру' ?>">
+                            <svg class="ic dt-ic" aria-hidden="true"><use href="#i-camera"/></svg><?= $lang === 'ru' ? 'Мероприятие' : 'Іс-шара' ?>
+                        </a>
                     </div>
                 </article>
             <?php endforeach; ?>

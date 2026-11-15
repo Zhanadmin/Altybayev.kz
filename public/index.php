@@ -75,6 +75,24 @@ $router->get('/tree/print', 'App\Controllers\PrintPosterController@index', ['aut
 $router->get('/api/tree/print-data', 'App\Controllers\PrintPosterController@apiData', ['auth']);
 $router->get('/tree/print/svg', 'App\Controllers\PrintPosterController@downloadSvg', ['auth']);
 
+// TASK-018: фотоальбомы семей и мероприятий (фото и видео; файлы вне public, выдача после входа)
+$router->get('/family/{id}/albums', 'App\Controllers\AlbumController@familyAlbums', ['auth']);
+$router->get('/album/media', 'App\Controllers\AlbumController@serve', ['auth']); // до /album/{id}
+$router->get('/album/{id}', 'App\Controllers\AlbumController@show', ['auth']);
+$router->get('/events', 'App\Controllers\AlbumController@events', ['auth']);
+$router->get('/event/{id}', 'App\Controllers\AlbumController@event', ['auth']);
+$router->post('/api/album/save', 'App\Controllers\AlbumController@apiSaveAlbum', ['auth']);
+$router->post('/api/album/delete', 'App\Controllers\AlbumController@apiDeleteAlbum', ['auth']);
+$router->post('/api/event/save', 'App\Controllers\AlbumController@apiSaveEvent', ['auth']);
+$router->post('/api/event/delete', 'App\Controllers\AlbumController@apiDeleteEvent', ['auth']);
+$router->post('/api/album/upload/init', 'App\Controllers\AlbumController@apiUploadInit', ['auth']);
+$router->post('/api/album/upload/chunk', 'App\Controllers\AlbumController@apiUploadChunk', ['auth']);
+$router->post('/api/album/upload/complete', 'App\Controllers\AlbumController@apiUploadComplete', ['auth']);
+$router->post('/api/album/upload/cancel', 'App\Controllers\AlbumController@apiUploadCancel', ['auth']);
+$router->post('/api/album/media/update', 'App\Controllers\AlbumController@apiMediaUpdate', ['auth']);
+$router->post('/api/album/media/delete', 'App\Controllers\AlbumController@apiMediaDelete', ['auth']);
+$router->post('/api/album/media/avatar', 'App\Controllers\AlbumController@apiSetAvatar', ['auth']);
+
 // 6. Админ-панель: Импорт GEDCOM из MyHeritage и управление откатами (TASK-005)
 $router->get('/admin/import', 'App\Controllers\AdminImportController@index', ['auth', 'admin']);
 $router->get('/admin/import/preview', 'App\Controllers\AdminImportController@preview', ['auth', 'admin']);

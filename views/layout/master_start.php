@@ -53,6 +53,7 @@ $navItems = [
     'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => '71',  'group' => 1],
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
+    'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => ($lang === 'ru' ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
     'history'  => ['href' => '/history',  'icon' => 'i-history',  'label' => I18n::t('nav_history'),  'count' => null,  'group' => 2],
 ];
 if ($isAdmin) {

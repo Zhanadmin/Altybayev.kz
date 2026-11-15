@@ -729,6 +729,23 @@ class TreeLayoutService
             }
         }
 
+        // TASK-015: родители ұзатылған дочери (корень без детей-юнитов) стоят прямо над ней,
+        // а не в конце ряда корней. Центрируем пару над карточкой дочери; наложения разрулит шаг 6.
+        foreach ($rootUnits as $rId) {
+            if (!empty($units[$rId]['children_units'])) continue;
+            $daughterCenters = [];
+            foreach ($units[$rId]['members'] as $memId) {
+                foreach ($childrenMap[$memId] ?? [] as $cId) {
+                    if (!isset($uzatylganUnits[$cId]) || !isset($personToUnitMap[$cId])) continue;
+                    $du = $units[$personToUnitMap[$cId]];
+                    $idx = array_search($cId, $du['members'], true);
+                    $daughterCenters[] = $du['x'] + $idx * (self::CARD_WIDTH + self::GAP_SPOUSE) + self::CARD_WIDTH / 2.0;
+                }
+            }
+            if (empty($daughterCenters)) continue;
+            $units[$rId]['x'] = array_sum($daughterCenters) / count($daughterCenters) - $units[$rId]['width'] / 2.0;
+        }
+
         // 6. Устранение горизонтальных пересечений по каждому поколению
         $unitsByGen = [];
         foreach ($units as $uId => $u) {

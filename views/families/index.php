@@ -169,6 +169,10 @@ require __DIR__ . '/../layout/master_start.php';
                                     <a href="/tree?focus=<?= $focalId ?>" class="btn btn-sm btn-ghost">
                                         <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= $lang === 'ru' ? 'Показать семью в древе' : 'Древода көрсету' ?>
                                     </a>
+                                    <?php /* TASK-018: фотоальбом семьи */ $famMedia = (int)(($albumCounts ?? [])[(int)$m['id']] ?? 0); ?>
+                                    <a href="/family/<?= (int)$m['id'] ?>/albums" class="btn btn-sm btn-ghost">
+                                        <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg><?= $lang === 'ru' ? 'Фотоальбом' : 'Фотоальбом' ?><?= $famMedia > 0 ? ' · ' . $famMedia : '' ?>
+                                    </a>
                                 </div>
                             <?php endif; ?>
                         </article>

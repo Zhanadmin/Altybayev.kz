@@ -98,8 +98,10 @@ $dsThemeReady = !empty($dsThemeReady);
     <?php endif; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <!-- TASK-012: заголовки — Cormorant Garamond, текст — PT Sans (обе с казахскими буквами ә ғ қ ң ө ұ ү һ і) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
+    <link rel="stylesheet" href="/assets/css/book.css?v=1">
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
         .ds-clan-switch { cursor: pointer; }
@@ -152,6 +154,58 @@ $dsThemeReady = !empty($dsThemeReady);
         <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></symbol>
         <!-- Тамга-заглушка: реальную тамгу рода подставит Жандос -->
         <symbol id="i-tamga" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7c0 3 2.7 5 6 5s6-2 6-5"/><path d="M8 21h8"/></symbol>
+        <symbol id="i-candle" viewBox="0 0 24 24"><path d="M9 21V11h6v10"/><path d="M12 11V8"/><path d="M12 3c1.5 1.6 1.5 3.4 0 4.6-1.5-1.2-1.5-3 0-4.6z"/><path d="M6 21h12"/></symbol>
+    </svg>
+
+    <!-- TASK-012: мотивы Шежіре-Орман (цветные SVG, без эмодзи и фильтров): лист, тюльпан, ветвь, мүйіз, уголок, кольца -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <defs>
+            <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9cc163"/><stop offset="1" stop-color="#4f7d2b"/></linearGradient>
+            <linearGradient id="gLeaf2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aa548"/><stop offset="1" stop-color="#3c6421"/></linearGradient>
+            <linearGradient id="gLeafG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1d27a"/><stop offset="1" stop-color="#b9861f"/></linearGradient>
+            <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e2a0"/><stop offset=".5" stop-color="#c99a35"/><stop offset="1" stop-color="#8f6a1f"/></linearGradient>
+        </defs>
+        <symbol id="m-leaf" viewBox="-2 -14 32 20"><path d="M0,0 C5,-9 17,-12 28,-4 C19,5 7,6 0,0 Z" fill="url(#gLeaf)"/><path d="M1,0 C9,-4 17,-5 26,-4" fill="none" stroke="#3d621f" stroke-width=".9"/></symbol>
+        <symbol id="m-leafG" viewBox="-2 -14 32 20"><path d="M0,0 C5,-9 17,-12 28,-4 C19,5 7,6 0,0 Z" fill="url(#gLeafG)"/><path d="M1,0 C9,-4 17,-5 26,-4" fill="none" stroke="#8a5f12" stroke-width=".9"/></symbol>
+        <!-- значок пола: ұл — лист, қыз — тюльпан; марқұм — золото -->
+        <symbol id="g-m" viewBox="-14 -14 28 28"><g transform="translate(-10,6) rotate(-40) scale(.8)"><path d="M0,0 C5,-9 17,-12 28,-4 C19,5 7,6 0,0 Z" fill="url(#gLeaf)"/><path d="M1,0 C9,-4 17,-5 26,-4" fill="none" stroke="#3d621f" stroke-width="1.1"/></g></symbol>
+        <symbol id="g-mG" viewBox="-14 -14 28 28"><g transform="translate(-10,6) rotate(-40) scale(.8)"><path d="M0,0 C5,-9 17,-12 28,-4 C19,5 7,6 0,0 Z" fill="url(#gLeafG)"/><path d="M1,0 C9,-4 17,-5 26,-4" fill="none" stroke="#8a5f12" stroke-width="1.1"/></g></symbol>
+        <symbol id="g-f" viewBox="-9 -14 18 24"><path d="M0,9 L0,0" stroke="#5f8a34" stroke-width="1.8"/><path d="M-5.5,-1 C-6.5,-7 -3.5,-11 0,-12 C3.5,-11 6.5,-7 5.5,-1 C3,1.2 -3,1.2 -5.5,-1 Z" fill="#e88b98"/><path d="M0,0 C-3,-3.5 -3,-8 0,-12 C3,-8 3,-3.5 0,0 Z" fill="#cf5b6d"/></symbol>
+        <symbol id="g-fG" viewBox="-9 -14 18 24"><path d="M0,9 L0,0" stroke="#8a6a2a" stroke-width="1.8"/><path d="M-5.5,-1 C-6.5,-7 -3.5,-11 0,-12 C3.5,-11 6.5,-7 5.5,-1 C3,1.2 -3,1.2 -5.5,-1 Z" fill="#e7c062"/><path d="M0,0 C-3,-3.5 -3,-8 0,-12 C3,-8 3,-3.5 0,0 Z" fill="#b8862a"/></symbol>
+        <!-- ветвь с листьями (разделитель заголовка) -->
+        <symbol id="o-branch" viewBox="0 0 150 26">
+            <path d="M2,16 C40,18 80,14 148,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <use href="#m-leaf" x="28" y="4" width="18" height="12" transform="rotate(-25 37 10)"/>
+            <use href="#m-leaf" x="44" y="12" width="16" height="10" transform="rotate(28 52 17)"/>
+            <use href="#m-leaf" x="74" y="2" width="18" height="12" transform="rotate(-30 83 8)"/>
+            <use href="#m-leaf" x="92" y="10" width="16" height="10" transform="rotate(25 100 15)"/>
+            <use href="#m-leaf" x="122" y="-1" width="18" height="12" transform="rotate(-15 131 5)"/>
+            <circle cx="64" cy="15" r="2.4" fill="#f3b3bd"/><circle cx="112" cy="11" r="2.2" fill="#e3b343"/>
+        </symbol>
+        <!-- қошқар мүйіз -->
+        <symbol id="o-horn" viewBox="-56 -44 112 68"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+            <path d="M0,0 C0,-26 22,-40 40,-30 C54,-22 50,-4 36,-4 C26,-4 24,-16 32,-18"/>
+            <path d="M0,0 C0,-26 -22,-40 -40,-30 C-54,-22 -50,-4 -36,-4 C-26,-4 -24,-16 -32,-18"/>
+            <path d="M0,0 L0,20 M-7,13 L0,20 L7,13"/></g></symbol>
+        <!-- угол листа: мүйіз + веточка -->
+        <symbol id="o-corner" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M4,40 V4 H40"/><path d="M10,34 V10 H34"/>
+            <path d="M10,10 C16,24 26,26 30,20 C33,15 28,11 24,14"/></g></symbol>
+        <!-- кольца у пар -->
+        <symbol id="o-rings" viewBox="-22 -15 44 30"><g fill="none" stroke-linecap="round">
+            <circle cx="-7" cy="1.5" r="10" stroke="#5b4214" stroke-width="4" opacity=".2"/><circle cx="8" cy="1.5" r="10" stroke="#5b4214" stroke-width="4" opacity=".2"/>
+            <circle cx="-7" cy="0" r="10" stroke="url(#gGold)" stroke-width="3.4"/><circle cx="7" cy="0" r="10" stroke="url(#gGold)" stroke-width="3.4"/>
+            <path d="M7,-10 A10,10 0 0 1 15,-6" stroke="#fff4cf" stroke-width="1.1"/></g>
+            <path d="M7,-15 L10,-11.5 L7,-8.5 L4,-11.5 Z" fill="#fffaf0" stroke="#a88232" stroke-width=".9"/></symbol>
+        <!-- тюльпан (большой) -->
+        <symbol id="o-tulip" viewBox="-20 -78 40 80">
+            <path d="M0,0 C-2,-18 1,-34 0,-46" fill="none" stroke="#5f8a34" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M0,-4 C-14,-12 -19,-27 -15,-40 C-9,-28 -4,-18 0,-10 Z" fill="url(#gLeaf)"/>
+            <path d="M0,-8 C12,-15 15,-26 12,-34 C7,-25 3,-18 0,-13 Z" fill="url(#gLeaf2)"/>
+            <path d="M-12,-50 C-14,-62 -8,-71 0,-75 C8,-71 14,-62 12,-50 C8,-44 -8,-44 -12,-50 Z" fill="#e88b98"/>
+            <path d="M0,-45 C-10,-47 -16,-57 -13,-70 C-7,-64 -3,-58 0,-52 Z" fill="#cf5b6d"/>
+            <path d="M0,-45 C10,-47 16,-57 13,-70 C7,-64 3,-58 0,-52 Z" fill="#f2a6b0"/>
+        </symbol>
     </svg>
 
     <!-- Оверлей мобильного меню -->
@@ -183,7 +237,10 @@ $dsThemeReady = !empty($dsThemeReady);
                 <?php endforeach; ?>
             </nav>
 
-            <div class="ds-sidebar-foot">altybayev.kz · 2026 · v2.1</div>
+            <div class="ds-sidebar-foot">
+                <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
+                <span>altybayev.kz · 2026 · v2.1</span>
+            </div>
         </aside>
 
         <!-- Рабочая область (белый остров) -->

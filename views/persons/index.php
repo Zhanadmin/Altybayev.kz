@@ -177,7 +177,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             </td>
 
             <!-- Жынысы -->
-            <td class="col-opt-lg"><span class="g-badge <?= $isMale ? 'is-m' : 'is-f' ?>"><span class="g-dot <?= $isMale ? 'is-m' : 'is-f' ?>"></span><?= htmlspecialchars($genderText) ?></span></td>
+            <td class="col-opt-lg"><span class="g-badge <?= $isMale ? 'is-m' : 'is-f' ?>"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= $isMale ? 'g-m' : 'g-f' ?><?= $isDeceased ? 'G' : '' ?>"/></svg><?= htmlspecialchars($genderText) ?></span></td>
 
             <!-- Руы -->
             <td class="col-opt-xl clip"><span class="badge" title="<?= htmlspecialchars($clanText) ?>"><?= htmlspecialchars($clanText) ?></span></td>
@@ -286,7 +286,7 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
 <div id="pp-top"></div>
 <?php if (empty($persons)): ?>
     <div class="island pp-empty">
-        <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+        <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
         <b><?= $lang === 'ru' ? 'Персоны не найдены' : 'Сұранысқа сай тұлғалар табылмады' ?></b>
         <span class="muted small"><?= $lang === 'ru' ? 'Попробуйте изменить поисковый запрос или сбросить фильтры' : 'Іздеу сөзін өзгертіп көріңіз немесе сүзгілерді тазартыңыз' ?></span>
     </div>
@@ -308,10 +308,11 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
                      title="<?= $lang === 'ru' ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
                     <div class="pp-group-head-main">
                         <svg class="ic pp-group-chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-                        <h3><?= htmlspecialchars($gTitle) ?></h3>
+                        <span class="ribbon-wrap"><h3 class="ribbon ribbon-sm"><?= htmlspecialchars($gTitle) ?></h3></span>
                         <span class="badge pp-group-count" data-initial-count="<?= $countInGroup ?>">
                             <?= $countInGroup ?> <?= $lang === 'ru' ? 'персон' : 'тұлға' ?>
                         </span>
+                        <span class="pp-gen-line" aria-hidden="true"></span>
                     </div>
                     <span class="pp-group-hint desktop-only muted small">
                         <span class="pp-hint-collapse"><?= $lang === 'ru' ? 'жию / свернуть' : 'жию' ?></span>

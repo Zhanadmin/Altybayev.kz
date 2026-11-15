@@ -30,7 +30,7 @@ $pageTitle = ($lang === 'ru') ? "{$siteTitle} — Вход в систему" : 
     <!-- TASK-012: шрифты с казахскими буквами и слой «Шежіре-кітап» -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
-    <link rel="stylesheet" href="/assets/css/book.css?v=2">
+    <link rel="stylesheet" href="/assets/css/book.css?v=3">
 </head>
 <body class="au-body">
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">

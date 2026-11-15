@@ -366,6 +366,35 @@ h1, h2, h3, .book { font-family: var(--font-book); letter-spacing: 0; }
 }
 .au-foot { font-family: var(--font-book); font-style: italic; font-size: 14px; }
 
+/* ---------- Адамдар (часть 4): поколения на лентах, пол — лист / тюльпан ---------- */
+.pp-group-head, .pp-group.is-collapsed .pp-group-head {
+    background: transparent; border-color: transparent; box-shadow: none; padding: 8px 6px;
+}
+.pp-group-head:hover, .pp-group.is-collapsed .pp-group-head:hover { background: var(--c-hover); border-color: var(--c-border); }
+.pp-group.is-collapsed .pp-group-head { border-bottom: 1px dashed var(--c-border-strong); border-radius: 0; }
+.pp-group.is-collapsed .ribbon { opacity: .8; }
+.pp-group-head:focus-visible { outline-offset: 4px; }
+.pp-group-head-main { flex: 1; }
+.pp-group-head-main h3.ribbon { margin: 0 16px; font-size: 18px; font-weight: 600; white-space: nowrap; }
+.pp-group-count { font-family: var(--font-book); font-style: italic; font-size: 14px; border: 0; background: transparent; color: var(--c-text-3); padding: 0; }
+.pp-gen-line { flex: 1; min-width: 20px; height: 1px; background: linear-gradient(90deg, var(--c-border-strong), transparent); }
+.pp-group-chevron { color: var(--c-accent-text); }
+.pp-group-hint { font-family: var(--font-book); font-style: italic; }
+.g-badge { gap: 4px; }
+.g-badge .gmark { width: 14px; height: 14px; }
+.pp-name { font-family: var(--font-book); font-size: 18px; font-weight: 700; }
+.pp-rel a { color: var(--c-text-2); }
+.pp-rel a:hover { color: var(--c-accent-text); }
+.pp-term { font-family: var(--font-book); font-style: italic; font-size: 16px; color: var(--c-accent-text); }
+.pp-empty .pp-sprout { width: 140px; height: 90px; color: var(--c-bark); }
+.pp-empty b { font-family: var(--font-book); font-size: 21px; }
+.pp-stats .badge { font-family: var(--font-book); font-size: 15px; }
+@media (max-width: 480px) {
+    .pp-group-head-main { gap: 8px; }
+    .pp-group-head-main h3.ribbon { white-space: normal; font-size: 16px; }
+    .pp-gen-line { display: none; }
+}
+
 /* ---------- Телефон ---------- */
 @media (max-width: 900px) {
     .orn-corner { width: 44px; height: 44px; }

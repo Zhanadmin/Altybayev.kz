@@ -101,7 +101,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <!-- TASK-012: заголовки — Cormorant Garamond, текст — PT Sans (обе с казахскими буквами ә ғ қ ң ө ұ ү һ і) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
-    <link rel="stylesheet" href="/assets/css/book.css?v=2">
+    <link rel="stylesheet" href="/assets/css/book.css?v=3">
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
         .ds-clan-switch { cursor: pointer; }

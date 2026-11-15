@@ -233,7 +233,7 @@ class KinshipService
                                     'term_kk' => 'Қайын аға',
                                     'term_ru' => 'Қайын аға (старший брат мужа)',
                                     'code' => 'kayin_aga',
-                                    'zhurt' => 'Күйеуінің жағы',
+                                    'zhurt' => 'Өз жұрты',
                                     'explanation' => 'Күйеуінің үлкен ағасы',
                                     'badge_class' => 'badge-inlaw',
                                 ];
@@ -242,7 +242,7 @@ class KinshipService
                                 'term_kk' => 'Қайын бике',
                                 'term_ru' => 'Қайын бике (старшая сестра мужа)',
                                 'code' => 'kayin_bike',
-                                'zhurt' => 'Күйеуінің жағы',
+                                'zhurt' => 'Өз жұрты',
                                 'explanation' => 'Күйеуінің үлкен әпкесі',
                                 'badge_class' => 'badge-inlaw',
                             ];
@@ -252,7 +252,7 @@ class KinshipService
                                     'term_kk' => 'Қайын іні',
                                     'term_ru' => 'Қайын іні (младший брат мужа)',
                                     'code' => 'kayin_ini',
-                                    'zhurt' => 'Күйеуінің жағы',
+                                    'zhurt' => 'Өз жұрты',
                                     'explanation' => 'Күйеуінің кіші інісі',
                                     'badge_class' => 'badge-inlaw',
                                 ];
@@ -261,7 +261,7 @@ class KinshipService
                                 'term_kk' => 'Қайын сіңлі',
                                 'term_ru' => 'Қайын сіңлі (младшая сестра мужа)',
                                 'code' => 'kayin_sinli',
-                                'zhurt' => 'Күйеуінің жағы',
+                                'zhurt' => 'Өз жұрты',
                                 'explanation' => 'Күйеуінің кіші қарындасы/сіңлісі',
                                 'badge_class' => 'badge-inlaw',
                             ];
@@ -277,7 +277,7 @@ class KinshipService
                         'term_kk' => 'Қайын ата',
                         'term_ru' => $baseGender === 'M' ? 'Тесть (Қайын ата)' : 'Свёкор (Қайын ата)',
                         'code' => 'kayin_ata',
-                        'zhurt' => $baseGender === 'M' ? 'Қайын жұрты' : 'Күйеуінің жағы',
+                        'zhurt' => $baseGender === 'M' ? 'Қайын жұрты' : 'Өз жұрты',
                         'explanation' => 'Жұбайының әкесі',
                         'badge_class' => 'badge-inlaw',
                     ];
@@ -287,7 +287,7 @@ class KinshipService
                         'term_kk' => 'Қайын ене',
                         'term_ru' => $baseGender === 'M' ? 'Тёща (Қайын ене)' : 'Свекровь (Қайын ене)',
                         'code' => 'kayin_ene',
-                        'zhurt' => $baseGender === 'M' ? 'Қайын жұрты' : 'Күйеуінің жағы',
+                        'zhurt' => $baseGender === 'M' ? 'Қайын жұрты' : 'Өз жұрты',
                         'explanation' => 'Жұбайының анасы',
                         'badge_class' => 'badge-inlaw',
                     ];
@@ -746,6 +746,274 @@ class KinshipService
             $result[$pId] = $this->determineKinship($p, $basePerson, 'auto', $allPersonsById, $marriages);
         }
 
+        // TASK-013: жұрт определяется по ПУТИ родства, а не по термину/фамилии/роду.
+        $sides = $this->computeZhurtSides($baseId, $allPersonsById, $marriages);
+        foreach ($result as $pId => $kin) {
+            if ($pId === $baseId) {
+                continue;
+            }
+            $code = $kin['code'] ?? '';
+            if ($code === 'wife' || $code === 'husband') {
+                $result[$pId]['zhurt'] = '';
+                $result[$pId]['zhurt_key'] = '';
+                continue;
+            }
+            $side = $sides[$pId] ?? null;
+            if ($side === null) {
+                // Пути родства нет (не связан с человеком в шежіре) — ни в один жұрт не попадает.
+                $result[$pId]['zhurt'] = '';
+                $result[$pId]['zhurt_key'] = '';
+                continue;
+            }
+            $result[$pId]['zhurt'] = self::ZHURT_LABELS[$side['side']]['kk'];
+            $result[$pId]['zhurt_key'] = $side['side'];
+            $result[$pId]['zhurt_dist'] = $side['dist'];
+            if (!empty($side['second'])) {
+                $result[$pId]['zhurt_second'] = self::ZHURT_LABELS[$side['second']]['kk'];
+                $result[$pId]['zhurt_second_key'] = $side['second'];
+            }
+            if (!empty($side['uzatylgan'])) {
+                $result[$pId]['uzatylgan'] = $side['uzatylgan'];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Названия жұрт (TASK-013). Қайын жұрты бывает только у мужчины.
+     */
+    public const ZHURT_LABELS = [
+        'oz' => ['kk' => 'Өз жұрты', 'ru' => 'Өз жұрты'],
+        'torkin' => ['kk' => 'Төркіні', 'ru' => 'Төркіні'],
+        'nagashy' => ['kk' => 'Нағашы жұрты', 'ru' => 'Нағашы жұрты'],
+        'kaiyn' => ['kk' => 'Қайын жұрты', 'ru' => 'Қайын жұрты'],
+    ];
+
+    /**
+     * Замужем ли / женат ли человек (есть хотя бы один брак в шежіре).
+     */
+    public function hasSpouse(int $personId, array $marriages): bool
+    {
+        return !empty($this->getSpouseIds($personId, $marriages));
+    }
+
+    /**
+     * TASK-013: стороны жұрт по пути родства от выбранного человека.
+     *
+     * Обход графа (родители, дети, супруги) отдельно для каждой «ветки» первого шага:
+     *  - paternal — через отца (и мать как жену отца, без её родителей);
+     *  - maternal — через родителей матери;
+     *  - spouse   — через мужа/жену;
+     *  - children — через своих детей (их супруги, внуки; родители супругов детей — құда).
+     * По кровным связям обход идёт дальше (вверх — по отцу; у матери любого предка её родители
+     * не обходятся — это чужой нағашы жұрт); супруг(а) кровного родственника (келін, жезде) входит,
+     * но его/её родня дальше не обходится. Поэтому замужняя дочь рода — «ұзатылған»: её муж и дети
+     * видны, а семья мужа — нет.
+     *
+     * Сторона = ветка с ближайшим путём (при равенстве: дети, отец, супруг, мать).
+     * Вторая сторона (двойная связь) — ближайшая ветка с другой стороной.
+     *
+     * @return array<int, array{side: string, group: string, dist: int, second: ?string, uzatylgan: ?array}>
+     */
+    public function computeZhurtSides(int $baseId, array $personsById, array $marriages): array
+    {
+        $base = $personsById[$baseId] ?? null;
+        if (!$base) {
+            return [];
+        }
+
+        // Граф
+        $parentsOf = [];
+        $childrenOf = [];
+        $spousesOf = [];
+        foreach ($personsById as $p) {
+            $id = (int)$p['id'];
+            foreach (['father_id', 'mother_id'] as $col) {
+                $pid = (int)($p[$col] ?? 0);
+                if ($pid && isset($personsById[$pid])) {
+                    $parentsOf[$id][] = $pid;
+                    $childrenOf[$pid][] = $id;
+                }
+            }
+        }
+        foreach ($marriages as $m) {
+            $h = (int)($m['husband_id'] ?? 0);
+            $w = (int)($m['wife_id'] ?? 0);
+            if ($h && $w && isset($personsById[$h], $personsById[$w])) {
+                $spousesOf[$h][] = $w;
+                $spousesOf[$w][] = $h;
+            }
+        }
+
+        $isFemale = (($base['gender'] ?? 'M') === 'F');
+        $isMarried = !empty($spousesOf[$baseId]);
+        $fatherId = (int)($base['father_id'] ?? 0);
+        $motherId = (int)($base['mother_id'] ?? 0);
+        if (!isset($personsById[$fatherId])) $fatherId = 0;
+        if (!isset($personsById[$motherId])) $motherId = 0;
+        $spouseIds = array_values(array_unique($spousesOf[$baseId] ?? []));
+        $childIds = array_values(array_unique($childrenOf[$baseId] ?? []));
+
+        // Ядро: сам человек, родители, супруги, дети — в чужие ветки не входят
+        $core = [$baseId => true];
+        if ($fatherId) $core[$fatherId] = true;
+        if ($motherId) $core[$motherId] = true;
+        foreach ($spouseIds as $s) $core[$s] = true;
+        foreach ($childIds as $c) $core[$c] = true;
+
+        // Семена веток: [id, режим, расстояние]
+        $seeds = ['children' => [], 'paternal' => [], 'spouse' => [], 'maternal' => []];
+        foreach ($childIds as $c) $seeds['children'][] = [$c, 'blood', 1];
+        if ($fatherId) $seeds['paternal'][] = [$fatherId, 'blood', 1];
+        if ($motherId) $seeds['paternal'][] = [$motherId, 'blood_noup', 1];
+        foreach ($spouseIds as $s) $seeds['spouse'][] = [$s, 'blood', 1];
+        if ($motherId) {
+            $mother = $personsById[$motherId];
+            foreach (['father_id', 'mother_id'] as $col) {
+                $gp = (int)($mother[$col] ?? 0);
+                if ($gp && isset($personsById[$gp]) && !isset($core[$gp])) {
+                    $seeds['maternal'][] = [$gp, 'blood', 2];
+                }
+            }
+        }
+
+        // Обход каждой ветки
+        $reach = []; // [personId][group] = ['dist' => n, 'mode' => m]
+        foreach ($seeds as $group => $groupSeeds) {
+            $visited = [];
+            $queue = [];
+            foreach ($groupSeeds as [$sid, $mode, $dist]) {
+                if (isset($visited[$sid])) continue;
+                $visited[$sid] = ['dist' => $dist, 'mode' => $mode];
+                $queue[] = $sid;
+            }
+            $ownSeeds = array_column($groupSeeds, 0);
+            $head = 0;
+            while ($head < count($queue)) {
+                $cur = $queue[$head++];
+                $curMode = $visited[$cur]['mode'];
+                $curDist = $visited[$cur]['dist'];
+                $next = [];
+                switch ($curMode) {
+                    case 'blood':
+                        // Вверх по отцу — кровная линия; мать (жена линии) — без её родителей:
+                        // её родня — чужой нағашы жұрт, не наша сторона.
+                        $curMotherId = (int)($personsById[$cur]['mother_id'] ?? 0);
+                        foreach ($parentsOf[$cur] ?? [] as $x) $next[] = [$x, $x === $curMotherId ? 'blood_noup' : 'blood'];
+                        foreach ($childrenOf[$cur] ?? [] as $x) $next[] = [$x, 'blood'];
+                        foreach ($spousesOf[$cur] ?? [] as $x) $next[] = [$x, 'inlaw'];
+                        break;
+                    case 'blood_noup':
+                        // Мать как жена отца: её родители — Нағашы; её дети от другого брака не ведут к чужому отцу
+                        foreach ($childrenOf[$cur] ?? [] as $x) $next[] = [$x, 'blood_noup'];
+                        foreach ($spousesOf[$cur] ?? [] as $x) $next[] = [$x, 'inlaw'];
+                        break;
+                    case 'inlaw':
+                        // Родня супруга(и) кровного родственника не обходится.
+                        // Исключение — супруги своих детей: их родители и братья/сёстры — құда.
+                        if ($group === 'children') {
+                            foreach ($parentsOf[$cur] ?? [] as $x) $next[] = [$x, 'quda'];
+                        }
+                        break;
+                    case 'quda':
+                        foreach ($childrenOf[$cur] ?? [] as $x) $next[] = [$x, 'quda_end'];
+                        break;
+                    default:
+                        break;
+                }
+                foreach ($next as [$nid, $nmode]) {
+                    if ($nid === $baseId || isset($visited[$nid])) continue;
+                    if (isset($core[$nid]) && !in_array($nid, $ownSeeds, true)) continue;
+                    $visited[$nid] = ['dist' => $curDist + 1, 'mode' => $nmode];
+                    $queue[] = $nid;
+                }
+            }
+            foreach ($visited as $pid => $info) {
+                $reach[$pid][$group] = $info;
+            }
+        }
+
+        // Сторона ветки
+        $sideOf = function (string $group, string $mode) use ($isFemale, $isMarried): string {
+            if (!$isFemale) {
+                if ($group === 'paternal') return 'oz';
+                if ($group === 'maternal') return 'nagashy';
+                if ($group === 'spouse') return 'kaiyn';
+                return ($mode === 'quda' || $mode === 'quda_end') ? 'kaiyn' : 'oz';
+            }
+            if ($group === 'paternal') return 'torkin';
+            if ($group === 'maternal') return 'nagashy';
+            if ($group === 'spouse') return 'oz';
+            // Свои дети и их семьи: у замужней — дом мужа (Өз жұрты), у незамужней — Төркіні
+            return $isMarried ? 'oz' : 'torkin';
+        };
+
+        $priority = ['children' => 0, 'paternal' => 1, 'spouse' => 2, 'maternal' => 3];
+        $result = [];
+        foreach ($reach as $pid => $groups) {
+            uksort($groups, function ($a, $b) use ($groups, $priority) {
+                $d = $groups[$a]['dist'] <=> $groups[$b]['dist'];
+                return $d !== 0 ? $d : ($priority[$a] <=> $priority[$b]);
+            });
+            $primaryGroup = (string)array_key_first($groups);
+            $primary = $groups[$primaryGroup];
+            $side = $sideOf($primaryGroup, $primary['mode']);
+            $second = null;
+            foreach ($groups as $g => $info) {
+                $s = $sideOf($g, $info['mode']);
+                if ($s !== $side) {
+                    $second = $s;
+                    break;
+                }
+            }
+
+            // След ұзатылған: замужняя женщина, пришедшая в эту сторону по крови (дочь/сестра рода),
+            // её муж — не кровный в этой же ветке. Её основное место — у мужа.
+            $uzatylgan = null;
+            $p = $personsById[$pid];
+            if (($p['gender'] ?? 'M') === 'F' && in_array($primary['mode'], ['blood', 'blood_noup'], true) && !empty($spousesOf[$pid])) {
+                $husbandId = 0;
+                foreach (array_unique($spousesOf[$pid]) as $hId) {
+                    $hInfo = $reach[$hId][$primaryGroup] ?? null;
+                    if ($hInfo && in_array($hInfo['mode'], ['blood', 'blood_noup'], true)) {
+                        $husbandId = 0; // муж — тоже кровный родственник этой ветки
+                        break;
+                    }
+                    if ($hId !== $baseId && !$husbandId) {
+                        $husbandId = $hId;
+                    }
+                }
+                if ($husbandId) {
+                    $h = $personsById[$husbandId];
+                    $uzatylgan = [
+                        'husband_id' => $husbandId,
+                        'husband_name' => trim(($h['first_name'] ?? '') . ' ' . ($h['last_name'] ?? '')),
+                        'husband_last_name' => (string)($h['last_name'] ?? ''),
+                        'husband_clan' => (string)($h['clan_ru'] ?? ''),
+                    ];
+                }
+            }
+
+            $result[$pid] = [
+                'side' => $side,
+                'group' => $primaryGroup,
+                'dist' => $primary['dist'],
+                'second' => $second,
+                'uzatylgan' => $uzatylgan,
+            ];
+        }
+
+        // Мать — жена отца, её место в семье отца, не след
+        if ($motherId && isset($result[$motherId])) {
+            $result[$motherId]['uzatylgan'] = null;
+        }
+        // Супруг(а) показывается отдельно, вне таблиц
+        foreach ($spouseIds as $s) {
+            unset($result[$s]);
+        }
+        unset($result[$baseId]);
+
         return $result;
     }
 
@@ -885,7 +1153,8 @@ class KinshipService
                 return 'Нағашы жұрты';
             case 'in_law':
             case 'in_law_special':
-                return $isFemale ? 'Күйеуінің жағы' : 'Қайын жұрты';
+                // TASK-013: у замужней женщины семья мужа — её Өз жұрты, қайын жұрта у неё нет
+                return $isFemale ? 'Өз жұрты' : 'Қайын жұрты';
             case 'paternal':
             case 'direct':
             default:
@@ -998,6 +1267,104 @@ class KinshipService
     }
 
     /**
+     * TASK-013: порядок таблиц жұрт.
+     * Мужчина: Өз жұрты, Қайын жұрты, Нағашы жұрты.
+     * Женщина: Төркіні, Өз жұрты (семья мужа), Нағашы жұрты — қайын жұрта нет.
+     *
+     * @return string[]
+     */
+    public function zhurtOrder(bool $isFemale): array
+    {
+        return $isFemale ? ['torkin', 'oz', 'nagashy'] : ['oz', 'kaiyn', 'nagashy'];
+    }
+
+    /**
+     * TASK-013: подписи таблицы жұрт на двух языках.
+     *
+     * @return array{title_kk: string, title_ru: string, desc_kk: string, desc_ru: string, empty_kk: string, empty_ru: string}
+     */
+    public function zhurtMeta(string $key, bool $isFemale, bool $isMarried): array
+    {
+        $empty = ['empty_kk' => 'Әзірге ешкім қосылмаған', 'empty_ru' => 'Пока никого не добавили'];
+        switch ($key) {
+            case 'torkin':
+                return [
+                    'title_kk' => 'Төркіні',
+                    'title_ru' => 'Төркіні (родная семья)',
+                    'desc_kk' => 'Туған әке-шешесі, бауырлары және олардың отбасылары, әкесінің руы',
+                    'desc_ru' => 'Родная семья по рождению: отец, мать, братья и сёстры с семьями, род отца',
+                ] + $empty;
+            case 'nagashy':
+                return [
+                    'title_kk' => 'Нағашы жұрты',
+                    'title_ru' => 'Нағашы жұрты (родня матери)',
+                    'desc_kk' => 'Анасының туған-туыстары (нағашылар)',
+                    'desc_ru' => 'Родня матери (нағашылар)',
+                ] + $empty;
+            case 'kaiyn':
+                return [
+                    'title_kk' => 'Қайын жұрты',
+                    'title_ru' => 'Қайын жұрты (родня жены)',
+                    'desc_kk' => 'Әйелінің туған-туыстары',
+                    'desc_ru' => 'Родня жены',
+                ] + $empty;
+            case 'oz':
+            default:
+                if (!$isFemale) {
+                    return [
+                        'title_kk' => 'Өз жұрты',
+                        'title_ru' => 'Өз жұрты (родня по отцу)',
+                        'desc_kk' => 'Әкесі жағынан туыстары, өз руы',
+                        'desc_ru' => 'Родня по отцу, свой род',
+                    ] + $empty;
+                }
+                if (!$isMarried) {
+                    return [
+                        'title_kk' => 'Өз жұрты',
+                        'title_ru' => 'Өз жұрты (семья мужа)',
+                        'desc_kk' => 'Күйеуінің отбасы — тұрмысқа шыққаннан кейін толады',
+                        'desc_ru' => 'Семья мужа — заполнится после замужества',
+                        'empty_kk' => 'Тұрмысқа шыққаннан кейін пайда болады',
+                        'empty_ru' => 'Появится после замужества',
+                    ];
+                }
+                return [
+                    'title_kk' => 'Өз жұрты',
+                    'title_ru' => 'Өз жұрты (семья мужа)',
+                    'desc_kk' => 'Күйеуінің отбасы — енді өз жұрты: қайын ата, қайын ене, күйеуінің бауырлары',
+                    'desc_ru' => 'Семья мужа — теперь её свои: свёкор, свекровь, братья и сёстры мужа с семьями',
+                ] + $empty;
+        }
+    }
+
+    /**
+     * TASK-013: разложить людей по сторонам жұрт (по zhurt_key, вычисленному по пути родства).
+     *
+     * @return array{spouses: int[], children: int[], oz: int[], torkin: int[], nagashy: int[], kaiyn: int[]}
+     */
+    protected function splitByZhurt(int $baseId, array $allKinships): array
+    {
+        $out = ['spouses' => [], 'children' => [], 'oz' => [], 'torkin' => [], 'nagashy' => [], 'kaiyn' => []];
+        foreach ($allKinships as $targetId => $kin) {
+            if ($targetId === $baseId) continue;
+            $code = $kin['code'] ?? '';
+            if ($code === 'wife' || $code === 'husband') {
+                $out['spouses'][] = $targetId;
+                continue;
+            }
+            if ($code === 'son' || $code === 'daughter' || $code === 'child') {
+                $out['children'][] = $targetId;
+                continue;
+            }
+            $key = $kin['zhurt_key'] ?? '';
+            if ($key !== '' && isset($out[$key])) {
+                $out[$key][] = $targetId;
+            }
+        }
+        return $out;
+    }
+
+    /**
      * Қазақтың «Үш жұрт» жүйесін кестелік түрде құру (TASK-011):
      * 1. Өз жұрты (әйел адам үшін — Төркін жұрты)
      * 2. Қайын жұрты (әйел адам үшін — Қайын жұрты / Күйеуінің жағы)
@@ -1025,36 +1392,11 @@ class KinshipService
         }
 
         $isFemale = (($base['gender'] ?? 'M') === 'F');
+        $isMarried = $this->hasSpouse($baseId, $marriages);
         $allKinships = $this->calculateAllKinships($baseId, $personsById, $marriages);
-
-        $ozIds = [];
-        $nagashyIds = [];
-        $kaiynIds = [];
-        $ownSpouses = [];
-        $ownChildren = [];
-
-        foreach ($allKinships as $targetId => $kin) {
-            if ($targetId === $baseId) continue;
-            $code = $kin['code'] ?? '';
-            $zhurt = $kin['zhurt'] ?? '';
-
-            if ($code === 'wife' || $code === 'husband') {
-                $ownSpouses[] = $targetId;
-                continue;
-            }
-            if ($code === 'son' || $code === 'daughter' || $code === 'child') {
-                $ownChildren[] = $targetId;
-                continue;
-            }
-
-            if (str_contains($zhurt, 'Нағашы')) {
-                $nagashyIds[] = $targetId;
-            } elseif (str_contains($zhurt, 'Қайын') || str_contains($zhurt, 'Күйеу') || str_contains($zhurt, 'Құда')) {
-                $kaiynIds[] = $targetId;
-            } elseif (str_contains($zhurt, 'Өз') || str_contains($zhurt, 'Төркін')) {
-                $ozIds[] = $targetId;
-            }
-        }
+        $buckets = $this->splitByZhurt($baseId, $allKinships);
+        $ownSpouses = $buckets['spouses'];
+        $ownChildren = $buckets['children'];
 
         $formatPersonRow = function(int $pId) use ($personsById, $allKinships) {
             $p = $personsById[$pId] ?? null;
@@ -1095,11 +1437,15 @@ class KinshipService
                 'code' => $kin['code'] ?? '',
                 'explanation' => $kin['explanation'] ?? '',
                 'badge_class' => $kin['badge_class'] ?? 'badge-relative',
+                'zhurt_key' => $kin['zhurt_key'] ?? '',
+                'zhurt_second' => $kin['zhurt_second'] ?? null,
+                'zhurt_second_key' => $kin['zhurt_second_key'] ?? null,
+                'uzatylgan' => $kin['uzatylgan'] ?? null,
                 'seniority' => $bYear ?: 9999,
             ];
         };
 
-        $buildTableData = function(array $ids, string $key, string $titleKk, string $titleRu, string $descKk, string $descRu) use ($formatPersonRow) {
+        $buildTableData = function(array $ids, string $key, string $titleKk, string $titleRu, string $descKk, string $descRu, string $emptyKk = '', string $emptyRu = '') use ($formatPersonRow) {
             $items = [];
             foreach ($ids as $id) {
                 $row = $formatPersonRow($id);
@@ -1123,37 +1469,27 @@ class KinshipService
                 'title_ru' => $titleRu,
                 'desc_kk' => $descKk,
                 'desc_ru' => $descRu,
+                'empty_kk' => $emptyKk !== '' ? $emptyKk : 'Әзірге ешкім қосылмаған',
+                'empty_ru' => $emptyRu !== '' ? $emptyRu : 'Пока никого не добавили',
                 'total_count' => count($items),
                 'items' => $items,
             ];
         };
 
-        $ozTable = $buildTableData(
-            $ozIds,
-            'oz',
-            $isFemale ? 'Төркін жұрты' : 'Өз жұрты',
-            $isFemale ? 'Төркін жұрты (Родня по отцу)' : 'Өз жұрты (Родня по отцу)',
-            $isFemale ? 'Родня по отцу (өз жұрты, төркіні)' : 'Родня по отцу (өз жұрты, өз елі)',
-            $isFemale ? 'Родня по отцу (её род)' : 'Родня по отцу (свой род)'
-        );
-
-        $kaiynTable = $buildTableData(
-            $kaiynIds,
-            'kaiyn',
-            'Қайын жұрты',
-            $isFemale ? 'Қайын жұрты (Родня мужа)' : 'Қайын жұрты (Родня супруги)',
-            $isFemale ? 'Күйеуінің жұрты' : 'Жұбайының туған-туыстары',
-            $isFemale ? 'Род мужа (қайын жұрт)' : 'Родня супруги (қайын жұрт)'
-        );
-
-        $nagashyTable = $buildTableData(
-            $nagashyIds,
-            'nagashy',
-            'Нағашы жұрты',
-            'Нағашы жұрты (Родня по матери)',
-            'Анасының туған-туыстары (нағашылар)',
-            'Родня по матери (нағашы жұрт)'
-        );
+        $tablesByKey = [];
+        foreach ($this->zhurtOrder($isFemale) as $key) {
+            $meta = $this->zhurtMeta($key, $isFemale, $isMarried);
+            $tablesByKey[$key] = $buildTableData(
+                $buckets[$key] ?? [],
+                $key,
+                $meta['title_kk'],
+                $meta['title_ru'],
+                $meta['desc_kk'],
+                $meta['desc_ru'],
+                $meta['empty_kk'],
+                $meta['empty_ru']
+            );
+        }
 
         $ownSpousesFormatted = array_values(array_filter(array_map($formatPersonRow, $ownSpouses)));
         $ownChildrenFormatted = array_values(array_filter(array_map($formatPersonRow, $ownChildren)));
@@ -1167,16 +1503,10 @@ class KinshipService
         return [
             'base_person' => $baseFormatted,
             'is_female' => $isFemale,
-            'groups' => [
-                'oz' => $ozTable,
-                'kaiyn' => $kaiynTable,
-                'nagashy' => $nagashyTable,
-            ],
-            'tables' => [
-                $ozTable,
-                $kaiynTable,
-                $nagashyTable,
-            ],
+            'is_married' => $isMarried,
+            'order' => array_keys($tablesByKey),
+            'groups' => $tablesByKey,
+            'tables' => array_values($tablesByKey),
             'own_family' => [
                 'spouses' => $ownSpousesFormatted,
                 'children' => $ownChildrenFormatted,
@@ -1216,13 +1546,11 @@ class KinshipService
         }
 
         $isFemale = (($base['gender'] ?? 'M') === 'F');
+        $isMarried = $this->hasSpouse($baseId, $marriages);
         $allKinships = $this->calculateAllKinships($baseId, $personsById, $marriages);
-
-        $ozPeople = [];
-        $nagashyPeople = [];
-        $kaiynPeople = [];
-        $ownSpouses = [];
-        $ownChildren = [];
+        $buckets = $this->splitByZhurt($baseId, $allKinships);
+        $ownSpouses = $buckets['spouses'];
+        $ownChildren = $buckets['children'];
 
         // Карта детей по парам
         $childrenByCouple = [];
@@ -1232,29 +1560,6 @@ class KinshipService
             if ($f || $m) {
                 $key = "{$f}_{$m}";
                 $childrenByCouple[$key][] = $p['id'];
-            }
-        }
-
-        foreach ($allKinships as $targetId => $kin) {
-            if ($targetId === $baseId) continue;
-            $code = $kin['code'] ?? '';
-            $zhurt = $kin['zhurt'] ?? '';
-
-            if ($code === 'wife' || $code === 'husband') {
-                $ownSpouses[] = $targetId;
-                continue;
-            }
-            if ($code === 'son' || $code === 'daughter' || $code === 'child') {
-                $ownChildren[] = $targetId;
-                continue;
-            }
-
-            if (str_contains($zhurt, 'Нағашы')) {
-                $nagashyPeople[$targetId] = true;
-            } elseif (str_contains($zhurt, 'Қайын') || str_contains($zhurt, 'Күйеу') || str_contains($zhurt, 'Құда')) {
-                $kaiynPeople[$targetId] = true;
-            } elseif (str_contains($zhurt, 'Өз') || str_contains($zhurt, 'Төркін')) {
-                $ozPeople[$targetId] = true;
             }
         }
 
@@ -1337,27 +1642,21 @@ class KinshipService
             ];
         };
 
-        return [
+        // TASK-013: стороны по порядку; ключи «{key}_zhurt» (oz_zhurt, torkin_zhurt, nagashy_zhurt, kaiyn_zhurt)
+        $result = [
             'base_person' => $base,
             'is_female' => $isFemale,
-            'oz_zhurt' => array_merge([
-                'title_kk' => $isFemale ? 'Төркіні' : 'Өз жұрты',
-                'title_ru' => $isFemale ? 'Төркіні (Семья по отцу)' : 'Өз жұрты (Родня по отцу)',
-                'icon' => '🛡️',
-            ], $buildFamilies($ozPeople)),
+            'is_married' => $isMarried,
+            'order' => [],
+        ];
+        foreach ($this->zhurtOrder($isFemale) as $key) {
+            $meta = $this->zhurtMeta($key, $isFemale, $isMarried);
+            $set = array_fill_keys($buckets[$key] ?? [], true);
+            $result[$key . '_zhurt'] = array_merge(['key' => $key] + $meta, $buildFamilies($set));
+            $result['order'][] = $key;
+        }
 
-            'nagashy_zhurt' => array_merge([
-                'title_kk' => 'Нағашы жұрты',
-                'title_ru' => 'Нағашы жұрты (Родня по матери)',
-                'icon' => '💎',
-            ], $buildFamilies($nagashyPeople)),
-
-            'kaiyn_zhurt' => array_merge([
-                'title_kk' => $isFemale ? 'Күйеуінің жағы' : 'Қайын жұрты',
-                'title_ru' => $isFemale ? 'Күйеуінің жағы (Семья мужа)' : 'Қайын жұрты (Родня жены)',
-                'icon' => '🤝',
-            ], $buildFamilies($kaiynPeople)),
-
+        return $result + [
             'own_family' => [
                 'spouses' => array_values(array_filter(array_map(fn($id) => $personsById[$id] ?? null, $ownSpouses))),
                 'children' => array_values(array_filter(array_map(fn($id) => $personsById[$id] ?? null, $ownChildren))),

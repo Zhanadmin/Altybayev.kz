@@ -328,16 +328,23 @@ require __DIR__ . '/../layout/master_start.php';
 
             <!-- Үш жұрт (три родственных круга с семейными папками, TASK-007) -->
             <?php if (!empty($ushZhurt)):
-                $oz = $ushZhurt['oz_zhurt'];
-                $nagashy = $ushZhurt['nagashy_zhurt'];
-                $kaiyn = $ushZhurt['kaiyn_zhurt'];
+                // TASK-013: стороны по порядку с сервера (женщина: Төркіні / Өз жұрты / Нағашы; мужчина: Өз / Қайын / Нағашы)
+                $zhurtOrder = $ushZhurt['order'] ?? ['oz', 'kaiyn', 'nagashy'];
+                $zhurtList = [];
+                foreach ($zhurtOrder as $zk) {
+                    if (!empty($ushZhurt[$zk . '_zhurt'])) {
+                        $zhurtList[$zk] = $ushZhurt[$zk . '_zhurt'];
+                    }
+                }
+                $firstZhurtKey = (string)array_key_first($zhurtList);
+                $zhurtIsFemale = !empty($ushZhurt['is_female']);
             ?>
                 <div class="island">
                     <div class="island-head pc-zhurt-head">
                         <h3><?= htmlspecialchars(I18n::t('ush_zhurt_title')) ?></h3>
                         <div class="seg" role="group" aria-label="<?= htmlspecialchars(I18n::t('ush_zhurt_title')) ?>">
-                            <?php foreach (['oz' => $oz, 'nagashy' => $nagashy, 'kaiyn' => $kaiyn] as $zKey => $zData): ?>
-                                <button type="button" onclick="switchZhurtTab('<?= $zKey ?>')" id="tabBtn_<?= $zKey ?>" class="<?= $zKey === 'oz' ? 'active' : '' ?>">
+                            <?php foreach ($zhurtList as $zKey => $zData): ?>
+                                <button type="button" onclick="switchZhurtTab('<?= htmlspecialchars($zKey) ?>')" id="tabBtn_<?= htmlspecialchars($zKey) ?>" class="<?= $zKey === $firstZhurtKey ? 'active' : '' ?>">
                                     <?= htmlspecialchars((string)($lang === 'ru' ? $zData['title_ru'] : $zData['title_kk'])) ?> <span class="muted">(<?= (int)$zData['total_count'] ?>)</span>
                                 </button>
                             <?php endforeach; ?>
@@ -345,12 +352,13 @@ require __DIR__ . '/../layout/master_start.php';
                     </div>
 
                     <?php
-                    $renderZhurtPane = function (array $zhurtData, string $paneId, bool $isActive) use ($lang) {
+                    $renderZhurtPane = function (array $zhurtData, string $paneId, bool $isActive) use ($lang, $person) {
                         ?>
-                        <div id="zhurtPane_<?= $paneId ?>" style="display: <?= $isActive ? 'block' : 'none' ?>;">
+                        <div id="zhurtPane_<?= htmlspecialchars($paneId) ?>" style="display: <?= $isActive ? 'block' : 'none' ?>;">
                             <?php if (empty($zhurtData['families']) && empty($zhurtData['standalone'])): ?>
                                 <div class="pp-empty muted">
-                                    <?= $lang === 'ru' ? 'Сведения о родне в этом круге пока не внесены' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген' ?>
+                                    <?= htmlspecialchars((string)($lang === 'ru' ? ($zhurtData['empty_ru'] ?? 'Пока никого не добавили') : ($zhurtData['empty_kk'] ?? 'Әзірге ешкім қосылмаған'))) ?>
+                                    <a class="btn" href="/tree?focus=<?= (int)($person['id'] ?? 0) ?>"><?= $lang === 'ru' ? 'Добавить' : 'Қосу' ?></a>
                                 </div>
                             <?php else: ?>
                                 <div class="pc-stack">
@@ -377,6 +385,12 @@ require __DIR__ . '/../layout/master_start.php';
                                                         <a href="/person/<?= (int)$w['id'] ?>"><?= htmlspecialchars($wName) ?></a>
                                                         <?php if (!empty($fam['wife_kinship']['term_kk'])): ?>
                                                             <span class="badge"><?= htmlspecialchars(I18n::formatKinship($fam['wife_kinship']['term_kk'], $fam['wife_kinship']['term_ru'] ?? null)) ?></span>
+                                                        <?php endif; ?>
+                                                        <?php if (!empty($fam['wife_kinship']['uzatylgan']['husband_id'])):
+                                                            $uzInfo = $fam['wife_kinship']['uzatylgan'];
+                                                            $uzFam = $uzInfo['husband_last_name'] ?: ($uzInfo['husband_clan'] ?: $uzInfo['husband_name']);
+                                                        ?>
+                                                            <span class="muted small" style="opacity:.7;">ұзатылған — <?= htmlspecialchars((string)$uzFam) ?></span>
                                                         <?php endif; ?>
                                                     <?php else: ?>
                                                         <span class="muted">Белгісіз</span>
@@ -437,9 +451,9 @@ require __DIR__ . '/../layout/master_start.php';
                         <?php
                     };
 
-                    $renderZhurtPane($oz, 'oz', true);
-                    $renderZhurtPane($nagashy, 'nagashy', false);
-                    $renderZhurtPane($kaiyn, 'kaiyn', false);
+                    foreach ($zhurtList as $zKey => $zData) {
+                        $renderZhurtPane($zData, (string)$zKey, $zKey === $firstZhurtKey);
+                    }
                     ?>
                 </div>
             <?php endif; ?>
@@ -618,7 +632,7 @@ require __DIR__ . '/../layout/master_start.php';
     }
 
     function switchZhurtTab(tab) {
-        const tabs = ['oz', 'nagashy', 'kaiyn'];
+        const tabs = ['torkin', 'oz', 'nagashy', 'kaiyn'];
         tabs.forEach(t => {
             const pane = document.getElementById('zhurtPane_' + t);
             const btn = document.getElementById('tabBtn_' + t);

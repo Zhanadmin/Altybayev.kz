@@ -2617,6 +2617,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .lt-ush-summary-pill.oz { border-left: 3px solid var(--c-male); }
         .lt-ush-summary-pill.kaiyn { border-left: 3px solid var(--c-female); }
         .lt-ush-summary-pill.nagashy { border-left: 3px solid var(--c-accent); }
+        .lt-ush-summary-pill.torkin { border-left: 3px solid var(--c-female); }
+        /* TASK-013: след ұзатылған (замужняя дочь рода) и пометка второй связи */
+        .lt-ush-item-row.is-uzatylgan { opacity: .6; font-style: italic; }
+        .lt-ush-second { display: block; margin-top: 2px; }
+        .lt-ush-add-btn { margin-left: 8px; width: auto; padding: 0 10px; }
         .lt-ush-header-actions {
             display: flex;
             align-items: center;
@@ -3406,9 +3411,6 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             </div>
             <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
                 <div id="ushZhurtTabButtons">
-                    <button type="button" id="tabBtnOz" class="active" onclick="switchUshZhurtTab('oz')">Өз жұрты</button>
-                    <button type="button" id="tabBtnNagashy" onclick="switchUshZhurtTab('nagashy')">Нағашы жұрты</button>
-                    <button type="button" id="tabBtnKaiyn" onclick="switchUshZhurtTab('kaiyn')">Қайын жұрты</button>
                 </div>
                 <div id="ushZhurtContentContainer" style="display:flex; flex-direction:column; gap:12px;">
                     <div class="uz-msg">Жүктелуде...</div>
@@ -5807,10 +5809,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             const p = data.person || (data.ush_zhurt && data.ush_zhurt.base_person) || {};
             const isFemale = !!data.is_female;
-            const groups = data.groups || {};
-            const ozTable = groups.oz || (data.tables && data.tables[0]) || { total_count: 0, items: [], title_kk: isFemale ? 'Төркін жұрты' : 'Өз жұрты' };
-            const kaiynTable = groups.kaiyn || (data.tables && data.tables[1]) || { total_count: 0, items: [], title_kk: 'Қайын жұрты' };
-            const nagashyTable = groups.nagashy || (data.tables && data.tables[2]) || { total_count: 0, items: [], title_kk: 'Нағашы жұрты' };
+            // TASK-013: порядок и названия таблиц — с сервера (женщина: Төркіні / Өз жұрты / Нағашы; мужчина: Өз / Қайын / Нағашы)
+            const zhurtTables = (Array.isArray(data.tables) && data.tables.length)
+                ? data.tables
+                : (isFemale ? ['torkin', 'oz', 'nagashy'] : ['oz', 'kaiyn', 'nagashy']).map(k => (data.groups && data.groups[k]) || { key: k, total_count: 0, items: [], title_kk: k });
 
             const isM = (p.gender === 'M');
             const isDeceased = (p.is_deceased == 1);
@@ -5820,13 +5822,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             island.innerHTML = `
                 <div class="lt-ush-drawer-header">
                     <div class="lt-ush-person-meta">
-                        <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
+                        <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${uzEsc(initials)}</div>
                         <div>
                             <div class="lt-ush-title-name">
-                                <strong>${p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''))}</strong>
-                                ${p.maiden_name ? `<span class="lt-sub is-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</span>` : ''}
+                                <strong>${uzEsc(p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')))}</strong>
+                                ${p.maiden_name ? `<span class="lt-sub is-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${uzEsc(p.maiden_name)})</span>` : ''}
                                 <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? (currentLang === 'ru' ? 'Мужчина' : 'Ер') : (currentLang === 'ru' ? 'Женщина' : 'Әйел')}</span>
-                                <span class="clan-pill">${p.clan_ru || 'белгісіз'}</span>
+                                <span class="clan-pill">${uzEsc(p.clan_ru || 'белгісіз')}</span>
                             </div>
                             <div class="lt-sub">
                                 ${currentLang === 'ru' ? 'Годы жизни:' : 'Өмір сүрген жылдары:'} <strong>${p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')}</strong>
@@ -5837,9 +5839,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     </div>
                     
                     <div class="lt-ush-header-badges">
-                        <span class="lt-ush-summary-pill oz">${ozTable.title_kk || ozTable.title_ru}: <strong>${ozTable.total_count}</strong></span>
-                        <span class="lt-ush-summary-pill kaiyn">${kaiynTable.title_kk || kaiynTable.title_ru}: <strong>${kaiynTable.total_count}</strong></span>
-                        <span class="lt-ush-summary-pill nagashy">${nagashyTable.title_kk || nagashyTable.title_ru}: <strong>${nagashyTable.total_count}</strong></span>
+                        ${zhurtTables.map(t => `<span class="lt-ush-summary-pill ${uzEsc(t.key)}">${uzEsc(t.title_kk || t.title_ru)}: <strong>${parseInt(t.total_count || 0, 10)}</strong></span>`).join('')}
                     </div>
 
                     <div class="lt-ush-header-actions">
@@ -5854,14 +5854,24 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 </div>
 
                 <div class="lt-ush-tables-grid ${layout === 'stacked' ? 'is-stacked' : ''}" id="ushGrid_${personId}">
-                    ${renderSingleUshZhurtCard(ozTable, personId, 'oz')}
-                    ${renderSingleUshZhurtCard(kaiynTable, personId, 'kaiyn')}
-                    ${renderSingleUshZhurtCard(nagashyTable, personId, 'nagashy')}
+                    ${zhurtTables.map(t => renderSingleUshZhurtCard(t, personId, t.key || 'oz', isFemale)).join('')}
                 </div>
             `;
         }
 
-        function renderSingleUshZhurtCard(tableData, basePersonId, zhurtKey) {
+        function uzEsc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // TASK-013: какого родственника предлагать добавить в пустую таблицу жұрт
+        function ushZhurtAddRelation(zhurtKey, isFemale) {
+            if (zhurtKey === 'nagashy') return 'mother';
+            if (zhurtKey === 'kaiyn') return 'spouse';
+            if (zhurtKey === 'oz' && isFemale) return 'spouse';
+            return 'father';
+        }
+
+        function renderSingleUshZhurtCard(tableData, basePersonId, zhurtKey, isFemale) {
             const items = tableData.items || [];
             const count = tableData.total_count || items.length || 0;
             const title = currentLang === 'ru' ? (tableData.title_ru || tableData.title_kk) : tableData.title_kk;
@@ -5869,7 +5879,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             let rowsHtml = '';
             if (items.length === 0) {
-                rowsHtml = `<tr><td colspan="3" class="lt-ush-empty-cell">${currentLang === 'ru' ? 'Сведения в этом круге пока не внесены' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген'}</td></tr>`;
+                const emptyText = currentLang === 'ru'
+                    ? (tableData.empty_ru || 'Пока никого не добавили')
+                    : (tableData.empty_kk || 'Әзірге ешкім қосылмаған');
+                const addLbl = currentLang === 'ru' ? 'Добавить' : 'Қосу';
+                const addBtn = canEdit
+                    ? ` <button type="button" class="btn-table-action lt-ush-add-btn" onclick="event.stopPropagation(); openAddModal('${ushZhurtAddRelation(zhurtKey, !!isFemale)}', ${parseInt(basePersonId, 10)})">${addLbl}</button>`
+                    : '';
+                rowsHtml = `<tr><td colspan="3" class="lt-ush-empty-cell">${uzEsc(emptyText)}${addBtn}</td></tr>`;
             } else {
                 rowsHtml = items.map(p => {
                     const isM = (p.gender === 'M');
@@ -5877,24 +5894,47 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
                     const term = currentLang === 'ru' ? (p.term_ru || p.term_kk) : p.term_kk;
                     const years = p.years_display || (p.birth_year ? p.birth_year + (p.death_year ? '–' + p.death_year : '–...') : '—');
+                    // Двойная связь: пометка второй стороны
+                    const secondHtml = p.zhurt_second
+                        ? `<span class="lt-sub lt-ush-second" title="${currentLang === 'ru' ? 'Вторая связь' : 'Екінші байланыс'}">${currentLang === 'ru' ? 'также' : 'сондай-ақ'}: ${uzEsc(p.zhurt_second)}</span>`
+                        : '';
+                    // След ұзатылған: замужняя дочь рода — её место у мужа
+                    const uz = p.uzatylgan;
+                    if (uz && uz.husband_id) {
+                        const fam = uz.husband_last_name || uz.husband_clan || uz.husband_name || '';
+                        return `
+                        <tr class="lt-ush-item-row is-uzatylgan" data-id="${p.id}" onclick="navigateToListPerson(${p.id})">
+                            <td class="lt-ush-col-person" colspan="2">
+                                <div class="lt-ush-person-text">
+                                    <span class="lt-ush-person-name" title="${uzEsc(p.full_name)}">${uzEsc(p.full_name)}</span>
+                                    <span class="lt-sub">ұзатылған — <a href="#" onclick="event.preventDefault(); event.stopPropagation(); navigateToListPerson(${parseInt(uz.husband_id, 10)})">${uzEsc(fam)}</a></span>
+                                </div>
+                            </td>
+                            <td class="lt-ush-col-term">
+                                <span class="kin-term-badge female">${uzEsc(term)}</span>
+                            </td>
+                        </tr>
+                    `;
+                    }
 
                     return `
                         <tr class="lt-ush-item-row" data-id="${p.id}" onclick="navigateToListPerson(${p.id})">
                             <td class="lt-ush-col-person">
                                 <div class="lt-ush-person-inline">
-                                    <span class="uz-avatar-mini ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</span>
+                                    <span class="uz-avatar-mini ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${uzEsc(initials)}</span>
                                     <div class="lt-ush-person-text">
-                                        <span class="lt-ush-person-name" title="${p.full_name}">${p.full_name}</span>
-                                        ${p.maiden_name ? `<span class="lt-sub is-maiden">(${p.maiden_name})</span>` : ''}
-                                        <span class="lt-sub">${p.clan_ru || 'белгісіз'}</span>
+                                        <span class="lt-ush-person-name" title="${uzEsc(p.full_name)}">${uzEsc(p.full_name)}</span>
+                                        ${p.maiden_name ? `<span class="lt-sub is-maiden">(${uzEsc(p.maiden_name)})</span>` : ''}
+                                        <span class="lt-sub">${uzEsc(p.clan_ru || 'белгісіз')}</span>
                                     </div>
                                 </div>
                             </td>
                             <td class="lt-ush-col-years">
-                                <span class="lt-ush-years-text">${years}</span>
+                                <span class="lt-ush-years-text">${uzEsc(years)}</span>
                             </td>
                             <td class="lt-ush-col-term">
-                                <span class="kin-term-badge ${isM ? 'male' : 'female'}">${term}</span>
+                                <span class="kin-term-badge ${isM ? 'male' : 'female'}">${uzEsc(term)}</span>
+                                ${secondHtml}
                             </td>
                         </tr>
                     `;
@@ -5905,8 +5945,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 <div class="lt-ush-card ${zhurtKey}-card" id="ushCard_${basePersonId}_${zhurtKey}">
                     <div class="lt-ush-card-head">
                         <div class="lt-ush-card-title-wrap">
-                            <h4 class="lt-ush-card-title">${title} <span class="lt-ush-card-count">(${count})</span></h4>
-                            <div class="lt-ush-card-desc">${desc}</div>
+                            <h4 class="lt-ush-card-title">${uzEsc(title)} <span class="lt-ush-card-count">(${parseInt(count, 10) || 0})</span></h4>
+                            <div class="lt-ush-card-desc">${uzEsc(desc)}</div>
                         </div>
                         ${items.length > 5 ? `
                             <div class="lt-ush-card-search-wrap">
@@ -6021,24 +6061,31 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     return;
                 }
                 currentUshZhurtData = data;
-                if (!currentUshZhurtData.groups && currentUshZhurtData.ush_zhurt) {
-                    currentUshZhurtData.groups = {
-                        oz: currentUshZhurtData.ush_zhurt.oz_zhurt,
-                        kaiyn: currentUshZhurtData.ush_zhurt.kaiyn_zhurt,
-                        nagashy: currentUshZhurtData.ush_zhurt.nagashy_zhurt,
-                    };
-                }
+                // TASK-013: семейные папки по сторонам в порядке с сервера
+                // (женщина: Төркіні / Өз жұрты / Нағашы; мужчина: Өз / Қайын / Нағашы)
+                const uz = data.ush_zhurt || {};
+                const order = Array.isArray(uz.order) && uz.order.length
+                    ? uz.order
+                    : (data.is_female ? ['torkin', 'oz', 'nagashy'] : ['oz', 'kaiyn', 'nagashy']);
+                currentUshZhurtData.familyGroups = {};
+                order.forEach(k => { currentUshZhurtData.familyGroups[k] = uz[k + '_zhurt'] || { key: k, families: [], standalone: [], total_count: 0 }; });
+                currentUshZhurtData.familyOrder = order;
+
                 const p = data.person || (data.ush_zhurt && data.ush_zhurt.base_person);
                 const pGender = p && p.gender === 'M' ? (currentLang === 'ru' ? 'мужчина' : 'ер') : (currentLang === 'ru' ? 'женщина' : 'әйел');
                 const pTitle = p ? `${p.full_name} (${pGender})` : '';
                 document.getElementById('ushZhurtModalSubtitle').textContent = pTitle;
 
-                const grp = currentUshZhurtData.groups || {};
-                if (grp.oz) document.getElementById('tabBtnOz').textContent = grp.oz.title || grp.oz.title_kk;
-                if (grp.nagashy) document.getElementById('tabBtnNagashy').textContent = grp.nagashy.title || grp.nagashy.title_kk;
-                if (grp.kaiyn) document.getElementById('tabBtnKaiyn').textContent = grp.kaiyn.title || grp.kaiyn.title_kk;
+                const tabsBox = document.getElementById('ushZhurtTabButtons');
+                if (tabsBox) {
+                    tabsBox.innerHTML = order.map(k => {
+                        const g = currentUshZhurtData.familyGroups[k];
+                        const t = currentLang === 'ru' ? (g.title_ru || g.title_kk || k) : (g.title_kk || k);
+                        return `<button type="button" id="tabBtnUz_${k}" onclick="switchUshZhurtTab('${k}')">${uzEsc(t)} (${parseInt(g.total_count || 0, 10)})</button>`;
+                    }).join('');
+                }
 
-                switchUshZhurtTab('oz');
+                switchUshZhurtTab(order[0]);
             } catch (e) {
                 document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg is-error">Қате: ${e.message}</div>`;
             }
@@ -6051,26 +6098,43 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         function switchUshZhurtTab(tabKey) {
             currentUshZhurtActiveTab = tabKey;
-            const tabs = ['oz', 'nagashy', 'kaiyn'];
+            const tabs = (currentUshZhurtData && currentUshZhurtData.familyOrder) || ['oz', 'nagashy', 'kaiyn'];
             tabs.forEach(t => {
-                const btn = document.getElementById(t === 'oz' ? 'tabBtnOz' : (t === 'nagashy' ? 'tabBtnNagashy' : 'tabBtnKaiyn'));
+                const btn = document.getElementById('tabBtnUz_' + t);
                 if (btn) btn.classList.toggle('active', t === tabKey);
             });
 
             const container = document.getElementById('ushZhurtContentContainer');
-            if (!currentUshZhurtData || !currentUshZhurtData.groups || !currentUshZhurtData.groups[tabKey]) {
+            const groupsSrc = (currentUshZhurtData && currentUshZhurtData.familyGroups) || {};
+            const group = groupsSrc[tabKey];
+            if (!group) {
                 container.innerHTML = `<div class="uz-msg">${currentLang === 'ru' ? 'Нет данных' : 'Мәлімет жоқ'}</div>`;
                 return;
             }
 
-            const group = currentUshZhurtData.groups[tabKey];
             const families = group.families || [];
-            if (families.length === 0) {
-                container.innerHTML = `<div class="uz-msg" style="font-style:italic;">${currentLang === 'ru' ? 'В этом журте пока нет внесенных родственников' : 'Бұл жұрт бойынша мәліметтер әзірге енгізілмеген'}</div>`;
+            const standalone = group.standalone || [];
+            if (families.length === 0 && standalone.length === 0) {
+                const emptyText = currentLang === 'ru'
+                    ? (group.empty_ru || 'Пока никого не добавили')
+                    : (group.empty_kk || 'Әзірге ешкім қосылмаған');
+                const baseId = currentUshZhurtData.base_id || selectedPersonId;
+                const addBtn = canEdit
+                    ? ` <button type="button" class="btn btn-profile-action" onclick="closeUshZhurtModal(); openAddModal('${ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female)}', ${parseInt(baseId, 10)})">${currentLang === 'ru' ? 'Добавить' : 'Қосу'}</button>`
+                    : '';
+                container.innerHTML = `<div class="uz-msg" style="font-style:italic;">${uzEsc(emptyText)}${addBtn}</div>`;
                 return;
             }
 
-            container.innerHTML = families.map(f => renderUshZhurtFolderHtml(f, 0)).join('');
+            const standaloneHtml = standalone.length
+                ? `<div class="uz-msg">${currentLang === 'ru' ? 'Другие родственники' : 'Басқа туыстар'}: ${standalone.map(s => {
+                    const sp = s.person || {};
+                    const k = s.kinship || {};
+                    const term = currentLang === 'ru' ? (k.term_ru || k.term_kk || '') : (k.term_kk || '');
+                    return `${uzEsc((sp.first_name || '') + ' ' + (sp.last_name || ''))}${term ? ' — ' + uzEsc(term) : ''}`;
+                }).join(', ')}</div>`
+                : '';
+            container.innerHTML = families.map(f => renderUshZhurtFolderHtml(f, 0)).join('') + standaloneHtml;
         }
 
         function renderUshZhurtFolderHtml(fam, depth) {

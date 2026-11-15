@@ -93,11 +93,12 @@ $femaleId = 2; // Менслу Айткалиева
 $femaleData = $ks->getUshZhurtTables($femaleId, $personsById, $marriages);
 
 assertCheck($femaleData['is_female'] === true, 'is_female === true для женщины');
-assertCheck($femaleData['tables'][0]['title_kk'] === 'Төркін жұрты', 'Для женщины таблица 1 называется Төркін жұрты');
-assertCheck($femaleData['tables'][1]['title_kk'] === 'Қайын жұрты', 'Для женщины таблица 2 называется Қайын жұрты');
-assertCheck(mb_stripos($femaleData['tables'][1]['title_ru'], 'мужа') !== false, 'Для женщины пояснение таблицы 2 содержит род мужа');
+// TASK-013: у замужней женщины — Төркіні / Өз жұрты (семья мужа) / Нағашы жұрты, Қайын жұрты нет
+assertCheck($femaleData['tables'][0]['title_kk'] === 'Төркіні', 'Для женщины таблица 1 называется Төркіні');
+assertCheck($femaleData['tables'][1]['title_kk'] === 'Өз жұрты', 'Для замужней женщины таблица 2 называется Өз жұрты (семья мужа)');
+assertCheck(mb_stripos($femaleData['tables'][1]['title_ru'], 'мужа') !== false, 'Для женщины пояснение таблицы 2 содержит семью мужа');
 assertCheck($femaleData['tables'][2]['title_kk'] === 'Нағашы жұрты', 'Для женщины таблица 3 называется Нағашы жұрты');
-assertCheck($femaleData['tables'][0]['total_count'] > 0, 'Төркін жұрты содержит родственников');
+assertCheck(!isset($femaleData['groups']['kaiyn']), 'У замужней женщины нет таблицы Қайын жұрты');
 
 // 3. Тестирование ответа контроллера /api/person/ush-zhurt через отдельный изолированный вызов
 echo "\n3. Тестирование ответа контроллера apiUshZhurt:\n";

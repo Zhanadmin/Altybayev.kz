@@ -605,7 +605,15 @@ p { margin: 0; }
 .pc-family-names { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
 .pc-family-names a:hover { color: var(--c-accent-text); }
 .pc-plus { color: var(--c-text-3); }
-.pc-family-body { padding: var(--sp-1) var(--sp-4) var(--sp-2); }
+.pc-family-body { padding: 0 var(--sp-3) 2px; }
+/* TASK-020: «Үш жұрт» компактно — семьи прижаты друг к другу */
+.pc-zhurt-head ~ div > .pc-stack, .pc-stack:has(> .pc-family) { gap: 6px; }
+.pc-family summary { padding: 6px var(--sp-3); }
+.pc-family-body .list-row { padding-top: 4px; padding-bottom: 4px; }
+@media (max-width: 640px) {
+    .pc-family summary { padding: 5px 10px; }
+    .pc-family-body { padding: 0 8px 2px; }
+}
 .pc-tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .pc-tag { background: var(--c-island); padding: 4px 10px; color: var(--c-text); white-space: normal; }
 .pc-tag span { color: var(--c-text-2); }

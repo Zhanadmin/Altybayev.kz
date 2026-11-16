@@ -382,7 +382,27 @@ class PersonController
             $canInvite = Auth::canEdit();
         }
 
+        // 11. TASK-018 (note 16.11 15:49): мероприятия человека и фото, где он отмечен (без миграции — блок скрыт)
+        $personEvents = [];
+        $personPhotos = ['items' => [], 'total' => 0];
+        $albumsReady = false;
+        try {
+            $albumSvc = new \App\Services\AlbumService($db);
+            if ($albumSvc->isReady()) {
+                $albumsReady = true;
+                $personEvents = $albumSvc->personEvents($id);
+                $personPhotos = $albumSvc->personTaggedMedia($id);
+            }
+        } catch (\Throwable $e) {
+            // альбомы не должны ломать карточку
+            $albumsReady = false;
+        }
+
         Response::view('persons/show', [
+            'albumsReady'     => $albumsReady,
+            'personEvents'    => $personEvents,
+            'personPhotos'    => $personPhotos,
+            'canCreateEvent'  => Auth::canEdit(),
             'contacts'        => $contacts,
             'inviteState'     => $inviteState,
             'canEditContacts' => $canEditContacts,

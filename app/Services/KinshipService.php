@@ -1816,19 +1816,29 @@ class KinshipService
                             $childrenList[] = [
                                 'person' => $cPerson,
                                 'kinship' => $allKinships[$cId] ?? null,
-                                'seniority' => (int)($cPerson['birth_year'] ?? 9999),
+                                // TASK-020: по своей дате рождения (год или дата), без даты — в конец
+                                'seniority' => $this->extractYear($cPerson['birth_year'] ?? null)
+                                    ?? $this->extractYear($cPerson['birth_date'] ?? null) ?? 9999,
+                                'sort_date' => (string)($cPerson['birth_date'] ?? '9999'),
                             ];
                             $handledChildren[$cId] = true;
                         }
                     }
 
                     // Сортировка детей внутри семьи по старшинству (по году рождения өсу ретімен)
-                    usort($childrenList, fn($a, $b) => $a['seniority'] <=> $b['seniority']);
+                    usort($childrenList, fn($a, $b) => [$a['seniority'], $a['sort_date']] <=> [$b['seniority'], $b['sort_date']]);
 
-                    // Старшинство семьи по возрасту мужа (если нет — жены, затем дата брака)
-                    $hSeniority = (int)($h['birth_year'] ?? 0);
-                    $wSeniority = (int)($w['birth_year'] ?? 0);
-                    $seniority = $hSeniority ?: ($wSeniority ?: 9999);
+                    // Старшинство семьи: по члену этого жұрта (сестра — по своему году, не по мужу)
+                    $hSeniority = (int)($this->extractYear($h['birth_year'] ?? null) ?? $this->extractYear($h['birth_date'] ?? null) ?? 0);
+                    $wSeniority = (int)($this->extractYear($w['birth_year'] ?? null) ?? $this->extractYear($w['birth_date'] ?? null) ?? 0);
+                    if (isset($personIdSet[$hId]) && !isset($personIdSet[$wId])) {
+                        $seniority = $hSeniority ?: 9999;
+                    } elseif (isset($personIdSet[$wId]) && !isset($personIdSet[$hId])) {
+                        $seniority = $wSeniority ?: 9999;
+                    } else {
+                        $both = array_filter([$hSeniority, $wSeniority]);
+                        $seniority = $both ? min($both) : 9999;
+                    }
 
                     $families[] = [
                         'marriage' => $m,

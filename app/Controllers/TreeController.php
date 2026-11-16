@@ -432,6 +432,22 @@ class TreeController
             $person['can_edit_clan'] = empty($person['father_id']);
             $person['clan_hint'] = !empty($person['father_id']) ? 'әкесінен / по отцу' : '';
 
+            // TASK-022: контакты для окна редактирования (телефоны, email, статус приглашения)
+            $contactsOut = null;
+            if (\App\Controllers\PersonContactController::canEditContacts((int)$person['id'])) {
+                $ctSvc = new \App\Services\PersonContactService($db);
+                $ct = \App\Services\PersonContactService::decodeContacts($person['private_contacts'] ?? null);
+                $ctState = $ctSvc->inviteStatus((int)$person['id'], $ct['emails']);
+                $contactsOut = [
+                    'phones'       => array_map(static fn($ph) => \App\Services\PersonContactService::formatPhone($ph), $ct['phones']),
+                    'email'        => $ct['emails'][0] ?? '',
+                    'invite_state' => $ctState['state'],
+                    'can_invite'   => Auth::canEdit(),
+                    'is_admin'     => Auth::isAdmin(),
+                    'csrf_token'   => \App\Core\Session::csrfToken(),
+                ];
+            }
+
             Response::json([
                 'status' => 'success',
                 'person' => $person,
@@ -441,6 +457,7 @@ class TreeController
                 'children' => $children,
                 'audit_logs' => $auditLogs,
                 'can_edit' => Auth::canEdit(),
+                'contacts' => $contactsOut,
             ]);
         } catch (\Throwable $e) {
             Response::json(['error' => $e->getMessage()], 500);

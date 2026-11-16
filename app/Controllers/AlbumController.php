@@ -284,6 +284,10 @@ class AlbumController
             if (!$album) {
                 $this->fail('Альбом табылмады', 'Альбом не найден', 404);
             }
+            // альбом мероприятия меняется вместе с мероприятием (/api/event/save), отдельно — нет
+            if (($album['owner_type'] ?? '') !== 'family') {
+                $this->fail('Іс-шара альбомын іс-шара арқылы өзгертіңіз', 'Альбом мероприятия меняется через само мероприятие', 400);
+            }
             if (!AlbumService::canManage($album, $user) && !Auth::canEdit()) {
                 $this->fail('Құқық жоқ', 'Нет прав', 403);
             }
@@ -715,7 +719,11 @@ class AlbumController
         Response::json(['success' => true]);
     }
 
-    /** POST /api/album/media/avatar {id, person_id} — фото с отметкой человека → аватар в карточке */
+    /**
+     * POST /api/album/media/avatar {id, person_id, crop_x, crop_y, crop_s} — любое фото альбома → аватар выбранного человека.
+     * TASK-018 (note 16.11 15:51): человек выбирается явно из всего шежіре (не обязательно отмеченный на фото);
+     * ставят редактор/админ любому, остальные — только себе.
+     */
     public function apiSetAvatar(Request $request): void
     {
         $this->requireReady();
@@ -726,9 +734,9 @@ class AlbumController
         if (!$m || $m['media_type'] !== 'photo') {
             $this->fail('Фото табылмады', 'Фото не найдено', 404);
         }
-        $tagged = array_map(fn($p) => (int)$p['id'], $m['people']);
-        if (!in_array($personId, $tagged, true)) {
-            $this->fail('Алдымен адамды фотода белгілеңіз', 'Сначала отметьте человека на фото', 400);
+        $person = $personId > 0 ? $this->svc()->getPerson($personId) : null;
+        if (!$person) {
+            $this->fail('Адамды таңдаңыз', 'Выберите человека', 400);
         }
         $isSelf = (int)($user['person_id'] ?? 0) === $personId;
         if (!Auth::canEdit() && !$isSelf) {
@@ -765,7 +773,11 @@ class AlbumController
                ]);
         } catch (\Throwable $e) {
         }
-        Response::json(['success' => true, 'avatar_url' => $url]);
+        Response::json([
+            'success'    => true,
+            'avatar_url' => $url,
+            'person'     => ['id' => $personId, 'name' => AlbumService::personName($person)],
+        ]);
     }
 
     // ================================================================== выдача файлов

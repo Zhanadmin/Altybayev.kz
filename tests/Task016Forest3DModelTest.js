@@ -26,6 +26,8 @@ check(H.kkPlural('Тілеуберді') === 'Тілеуберділер', 'kkPl
 check(H.kkDative('Алтыбаевтар') === 'Алтыбаевтарға', 'kkDative: Алтыбаевтарға');
 check(H.ruPlural('Алтыбаев').gen === 'Алтыбаевых', 'ruPlural: Алтыбаевых');
 check(H.surnameBase('Кубенова') === 'Кубенов', 'surnameBase: Кубенова → Кубенов');
+check(H.TXT && H.TXT.ru && H.TXT.ru.introTree && H.TXT.ru.introTree.includes('дуб') && H.TXT.ru.introLeaf.includes('медальон'), 'Легенда ru содержит дуб, желуди и медальоны');
+check(H.TXT && H.TXT.kk && H.TXT.kk.introTree && H.TXT.kk.introTree.includes('емен') && H.TXT.kk.introLeaf.includes('медальон'), 'Легенда kk содержит дубовую рощу (емен)');
 
 // Синтетическое шежіре: два рода (А… и К…), дочь рода К замужем за сыном рода А,
 // келін без отца в базе, одиночка-муж без родителей, брак внутри рода.

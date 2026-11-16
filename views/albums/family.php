@@ -14,7 +14,7 @@ $dsThemeReady = true;
 
 require __DIR__ . '/../layout/master_start.php';
 ?>
-<link rel="stylesheet" href="/assets/css/album.css?v=1">
+<link rel="stylesheet" href="/assets/css/album.css?v=5">
 
 <div class="al">
     <div class="ds-page-head">

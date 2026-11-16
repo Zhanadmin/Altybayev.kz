@@ -185,6 +185,14 @@
             if (b) openLb(parseInt(b.getAttribute('data-i'), 10));
         });
         renderGrid();
+        // TASK-018 (note 16.11 15:49): ссылка из карточки человека /event/ID#m<медиа> — сразу открыть это фото
+        var hm = /^#m(\d+)$/.exec(location.hash || '');
+        if (hm) {
+            var hid = parseInt(hm[1], 10);
+            for (var hi = 0; hi < items.length; hi++) {
+                if (items[hi].id === hid) { setTimeout(openLb.bind(null, hi), 0); break; }
+            }
+        }
     }
 
     /* ===================================================== загрузка */
@@ -216,19 +224,29 @@
     }
 
     function addFiles(list) {
+        var added = false;
         Array.prototype.forEach.call(list || [], function (f) {
             var row = document.createElement('div');
             row.className = 'al-q';
             row.innerHTML = '<span class="nm"></span><span class="st"></span><span class="al-bar"><i></i></span>';
             row.querySelector('.nm').textContent = f.name + ' · ' + fmtBytes(f.size);
             queueBox.appendChild(row);
-            var job = { file: f, row: row, kind: kindOf(f) };
+            // подпись, дата и люди — на момент выбора файла (потом поле могут поменять для следующей пачки)
+            var job = { file: f, row: row, kind: kindOf(f),
+                meta: { caption: valueOf('alCaption'), date: valueOf('alDate'), people: valueOf('alUploadPeopleIds') } };
             if (!job.kind) { fail(job, t('err_type')); return; }
             var max = (job.kind === 'video' ? AL.videoMaxMb : AL.photoMaxMb) * 1048576;
             if (f.size > max) { fail(job, t('err_big') + ' ' + (job.kind === 'video' ? AL.videoMaxMb : AL.photoMaxMb) + ' MB'); return; }
             status(job, t('waiting'));
             queue.push(job);
+            added = true;
         });
+        // TASK-018: отметки прошлой пачки не должны попасть на следующие фото
+        if (added) {
+            if (pickers.alUploadPeople) pickers.alUploadPeople.set([]);
+            var cap = document.getElementById('alCaption');
+            if (cap) cap.value = '';
+        }
         pump();
     }
     function status(job, s, pct) {
@@ -265,9 +283,9 @@
         }).then(function (poster) {
             var fd = new FormData();
             fd.append('upload_id', uploadId);
-            fd.append('caption', valueOf('alCaption'));
-            fd.append('taken_date', valueOf('alDate'));
-            fd.append('people', valueOf('alUploadPeopleIds'));
+            fd.append('caption', job.meta.caption);
+            fd.append('taken_date', job.meta.date);
+            fd.append('people', job.meta.people);
             if (poster && poster.blob) fd.append('poster', poster.blob, 'poster.jpg');
             if (poster && poster.duration) fd.append('duration', String(Math.round(poster.duration)));
             return post('/api/album/upload/complete', fd);
@@ -402,7 +420,8 @@
         lb.querySelector('[data-lb="edit"]').style.display = it.canEdit ? '' : 'none';
         var av = lb.querySelector('[data-lb="avatar"]');
         var avaPeople = avatarPeople(it);
-        av.style.display = avaPeople.length ? '' : 'none';
+        // TASK-018 (note 16.11 15:51): кнопка «Аватарға қою» на любом фото — человек выбирается в окне
+        av.style.display = canSetAnyAvatar(it) ? '' : 'none';
 
         var info = lb.querySelector('.al-lb-info');
         var sub = [];
@@ -415,10 +434,12 @@
                 var link = '<a href="/person/' + p.id + '">' + esc(p.name) + '</a>';
                 if (avaIds.indexOf(p.id) < 0) return link;
                 // TASK-018: явная кнопка рядом с человеком — «Аватарға қою»
+                var lbl = avaLabel(p.name);
                 return '<span class="al-pp">' + link + '<button type="button" class="al-ava-btn" data-lb="avatar" data-pid="' + p.id + '"' +
-                    ' aria-label="' + esc(t('avatar_set') + ': ' + p.name) + '">' + esc(t('avatar_set')) + '</button></span>';
+                    ' aria-label="' + esc(lbl) + '">' + esc(lbl) + '</button></span>';
             }).join('') + '</div>' : '') +
-            (it.type === 'photo' && !it.people.length && it.canEdit ? '<div class="ava-hint">' + esc(t('avatar_hint')) + '</div>' : '');
+            (lastAva && lastAva.media === it.id ? '<div class="ava-done">✓ ' + esc(t('avatar_done')) + ' <a href="/person/' + lastAva.pid + '">' +
+                esc(lastAva.name) + '</a></div>' : '');
         // соседние фото — заранее
         [cur + 1, cur - 1].forEach(function (j) {
             var n = items[(j + items.length) % items.length];
@@ -522,6 +543,31 @@
         if (!it || it.type !== 'photo' || !it.people || !it.people.length) return [];
         return it.people.filter(function (p) { return AL.canEditAll || p.id === AL.myPersonId; });
     }
+    /* Верхняя кнопка: на любом фото — редактору/админу (любой человек) или привязанному к карточке (только себе) */
+    function canSetAnyAvatar(it) {
+        return !!it && it.type === 'photo' && (!!AL.canEditAll || (AL.myPersonId > 0 && !!peopleById[AL.myPersonId]));
+    }
+    /* «Айнур Алтыбаева (1990)» → «Айнурға аватар қою» (каз., дательный падеж имени) / «Поставить аватар: Айнур Алтыбаева» */
+    function bareName(name) { return String(name || '').replace(/\s*\(\d{3,4}\)\s*/, ' ').replace(/\s*·\s*№\d+\s*$/, '').trim(); }
+    function kkDative(word) {
+        var w = String(word || '').trim();
+        if (!/[а-яәөүұіқғңһё]$/i.test(w)) return w + ' —'; // не кириллица — без окончания
+        var low = w.toLowerCase(), front = false;
+        for (var i = low.length - 1; i >= 0; i--) {
+            var c = low.charAt(i);
+            if ('әөүіеэюи'.indexOf(c) >= 0) { front = true; break; } // «Габит» → «Габитке»; «у» — по предыдущей гласной
+            if ('аоұыяё'.indexOf(c) >= 0) { front = false; break; }
+        }
+        var last = low.charAt(low.length - 1);
+        var hard = 'кқпстфхцчшщбвгд'.indexOf(last) >= 0;
+        return w + (hard ? (front ? 'ке' : 'қа') : (front ? 'ге' : 'ға'));
+    }
+    function avaLabel(name) {
+        var full = bareName(name);
+        var arg = AL.lang === 'ru' ? full : kkDative(full.split(' ')[0]);
+        return t('avatar_for').replace('{name}', arg);
+    }
+    var lastAva = null; // последний поставленный аватар — показываем «✓ Аватар қойылды» под этим фото
 
     /* ===================================================== аватар: окно квадратной обрезки */
     var avaModal = document.getElementById('alAvaModal');
@@ -529,10 +575,71 @@
     var cropImg = document.getElementById('alCropImg');
     var cropBox = document.getElementById('alCropBox');
     var cropSize = document.getElementById('alCropSize');
-    var avaWho = document.getElementById('alAvaWho');
+    var avaSearch = document.getElementById('alAvaSearch');
+    var avaList = document.getElementById('alAvaList');
+    var avaChosen = document.getElementById('alAvaChosen');
+    var avaTitle = document.getElementById('alAvaTitle');
     var avaSave = document.getElementById('alAvaSave');
     // квадрат в долях: x — от ширины, y — от высоты, s — от меньшей стороны
     var crop = { x: 0, y: 0, s: 1 }, cropItem = null;
+    var avaPid = 0, avaImgReady = false;
+
+    /* Кандидаты: отмеченные на фото — сверху, затем все люди шежіре (поиск по имени). Не редактор — только он сам. */
+    function avaCandidates(it, q) {
+        q = String(q || '').trim().toLowerCase();
+        var match = function (name) { return !q || String(name).toLowerCase().indexOf(q) >= 0; };
+        if (!AL.canEditAll) {
+            var me = AL.myPersonId;
+            return peopleById[me] ? [{ id: me, name: peopleById[me], tagged: (it.people || []).some(function (p) { return p.id === me; }) }] : [];
+        }
+        var out = [], seen = {};
+        (it.people || []).forEach(function (p) {
+            var nm = peopleById[p.id] || p.name;
+            if (match(nm)) { out.push({ id: p.id, name: nm, tagged: true }); }
+            seen[p.id] = true;
+        });
+        (AL.people || []).forEach(function (p) {
+            if (out.length >= 60 || seen[p.id] || !match(p.name)) return;
+            out.push({ id: p.id, name: p.name, tagged: false });
+        });
+        return out;
+    }
+    function renderAvaList() {
+        if (!avaList || !cropItem) return;
+        var list = avaCandidates(cropItem, avaSearch ? avaSearch.value : '');
+        avaList.innerHTML = list.length ? list.map(function (p) {
+            var on = p.id === avaPid;
+            return '<button type="button" class="al-ava-opt' + (on ? ' is-on' : '') + '" role="option" aria-selected="' + (on ? 'true' : 'false') +
+                '" data-pid="' + p.id + '">' + esc(p.name) + (p.tagged ? ' <span class="tag">' + esc(t('avatar_tagged')) + '</span>' : '') + '</button>';
+        }).join('') : '<div class="small muted" style="padding:8px">' + esc(t('avatar_none')) + '</div>';
+    }
+    function setAvaPid(pid) {
+        avaPid = peopleById[pid] ? pid : 0;
+        var name = avaPid ? peopleById[avaPid] : '';
+        avaTitle.textContent = avaPid ? avaLabel(name) : t('avatar_title');
+        var onPhoto = avaPid && cropItem && (cropItem.people || []).some(function (p) { return p.id === avaPid; });
+        avaChosen.innerHTML = avaPid
+            ? esc(t('avatar_chosen')) + ' <b>' + esc(name) + '</b>' + (onPhoto ? '' : ' <span class="muted">(' + esc(t('avatar_not_tagged')) + ')</span>')
+            : '<span class="muted">' + esc(t('avatar_choose')) + '</span>';
+        avaSave.textContent = avaPid ? avaLabel(name) : t('save');
+        avaSave.disabled = !(avaPid && avaImgReady);
+        renderAvaList();
+    }
+    if (avaList) {
+        avaList.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-pid]');
+            if (b) setAvaPid(parseInt(b.getAttribute('data-pid'), 10));
+        });
+    }
+    if (avaSearch) {
+        avaSearch.addEventListener('input', renderAvaList);
+        avaSearch.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            var first = avaList.querySelector('[data-pid]');
+            if (first) setAvaPid(parseInt(first.getAttribute('data-pid'), 10));
+        });
+    }
 
     function cropDims() {
         var w = cropImg.clientWidth, h = cropImg.clientHeight;
@@ -566,8 +673,8 @@
     }
 
     if (avaModal && cropImg && cropBox) {
-        cropImg.addEventListener('load', function () { resetCrop(); avaSave.disabled = false; });
-        cropImg.addEventListener('error', function () { avaSave.disabled = true; toast(t('err_network')); });
+        cropImg.addEventListener('load', function () { resetCrop(); avaImgReady = true; avaSave.disabled = !avaPid; });
+        cropImg.addEventListener('error', function () { avaImgReady = false; avaSave.disabled = true; toast(t('err_network')); });
         window.addEventListener('resize', function () { if (avaModal.style.display === 'flex') drawCrop(); });
         cropSize.addEventListener('input', function () {
             var d = cropDims();
@@ -614,22 +721,24 @@
         });
 
         avaSave.addEventListener('click', function () {
-            if (!cropItem) return;
-            var pid = parseInt(avaWho.value, 10);
-            var p = cropItem.people.filter(function (x) { return x.id === pid; })[0];
-            if (!p) return;
+            if (!cropItem || !avaPid || !avaImgReady) return;
+            var pid = avaPid, item = cropItem;
             clampCrop();
             avaSave.disabled = true;
             var label = avaSave.textContent;
             avaSave.textContent = t('avatar_saving');
             post('/api/album/media/avatar', {
-                id: cropItem.id, person_id: p.id,
+                id: item.id, person_id: pid,
                 crop_x: crop.x.toFixed(5), crop_y: crop.y.toFixed(5), crop_s: crop.s.toFixed(5)
-            }).then(function () {
+            }).then(function (res) {
+                // имя — из ответа сервера: видно, кому на самом деле записан аватар
+                var name = (res.person && res.person.name) || bareName(peopleById[pid]);
+                lastAva = { media: item.id, pid: (res.person && res.person.id) || pid, name: name };
                 closeModal(avaModal);
-                toast(t('avatar_done') + ' ' + p.name, 'success');
+                toast(t('avatar_done') + ' ' + name, 'success');
+                if (lb.classList.contains('is-open') && items[cur] && items[cur].id === item.id) showCur();
             }).catch(function (err) { toast(err.message); }).then(function () {
-                avaSave.disabled = false;
+                avaSave.disabled = !(avaPid && avaImgReady);
                 avaSave.textContent = label;
             });
         });
@@ -637,22 +746,23 @@
 
     function avatarCur(pid) {
         var it = items[cur];
-        var opts = avatarPeople(it);
-        if (!opts.length || !avaModal) return;
+        if (!canSetAnyAvatar(it) || !avaModal) return;
         cropItem = it;
-        avaWho.innerHTML = opts.map(function (o) {
-            return '<option value="' + o.id + '">' + esc(o.name) + '</option>';
-        }).join('');
-        if (pid && opts.some(function (o) { return o.id === pid; })) avaWho.value = String(pid);
-        document.getElementById('alAvaWhoField').style.display = opts.length > 1 ? '' : 'none';
+        if (avaSearch) avaSearch.value = '';
+        var cands = avaCandidates(it, '');
+        // Человек выбирается явно: с кнопки у имени — он; если вариант один (только себе) — он; иначе пусто, пока не выберут
+        var pre = 0;
+        if (pid && cands.some(function (c) { return c.id === pid; })) pre = pid;
+        else if (!AL.canEditAll && cands.length === 1) pre = cands[0].id;
+        document.getElementById('alAvaWhoField').style.display = AL.canEditAll ? '' : 'none';
+        avaImgReady = !!(cropImg.getAttribute('src') === it.full && cropImg.complete && cropImg.naturalWidth);
+        setAvaPid(pre);
         openModal('alAvaModal');
-        if (cropImg.getAttribute('src') === it.full && cropImg.complete && cropImg.naturalWidth) {
+        if (avaImgReady) {
             resetCrop();
-            avaSave.disabled = false;
         } else {
-            avaSave.disabled = true; // до загрузки нового фото обрезка относится к старому
-            cropImg.src = it.full;
+            cropImg.src = it.full; // до загрузки нового фото обрезка относится к старому — «Сақтау» выключен
         }
-        setTimeout(function () { cropBox.focus(); }, 40);
+        setTimeout(function () { (pre || !avaSearch ? cropBox : avaSearch).focus(); }, 40);
     }
 })();

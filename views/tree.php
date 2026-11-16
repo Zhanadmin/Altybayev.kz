@@ -3563,6 +3563,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <textarea class="form-textarea" id="editBiography" rows="3" placeholder="Өмірбаяны, естеліктері, еңбек жолы..."></textarea>
                     </div>
 
+                    <?php
+                    // TASK-022: телефон(ы), email, приглашение
+                    $pcfInputCls = 'form-input';
+                    $pcfBtnCls = 'btn-modal-cancel';
+                    $pcfBtnPrimaryCls = 'btn-modal-submit';
+                    require __DIR__ . '/layout/person_contact_fields.php';
+                    ?>
+
                     <!-- Аудит-лог тарихы -->
                     <div class="audit-log-section" id="editAuditSection">
                         <div class="audit-log-title"><svg class="ic"><use href="#t-history"/></svg> Өзгерістер тарихы (Audit Log)</div>
@@ -3893,7 +3901,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
          THREE.JS ЖӘНЕ ШЕЖІРЕ-ОРМАН 3D ҚОЗҒАЛТҚЫШЫ (WEBGL)
          ======================================================== -->
     <script src="/assets/js/three/three.min.js"></script>
-    <script src="/assets/js/shezhire-forest-3d.js"></script>
+    <script src="/assets/js/shezhire-forest-3d.js?v=<?= filemtime(__DIR__ . '/../public/assets/js/shezhire-forest-3d.js') ?>"></script>
     <script src="/assets/js/rodoslov-generator.js"></script>
 
     <!-- ========================================================
@@ -5704,6 +5712,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 document.getElementById('editDeathDate').value = p.death_date || '';
                 document.getElementById('editDeathPlace').value = p.death_place || '';
                 document.getElementById('editBiography').value = p.biography || '';
+                if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
 
                 const btnDel = document.getElementById('btnDeletePerson');
                 if (btnDel) {
@@ -5808,7 +5817,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    closeEditPersonModal();
+                    // TASK-022: контакты — тем же нажатием «Сақтау»
+                    const ct = (typeof pcfSave === 'function') ? await pcfSave() : { ok: true, offerInvite: false };
+                    if (ct.ok && !ct.offerInvite) {
+                        closeEditPersonModal();
+                    } // иначе окно остаётся: ошибка контактов или кнопка «Шақыру жіберу» после сохранения email
                     const clanEl = document.getElementById('editClanRu');
                     const newRu = clanEl.value.trim();
                     const origRu = clanEl.dataset.orig || '';

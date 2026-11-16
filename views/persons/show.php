@@ -395,6 +395,77 @@ require __DIR__ . '/../layout/master_start.php';
                 </div>
             <?php endif; ?>
 
+            <!-- TASK-018 (note 16.11 15:49): мероприятия человека и фото, где он отмечен -->
+            <?php if (!empty($albumsReady)):
+                $pcRu = ($lang === 'ru');
+                $pcEvents = $personEvents ?? [];
+                $pcPhotos = $personPhotos['items'] ?? [];
+                $pcPhotosTotal = (int)($personPhotos['total'] ?? 0);
+                $pcNewEventUrl = '/events?' . http_build_query(['kind' => 'other', 'person_id' => (int)$person['id']]);
+            ?>
+                <link rel="stylesheet" href="/assets/css/album.css?v=5">
+                <div class="island" id="pcEventsIsland">
+                    <div class="island-head pc-kin-head">
+                        <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
+                        <h3><?= $pcRu ? 'Мероприятия' : 'Іс-шаралар' ?></h3>
+                        <span class="more"><?= count($pcEvents) ?></span>
+                        <?php if (!empty($canCreateEvent)): ?>
+                            <a class="btn btn-sm btn-ghost pc-ev-add" href="<?= htmlspecialchars($pcNewEventUrl) ?>"
+                               data-tip="<?= $pcRu ? 'Создать мероприятие для этого человека' : 'Осы адамға іс-шара құру' ?>">
+                                <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><?= $pcRu ? 'Мероприятие' : 'Іс-шара' ?>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    <?php if (!$pcEvents): ?>
+                        <div class="muted"><?= $pcRu ? 'Пока нет мероприятий с этим человеком.' : 'Бұл адаммен байланысты іс-шара әзірге жоқ.' ?></div>
+                    <?php else: ?>
+                        <div class="pc-ev-list">
+                            <?php foreach ($pcEvents as $pe): ?>
+                                <a class="island-sub pc-ev" href="/event/<?= (int)$pe['id'] ?>">
+                                    <span class="pc-ev-thumbs">
+                                        <?php if (!empty($pe['thumbs'])): foreach ($pe['thumbs'] as $th): ?>
+                                            <img src="/album/media?id=<?= (int)$th['id'] ?>&amp;v=thumb" alt="" loading="lazy" decoding="async">
+                                        <?php endforeach; else: ?>
+                                            <span class="pc-ev-noimg"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="pc-ev-body">
+                                        <b><?= htmlspecialchars((string)$pe['title']) ?></b>
+                                        <span class="small muted">
+                                            <?= !empty($pe['event_date']) ? htmlspecialchars(I18n::formatDate($pe['event_date'])) : ($pcRu ? 'дата не указана' : 'күні белгісіз') ?><?= !empty($pe['place']) ? ' · ' . htmlspecialchars((string)$pe['place']) : '' ?>
+                                            · <?= (int)$pe['media_count'] ?> <?= $pcRu ? 'фото/видео' : 'фото/бейне' ?>
+                                        </span>
+                                    </span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($pcPhotos): ?>
+                        <div class="pc-sub-title pc-ev-photos-title">
+                            <?= $pcRu ? 'Фото и видео, где отмечен(а)' : 'Белгіленген фото мен бейнелер' ?> · <?= $pcPhotosTotal ?>
+                        </div>
+                        <div class="al-grid pc-ev-grid">
+                            <?php foreach ($pcPhotos as $ph):
+                                $phUrl = ($ph['owner_type'] === 'event' ? '/event/' . (int)$ph['owner_id'] : '/album/' . (int)$ph['album_id']) . '#m' . (int)$ph['id'];
+                                $phLabel = (string)($ph['caption'] ?: $ph['album_title']);
+                            ?>
+                                <a class="al-tile" href="<?= htmlspecialchars($phUrl) ?>" title="<?= htmlspecialchars($phLabel) ?>" aria-label="<?= htmlspecialchars(($ph['media_type'] === 'video' ? ($pcRu ? 'Видео' : 'Бейне') : 'Фото') . ': ' . $phLabel) ?>">
+                                    <?php if (!empty($ph['has_thumb'])): ?>
+                                        <img src="/album/media?id=<?= (int)$ph['id'] ?>&amp;v=thumb" alt="" loading="lazy" decoding="async">
+                                    <?php else: ?>
+                                        <span class="al-noposter"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
+                                    <?php endif; ?>
+                                    <?php if ($ph['media_type'] === 'video'): ?>
+                                        <span class="al-play"><span><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg></span></span>
+                                    <?php endif; ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
             <!-- Дыбыс жазбалары мен естеліктер (TASK-004 Media) -->
             <div class="island">
                 <div class="island-head"><h3><?= htmlspecialchars(I18n::t('audio_and_photos')) ?></h3></div>

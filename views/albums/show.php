@@ -19,7 +19,7 @@ $fmtDate = fn(?string $d) => $d ? I18n::formatDate($d) : '';
 
 require __DIR__ . '/../layout/master_start.php';
 ?>
-<link rel="stylesheet" href="/assets/css/album.css?v=3">
+<link rel="stylesheet" href="/assets/css/album.css?v=5">
 
 <div class="al">
     <div class="ds-page-head">
@@ -187,11 +187,14 @@ require __DIR__ . '/../layout/master_start.php';
             <button type="button" class="btn btn-ghost btn-icon" data-close-modal aria-label="<?= htmlspecialchars($L('Жабу', 'Закрыть')) ?>"><svg class="ic"><use href="#i-x"/></svg></button>
         </div>
         <div class="modal-body">
+            <!-- TASK-018 (note 16.11 15:51): явный выбор человека — отмеченные на фото сверху, поиск по всему шежіре -->
             <div class="field" id="alAvaWhoField">
-                <label for="alAvaWho"><?= $L('Кімнің аватары', 'Чей аватар') ?></label>
-                <select id="alAvaWho" class="input"></select>
+                <label for="alAvaSearch"><?= $L('Кімге аватар қоямыз', 'Кому ставим аватар') ?></label>
+                <input id="alAvaSearch" class="input" type="search" autocomplete="off" placeholder="<?= htmlspecialchars($L('Атын жазыңыз…', 'Начните вводить имя…')) ?>">
+                <div id="alAvaList" class="al-ava-list" role="listbox" aria-label="<?= htmlspecialchars($L('Адамдар', 'Люди')) ?>"></div>
             </div>
-            <p class="small muted" style="margin:0 0 8px"><?= $L('Шаршыны жылжытып, өлшемін таңдаңыз', 'Передвиньте квадрат и выберите размер') ?></p>
+            <p id="alAvaChosen" class="al-ava-chosen" aria-live="polite"></p>
+            <p class="small muted" style="margin:0 0 8px"><?= $L('Шеңберді жылжытып, өлшемін таңдаңыз', 'Передвиньте круг и выберите размер') ?></p>
             <div class="al-crop" id="alCrop">
                 <img id="alCropImg" alt="" draggable="false">
                 <div class="al-crop-box" id="alCropBox" tabindex="0" aria-label="<?= htmlspecialchars($L('Кесу аймағы', 'Область обрезки')) ?>"></div>
@@ -203,7 +206,7 @@ require __DIR__ . '/../layout/master_start.php';
         </div>
         <div class="modal-foot">
             <button type="button" class="btn" data-close-modal><?= $L('Бас тарту', 'Отмена') ?></button>
-            <button type="button" class="btn btn-primary" id="alAvaSave"><?= $L('Аватарға қою', 'Поставить на аватар') ?></button>
+            <button type="button" class="btn btn-primary" id="alAvaSave" disabled><?= $L('Сақтау', 'Сохранить') ?></button>
         </div>
     </div>
 </div>
@@ -259,6 +262,7 @@ window.AL = <?= json_encode([
     'people'     => $people,
     'canEditAll' => (bool)$canEditAll,
     'myPersonId' => (int)($user['person_id'] ?? 0),
+    'lang'       => $lang,
     't'          => [
         'photo' => $L('Фото', 'Фото'), 'video' => $L('Бейне', 'Видео'),
         'waiting' => $L('кезекте', 'в очереди'), 'starting' => $L('басталды…', 'начинаем…'),
@@ -278,9 +282,18 @@ window.AL = <?= json_encode([
         'video_unsupported' => $L('Бұл браузер бейнені ойната алмайды.', 'Этот браузер не может воспроизвести видео.'),
         'download' => $L('Жүктеп алу', 'Скачать'),
         'avatar_done' => $L('Аватар қойылды:', 'Аватар установлен:'),
+        'avatar_title' => $L('Аватарға қою', 'Поставить на аватар'),
+        'avatar_for' => $L('{name} аватар қою', 'Поставить аватар: {name}'),
+        'avatar_choose' => $L('Тізімнен адамды таңдаңыз', 'Выберите человека из списка'),
+        'avatar_chosen' => $L('Аватар қойылады:', 'Аватар будет поставлен:'),
+        'avatar_tagged' => $L('фотода', 'на фото'),
+        'avatar_not_tagged' => $L('бұл фотода белгіленбеген', 'на этом фото не отмечен(а)'),
+        'avatar_none' => $L('Ешкім табылмады', 'Никого не найдено'),
+        'avatar_open' => $L('Карточкасын ашу', 'Открыть карточку'),
+        'save' => $L('Сақтау', 'Сохранить'),
     ],
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
-<script src="/assets/js/album.js?v=3" defer></script>
+<script src="/assets/js/album.js?v=7" defer></script>
 
 <?php require __DIR__ . '/../layout/master_end.php'; ?>

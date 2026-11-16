@@ -90,6 +90,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                             </div>
                         </div>
                     </div>
+                    <?php require __DIR__ . '/person_contact_fields.php'; ?>
                 </div>
                 <div class="modal-foot">
                     <button type="button" class="btn" onclick="closeGlobalPersonEditModal()"><?= $__t('Бас тарту', 'Отмена') ?></button>
@@ -201,6 +202,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         toggleEditModalDeceasedFields(isDec);
                         document.getElementById('editModalDeathDate').value = p.death_date || '';
                         document.getElementById('editModalDeathYear').value = p.death_year || '';
+                        if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
                     }
                 })
                 .catch(e => showAppToast('Қате / Ошибка: ' + e.message, 'error'));
@@ -209,6 +211,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
         function closeGlobalPersonEditModal() {
             const modal = document.getElementById('globalPersonEditModal');
             if (modal) modal.style.display = 'none';
+            if (window.pcfDirty) { window.pcfDirty = false; window.location.reload(); } // TASK-022: данные на странице устарели
         }
 
         async function handleGlobalPersonSave(e) {
@@ -238,6 +241,16 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                 });
                 const data = await res.json();
                 if (data && (data.status === 'success' || data.success)) {
+                    // TASK-022: контакты — тем же нажатием «Сақтау»
+                    const ct = (typeof pcfSave === 'function') ? await pcfSave() : { ok: true, offerInvite: false };
+                    if (!ct.ok) { window.pcfDirty = true; return; } // остаёмся в окне, ошибка уже показана
+                    if (ct.offerInvite) {
+                        // email сохранён — показываем кнопку «Шақыру жіберу», окно не закрываем
+                        window.pcfDirty = true;
+                        showAppToast('Сақталды. Енді шақыру жіберуге болады / Сохранено. Теперь можно отправить приглашение', 'success');
+                        return;
+                    }
+                    window.pcfDirty = false;
                     closeGlobalPersonEditModal();
                     window.location.reload();
                 } else {

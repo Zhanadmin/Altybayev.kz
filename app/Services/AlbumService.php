@@ -489,6 +489,81 @@ class AlbumService
         return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * TASK-018 (note 16.11 15:49): мероприятия человека для его карточки —
+     * созданные для него (source_person_id), где он участник, или где он отмечен на фото/видео.
+     * У каждого: media_count и до 4 превью (thumbs) — сначала те, где он отмечен.
+     */
+    public function personEvents(int $personId, int $limit = 30): array
+    {
+        $st = $this->db->prepare(
+            "SELECT e.id, e.title, e.event_date, e.place, e.kind, e.source_person_id,
+                    (SELECT COUNT(am.id) FROM albums a JOIN album_media am ON am.album_id = a.id
+                      WHERE a.owner_type = 'event' AND a.owner_id = e.id) AS media_count
+             FROM events e
+             WHERE e.source_person_id = ?
+                OR EXISTS (SELECT 1 FROM event_people ep WHERE ep.event_id = e.id AND ep.person_id = ?)
+                OR EXISTS (SELECT 1 FROM albums a3 JOIN album_media am3 ON am3.album_id = a3.id
+                           JOIN album_media_people amp3 ON amp3.media_id = am3.id
+                           WHERE a3.owner_type = 'event' AND a3.owner_id = e.id AND amp3.person_id = ?)
+             ORDER BY (e.event_date IS NULL), e.event_date DESC, e.id DESC
+             LIMIT " . max(1, min(100, $limit))
+        );
+        $st->execute([$personId, $personId, $personId]);
+        $events = $st->fetchAll(PDO::FETCH_ASSOC);
+        if (!$events) {
+            return [];
+        }
+        $ids = array_map(fn($e) => (int)$e['id'], $events);
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $t = $this->db->prepare(
+            "SELECT a.owner_id AS event_id, am.id, am.media_type,
+                    EXISTS (SELECT 1 FROM album_media_people amp WHERE amp.media_id = am.id AND amp.person_id = ?) AS tagged
+             FROM albums a JOIN album_media am ON am.album_id = a.id
+             WHERE a.owner_type = 'event' AND a.owner_id IN ($in) AND am.thumb_path IS NOT NULL
+             ORDER BY a.owner_id, tagged DESC, am.id DESC"
+        );
+        $t->execute(array_merge([$personId], $ids));
+        $thumbs = [];
+        foreach ($t->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $eid = (int)$r['event_id'];
+            if (count($thumbs[$eid] ?? []) < 4) {
+                $thumbs[$eid][] = ['id' => (int)$r['id'], 'type' => (string)$r['media_type']];
+            }
+        }
+        foreach ($events as &$e) {
+            $e['thumbs'] = $thumbs[(int)$e['id']] ?? [];
+        }
+        unset($e);
+        return $events;
+    }
+
+    /**
+     * TASK-018 (note 16.11 15:49): фото и видео, где человек отмечен (любые альбомы — семьи и мероприятий).
+     * @return array{items: list<array>, total: int}
+     */
+    public function personTaggedMedia(int $personId, int $limit = 24): array
+    {
+        $c = $this->db->prepare('SELECT COUNT(*) FROM album_media_people WHERE person_id = ?');
+        $c->execute([$personId]);
+        $total = (int)$c->fetchColumn();
+        if ($total === 0) {
+            return ['items' => [], 'total' => 0];
+        }
+        $st = $this->db->prepare(
+            "SELECT am.id, am.media_type, am.album_id, am.caption, am.taken_date, am.duration_seconds,
+                    (am.thumb_path IS NOT NULL) AS has_thumb, a.owner_type, a.owner_id, a.title AS album_title
+             FROM album_media_people amp
+             JOIN album_media am ON am.id = amp.media_id
+             JOIN albums a ON a.id = am.album_id
+             WHERE amp.person_id = ?
+             ORDER BY COALESCE(am.taken_date, DATE(am.created_at)) DESC, am.id DESC
+             LIMIT " . max(1, min(100, $limit))
+        );
+        $st->execute([$personId]);
+        return ['items' => $st->fetchAll(PDO::FETCH_ASSOC), 'total' => $total];
+    }
+
     public function saveEvent(?int $id, array $d, array $personIds, array $marriageIds, ?int $userId): int
     {
         $personIds = $this->existingPersonIds($personIds);

@@ -182,7 +182,6 @@ require __DIR__ . '/../layout/master_start.php';
                                         <?= $lang === 'ru' ? 'Семьи детей' : 'Балаларының отбасылары' ?> (<?= count($f['child_fams']) ?>)
                                     </button>
                                 </div>
-                                <div class="fm-kids" hidden></div>
                             <?php endif; ?>
 
                             <!-- Быстрый переход в древо -->
@@ -213,19 +212,21 @@ document.addEventListener('click', function (e) {
     var btn = e.target.closest('.fm-kids-btn');
     if (!btn) return;
     var card = btn.closest('.fm-card');
-    var box = card.querySelector(':scope > .fm-kids');
-    if (!box) return;
-    var open = btn.getAttribute('aria-expanded') === 'true';
-    if (open) {
-        box.hidden = true;
-        box.innerHTML = '';
+    /* TASK-025: дети — отдельный ряд-панель сразу под карточкой семьи, карточки в строку */
+    var nxt = card.nextElementSibling;
+    var existing = (nxt && nxt.classList.contains('fm-kids-row')) ? nxt : null;
+    if (existing) {
+        existing.remove();
         btn.setAttribute('aria-expanded', 'false');
         btn.title = btn.dataset.closed;
         return;
     }
+    var box = document.createElement('div');
+    box.className = 'fm-kids-row';
+    var ownKey = card.id || card.dataset.famKey || '';
+    var chain = (card.dataset.chain || '') + ',' + ownKey + ',';
     var seen = {};
-    var p = card;
-    while (p) { if (p.id) seen[p.id] = 1; p = p.parentElement && p.parentElement.closest('.fm-card'); }
+    chain.split(',').forEach(function (k) { if (k) seen[k] = 1; });
     var ids = (btn.dataset.fams || '').split(',');
     ids.forEach(function (id) {
         var key = 'fam-' + id;
@@ -241,13 +242,13 @@ document.addEventListener('click', function (e) {
         var clone = src.cloneNode(true);
         clone.removeAttribute('id');
         clone.classList.add('fm-nested');
-        var inner = clone.querySelector(':scope > .fm-kids');
-        if (inner) { inner.hidden = true; inner.innerHTML = ''; }
+        clone.dataset.famKey = key;
+        clone.dataset.chain = chain;
         var ib = clone.querySelector('.fm-kids-btn');
         if (ib) { ib.setAttribute('aria-expanded', 'false'); }
         box.appendChild(clone);
     });
-    box.hidden = false;
+    card.parentNode.insertBefore(box, card.nextSibling);
     btn.setAttribute('aria-expanded', 'true');
     btn.title = btn.dataset.open;
 });

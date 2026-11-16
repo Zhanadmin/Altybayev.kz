@@ -670,10 +670,21 @@ class TreeLayoutService
             }
 
             // Сортировка дочерних юнитов строго по возрасту старшего члена юнита
-            usort($childrenUnitList, function ($cuA, $cuB) use ($units, $personsById) {
-                $pA = $personsById[$units[$cuA]['members'][0]];
-                $pB = $personsById[$units[$cuB]['members'][0]];
-                return $this->comparePersonsByAge($pA, $pB);
+            // TASK-020: порядок — по возрасту САМОГО ребёнка этих родителей (дочь, живущая в паре с мужем,
+            // стоит по своей дате рождения, а не по возрасту мужа, который стоит первым в юните).
+            $parentMembers = $u['members'];
+            $childOfParent = function (int $cuId) use ($units, $childrenMap, $parentMembers, $personsById) {
+                foreach ($units[$cuId]['members'] as $memId) {
+                    foreach ($parentMembers as $pm) {
+                        if (in_array($memId, $childrenMap[$pm] ?? [], true)) {
+                            return $personsById[$memId];
+                        }
+                    }
+                }
+                return $personsById[$units[$cuId]['members'][0]];
+            };
+            usort($childrenUnitList, function ($cuA, $cuB) use ($childOfParent) {
+                return $this->comparePersonsByAge($childOfParent($cuA), $childOfParent($cuB));
             });
 
             $u['children_units'] = $childrenUnitList;
@@ -713,11 +724,46 @@ class TreeLayoutService
         });
 
         // 5. Иерархическое позиционирование поддеревьев
-        $currX = 1000;
+        // TASK-026: плотная раскладка по контурам поколений (Reingold–Tilford): соседние ветки
+        // сближаются до фиксированного зазора GAP_SIBLING в каждом ряду поколения, а не по общей ширине ветки.
         $placedUnits = [];
+        $claimed = [];
+        $accLeft = [];
+        $accRight = [];
+        $prevRootX = 1000.0;
+        $firstRoot = true;
         foreach ($rootUnits as $rId) {
-            $this->positionUnitSubtree($rId, $currX, $units, $placedUnits);
-            $currX += $units[$rId]['subtree_width'] + self::GAP_SIBLING;
+            if (isset($claimed[$rId])) continue;
+            $sub = $this->packUnitSubtree($rId, $units, $claimed);
+            $shift = $prevRootX;
+            if (!$firstRoot) {
+                $need = null;
+                foreach ($sub['left'] as $g => $l) {
+                    if (isset($accRight[$g])) {
+                        $v = $accRight[$g] + self::GAP_SIBLING - $l;
+                        $need = ($need === null) ? $v : max($need, $v);
+                    }
+                }
+                $shift = ($need === null) ? $prevRootX : max($need, $prevRootX);
+            } else {
+                $shift = 1000.0;
+            }
+            $firstRoot = false;
+            $prevRootX = $shift;
+            foreach ($sub['offs'] as $uid => $dx) {
+                $units[$uid]['x'] = $shift + $dx;
+                $placedUnits[$uid] = true;
+            }
+            foreach ($sub['left'] as $g => $l) {
+                $accLeft[$g] = isset($accLeft[$g]) ? min($accLeft[$g], $shift + $l) : $shift + $l;
+            }
+            foreach ($sub['right'] as $g => $r) {
+                $accRight[$g] = isset($accRight[$g]) ? max($accRight[$g], $shift + $r) : $shift + $r;
+            }
+        }
+        $currX = 1000;
+        foreach ($accRight as $r) {
+            $currX = max($currX, $r + self::GAP_SIBLING);
         }
 
         // Размещаем любые оставшиеся изолированные юниты
@@ -918,6 +964,85 @@ class TreeLayoutService
 
         $units[$unitId]['subtree_width'] = max((float)$units[$unitId]['width'], $totalChildrenWidth);
         return $units[$unitId]['subtree_width'];
+    }
+
+    /**
+     * TASK-026: компактная упаковка поддерева. Возвращает смещения юнитов относительно x корня ветки
+     * и контуры (левый/правый край по поколениям). Соседние ветки-братья сдвигаются так, чтобы в каждом
+     * общем ряду поколения между ними был ровно GAP_SIBLING; родитель центрируется над детьми.
+     */
+    protected function packUnitSubtree(int $unitId, array $units, array &$claimed): array
+    {
+        $claimed[$unitId] = true;
+        $gen = $units[$unitId]['generation'];
+        $w = (float)$units[$unitId]['width'];
+
+        $accLeft = [];
+        $accRight = [];
+        $childX = []; // unitId => x относительно первого ребёнка
+        $prevEnd = null;
+        $accOffs = [];
+
+        foreach ($units[$unitId]['children_units'] ?? [] as $cuId) {
+            if (isset($claimed[$cuId])) continue;
+            $sub = $this->packUnitSubtree($cuId, $units, $claimed);
+
+            $shift = 0.0;
+            if ($prevEnd !== null) {
+                $shift = $prevEnd + self::GAP_SIBLING; // не левее предыдущего брата
+                foreach ($sub['left'] as $g => $l) {
+                    if (isset($accRight[$g])) {
+                        $shift = max($shift, $accRight[$g] + self::GAP_SIBLING - $l);
+                    }
+                }
+            }
+            // $sub['offs'][$cuId] === смещение самого юнита ребёнка внутри его ветки
+            $ownX = $shift + $sub['offs'][$cuId];
+            $prevEnd = $ownX + (float)$units[$cuId]['width'];
+            $childX[$cuId] = $ownX;
+
+            foreach ($sub['offs'] as $uid => $dx) {
+                $accOffs[$uid] = $shift + $dx;
+            }
+            foreach ($sub['left'] as $g => $l) {
+                $accLeft[$g] = isset($accLeft[$g]) ? min($accLeft[$g], $shift + $l) : $shift + $l;
+            }
+            foreach ($sub['right'] as $g => $r) {
+                $accRight[$g] = isset($accRight[$g]) ? max($accRight[$g], $shift + $r) : $shift + $r;
+            }
+        }
+
+        if (empty($childX)) {
+            return [
+                'offs' => [$unitId => 0.0],
+                'left' => [$gen => 0.0],
+                'right' => [$gen => $w],
+            ];
+        }
+
+        // Центрируем родительскую пару над рядом детей (юниты детей, не их потомки)
+        $firstId = array_key_first($childX);
+        $lastId = array_key_last($childX);
+        $cl = $childX[$firstId];
+        $cr = $childX[$lastId] + (float)$units[$lastId]['width'];
+        $parentX = ($cl + $cr) / 2.0 - $w / 2.0;
+
+        $offs = [$unitId => 0.0];
+        foreach ($accOffs as $uid => $dx) {
+            $offs[$uid] = $dx - $parentX;
+        }
+        $left = [];
+        $right = [];
+        foreach ($accLeft as $g => $l) {
+            $left[$g] = $l - $parentX;
+        }
+        foreach ($accRight as $g => $r) {
+            $right[$g] = $r - $parentX;
+        }
+        $left[$gen] = isset($left[$gen]) ? min($left[$gen], 0.0) : 0.0;
+        $right[$gen] = isset($right[$gen]) ? max($right[$gen], $w) : $w;
+
+        return ['offs' => $offs, 'left' => $left, 'right' => $right];
     }
 
     /**

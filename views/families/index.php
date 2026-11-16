@@ -72,12 +72,18 @@ require __DIR__ . '/../layout/master_start.php';
                     ?>
                         <article class="island fm-card<?= $isAncestors ? ' fm-ancestors' : '' ?>" id="fam-<?= (int)$m['id'] ?>">
                             <div class="fm-card-head">
-                                <span class="small muted">#<?= $idx + 1 ?> (ID <?= (int)$m['id'] ?>)</span>
+                                <?php
+                                    /* TASK-020: служебное «#N (ID)» скрыто; главное — «N лет вместе» */
+                                    $mStart = (string)($m['start_date'] ?: $m['marriage_date']);
+                                    $mEnd = (string)($m['end_date'] ?: $m['divorce_date']);
+                                    $together = I18n::togetherLabel($mStart, $isMarried ? null : ($mEnd !== '' ? $mEnd : null), $lang);
+                                ?>
+                                <span class="fm-together"<?= $mStart !== '' ? ' title="' . htmlspecialchars(($lang === 'ru' ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><?= $together !== '' ? '<strong>' . htmlspecialchars($together) . '</strong>' : '' ?></span>
                                 <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">
                                     <?= $isMarried ? ($lang === 'ru' ? 'В браке' : 'Некеде') : ($lang === 'ru' ? 'В разводе' : 'Ажырасқан') ?>
                                 </span>
                                 <?php if ($canEdit): ?>
-                                    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-tip="Өңдеу" aria-label="Өңдеу"
+                                    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-tip="<?= $lang === 'ru' ? 'Изменить' : 'Өңдеу' ?>" aria-label="<?= $lang === 'ru' ? 'Изменить' : 'Өңдеу' ?>"
                                             onclick="openMarriageEditModal(<?= (int)$m['id'] ?>, '<?= htmlspecialchars($m['status'] ?? 'married') ?>', '<?= htmlspecialchars((string)($m['start_date'] ?: $m['marriage_date'])) ?>', '<?= htmlspecialchars((string)($m['end_date'] ?: $m['divorce_date'])) ?>', '<?= htmlspecialchars((string)($m['notes'] ?? '')) ?>')">
                                         <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                                     </button>
@@ -95,7 +101,7 @@ require __DIR__ . '/../layout/master_start.php';
                                             <?php $hl = I18n::lifeLabel($h); if ($hl['short'] !== ''): ?> · <span title="<?= htmlspecialchars($hl['title']) ?>"><?= htmlspecialchars($hl['short']) ?></span><?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <span class="muted">Белгісіз</span>
+                                        <span class="muted"><?= $lang === 'ru' ? 'Неизвестно' : 'Белгісіз' ?></span>
                                     <?php endif; ?>
                                 </div>
 
@@ -111,7 +117,7 @@ require __DIR__ . '/../layout/master_start.php';
                                         <?php $wl = I18n::lifeLabel($w); ?>
                                         <div class="small muted"><?php if ($wl['short'] !== ''): ?><span title="<?= htmlspecialchars($wl['title']) ?>"><?= htmlspecialchars($wl['short']) ?></span><?php endif; ?></div>
                                     <?php else: ?>
-                                        <span class="muted">Белгісіз</span>
+                                        <span class="muted"><?= $lang === 'ru' ? 'Неизвестно' : 'Белгісіз' ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -121,10 +127,10 @@ require __DIR__ . '/../layout/master_start.php';
                                 <div class="fm-dates small muted">
                                     <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
                                     <span>
-                                        <?= $lang === 'ru' ? 'Период союза:' : 'Неке мерзімі:' ?>
-                                        <strong><?= htmlspecialchars((string)($m['start_date'] ?: $m['marriage_date'])) ?></strong>
+                                        <?= $lang === 'ru' ? 'Брак:' : 'Неке:' ?>
+                                        <?= htmlspecialchars(I18n::marriageDateLabel($m['start_date'] ?: $m['marriage_date'], $lang)) ?>
                                         <?php if (!empty($m['end_date']) || !empty($m['divorce_date'])): ?>
-                                            — <strong><?= htmlspecialchars((string)($m['end_date'] ?: $m['divorce_date'])) ?></strong>
+                                            — <?= htmlspecialchars(I18n::marriageDateLabel($m['end_date'] ?: $m['divorce_date'], $lang)) ?>
                                         <?php endif; ?>
                                     </span>
                                 </div>
@@ -146,6 +152,9 @@ require __DIR__ . '/../layout/master_start.php';
                                                title="<?= htmlspecialchars($lang === 'ru' ? 'Выдана замуж — её место в семье мужа' : 'Ұзатылған — орны күйеуінің шаңырағында') ?>">
                                                 <svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg>
                                                 <?= htmlspecialchars($c['first_name']) ?>
+                                                <?php $ul = I18n::lifeLabel($c); if ($ul['short'] !== ''): ?>
+                                                    <span title="<?= htmlspecialchars($ul['title']) ?>">· <?= htmlspecialchars($ul['short']) ?></span>
+                                                <?php endif; ?>
                                                 <span><?= $lang === 'ru' ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
                                             </a>
                                         <?php continue; endif; ?>
@@ -161,13 +170,25 @@ require __DIR__ . '/../layout/master_start.php';
                                 <?php endif; ?>
                             </div>
 
+                            <?php if (!empty($f['child_fams'])): ?>
+                                <div class="fm-foot">
+                                    <button type="button" class="btn btn-sm btn-ghost fm-kids-btn" aria-expanded="false"
+                                            data-fams="<?= htmlspecialchars(implode(',', $f['child_fams'])) ?>"
+                                            data-open="<?= $lang === 'ru' ? 'Скрыть семьи детей' : 'Балаларының отбасыларын жасыру' ?>"
+                                            data-closed="<?= $lang === 'ru' ? 'Семьи детей' : 'Балаларының отбасылары' ?>">
+                                        <?= $lang === 'ru' ? 'Семьи детей' : 'Балаларының отбасылары' ?> (<?= count($f['child_fams']) ?>)
+                                    </button>
+                                </div>
+                                <div class="fm-kids" hidden></div>
+                            <?php endif; ?>
+
                             <!-- Быстрый переход в древо -->
                             <?php if ($h || $w):
                                 $focalId = $h ? (int)$h['id'] : (int)$w['id'];
                             ?>
                                 <div class="fm-foot">
                                     <a href="/tree?focus=<?= $focalId ?>" class="btn btn-sm btn-ghost">
-                                        <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= $lang === 'ru' ? 'Показать семью в древе' : 'Древода көрсету' ?>
+                                        <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= $lang === 'ru' ? 'Показать семью в древе' : 'Отбасын шежіреде көрсету' ?>
                                     </a>
                                     <?php /* TASK-018: фотоальбом семьи */ $famMedia = (int)(($albumCounts ?? [])[(int)$m['id']] ?? 0); ?>
                                     <a href="/family/<?= (int)$m['id'] ?>/albums" class="btn btn-sm btn-ghost">
@@ -183,12 +204,58 @@ require __DIR__ . '/../layout/master_start.php';
     <?php endif; ?>
 </div>
 
+<script>
+/* TASK-020: «Семьи детей» — раскрытие вниз по поколениям (клоны карточек со страницы) */
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.fm-kids-btn');
+    if (!btn) return;
+    var card = btn.closest('.fm-card');
+    var box = card.querySelector(':scope > .fm-kids');
+    if (!box) return;
+    var open = btn.getAttribute('aria-expanded') === 'true';
+    if (open) {
+        box.hidden = true;
+        box.innerHTML = '';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.title = btn.dataset.closed;
+        return;
+    }
+    var seen = {};
+    var p = card;
+    while (p) { if (p.id) seen[p.id] = 1; p = p.parentElement && p.parentElement.closest('.fm-card'); }
+    var ids = (btn.dataset.fams || '').split(',');
+    ids.forEach(function (id) {
+        var key = 'fam-' + id;
+        var src = document.querySelector('.fm-grid > #' + key);
+        if (!src || seen[key]) {
+            var a = document.createElement('a');
+            a.href = '/families#' + key;
+            a.className = 'small';
+            a.textContent = '→ #' + id;
+            if (!src) { box.appendChild(a); }
+            return;
+        }
+        var clone = src.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.classList.add('fm-nested');
+        var inner = clone.querySelector(':scope > .fm-kids');
+        if (inner) { inner.hidden = true; inner.innerHTML = ''; }
+        var ib = clone.querySelector('.fm-kids-btn');
+        if (ib) { ib.setAttribute('aria-expanded', 'false'); }
+        box.appendChild(clone);
+    });
+    box.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    btn.title = btn.dataset.open;
+});
+</script>
+
 <!-- Модальное окно редактирования брака — белый остров поверх затемнения -->
 <div id="marriageEditModal" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="marriageEditTitle" style="max-width: 440px;">
         <div class="modal-head">
-            <h3 id="marriageEditTitle">Некені өңдеу / Редактирование брака</h3>
-            <button type="button" class="btn btn-ghost btn-icon" onclick="closeMarriageEditModal()" aria-label="Жабу / Закрыть">
+            <h3 id="marriageEditTitle"><?= $lang === 'ru' ? 'Редактирование брака' : 'Некені өңдеу' ?></h3>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="closeMarriageEditModal()" aria-label="<?= $lang === 'ru' ? 'Закрыть' : 'Жабу' ?>">
                 <svg class="ic"><use href="#i-x"/></svg>
             </button>
         </div>
@@ -196,30 +263,30 @@ require __DIR__ . '/../layout/master_start.php';
             <input type="hidden" id="editMarriageId" name="id" value="">
             <div class="modal-body">
                 <div class="field">
-                    <label for="editMarriageStatus">Күйі / Статус</label>
+                    <label for="editMarriageStatus"><?= $lang === 'ru' ? 'Статус' : 'Күйі' ?></label>
                     <select id="editMarriageStatus" class="select">
-                        <option value="married">Некеде / В браке</option>
-                        <option value="divorced">Ажырасқан / В разводе</option>
+                        <option value="married"><?= $lang === 'ru' ? 'В браке' : 'Некеде' ?></option>
+                        <option value="divorced"><?= $lang === 'ru' ? 'В разводе' : 'Ажырасқан' ?></option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="field">
-                        <label for="editMarriageStartDate">Неке күні / Дата</label>
+                        <label for="editMarriageStartDate"><?= $lang === 'ru' ? 'Дата брака' : 'Неке күні' ?></label>
                         <input type="text" id="editMarriageStartDate" class="input" placeholder="1995">
                     </div>
                     <div class="field">
-                        <label for="editMarriageEndDate">Ажырасу / Дата</label>
+                        <label for="editMarriageEndDate"><?= $lang === 'ru' ? 'Дата развода' : 'Ажырасу күні' ?></label>
                         <input type="text" id="editMarriageEndDate" class="input" placeholder="2010">
                     </div>
                 </div>
                 <div class="field">
-                    <label for="editMarriageNotes">Жазба / Примечание</label>
+                    <label for="editMarriageNotes"><?= $lang === 'ru' ? 'Примечание' : 'Жазба' ?></label>
                     <input type="text" id="editMarriageNotes" class="input">
                 </div>
             </div>
             <div class="modal-foot">
-                <button type="button" class="btn" onclick="closeMarriageEditModal()">Бас тарту / Отмена</button>
-                <button type="submit" class="btn btn-primary">Сақтау / Сохранить</button>
+                <button type="button" class="btn" onclick="closeMarriageEditModal()"><?= $lang === 'ru' ? 'Отмена' : 'Бас тарту' ?></button>
+                <button type="submit" class="btn btn-primary"><?= $lang === 'ru' ? 'Сохранить' : 'Сақтау' ?></button>
             </div>
         </form>
     </div>

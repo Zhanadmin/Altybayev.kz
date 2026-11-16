@@ -251,7 +251,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
                 <a href="/person/<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= $lang === 'ru' ? 'Карточка' : 'Парақшасы' ?>" data-tip="<?= $lang === 'ru' ? 'Карточка' : 'Парақша' ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>
                 </a>
-                <a href="/tree?focus=<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= $lang === 'ru' ? 'Показать в древе' : 'Древода көрсету' ?>" data-tip="<?= $lang === 'ru' ? 'В древе' : 'Древода' ?>">
+                <a href="/tree?focus=<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= $lang === 'ru' ? 'Показать в древе' : 'Шежіреде көрсету' ?>" data-tip="<?= $lang === 'ru' ? 'В древе' : 'Шежіреде' ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>
                 </a>
                 <?php if ($canEdit): ?>

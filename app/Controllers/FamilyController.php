@@ -54,7 +54,7 @@ class FamilyController
             $wId = (int)($m['wife_id'] ?? 0);
             $hId = (int)($m['husband_id'] ?? 0);
             $mStatus = $m['status'] ?? (!empty($m['is_current']) ? 'married' : 'divorced');
-            if ($wId <= 0 || $hId <= 0 || $mStatus !== 'married' || !empty($m['divorce_date']) || !isset($personsById[$hId])) {
+            if ($wId <= 0 || $hId <= 0 || $mStatus !== 'married' || !empty($m['divorce_date']) || !empty($m['end_date']) || !isset($personsById[$hId])) {
                 continue;
             }
             $hp = $personsById[$hId];
@@ -121,6 +121,21 @@ class FamilyController
             }
             unset($child);
 
+            // TASK-020: браки детей (по старшинству детей) — для кнопки «Семьи детей»
+            $childFams = [];
+            foreach ($children as $child) {
+                $cid = (int)$child['id'];
+                foreach ($marriages as $cm) {
+                    if ((int)$cm['id'] === (int)$m['id']) {
+                        continue;
+                    }
+                    if ((int)($cm['husband_id'] ?? 0) === $cid || (int)($cm['wife_id'] ?? 0) === $cid) {
+                        $childFams[] = (int)$cm['id'];
+                    }
+                }
+            }
+            $childFams = array_values(array_unique($childFams));
+
             // Определение старшинства и поколения
             $hYear = (int)($husband['birth_year'] ?? 0);
             $wYear = (int)($wife['birth_year'] ?? 0);
@@ -151,6 +166,7 @@ class FamilyController
                 'w_name'         => $wName,
                 'status'         => $status,
                 'children'       => $children,
+                'child_fams'     => $childFams,
                 'seniority_year' => $seniorityYear,
                 'generation_key' => $genKey,
             ];

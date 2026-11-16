@@ -650,6 +650,11 @@ p { margin: 0; }
 .fm-ancestors { border-color: var(--c-accent); }
 .fm-card-head { display: flex; align-items: center; gap: var(--sp-2); }
 .fm-card-head .small { margin-right: auto; }
+.fm-together { margin-right: auto; font-size: 1.05rem; color: var(--text, inherit); }
+/* TASK-020: вложенные семьи детей */
+.fm-kids { margin-top: 12px; padding-left: 12px; border-left: 2px dashed var(--border, #d9d2c0); display: grid; gap: 12px; }
+.fm-kids .fm-card { box-shadow: none; }
+.fm-kids-btn[aria-expanded="true"] { background: rgba(0, 0, 0, .05); }
 .fm-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
 .fm-spouse { padding: var(--sp-3); min-width: 0; }
 .fm-spouse .pc-label { margin-bottom: 2px; }

@@ -3430,7 +3430,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 <button type="button" class="btn btn-primary btn-profile-action" onclick="viewInEditingMode()">
                     <?php /* btn_view_in_tree */ ?>
                     <svg class="ic"><use href="#t-tree"/></svg>
-                    <span data-i18n="lbl_view_in_tree">Древода көрсету («Өңдеу» режимі)</span>
+                    <span data-i18n="lbl_view_in_tree">Шежіреде көрсету («Өңдеу» режимі)</span>
                 </button>
                 <button type="button" class="btn btn-profile-action" onclick="setFocalFromProfile()">
                     <svg class="ic"><use href="#t-target"/></svg> <span data-i18n="lbl_focus_here">Осы адамға бағыттау / Фокус</span>
@@ -3937,7 +3937,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 mode_editing: "Өңдеу",
                 mode_forest: "3D Шежіре-Орман",
                 mode_list: "Тізім",
-                lbl_view_in_tree: "Древода көрсету («Өңдеу» режимі)",
+                lbl_view_in_tree: "Шежіреде көрсету («Өңдеу» режимі)",
                 lbl_edit_person: "Өңдеу",
                 form_is_deceased_checkbox: "Қайтыс болған / Ушёл из жизни",
                 search_placeholder: "Адамды іздеу...",
@@ -5676,12 +5676,15 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const clanInput = document.getElementById('editClanRu');
                 const clanHint = document.getElementById('editClanHint');
                 clanInput.value = p.clan_ru || '';
-                const canEditClan = (data.can_edit_clan !== false) && (!p.father_id);
-                clanInput.readOnly = !canEditClan;
-                clanInput.style.backgroundColor = canEditClan ? '' : 'var(--c-island-2)';
-                clanInput.style.cursor = canEditClan ? 'text' : 'not-allowed';
+                clanInput.dataset.orig = p.clan_ru || '';
+                clanInput.dataset.hasFather = p.father_id ? '1' : '0';
+                clanInput.readOnly = false;
+                clanInput.style.backgroundColor = '';
+                clanInput.style.cursor = 'text';
                 if (clanHint) {
-                    clanHint.textContent = canEditClan ? '' : (data.clan_hint || 'әкесінен / по отцу');
+                    clanHint.textContent = p.father_id
+                        ? (currentLang === 'ru' ? 'Ру распространится по мужской линии (отцы, братья, потомки) — с предпросмотром' : 'Ру ер жағы бойынша таралады (әкелер, бауырлар, ұрпақ) — алдын ала көрумен')
+                        : '';
                 }
 
                 document.getElementById('editBirthYear').value = p.birth_year || '';
@@ -5730,6 +5733,45 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             document.getElementById('editPersonModal').classList.remove('active');
         }
 
+        async function proposeClanPropagation(id, ru) {
+            const ruLang = currentLang === 'ru';
+            try {
+                const pr = await fetch(`/api/person/clan-propagate-preview?id=${encodeURIComponent(id)}&clan_ru=${encodeURIComponent(ru)}`);
+                const prev = await pr.json();
+                if (!prev || prev.status !== 'success') return;
+                if (prev.count <= 0 && prev.conflict_count === 0) return;
+                let overwrite = 0;
+                let msg = ruLang
+                    ? `Ру «${ru}» получат ещё ${prev.count} чел. по мужской линии. Применить?`
+                    : `«${ru}» руын ер жағы бойынша тағы ${prev.count} адам алады. Қолдану керек пе?`;
+                if (prev.conflict_count > 0) {
+                    const names = (prev.conflicts || []).slice(0, 8).map(c => c.name || c.full_name || c.id).join(', ');
+                    msg += ruLang
+                        ? `\n\n⚠ У ${prev.conflict_count} чел. уже указан другой ру (${names}). По умолчанию они НЕ изменятся.`
+                        : `\n\n⚠ ${prev.conflict_count} адамда басқа ру көрсетілген (${names}). Әдепкіде ӨЗГЕРМЕЙДІ.`;
+                }
+                if (!confirm(msg)) return;
+                if (prev.conflict_count > 0) {
+                    overwrite = confirm(ruLang
+                        ? 'Перезаписать и конфликтующие ру тоже? ОК — перезаписать, Отмена — только пустые.'
+                        : 'Қайшы руларды да қайта жазу керек пе? ОК — қайта жазу, Бас тарту — тек бос руларды.') ? 1 : 0;
+                }
+                const body = new URLSearchParams();
+                body.append('id', id);
+                body.append('clan_ru', ru);
+                body.append('overwrite', overwrite);
+                const ar = await fetch('/api/person/clan-propagate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                const res = await ar.json();
+                if (res.error) alert((ruLang ? 'Ошибка: ' : 'Қате: ') + res.error);
+            } catch (err) {
+                alert((ruLang ? 'Ошибка: ' : 'Қате: ') + err.message);
+            }
+        }
+
         async function handleSavePersonEdit(e) {
             e.preventDefault();
             const id = document.getElementById('editPersonId').value;
@@ -5761,6 +5803,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = await res.json();
                 if (data.status === 'success') {
                     closeEditPersonModal();
+                    const clanEl = document.getElementById('editClanRu');
+                    const newRu = clanEl.value.trim();
+                    const origRu = clanEl.dataset.orig || '';
+                    if (newRu && newRu.toLowerCase() !== 'белгісіз' && newRu !== origRu) {
+                        await proposeClanPropagation(id, newRu);
+                    }
                     alert(currentLang === 'ru' ? 'Данные успешно обновлены и сохранены в истории!' : 'Өзгерістер сәтті сақталды!');
                     await initTree();
                     selectPerson(parseInt(id));
@@ -5988,7 +6036,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const spouseSub = (p.spouses || []).filter(s => s.status !== 'divorced').map(s => s.name).join(', ');
                 const genderLbl = isM ? 'Ер' : 'Әйел';
                 const clanLbl = p.clan_ru || 'белгісіз';
-                const tFocus = currentLang === 'ru' ? 'Фокус в древе' : 'Древода фокус';
+                const tFocus = currentLang === 'ru' ? 'Фокус в древе' : 'Шежіреде фокус';
                 const tEdit = currentLang === 'ru' ? 'Редактировать' : 'Өңдеу';
 
                 tr.innerHTML = `

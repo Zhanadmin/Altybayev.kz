@@ -453,6 +453,141 @@ class TreeController
     }
 
     /**
+     * Собирает людей, которым распространяется ру по мужской линии от человека $id:
+     * отцы вверх по цепочке, их дети (братья/сёстры) и потомки по мужской линии.
+     * Жёны (келін) не затрагиваются.
+     * @return array{targets: array<int,array>, conflicts: array<int,array>}
+     */
+    private function collectClanTargets(\PDO $db, int $id, string $ru): array
+    {
+        $byId = [];
+        foreach ($db->query("SELECT id, first_name, last_name, gender, father_id, clan_ru FROM persons WHERE is_deleted = 0")->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $byId[(int)$r['id']] = $r;
+        }
+        if (!isset($byId[$id])) {
+            return ['targets' => [], 'conflicts' => []];
+        }
+        $kids = [];
+        foreach ($byId as $r) {
+            if (!empty($r['father_id'])) {
+                $kids[(int)$r['father_id']][] = (int)$r['id'];
+            }
+        }
+        // Корень — самый верхний отец
+        $root = $id;
+        $guard = 0;
+        while (!empty($byId[$root]['father_id']) && isset($byId[(int)$byId[$root]['father_id']]) && $guard++ < 100) {
+            $root = (int)$byId[$root]['father_id'];
+        }
+        // Спуск от корня: дети любого пола; дальше — только через сыновей
+        $set = [$root => true];
+        $queue = [$root];
+        while ($queue) {
+            $cur = array_shift($queue);
+            foreach ($kids[$cur] ?? [] as $kid) {
+                if (isset($set[$kid])) {
+                    continue;
+                }
+                $set[$kid] = true;
+                if (($byId[$kid]['gender'] ?? '') === 'M') {
+                    $queue[] = $kid;
+                }
+            }
+        }
+        $targets = [];
+        $conflicts = [];
+        foreach (array_keys($set) as $pid) {
+            $cur = trim((string)($byId[$pid]['clan_ru'] ?? ''));
+            $row = ['id' => $pid, 'name' => trim(($byId[$pid]['first_name'] ?? '') . ' ' . ($byId[$pid]['last_name'] ?? '')), 'current' => $cur];
+            if ($cur === '' || mb_strtolower($cur) === 'белгісіз') {
+                $targets[] = $row;
+            } elseif (mb_strtolower($cur) !== mb_strtolower($ru)) {
+                $conflicts[] = $row;
+            }
+        }
+        return ['targets' => $targets, 'conflicts' => $conflicts];
+    }
+
+    /**
+     * API: предпросмотр распространения ру по мужской линии (GET id, clan_ru)
+     */
+    public function apiClanPropagatePreview(Request $request): void
+    {
+        if (!Auth::canEdit()) {
+            Response::json(['error' => 'Нет прав на редактирование'], 403);
+            return;
+        }
+        $id = (int)$request->get('id', 0);
+        $ru = trim((string)$request->get('clan_ru', ''));
+        if ($id <= 0 || $ru === '' || mb_strtolower($ru) === 'белгісіз') {
+            Response::json(['error' => 'id and clan_ru required'], 422);
+            return;
+        }
+        try {
+            $res = $this->collectClanTargets(Database::getConnection(), $id, $ru);
+            Response::json([
+                'status' => 'success',
+                'clan_ru' => $ru,
+                'count' => count($res['targets']),
+                'targets' => $res['targets'],
+                'conflict_count' => count($res['conflicts']),
+                'conflicts' => $res['conflicts'],
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: применить ру по мужской линии (POST id, clan_ru, overwrite=0|1).
+     * Без overwrite обновляются только люди с пустым/«белгісіз» ру; конфликтующие не трогаются.
+     */
+    public function apiClanPropagateApply(Request $request): void
+    {
+        if (!Auth::canEdit()) {
+            Response::json(['error' => 'Нет прав на редактирование'], 403);
+            return;
+        }
+        $id = (int)$request->get('id', 0);
+        $ru = trim((string)$request->get('clan_ru', ''));
+        $overwrite = (int)$request->get('overwrite', 0) === 1;
+        if ($id <= 0 || $ru === '' || mb_strtolower($ru) === 'белгісіз') {
+            Response::json(['error' => 'id and clan_ru required'], 422);
+            return;
+        }
+        try {
+            $db = Database::getConnection();
+            $res = $this->collectClanTargets($db, $id, $ru);
+            $rows = $overwrite ? array_merge($res['targets'], $res['conflicts']) : $res['targets'];
+            $db->beginTransaction();
+            $upd = $db->prepare("UPDATE `persons` SET `clan_ru` = ?, `updated_at` = NOW() WHERE `id` = ? AND `is_deleted` = 0");
+            foreach ($rows as $r) {
+                $upd->execute([$ru, (int)$r['id']]);
+            }
+            $db->commit();
+            $this->recordAuditLog(
+                'UPDATE',
+                'persons',
+                $id,
+                'Ру «' . $ru . '» распространён по мужской линии на ' . count($rows) . ' чел.',
+                [],
+                ['clan_ru' => $ru, 'ids' => array_column($rows, 'id')],
+                Auth::user()
+            );
+            Response::json([
+                'status' => 'success',
+                'updated' => count($rows),
+                'skipped_conflicts' => $overwrite ? 0 : count($res['conflicts']),
+            ]);
+        } catch (\Throwable $e) {
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
+            Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * API: Сохранение изменений персоны (Реальное редактирование в БД с фиксацией в audit_logs)
      */
     public function apiPersonUpdate(Request $request): void

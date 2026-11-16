@@ -954,7 +954,21 @@ class KinshipService
      */
     public function hasSpouse(int $personId, array $marriages): bool
     {
-        return !empty($this->getSpouseIds($personId, $marriages));
+        // TASK-020: расторгнутый брак — не текущий (дочь после развода снова незамужняя)
+        $active = array_filter($marriages, fn($m) => !$this->isDissolvedMarriage($m));
+        return !empty($this->getSpouseIds($personId, $active));
+    }
+
+    /** Брак расторгнут: статус divorced, либо указана дата развода/окончания, либо is_current=0 без статуса. */
+    protected function isDissolvedMarriage(array $m): bool
+    {
+        $status = $m['status'] ?? null;
+        if ($status !== null && $status !== '') {
+            if ($status !== 'married') return true;
+        } elseif (array_key_exists('is_current', $m) && $m['is_current'] !== null && empty($m['is_current'])) {
+            return true;
+        }
+        return !empty($m['divorce_date']) || !empty($m['end_date']);
     }
 
     /**
@@ -999,7 +1013,7 @@ class KinshipService
         foreach ($marriages as $m) {
             $h = (int)($m['husband_id'] ?? 0);
             $w = (int)($m['wife_id'] ?? 0);
-            if ($h && $w && isset($personsById[$h], $personsById[$w])) {
+            if ($h && $w && isset($personsById[$h], $personsById[$w]) && !$this->isDissolvedMarriage($m)) {
                 $spousesOf[$h][] = $w;
                 $spousesOf[$w][] = $h;
             }

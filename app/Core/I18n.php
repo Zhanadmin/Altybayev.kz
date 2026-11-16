@@ -362,6 +362,39 @@ class I18n
     }
 
     /**
+     * TASK-020: «47 лет вместе» / «47 жыл бірге» — полных лет от даты брака до сегодня
+     * (или до развода/ухода). Пустая строка, если год брака неизвестен или союз прекращён.
+     */
+    public static function togetherLabel(mixed $start, mixed $end = null, ?string $lang = null, ?string $today = null): string
+    {
+        $lang = $lang ?? self::lang();
+        $from = self::lifeParts($start, null);
+        if (!$from) return '';
+        $ts = $today !== null ? strtotime($today) : false;
+        if ($ts === false) $ts = time();
+        $to = self::lifeParts($end, null) ?? [(int)date('Y', $ts), (int)date('n', $ts), (int)date('j', $ts)];
+        $n = self::yearsBetween($from, $to);
+        if ($n < 0 || $n > 100) return '';
+        if ($lang === 'ru') {
+            return ($end ? 'прожили ' : '') . self::ruYears($n) . ($end ? '' : ' вместе');
+        }
+        return $n . ' жыл' . ($end ? ' бірге болды' : ' бірге');
+    }
+
+    /** TASK-020: дата брака для карточки: «8 марта 1979 года» / «1979 ж. 8 наурыз» (месяц — на языке интерфейса). */
+    public static function marriageDateLabel(mixed $date, ?string $lang = null): string
+    {
+        $lang = $lang ?? self::lang();
+        $raw = trim((string)($date ?? ''));
+        if ($raw === '') return '';
+        $s = self::formatDate($raw, $lang);
+        if ($lang === 'ru') {
+            return preg_replace('/ г\.$/u', ' года', preg_replace('/^(\d{1,2} \S+ \d{4})$/u', '$1 года', $s));
+        }
+        return str_replace(' жылғы ', ' ж. ', $s);
+    }
+
+    /**
      * Словарь локализации интерфейса
      */
     public static function getDictionary(): array
@@ -544,7 +577,7 @@ class I18n
             'btn_you_are_here' => ['kk' => 'Сіз осындасыз', 'ru' => 'Вы здесь'],
             'btn_art_concept' => ['kk' => 'Шежіре суреті', 'ru' => 'Иллюстрация древа'],
             'btn_kinship_dict' => ['kk' => 'Туыстық сөздігі', 'ru' => 'Словарь родства'],
-            'btn_view_in_tree' => ['kk' => 'Древода көрсету', 'ru' => 'Показать в древе'],
+            'btn_view_in_tree' => ['kk' => 'Шежіреде көрсету', 'ru' => 'Показать в древе'],
             'btn_focus_here' => ['kk' => 'Фокус орнату', 'ru' => 'Фокусировать'],
             'ush_zhurt_title' => ['kk' => 'Үш жұрт', 'ru' => 'Три родственных круга (Үш жұрт)'],
             'oz_zhurt' => ['kk' => 'Өз жұрты', 'ru' => 'Өз жұрты (Родня по отцу)'],
@@ -567,7 +600,7 @@ class I18n
             // Действия
             'btn_edit' => ['kk' => 'Өзгерту', 'ru' => 'Редактировать'],
             'btn_view_profile' => ['kk' => 'Парақшасы', 'ru' => 'Карточка'],
-            'btn_show_in_tree' => ['kk' => 'Древода көрсету', 'ru' => 'Показать в древе'],
+            'btn_show_in_tree' => ['kk' => 'Шежіреде көрсету', 'ru' => 'Показать в древе'],
             'btn_add_relative' => ['kk' => '+ Туыс қосу', 'ru' => '+ Добавить родню'],
             'btn_add_son' => ['kk' => '+ Ұл', 'ru' => '+ Сын'],
             'btn_add_daughter' => ['kk' => '+ Қыз', 'ru' => '+ Дочь'],

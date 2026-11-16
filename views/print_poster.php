@@ -364,7 +364,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
     <header class="poster-toolbar">
         <div class="toolbar-left">
             <a href="/tree" class="btn-tb btn-tb-secondary">
-                ← <?= $isKk ? 'Древоға қайту' : 'Назад к древу' ?>
+                ← <?= $isKk ? 'Шежіреге қайту' : 'Назад к древу' ?>
             </a>
             <div class="toolbar-title">
                 <span><?= $isKk ? 'Шежірені басып шығару (Плакат)' : 'Печать шежире (Подарочный плакат)' ?></span>

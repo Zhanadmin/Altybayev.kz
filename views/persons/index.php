@@ -181,13 +181,14 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             </td>
 
             <!-- Жынысы -->
-            <td class="col-opt-lg"><span class="g-badge <?= $isMale ? 'is-m' : 'is-f' ?>"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= $isMale ? 'g-m' : 'g-f' ?><?= $isDeceased ? 'G' : '' ?>"/></svg><?= htmlspecialchars($genderText) ?></span></td>
+            <td class="col-opt-lg pp-gender-cell"><span class="g-badge g-icon <?= $isMale ? 'is-m' : 'is-f' ?>" title="<?= $isMale ? 'Ер / Мужской' : 'Әйел / Женский' ?>" aria-label="<?= $isMale ? 'Ер / Мужской' : 'Әйел / Женский' ?>" role="img"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= $isMale ? 'g-m' : 'g-f' ?><?= $isDeceased ? 'G' : '' ?>"/></svg></span></td>
 
             <!-- Руы -->
             <td class="col-opt-xl clip"><span class="badge" title="<?= htmlspecialchars($clanText) ?>"><?= htmlspecialchars($clanText) ?></span></td>
 
             <!-- Жылдары -->
-            <td class="clip pp-years col-opt-md" title="<?= htmlspecialchars($yearsTitle) ?>"><?= htmlspecialchars($yearsDisp) ?></td>
+            <?php $yearsParts = explode(' · ', $yearsDisp, 2); ?>
+            <td class="pp-years col-opt-md" title="<?= htmlspecialchars($yearsTitle) ?>"><?= htmlspecialchars($yearsParts[0]) ?><?php if (isset($yearsParts[1])): ?><div class="pp-years-sub"><?= htmlspecialchars($yearsParts[1]) ?></div><?php endif; ?></td>
 
             <!-- Ата-анасы -->
             <td class="col-opt-lg pp-rel">

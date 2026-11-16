@@ -746,6 +746,22 @@ class KinshipService
             $result[$pId] = $this->determineKinship($p, $basePerson, 'auto', $allPersonsById, $marriages);
         }
 
+        // TASK-020: предки и жёны/мужья предков — термин по пути родства и степени
+        foreach ($this->ancestorTerms($baseId, $allPersonsById, $marriages) as $aId => $t) {
+            if (!isset($result[$aId])) {
+                continue;
+            }
+            $code = $result[$aId]['code'] ?? '';
+            // Супруг(а) предка перекрываем только общими «заглушками», точные термины не трогаем
+            if (!empty($t['spouse']) && !in_array($code, ['ancestor', 'relative', 'clan_relative'], true)) {
+                continue;
+            }
+            $result[$aId]['term_kk'] = $t['term_kk'];
+            $result[$aId]['term_ru'] = $t['term_ru'];
+            $result[$aId]['code'] = $t['code'];
+            $result[$aId]['explanation'] = $t['explanation'];
+        }
+
         // TASK-013: жұрт определяется по ПУТИ родства, а не по термину/фамилии/роду.
         $sides = $this->computeZhurtSides($baseId, $allPersonsById, $marriages);
         foreach ($result as $pId => $kin) {
@@ -778,6 +794,149 @@ class KinshipService
         }
 
         return $result;
+    }
+
+    /**
+     * TASK-020: термины для прямых предков (по пути отец/мать и степени) и их супругов.
+     * Степень 2 — ата/әже, 3 — үлкен ата/үлкен әже, 4+ — баба/үлкен әже (N-е колено).
+     * Через мать — с префиксом «Нағашы».
+     *
+     * @return array<int, array{term_kk:string, term_ru:string, code:string, explanation:string, spouse?:bool}>
+     */
+    protected function ancestorTerms(int $baseId, array $personsById, array $marriages): array
+    {
+        $base = $personsById[$baseId] ?? null;
+        if (!$base) {
+            return [];
+        }
+        // Обход вверх: [id => [степень, через_мать]]
+        $anc = [];
+        $queue = [];
+        foreach (['father_id' => false, 'mother_id' => true] as $col => $viaMother) {
+            $pid = (int)($base[$col] ?? 0);
+            if ($pid && isset($personsById[$pid]) && !isset($anc[$pid])) {
+                $anc[$pid] = [1, $viaMother];
+                $queue[] = $pid;
+            }
+        }
+        for ($h = 0; $h < count($queue); $h++) {
+            $cur = $queue[$h];
+            [$deg, $viaM] = $anc[$cur];
+            foreach (['father_id', 'mother_id'] as $col) {
+                $pid = (int)($personsById[$cur][$col] ?? 0);
+                if ($pid && $pid !== $baseId && isset($personsById[$pid]) && !isset($anc[$pid])) {
+                    $anc[$pid] = [$deg + 1, $viaM];
+                    $queue[] = $pid;
+                }
+            }
+        }
+
+        $make = function (string $gender, int $deg, bool $viaM, bool $spouse): ?array {
+            $f = ($gender === 'F');
+            if ($deg < 2) {
+                return null; // родители обработаны основным правилом
+            }
+            if ($deg === 2) {
+                $kk = $f ? 'Әже' : 'Ата';
+                $ru = $f ? 'Бабушка' : 'Дедушка';
+            } elseif ($deg === 3) {
+                $kk = $f ? 'Үлкен әже' : 'Үлкен ата';
+                $ru = $f ? 'Прабабушка' : 'Прадедушка';
+            } else {
+                $kk = $f ? 'Үлкен әже' : 'Баба';
+                $ru = ($f ? 'Прародительница' : 'Предок') . ", {$deg}-е колено";
+            }
+            if ($viaM) {
+                $kk = 'Нағашы ' . mb_strtolower(mb_substr($kk, 0, 1)) . mb_substr($kk, 1);
+                $ru .= ' по матери';
+            } else {
+                $ru .= ' по отцу';
+            }
+            return [
+                'term_kk' => $kk,
+                'term_ru' => $ru,
+                'code' => ($f ? 'ancestress_' : 'ancestor_') . $deg . ($viaM ? '_m' : '_p'),
+                'explanation' => $ru,
+                'spouse' => $spouse,
+            ];
+        };
+
+        $out = [];
+        foreach ($anc as $aId => [$deg, $viaM]) {
+            $t = $make((string)($personsById[$aId]['gender'] ?? 'M'), $deg, $viaM, false);
+            if ($t) {
+                $out[$aId] = $t;
+            }
+        }
+        // Супруги предков (не кровные предки сами): әже/ата по степени супруга
+        foreach ($marriages as $m) {
+            $h = (int)($m['husband_id'] ?? 0);
+            $w = (int)($m['wife_id'] ?? 0);
+            foreach ([[$h, $w], [$w, $h]] as [$a, $s]) {
+                if ($a && $s && isset($anc[$a]) && !isset($anc[$s]) && $s !== $baseId && isset($personsById[$s]) && !isset($out[$s])) {
+                    $t = $make((string)($personsById[$s]['gender'] ?? 'F'), $anc[$a][0], $anc[$a][1], true);
+                    if ($t) {
+                        $out[$s] = $t;
+                    }
+                }
+            }
+        }
+
+        // Потомки: бала → немере → шөбере → шөпшек → немене → туажат → жүрежат; дети дочери — жиен, жиеншар
+        $childrenOf = [];
+        foreach ($personsById as $p) {
+            foreach (['father_id', 'mother_id'] as $col) {
+                $pid = (int)($p[$col] ?? 0);
+                if ($pid && isset($personsById[$pid])) {
+                    $childrenOf[$pid][] = (int)$p['id'];
+                }
+            }
+        }
+        $desc = [];
+        $dq = [];
+        foreach (array_unique($childrenOf[$baseId] ?? []) as $c) {
+            $desc[$c] = [1, ($personsById[$c]['gender'] ?? 'M') === 'F'];
+            $dq[] = $c;
+        }
+        for ($h = 0; $h < count($dq); $h++) {
+            $cur = $dq[$h];
+            [$deg, $viaDau] = $desc[$cur];
+            foreach (array_unique($childrenOf[$cur] ?? []) as $c) {
+                if ($c !== $baseId && !isset($desc[$c])) {
+                    $desc[$c] = [$deg + 1, $viaDau];
+                    $dq[] = $c;
+                }
+            }
+        }
+        $ladder = [2 => 'Немере', 3 => 'Шөбере', 4 => 'Шөпшек', 5 => 'Немене', 6 => 'Туажат', 7 => 'Жүрежат'];
+        $ladderRu = [2 => 'внук', 3 => 'правнук', 4 => 'праправнук', 5 => 'потомок 5-го колена', 6 => 'потомок 6-го колена', 7 => 'потомок 7-го колена'];
+        foreach ($desc as $dId => [$deg, $viaDau]) {
+            if ($deg < 2) {
+                continue;
+            }
+            $f = (($personsById[$dId]['gender'] ?? 'M') === 'F');
+            if ($viaDau && $deg <= 3) {
+                $kk = $deg === 2 ? 'Жиен' : 'Жиеншар';
+                $ru = ($deg === 2 ? ($f ? 'внучка' : 'внук') : ($f ? 'правнучка' : 'правнук')) . ' по дочери';
+            } elseif (isset($ladder[$deg])) {
+                $kk = $ladder[$deg];
+                $ru = $ladderRu[$deg];
+                if ($deg <= 4 && $f) {
+                    $ru = str_replace('внук', 'внучка', $ru);
+                }
+            } else {
+                $kk = 'Ұрпақ';
+                $ru = "потомок, {$deg}-е колено";
+            }
+            $out[$dId] = [
+                'term_kk' => $kk,
+                'term_ru' => $ru,
+                'code' => 'descendant_' . $deg . ($viaDau ? '_d' : ''),
+                'explanation' => $ru,
+                'spouse' => false,
+            ];
+        }
+        return $out;
     }
 
     /**

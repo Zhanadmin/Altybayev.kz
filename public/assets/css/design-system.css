@@ -510,9 +510,15 @@ p { margin: 0; }
 .pp-table td { vertical-align: top; }
 .pp-table td.actions { vertical-align: middle; padding-top: 6px; padding-bottom: 6px; overflow: visible; }
 .pp-table .actions .btn-icon { width: 32px; height: 32px; }
-.pp-w-gender { width: 80px; }
+.pp-w-gender { width: 52px; }
 .pp-w-clan { width: 120px; }
 .pp-w-years { width: 150px; }
+/* TASK-020: текст в таблице «Адамдар» переносится, а не обрезается */
+.pp-table .clip { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.pp-years-sub { font-size: var(--fs-xs); color: var(--c-text-3); margin-top: 2px; }
+.pp-gender-cell { text-align: center; }
+.g-badge.g-icon { padding: 4px; width: 28px; height: 28px; justify-content: center; }
+.g-badge.g-icon .gmark { width: 16px; height: 16px; }
 .pp-w-rel { width: 15%; }
 .pp-w-kin { width: 14%; }
 .pp-w-act3 { width: 132px; }

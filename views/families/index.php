@@ -123,7 +123,8 @@ require __DIR__ . '/../layout/master_start.php';
                             </div>
 
                             <!-- Даты брака / развода -->
-                            <?php if (!empty($m['marriage_date']) || !empty($m['start_date']) || !empty($m['end_date'])): ?>
+                            <?php /* TASK-020: год/дата брака в карточке не показывается — только «N лет вместе» в шапке */ ?>
+                            <?php if (false): ?>
                                 <div class="fm-dates small muted">
                                     <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
                                     <span>
@@ -147,6 +148,7 @@ require __DIR__ . '/../layout/master_start.php';
                                             if (!empty($c['uzatylgan'])):
                                                 $uz = $c['uzatylgan'];
                                                 $uzFam = (string)($uz['family'] ?? '');
+                                                if ($lang === 'ru' && mb_strtolower($uzFam) === 'белгісіз') { $uzFam = 'не указан'; }
                                         ?>
                                             <a href="/families#fam-<?= (int)$uz['marriage_id'] ?>" class="badge pc-tag fm-uzatylgan"
                                                title="<?= htmlspecialchars($lang === 'ru' ? 'Выдана замуж — её место в семье мужа' : 'Ұзатылған — орны күйеуінің шаңырағында') ?>">
@@ -263,19 +265,18 @@ document.addEventListener('click', function (e) {
             <input type="hidden" id="editMarriageId" name="id" value="">
             <div class="modal-body">
                 <div class="field">
-                    <label for="editMarriageStatus"><?= $lang === 'ru' ? 'Статус' : 'Күйі' ?></label>
-                    <select id="editMarriageStatus" class="select">
-                        <option value="married"><?= $lang === 'ru' ? 'В браке' : 'Некеде' ?></option>
-                        <option value="divorced"><?= $lang === 'ru' ? 'В разводе' : 'Ажырасқан' ?></option>
-                    </select>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                        <input type="checkbox" id="editMarriageDivorced" onchange="toggleMarriageDivorce()">
+                        <span><?= $lang === 'ru' ? 'Развелись' : 'Ажырасты' ?></span>
+                    </label>
                 </div>
                 <div class="form-row">
                     <div class="field">
                         <label for="editMarriageStartDate"><?= $lang === 'ru' ? 'Дата брака' : 'Неке күні' ?></label>
                         <input type="text" id="editMarriageStartDate" class="input" placeholder="1995">
                     </div>
-                    <div class="field">
-                        <label for="editMarriageEndDate"><?= $lang === 'ru' ? 'Дата развода' : 'Ажырасу күні' ?></label>
+                    <div class="field" id="editMarriageEndField" style="display:none">
+                        <label for="editMarriageEndDate"><?= $lang === 'ru' ? 'Дата развода' : 'Ажырасқан күні' ?></label>
                         <input type="text" id="editMarriageEndDate" class="input" placeholder="2010">
                     </div>
                 </div>
@@ -295,11 +296,18 @@ document.addEventListener('click', function (e) {
 <script>
     function openMarriageEditModal(id, status, startDate, endDate, notes) {
         document.getElementById('editMarriageId').value = id;
-        document.getElementById('editMarriageStatus').value = status;
+        document.getElementById('editMarriageDivorced').checked = (status === 'divorced' || !!endDate);
         document.getElementById('editMarriageStartDate').value = startDate || '';
         document.getElementById('editMarriageEndDate').value = endDate || '';
+        toggleMarriageDivorce();
         document.getElementById('editMarriageNotes').value = notes || '';
         document.getElementById('marriageEditModal').style.display = 'flex';
+    }
+
+    function toggleMarriageDivorce() {
+        const on = document.getElementById('editMarriageDivorced').checked;
+        document.getElementById('editMarriageEndField').style.display = on ? '' : 'none';
+        if (!on) { document.getElementById('editMarriageEndDate').value = ''; }
     }
 
     function closeMarriageEditModal() {
@@ -315,9 +323,10 @@ document.addEventListener('click', function (e) {
         const id = document.getElementById('editMarriageId').value;
         const formData = new URLSearchParams();
         formData.append('id', id);
-        formData.append('status', document.getElementById('editMarriageStatus').value);
+        const divorced = document.getElementById('editMarriageDivorced').checked;
+        formData.append('status', divorced ? 'divorced' : 'married');
         formData.append('start_date', document.getElementById('editMarriageStartDate').value.trim());
-        formData.append('end_date', document.getElementById('editMarriageEndDate').value.trim());
+        formData.append('end_date', divorced ? document.getElementById('editMarriageEndDate').value.trim() : '');
         formData.append('notes', document.getElementById('editMarriageNotes').value.trim());
 
         try {

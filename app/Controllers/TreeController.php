@@ -36,15 +36,10 @@ class TreeController
         $user = Auth::user();
 
         // Поиск или связка персоны Жандоса
-        $userPersonId = null;
-        if (!empty($user['person_id'])) {
-            $userPersonId = (int)$user['person_id'];
-        } else {
-            $userPersonId = $this->resolveZhandosPersonId();
-            if ($user && $userPersonId) {
-                $this->saveUserPersonId((int)$user['id'], $userPersonId);
-            }
-        }
+        // TASK-014 (note 16.11): без привязки — фокус на Жандосе, но в users.person_id не пишем.
+        $userPersonId = !empty($user['person_id'])
+            ? (int)$user['person_id']
+            : $this->resolveZhandosPersonId();
 
         $allTerms = $this->kinshipService->getAllTerms();
         $conceptArtUrl = '/assets/img/shezhire_living_forest_concept.jpg';
@@ -147,10 +142,10 @@ class TreeController
         }
 
         $user = Auth::user();
+        // TASK-014 (note 16.11): карточка Жандоса — только точка фокуса дерева по умолчанию.
+        // В users.person_id её НЕ записываем: иначе каждый новый пользователь «становится» Жандосом
+        // (общий person_id → чужие альбомы, «своё» фото профиля и т. п.). Привязку ставит админ.
         $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : $this->resolveZhandosPersonId();
-        if ($user && empty($user['person_id']) && $userPersonId) {
-            $this->saveUserPersonId((int)$user['id'], $userPersonId);
-        }
 
         // Защита закрытых контактов
         $isAdmin = Auth::isAdmin();
@@ -1075,13 +1070,34 @@ class TreeController
             return;
         }
 
-        $personId = (int)$request->get('person_id', 0);
+        // TASK-014 (note 16.11): только POST + CSRF (раньше был GET без токена)
+        if (!\App\Core\Session::validateCsrf((string)$request->post('csrf_token', ''))) {
+            Response::json(['error' => 'Сессия ескірді, бетті жаңартыңыз / Сессия устарела, обновите страницу'], 403);
+            return;
+        }
+
+        $personId = (int)$request->post('person_id', 0);
         if (!$personId) {
             Response::json(['error' => 'person_id is required'], 400);
             return;
         }
 
         try {
+            $db = Database::getConnection();
+            $chk = $db->prepare('SELECT id FROM persons WHERE id = ? AND is_deleted = 0 LIMIT 1');
+            $chk->execute([$personId]);
+            if (!$chk->fetchColumn()) {
+                Response::json(['error' => 'Тұлға табылмады / Персона не найдена'], 404);
+                return;
+            }
+            // Одна карточка — один пользователь: иначе права и «свои» данные смешиваются.
+            $own = $db->prepare('SELECT id FROM users WHERE person_id = ? AND id <> ? LIMIT 1');
+            $own->execute([$personId, (int)$user['id']]);
+            if ($own->fetchColumn()) {
+                Response::json(['error' => 'Бұл тұлға басқа пайдаланушыға байланған / Эта персона уже привязана к другому пользователю'], 409);
+                return;
+            }
+
             $this->saveUserPersonId((int)$user['id'], $personId);
 
             Response::json([

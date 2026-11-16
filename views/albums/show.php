@@ -19,7 +19,7 @@ $fmtDate = fn(?string $d) => $d ? I18n::formatDate($d) : '';
 
 require __DIR__ . '/../layout/master_start.php';
 ?>
-<link rel="stylesheet" href="/assets/css/album.css?v=2">
+<link rel="stylesheet" href="/assets/css/album.css?v=3">
 
 <div class="al">
     <div class="ds-page-head">
@@ -135,7 +135,7 @@ require __DIR__ . '/../layout/master_start.php';
         <span class="al-lb-count"></span>
         <span class="spacer"></span>
         <a class="btn-lb" data-lb="download" href="#" download aria-label="<?= htmlspecialchars($L('Жүктеп алу', 'Скачать')) ?>"><svg class="ic"><use href="#i-save"/></svg><span class="desktop-only"><?= $L('Жүктеп алу', 'Скачать') ?></span></a>
-        <button type="button" class="btn-lb" data-lb="avatar" aria-label="<?= htmlspecialchars($L('Аватар ету', 'Сделать аватаром')) ?>"><svg class="ic"><use href="#i-users"/></svg><span class="desktop-only"><?= $L('Аватар ету', 'На аватар') ?></span></button>
+        <button type="button" class="btn-lb" data-lb="avatar" aria-label="<?= htmlspecialchars($L('Аватарға қою', 'Поставить на аватар')) ?>"><svg class="ic"><use href="#i-users"/></svg><span class="desktop-only"><?= $L('Аватарға қою', 'На аватар') ?></span></button>
         <button type="button" class="btn-lb" data-lb="edit" aria-label="<?= htmlspecialchars($L('Өзгерту', 'Изменить')) ?>"><svg class="ic"><use href="#i-edit"/></svg></button>
         <button type="button" class="btn-lb danger" data-lb="delete" aria-label="<?= htmlspecialchars($L('Жою', 'Удалить')) ?>"><svg class="ic"><use href="#i-x"/></svg><span class="desktop-only"><?= $L('Жою', 'Удалить') ?></span></button>
     </div>
@@ -176,6 +176,35 @@ require __DIR__ . '/../layout/master_start.php';
                 <button type="submit" class="btn btn-primary"><?= $L('Сақтау', 'Сохранить') ?></button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- TASK-018: аватар из фото — квадратная обрезка -->
+<div id="alAvaModal" class="modal-backdrop" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="alAvaTitle" style="max-width:560px">
+        <div class="modal-head">
+            <h3 id="alAvaTitle"><?= $L('Аватарға қою', 'Поставить на аватар') ?></h3>
+            <button type="button" class="btn btn-ghost btn-icon" data-close-modal aria-label="<?= htmlspecialchars($L('Жабу', 'Закрыть')) ?>"><svg class="ic"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="modal-body">
+            <div class="field" id="alAvaWhoField">
+                <label for="alAvaWho"><?= $L('Кімнің аватары', 'Чей аватар') ?></label>
+                <select id="alAvaWho" class="input"></select>
+            </div>
+            <p class="small muted" style="margin:0 0 8px"><?= $L('Шаршыны жылжытып, өлшемін таңдаңыз', 'Передвиньте квадрат и выберите размер') ?></p>
+            <div class="al-crop" id="alCrop">
+                <img id="alCropImg" alt="" draggable="false">
+                <div class="al-crop-box" id="alCropBox" tabindex="0" aria-label="<?= htmlspecialchars($L('Кесу аймағы', 'Область обрезки')) ?>"></div>
+            </div>
+            <div class="field" style="margin-top:10px">
+                <label for="alCropSize"><?= $L('Өлшемі', 'Размер') ?></label>
+                <input id="alCropSize" type="range" min="20" max="100" value="100" step="1">
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" data-close-modal><?= $L('Бас тарту', 'Отмена') ?></button>
+            <button type="button" class="btn btn-primary" id="alAvaSave"><?= $L('Аватарға қою', 'Поставить на аватар') ?></button>
+        </div>
     </div>
 </div>
 
@@ -243,14 +272,15 @@ window.AL = <?= json_encode([
         'confirm_delete_media' => $L('Бұл файлды жою керек пе?', 'Удалить этот файл?'),
         'deleted' => $L('Жойылды', 'Удалено'), 'saved' => $L('Сақталды', 'Сохранено'),
         'added_by' => $L('қосқан:', 'добавил(а):'),
-        'avatar_choose' => $L('Кімнің аватары болады? Нөмірін жазыңыз:', 'Чьим аватаром сделать? Введите номер:'),
-        'avatar_confirm' => $L('Аватар карточкада барлық туыстарға көрінеді. Аватар ету:', 'Аватар виден всем родственникам в карточке. Сделать аватаром:'),
+        'avatar_set' => $L('Аватарға қою', 'На аватар'),
+        'avatar_hint' => $L('Аватарды қою үшін «Өзгерту» арқылы фотодағы адамды белгілеңіз', 'Чтобы поставить аватар, отметьте человека на фото через «Изменить»'),
+        'avatar_saving' => $L('Сақталуда…', 'Сохраняем…'),
         'video_unsupported' => $L('Бұл браузер бейнені ойната алмайды.', 'Этот браузер не может воспроизвести видео.'),
         'download' => $L('Жүктеп алу', 'Скачать'),
         'avatar_done' => $L('Аватар қойылды:', 'Аватар установлен:'),
     ],
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
-<script src="/assets/js/album.js?v=2" defer></script>
+<script src="/assets/js/album.js?v=3" defer></script>
 
 <?php require __DIR__ . '/../layout/master_end.php'; ?>

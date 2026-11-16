@@ -319,7 +319,12 @@ class AlbumMediaService
      * Сделать аватар: квадрат 600 px из фото альбома в public/uploads/photos (как аватары TASK-007).
      * @return string публичный URL
      */
-    public function makeAvatar(string $photoRel, string $publicDir, string $publicPrefix = '/uploads/photos/'): string
+    /**
+     * Квадратный аватар 600 px из фото альбома.
+     * $crop (TASK-018, необязательно): ['x' => доля ширины, 'y' => доля высоты, 's' => доля меньшей стороны] —
+     * квадрат, выбранный пользователем; значения зажимаются в границы фото.
+     */
+    public function makeAvatar(string $photoRel, string $publicDir, string $publicPrefix = '/uploads/photos/', ?array $crop = null): string
     {
         $src = $this->abs($photoRel);
         $info = $this->inspectImage($src, 'kk');
@@ -327,9 +332,20 @@ class AlbumMediaService
         $img = $this->decodeImage($src, $info['type'], 'kk');
         $w = imagesx($img);
         $h = imagesy($img);
-        $side = min($w, $h);
-        $sx = (int)(($w - $side) / 2);
-        $sy = (int)max(0, ($h - $side) / 3); // чуть выше центра — лица обычно в верхней части
+        $min = min($w, $h);
+        if ($crop !== null) {
+            $fs = max(0.05, min(1.0, (float)$crop['s']));
+            $side = max(16, (int)round($min * $fs));
+            $side = min($side, $min);
+            $sx = (int)round($w * max(0.0, min(1.0, (float)$crop['x'])));
+            $sy = (int)round($h * max(0.0, min(1.0, (float)$crop['y'])));
+            $sx = max(0, min($sx, $w - $side));
+            $sy = max(0, min($sy, $h - $side));
+        } else {
+            $side = $min;
+            $sx = (int)(($w - $side) / 2);
+            $sy = (int)max(0, ($h - $side) / 3); // чуть выше центра — лица обычно в верхней части
+        }
         $out = min(600, $side);
         $canvas = imagecreatetruecolor($out, $out);
         imagecopyresampled($canvas, $img, 0, 0, $sx, $sy, $out, $out, $side, $side);

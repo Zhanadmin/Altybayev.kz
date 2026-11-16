@@ -645,7 +645,7 @@ p { margin: 0; }
 .fm .island.toolbar, .hs .island.toolbar { padding: var(--sp-4); }
 .fm-group { display: flex; flex-direction: column; }
 .fm-group .island-head { margin-bottom: var(--sp-3); }
-.fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: var(--sp-4); }
+.fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: var(--sp-4); align-items: start; }
 .fm-card { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
 .fm-ancestors { border-color: var(--c-accent); }
 .fm-card-head { display: flex; align-items: center; gap: var(--sp-2); }

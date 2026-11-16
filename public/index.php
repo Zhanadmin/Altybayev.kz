@@ -53,9 +53,10 @@ $router->get('/api/person/clan-propagate-preview', 'App\Controllers\TreeControll
 $router->post('/api/person/clan-propagate', 'App\Controllers\TreeController@apiClanPropagateApply', ['auth']);
 $router->post('/api/person/create-relative', 'App\Controllers\TreeController@apiPersonCreateRelative', ['auth']);
 $router->post('/api/person/delete', 'App\Controllers\TreeController@apiPersonDelete', ['auth']);
+$router->post('/api/person/contacts/save', 'App\Controllers\PersonContactController@save', ['auth']); // TASK-022
+$router->post('/api/person/invite', 'App\Controllers\PersonContactController@invite', ['auth']); // TASK-022
 $router->post('/api/marriage/update', 'App\Controllers\TreeController@apiMarriageUpdate', ['auth']);
 $router->post('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
-$router->get('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);
 $router->get('/api/kinship-all', 'App\Controllers\TreeController@apiKinshipAll', ['auth']);
 $router->get('/api/person/ush-zhurt', 'App\Controllers\TreeController@apiUshZhurt', ['auth']);

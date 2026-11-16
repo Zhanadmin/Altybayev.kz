@@ -62,7 +62,7 @@ $adRoleLabels = [
             <table class="table ad-table">
                 <thead>
                     <tr>
-                        <th class="num col-opt-lg">ID</th>
+                        <th class="num" title="<?= $lang === 'ru' ? 'Номер пользователя' : 'Пайдаланушы нөмірі' ?>">№</th>
                         <th><?= $lang === 'ru' ? 'Имя / Email' : 'Аты / Email' ?></th>
                         <th class="ad-w-person col-opt-lg"><?= $lang === 'ru' ? 'Связанная персона' : 'Байланысты тұлға' ?></th>
                         <th class="ad-w-role"><?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?></th>
@@ -77,7 +77,7 @@ $adRoleLabels = [
                         $uInitial = mb_substr($uName !== '' ? $uName : $uEmail, 0, 1);
                     ?>
                         <tr>
-                            <td class="num col-opt-lg"><?= (int)$u['id'] ?></td>
+                            <td class="num"><?= (int)$u['id'] ?></td>
                             <td>
                                 <div class="person">
                                     <span class="avatar" aria-hidden="true"><?= htmlspecialchars($uInitial) ?></span>
@@ -88,8 +88,14 @@ $adRoleLabels = [
                                 </div>
                             </td>
                             <td class="clip col-opt-lg">
-                                <?php if (!empty($u['person_id'])): ?>
-                                    <a href="/person/<?= (int)$u['person_id'] ?>" class="pp-name">ID #<?= (int)$u['person_id'] ?></a>
+                                <?php if (!empty($u['person_id'])):
+                                    $pName = trim((string)($u['person_name'] ?? ''));
+                                ?>
+                                    <a href="/person/<?= (int)$u['person_id'] ?>" class="pp-name"
+                                       title="<?= $lang === 'ru' ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?> #<?= (int)$u['person_id'] ?>"><?= htmlspecialchars($pName !== '' ? $pName : ('#' . (int)$u['person_id'])) ?></a>
+                                    <?php if ((int)($u['person_shared'] ?? 0) > 1): ?>
+                                        <div class="small ad-warn" role="note"><?= $lang === 'ru' ? '⚠ Эта карточка привязана к нескольким пользователям' : '⚠ Бұл карточка бірнеше пайдаланушыға байланған' ?></div>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="muted">—</span>
                                 <?php endif; ?>
@@ -239,6 +245,7 @@ $adRoleLabels = [
 
 <style>
     /* TASK-014: форма приглашения в стиле островов админки */
+    .ad-warn { color: var(--danger, #b42318); white-space: normal; }
     .ad-invite { margin: 0 0 var(--sp-5, 20px); display: grid; gap: var(--sp-3, 12px); }
     .ad-invite-actions { display: flex; justify-content: flex-end; }
     .ad-table td.actions { white-space: nowrap; }

@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+$__ru = \App\Core\I18n::lang() === 'ru';
+$__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
 ?>
                 </div>
                 <!-- TASK-014: подвал со ссылками на политику и условия -->
@@ -16,8 +18,8 @@ declare(strict_types=1);
     <div id="globalPersonEditModal" class="modal-backdrop" style="display:none;">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalPersonEditTitle">
             <div class="modal-head">
-                <h3 id="modalPersonEditTitle">Тұлғаны өңдеу</h3>
-                <button type="button" class="btn btn-ghost btn-icon" onclick="closeGlobalPersonEditModal()" aria-label="Жабу / Закрыть">
+                <h3 id="modalPersonEditTitle"><?= $__t('Тұлғаны өңдеу', 'Редактирование человека') ?></h3>
+                <button type="button" class="btn btn-ghost btn-icon" onclick="closeGlobalPersonEditModal()" aria-label="<?= $__t('Жабу', 'Закрыть') ?>">
                     <svg class="ic"><use href="#i-x"/></svg>
                 </button>
             </div>
@@ -26,72 +28,72 @@ declare(strict_types=1);
                 <div class="modal-body">
                     <div class="form-row">
                         <div class="field">
-                            <label for="editModalFirstName">Аты / Имя *</label>
+                            <label for="editModalFirstName"><?= $__t('Аты', 'Имя') ?> *</label>
                             <input type="text" id="editModalFirstName" class="input" required>
                         </div>
                         <div class="field">
-                            <label for="editModalLastName">Тегі / Фамилия</label>
+                            <label for="editModalLastName"><?= $__t('Тегі', 'Фамилия') ?></label>
                             <input type="text" id="editModalLastName" class="input">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="field">
-                            <label for="editModalMiddleName">Әкесінің аты / Отчество</label>
+                            <label for="editModalMiddleName"><?= $__t('Әкесінің аты', 'Отчество') ?></label>
                             <input type="text" id="editModalMiddleName" class="input">
                         </div>
                         <div class="field">
-                            <label for="editModalMaidenName">Қыз кезіндегі тегі / Девичья фамилия</label>
+                            <label for="editModalMaidenName"><?= $__t('Қыз кезіндегі тегі', 'Девичья фамилия') ?></label>
                             <input type="text" id="editModalMaidenName" class="input">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="field">
-                            <label for="editModalGender">Жынысы / Пол</label>
+                            <label for="editModalGender"><?= $__t('Жынысы', 'Пол') ?></label>
                             <select id="editModalGender" class="select">
-                                <option value="M">Ер / Мужской</option>
-                                <option value="F">Әйел / Женский</option>
+                                <option value="M"><?= $__t('Ер', 'Мужской') ?></option>
+                                <option value="F"><?= $__t('Әйел', 'Женский') ?></option>
                             </select>
                         </div>
                         <div class="field">
-                            <label for="editModalClanRu">Руы / Род</label>
+                            <label for="editModalClanRu"><?= $__t('Руы', 'Род') ?></label>
                             <input type="text" id="editModalClanRu" class="input" placeholder="Керей, Жағалбайлы...">
                             <div id="editModalClanHint" class="hint"></div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="field">
-                            <label for="editModalBirthDate">Туған күні / Дата рождения</label>
+                            <label for="editModalBirthDate"><?= $__t('Туған күні', 'Дата рождения') ?></label>
                             <input type="date" id="editModalBirthDate" class="input">
                         </div>
                         <div class="field">
-                            <label for="editModalBirthYear">Туған жылы / Год</label>
-                            <input type="text" id="editModalBirthYear" class="input" placeholder="мысалы, 1985">
+                            <label for="editModalBirthYear"><?= $__t('Туған жылы', 'Год рождения') ?></label>
+                            <input type="text" id="editModalBirthYear" class="input" placeholder="<?= $__t('мысалы, 1985', 'например, 1985') ?>">
                         </div>
                     </div>
                     <div class="field">
-                        <label for="editModalBirthPlace">Туған жері / Место рождения</label>
+                        <label for="editModalBirthPlace"><?= $__t('Туған жері', 'Место рождения') ?></label>
                         <input type="text" id="editModalBirthPlace" class="input">
                     </div>
                     <div class="island-sub">
                         <label class="check">
                             <input type="checkbox" id="editModalIsDeceased" onchange="toggleEditModalDeceasedFields(this.checked)">
-                            <span>Өмірден өткен / Умер(ла)</span>
+                            <span><?= $__t('Өмірден өткен', 'Умер(ла)') ?></span>
                         </label>
                         <div id="editModalDeceasedFields" class="form-row" style="display:none; margin-top:12px;">
                             <div class="field">
-                                <label for="editModalDeathDate">Қайтыс болған күні / Дата</label>
+                                <label for="editModalDeathDate"><?= $__t('Қайтыс болған күні', 'Дата смерти') ?></label>
                                 <input type="date" id="editModalDeathDate" class="input">
                             </div>
                             <div class="field">
-                                <label for="editModalDeathYear">Жылы / Год</label>
-                                <input type="text" id="editModalDeathYear" class="input" placeholder="мысалы, 2020">
+                                <label for="editModalDeathYear"><?= $__t('Қайтыс болған жылы', 'Год смерти') ?></label>
+                                <input type="text" id="editModalDeathYear" class="input" placeholder="<?= $__t('мысалы, 2020', 'например, 2020') ?>">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-foot">
-                    <button type="button" class="btn" onclick="closeGlobalPersonEditModal()">Бас тарту / Отмена</button>
-                    <button type="submit" class="btn btn-primary">Сақтау / Сохранить</button>
+                    <button type="button" class="btn" onclick="closeGlobalPersonEditModal()"><?= $__t('Бас тарту', 'Отмена') ?></button>
+                    <button type="submit" class="btn btn-primary"><?= $__t('Сақтау', 'Сохранить') ?></button>
                 </div>
             </form>
         </div>

@@ -107,10 +107,19 @@ class FamilyController
 
             // Сортировка детей внутри семьи по старшинству (по году рождения ascending)
             usort($children, function ($cA, $cB) {
-                $yA = (int)($cA['birth_year'] ?? 0);
-                $yB = (int)($cB['birth_year'] ?? 0);
-                if ($yA && $yB && $yA !== $yB) {
+                // Старшие первыми независимо от пола; без даты — в конец
+                $yA = (int)($cA['birth_year'] ?? 0) ?: (int)substr((string)($cA['birth_date'] ?? ''), 0, 4);
+                $yB = (int)($cB['birth_year'] ?? 0) ?: (int)substr((string)($cB['birth_date'] ?? ''), 0, 4);
+                if (!$yA !== !$yB) {
+                    return $yA ? -1 : 1;
+                }
+                if ($yA !== $yB) {
                     return $yA <=> $yB;
+                }
+                $dA = (string)($cA['birth_date'] ?? '');
+                $dB = (string)($cB['birth_date'] ?? '');
+                if ($dA !== '' && $dB !== '' && $dA !== $dB) {
+                    return strcmp($dA, $dB);
                 }
                 return ((int)$cA['id']) <=> ((int)$cB['id']);
             });

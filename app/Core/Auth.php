@@ -50,9 +50,8 @@ class Auth
         }
 
         $sessionUser['role'] = $row['role'] ?: 'viewer';
-        if (!empty($row['person_id'])) {
-            $sessionUser['person_id'] = (int)$row['person_id'];
-        }
+        // TASK-014 (note 16.11): привязка к карточке — всегда как в БД (снятая привязка тоже снимается)
+        $sessionUser['person_id'] = !empty($row['person_id']) ? (int)$row['person_id'] : null;
         Session::set(self::SESSION_USER_KEY, $sessionUser);
     }
 

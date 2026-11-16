@@ -160,6 +160,91 @@ require __DIR__ . '/../layout/master_start.php';
                     <dd><?= $isMale ? ($lang === 'ru' ? 'Мужской' : 'Ер') : ($lang === 'ru' ? 'Женский' : 'Әйел') ?></dd>
                 </dl>
             </div>
+
+            <?php
+            // TASK-022: контакты — видят все вошедшие (маршрут за auth), менять — сам человек, editor, admin
+            $ctPhones = $contacts['phones'] ?? [];
+            $ctEmail = ($contacts['emails'][0] ?? '');
+            $ctState = $inviteState['state'] ?? 'none';
+            $ctCsrf = \App\Core\Session::csrfToken();
+            ?>
+            <div class="island" id="contactsIsland">
+                <div class="island-head pc-kin-head"><h3><?= htmlspecialchars(I18n::t('contacts_title')) ?></h3>
+                    <?php if ($canEditContacts): ?>
+                        <button type="button" class="btn btn-ghost btn-sm" id="ctEditBtn" onclick="ctToggleEdit(true)"><?= htmlspecialchars(I18n::t('btn_edit')) ?></button>
+                    <?php endif; ?>
+                </div>
+
+                <div id="ctView">
+                    <?php if (empty($ctPhones) && $ctEmail === ''): ?>
+                        <div class="muted"><?= htmlspecialchars(I18n::t('contacts_empty')) ?></div>
+                    <?php else: ?>
+                        <dl class="props pc-props-tight">
+                            <?php if (!empty($ctPhones)): ?>
+                                <dt><?= htmlspecialchars(I18n::t('contacts_phones')) ?></dt>
+                                <dd>
+                                    <?php foreach ($ctPhones as $ph):
+                                        $phDigits = preg_replace('/\D+/', '', $ph);
+                                    ?>
+                                        <div>
+                                            <a href="tel:<?= htmlspecialchars('+' . $phDigits) ?>"><?= htmlspecialchars(\App\Services\PersonContactService::formatPhone($ph)) ?></a>
+                                            <a class="badge" target="_blank" rel="noopener noreferrer" href="https://wa.me/<?= htmlspecialchars($phDigits) ?>" title="<?= htmlspecialchars(I18n::t('contacts_whatsapp')) ?>">WhatsApp</a>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </dd>
+                            <?php endif; ?>
+                            <?php if ($ctEmail !== ''): ?>
+                                <dt><?= htmlspecialchars(I18n::t('contacts_email')) ?></dt>
+                                <dd><a href="mailto:<?= htmlspecialchars($ctEmail) ?>"><?= htmlspecialchars($ctEmail) ?></a></dd>
+                            <?php endif; ?>
+                        </dl>
+                    <?php endif; ?>
+
+                    <?php if ($ctEmail !== ''): ?>
+                        <div class="pc-upload" id="ctInviteBox">
+                            <?php if ($ctState === 'accepted'): ?>
+                                <span class="badge badge-leaf"><?= htmlspecialchars(I18n::t('invite_accepted')) ?></span>
+                            <?php elseif ($ctState === 'pending'): ?>
+                                <span class="badge badge-accent"><?= htmlspecialchars(I18n::t('invite_invited')) ?></span>
+                            <?php elseif ($canInvite): ?>
+                                <label for="ctInviteRole" class="small"><?= htmlspecialchars(I18n::t('invite_role')) ?></label>
+                                <select id="ctInviteRole" class="input">
+                                    <option value="viewer" selected><?= htmlspecialchars(I18n::t('role_viewer')) ?></option>
+                                    <option value="editor"><?= htmlspecialchars(I18n::t('role_editor')) ?></option>
+                                    <?php if ($isAdmin): ?><option value="admin"><?= htmlspecialchars(I18n::t('role_admin')) ?></option><?php endif; ?>
+                                </select>
+                                <button type="button" class="btn btn-primary" id="ctInviteBtn" onclick="ctSendInvite()"><?= htmlspecialchars(I18n::t('invite_send')) ?></button>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($canEditContacts): ?>
+                    <form id="ctForm" style="display:none;" onsubmit="ctSave(event)">
+                        <div class="field">
+                            <label><?= htmlspecialchars(I18n::t('contacts_phones')) ?> (+7)</label>
+                            <div id="ctPhoneRows">
+                                <?php foreach (($ctPhones ?: ['']) as $ph): ?>
+                                    <div class="ct-phone-row" style="display:flex; gap:6px; margin-bottom:6px;">
+                                        <input type="tel" class="input ct-phone" inputmode="tel" placeholder="+7 (___) ___-__-__" maxlength="20" value="<?= htmlspecialchars($ph !== '' ? \App\Services\PersonContactService::formatPhone($ph) : '') ?>">
+                                        <button type="button" class="btn btn-ghost btn-icon" onclick="ctRemovePhone(this)" aria-label="<?= $lang === 'ru' ? 'Удалить номер' : 'Нөмірді өшіру' ?>">×</button>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="ctAddPhone()"><?= htmlspecialchars(I18n::t('contacts_add_phone')) ?></button>
+                        </div>
+                        <div class="field">
+                            <label for="ctEmailInput"><?= htmlspecialchars(I18n::t('contacts_email')) ?></label>
+                            <input type="email" id="ctEmailInput" class="input" maxlength="191" autocomplete="off" value="<?= htmlspecialchars($ctEmail) ?>">
+                        </div>
+                        <div class="small muted" style="margin-bottom:8px;"><?= htmlspecialchars(I18n::t('contacts_hint')) ?></div>
+                        <div style="display:flex; gap:8px;">
+                            <button type="submit" class="btn btn-primary"><?= htmlspecialchars(I18n::t('btn_save')) ?></button>
+                            <button type="button" class="btn" onclick="ctToggleEdit(false)"><?= htmlspecialchars(I18n::t('btn_cancel')) ?></button>
+                        </div>
+                    </form>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Правая колонка: сведения, родители, супруги, дети, братья/сёстры, медиа, үш жұрт -->
@@ -374,8 +459,8 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php foreach ($zhurtData['families'] as $fam):
                                         $h = $fam['husband'];
                                         $w = $fam['wife'];
-                                        $hName = $h ? trim(($h['last_name'] ?? '') . ' ' . $h['first_name']) : 'Белгісіз';
-                                        $wName = $w ? trim(($w['last_name'] ?? '') . ' ' . $w['first_name']) : 'Белгісіз';
+                                        $hName = $h ? trim(($h['last_name'] ?? '') . ' ' . $h['first_name']) : ($lang === 'ru' ? 'Неизвестно' : 'Белгісіз');
+                                        $wName = $w ? trim(($w['last_name'] ?? '') . ' ' . $w['first_name']) : ($lang === 'ru' ? 'Неизвестно' : 'Белгісіз');
                                         $childCount = count($fam['children']);
                                     ?>
                                         <details open class="pc-family">
@@ -387,7 +472,7 @@ require __DIR__ . '/../layout/master_start.php';
                                                             <span class="badge"><?= htmlspecialchars(I18n::formatKinship($fam['husband_kinship']['term_kk'], $fam['husband_kinship']['term_ru'] ?? null)) ?></span>
                                                         <?php endif; ?>
                                                     <?php else: ?>
-                                                        <span class="muted">Белгісіз</span>
+                                                        <span class="muted"><?= $lang === 'ru' ? 'Неизвестно' : 'Белгісіз' ?></span>
                                                     <?php endif; ?>
                                                     <svg class="couple-rings pc-plus" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
                                                     <?php if ($w): ?>
@@ -399,10 +484,10 @@ require __DIR__ . '/../layout/master_start.php';
                                                             $uzInfo = $fam['wife_kinship']['uzatylgan'];
                                                             $uzFam = $uzInfo['husband_last_name'] ?: ($uzInfo['husband_clan'] ?: $uzInfo['husband_name']);
                                                         ?>
-                                                            <span class="muted small" style="opacity:.7;">ұзатылған — <?= htmlspecialchars((string)$uzFam) ?></span>
+                                                            <span class="muted small" style="opacity:.7;"><?= $lang === 'ru' ? 'замужем' : 'ұзатылған' ?> — <?= htmlspecialchars((string)$uzFam) ?></span>
                                                         <?php endif; ?>
                                                     <?php else: ?>
-                                                        <span class="muted">Белгісіз</span>
+                                                        <span class="muted"><?= $lang === 'ru' ? 'Неизвестно' : 'Белгісіз' ?></span>
                                                     <?php endif; ?>
                                                 </span>
                                                 <span class="badge"><?= $childCount ?> <?= $lang === 'ru' ? 'детей' : 'бала' ?></span>
@@ -617,6 +702,106 @@ require __DIR__ . '/../layout/master_start.php';
         } catch (err) {
             msg.style.color = 'var(--c-danger)';
             msg.innerText = 'Сұраныс қатесі: ' + err.message;
+        }
+    }
+
+    // ---- TASK-022: контакты и приглашение ----
+    const CT_PERSON_ID = <?= (int)$person['id'] ?>;
+    const CT_CSRF = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
+
+    function ctMask(input) {
+        let d = input.value.replace(/\D+/g, '');
+        if (input.value.trim().startsWith('+') && !d.startsWith('7')) { return; } // иностранный номер — без маски
+        if (d.startsWith('8')) d = '7' + d.slice(1);
+        if (d && !d.startsWith('7')) d = '7' + d;
+        d = d.slice(0, 11);
+        const p = d.slice(1);
+        let out = d ? '+7' : '';
+        if (p.length > 0) out += ' (' + p.slice(0, 3);
+        if (p.length >= 3) out += ')';
+        if (p.length > 3) out += ' ' + p.slice(3, 6);
+        if (p.length > 6) out += '-' + p.slice(6, 8);
+        if (p.length > 8) out += '-' + p.slice(8, 10);
+        input.value = out;
+    }
+    function ctBindMask(input) {
+        input.addEventListener('input', function () { ctMask(input); });
+    }
+    document.querySelectorAll('.ct-phone').forEach(ctBindMask);
+
+    function ctToggleEdit(on) {
+        const f = document.getElementById('ctForm');
+        const v = document.getElementById('ctView');
+        const b = document.getElementById('ctEditBtn');
+        if (!f || !v) return;
+        f.style.display = on ? 'block' : 'none';
+        v.style.display = on ? 'none' : 'block';
+        if (b) b.style.display = on ? 'none' : '';
+    }
+    function ctAddPhone() {
+        const rows = document.getElementById('ctPhoneRows');
+        if (rows.querySelectorAll('.ct-phone-row').length >= <?= \App\Services\PersonContactService::MAX_PHONES ?>) return;
+        const row = document.createElement('div');
+        row.className = 'ct-phone-row';
+        row.style.cssText = 'display:flex; gap:6px; margin-bottom:6px;';
+        const inp = document.createElement('input');
+        inp.type = 'tel'; inp.className = 'input ct-phone'; inp.inputMode = 'tel'; inp.maxLength = 20;
+        inp.placeholder = '+7 (___) ___-__-__';
+        ctBindMask(inp);
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'btn btn-ghost btn-icon'; btn.textContent = '×';
+        btn.addEventListener('click', function () { ctRemovePhone(btn); });
+        row.appendChild(inp); row.appendChild(btn);
+        rows.appendChild(row);
+        inp.focus();
+    }
+    function ctRemovePhone(btn) {
+        const row = btn.closest('.ct-phone-row');
+        const rows = document.getElementById('ctPhoneRows');
+        if (rows.querySelectorAll('.ct-phone-row').length > 1) { row.remove(); }
+        else { row.querySelector('input').value = ''; }
+    }
+    async function ctPost(url, body) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        });
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok || !data.success) { throw new Error(data.error || ('HTTP ' + res.status)); }
+        return data;
+    }
+    async function ctSave(e) {
+        e.preventDefault();
+        const body = new URLSearchParams();
+        body.append('csrf_token', CT_CSRF);
+        body.append('person_id', CT_PERSON_ID);
+        document.querySelectorAll('.ct-phone').forEach(function (i) {
+            if (i.value.trim() !== '') body.append('phones[]', i.value.trim());
+        });
+        body.append('email', document.getElementById('ctEmailInput').value.trim());
+        try {
+            await ctPost('/api/person/contacts/save', body);
+            window.location.reload();
+        } catch (err) {
+            if (typeof showAppToast === 'function') { showAppToast(err.message, 'error'); } else { alert(err.message); }
+        }
+    }
+    async function ctSendInvite() {
+        const btn = document.getElementById('ctInviteBtn');
+        if (btn) btn.disabled = true;
+        const body = new URLSearchParams();
+        body.append('csrf_token', CT_CSRF);
+        body.append('person_id', CT_PERSON_ID);
+        body.append('role', document.getElementById('ctInviteRole').value);
+        try {
+            const data = await ctPost('/api/person/invite', body);
+            if (typeof showAppToast === 'function') { showAppToast(data.message || 'OK', 'success'); }
+            setTimeout(function () { window.location.reload(); }, 900);
+        } catch (err) {
+            if (btn) btn.disabled = false;
+            if (typeof showAppToast === 'function') { showAppToast(err.message, 'error'); } else { alert(err.message); }
         }
     }
 

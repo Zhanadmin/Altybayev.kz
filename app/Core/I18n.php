@@ -182,6 +182,11 @@ class I18n
             return $termKk;
         }
 
+        // TASK-020: term_ru уже может начинаться с казахского термина — без дубля «Іні (Іні (…))»
+        if ($termRu !== '' && mb_stripos($termRu, $termKk) === 0 && $termKk !== '') {
+            return $termRu;
+        }
+
         if ($termRu !== '' && mb_strtolower($termRu) !== mb_strtolower($termKk)) {
             return "{$termKk} ({$termRu})";
         }
@@ -608,6 +613,23 @@ class I18n
             'btn_cancel' => ['kk' => 'Бас тарту', 'ru' => 'Отмена'],
             'btn_delete' => ['kk' => 'Өшіру', 'ru' => 'Удалить'],
             'btn_upload_photo' => ['kk' => 'Сурет жүктеу', 'ru' => 'Загрузить фото'],
+
+            // TASK-022: контакты и приглашение
+            'contacts_title' => ['kk' => 'Байланыс', 'ru' => 'Контакты'],
+            'contacts_phone' => ['kk' => 'Телефон', 'ru' => 'Телефон'],
+            'contacts_phones' => ['kk' => 'Телефондар', 'ru' => 'Телефоны'],
+            'contacts_email' => ['kk' => 'Email', 'ru' => 'Email'],
+            'contacts_empty' => ['kk' => 'Байланыс деректері көрсетілмеген', 'ru' => 'Контакты не указаны'],
+            'contacts_add_phone' => ['kk' => '+ Тағы нөмір', 'ru' => '+ Ещё номер'],
+            'contacts_whatsapp' => ['kk' => 'WhatsApp-қа жазу', 'ru' => 'Написать в WhatsApp'],
+            'contacts_hint' => ['kk' => 'Байланыс деректерін тек сайтқа кірген туыстар көреді', 'ru' => 'Контакты видят только родственники, вошедшие на сайт'],
+            'invite_send' => ['kk' => 'Шақыру жіберу', 'ru' => 'Отправить приглашение'],
+            'invite_role' => ['kk' => 'Рөлі', 'ru' => 'Роль'],
+            'invite_invited' => ['kk' => 'Шақырылды', 'ru' => 'Приглашён'],
+            'invite_accepted' => ['kk' => 'Қабылданды', 'ru' => 'Принято'],
+            'role_viewer' => ['kk' => 'Көрермен (viewer)', 'ru' => 'Зритель (viewer)'],
+            'role_editor' => ['kk' => 'Редактор (editor)', 'ru' => 'Редактор (editor)'],
+            'role_admin' => ['kk' => 'Әкімші (admin)', 'ru' => 'Администратор (admin)'],
 
             // Карточка персоны
             'person_details_title' => ['kk' => 'Тұлға парақшасы', 'ru' => 'Карточка персоны'],

@@ -7,7 +7,9 @@
  *    у корней — табличка с названием рода, ру и тамгой, на стволе — тамга, над кроной — имя рода;
  *  - снизу вверх — поколения: на стволе стоят предки, пока род идёт одной линией,
  *    дальше ветви расходятся «отец → дети», каждый ярус — одно поколение;
- *  - люди — листья (мужчины) и тюльпаны (женщины), золотые — ушедшие; у каждого подпись имени;
+ *  - люди — плоды на ветках: голубые (мужчины) и тюльпаны (женщины), золотые — ушедшие; у каждого подпись имени;
+ *  - поляна (TASK-016, замечание 16.11): небо, трава с цветами, холмы; дерево — байтерек с корой, корнями и густой кроной;
+ *    линии браков в покое тонкие и бледные, яркие — при наведении/выборе; подписи не налезают друг на друга;
  *  - келін, у которой в базе нет отца, растёт на дереве мужа рядом с ним (тонкая золотая связка);
  *  - линии между деревьями — ТОЛЬКО браки: дочь рода (тюльпан на дереве отца) → муж на дереве его рода.
  *    Подпись: «Асила Кубенова → келін Алтыбаевых».
@@ -36,7 +38,7 @@
             introTitle: 'Шежіре-Орман: қалай қарау керек',
             introTree: 'Бір ағаш — бір ру (әке жағымен). Ағаш түбінде — ру аты мен таңбасы.',
             introBranch: 'Төменде, діңде — ата-бабалар, жоғарыда — ұрпақтар. Бұтақ әкеден балаларына тарайды, әр қабат — бір буын.',
-            introLeaf: 'Жапырақ — ер адам, қызғалдақ — әйел, алтын түсті — дүниеден өткендер. Әр адамның аты жазулы.',
+            introLeaf: 'Адамдар — бұтақтағы жемістер: көк жеміс — ер адам, қызғылт қызғалдақ — әйел, алтын түстілер — дүниеден өткендер. Әр адамның аты жазулы, жасыл жапырақ — жай ғана ағаштың жапырағы.',
             introLine: 'Ағаштар арасындағы сызық — тек неке: ұзатылған қыз әкесінің ағашынан күйеуінің ағашына. Сызыққа апарсаңыз — кім кімге келін болғаны жазылады.',
             introMouse: 'Тышқан: сүйреу — айналдыру, дөңгелек — жақындату, оң батырма — жылжыту',
             introKeys: 'Пернетақта: W A S D / бағыттауыштар — жүру, Q / E — бұрылу, + / − — жақындату',
@@ -47,8 +49,8 @@
             btnGotIt: 'Түсінікті',
             btnHelp: 'Көмек',
             pickTree: 'Руға бару…',
-            legendLeaf: 'ер адам',
-            legendTulip: 'әйел',
+            legendLeaf: 'ер адам (көк жеміс)',
+            legendTulip: 'әйел (қызғалдақ)',
             legendGold: 'дүниеден өткен',
             legendLine: 'неке: қыз → күйеуінің руы',
             legendKelin: 'келін (күйеуінің ағашында)',
@@ -87,7 +89,7 @@
             introTitle: 'Шежіре-Орман: как смотреть',
             introTree: 'Одно дерево — один род (по отцу). У корней — название рода и тамга.',
             introBranch: 'Внизу, на стволе — предки, вверху — потомки. Ветка идёт от отца к детям, каждый ярус — одно поколение.',
-            introLeaf: 'Лист — мужчина, тюльпан — женщина, золотые — ушедшие. У каждого подписано имя.',
+            introLeaf: 'Люди — плоды на ветках: голубой плод — мужчина, розовый тюльпан — женщина, золотые — ушедшие. У каждого подписано имя; зелёная листва — просто крона дерева.',
             introLine: 'Линия между деревьями — только брак: выданная замуж дочь идёт с дерева отца к дереву мужа. Наведите на линию — будет написано, чьей келін она стала.',
             introMouse: 'Мышь: тянуть — вращать, колесо — приблизить, правая кнопка — сдвинуть',
             introKeys: 'Клавиши: W A S D / стрелки — идти, Q / E — повернуть, + / − — приблизить',
@@ -98,8 +100,8 @@
             btnGotIt: 'Понятно',
             btnHelp: 'Помощь',
             pickTree: 'Перейти к роду…',
-            legendLeaf: 'мужчина',
-            legendTulip: 'женщина',
+            legendLeaf: 'мужчина (голубой плод)',
+            legendTulip: 'женщина (тюльпан)',
             legendGold: 'ушедшие',
             legendLine: 'брак: дочь → род мужа',
             legendKelin: 'келін (на дереве мужа)',
@@ -449,13 +451,30 @@
                 }
             }
             const nBlood = tr.blood.length;
-            const trunkR = Math.min(1.6, 0.35 + 0.11 * Math.sqrt(nBlood));
-            tr.trunkR = trunkR;
+            const trunkR0 = Math.min(1.6, 0.35 + 0.11 * Math.sqrt(nBlood));
             tr.generations = slots.length;
             tr.trunkTopY = Y0 + trunkTopGen * LEVEL_H + (branched ? 1.2 : 0.8);
-            tr.crownR = Math.max(radii.length ? Math.max.apply(null, radii) : 0, trunkR + 1.5) + 1.2;
+            tr.crownR = Math.max(radii.length ? Math.max.apply(null, radii) : 0, trunkR0 + 1.5) + 1.2;
+            // мощный ствол байтерека: толщина по размеру кроны, а не тонкий столб
+            // и по высоте ствола: длинная линия предков — значит, старое толстое дерево
+            const trunkR = Math.max(0.9, trunkR0, Math.min(4.5, Math.max(tr.crownR * 0.24, tr.trunkTopY * 0.1)));
+            tr.trunkR = trunkR;
+            // ярусы ветвей не ближе к оси, чем кора толстого ствола (+ место под человека)
+            const minRing = trunkR * 1.3 + 1.6;
+            const firstRing = radii.filter(x => x > 0).reduce((m, x) => Math.min(m, x), Infinity);
+            if (firstRing < minRing) {
+                const shift = minRing - firstRing;
+                for (let g = 0; g < radii.length; g++) if (radii[g] > 0) radii[g] += shift;
+                tr.crownR = Math.max.apply(null, radii) + 1.2;
+            }
             tr.height = Y0 + (slots.length - 1) * LEVEL_H + 2.2;
-            tr.R = Math.max(tr.crownR, 3.2) + 1.6;
+            // ствол уходит в крону и там сужается — не «столб с зонтиком»
+            const topRowY = Y0 + (slots.length - 1) * LEVEL_H;
+            tr.trunkH = Math.max(tr.trunkTopY + 1.5, tr.trunkTopY + (topRowY - tr.trunkTopY) * 0.7);
+            // расстояние от оси до коры на высоте y (по профилю ствола) + место под человека
+            const barkZ = (y, pad) => trunkR * trunkFactor(Math.min(1, y / tr.trunkH)) * 1.12 + pad;
+            // место дерева на поляне: крона или корни с табличкой — что шире
+            tr.R = Math.max(Math.max(tr.crownR, 3.2) + 1.6, trunkR * 2.6 + 2.5);
             tr.local = new Map(); // id → {x,y,z, gen, onTrunk}
             for (let g = 0; g < slots.length; g++) {
                 const row = slots[g] || [];
@@ -465,11 +484,12 @@
                     let ki = 0;
                     row.forEach(s => {
                         if (s.role === 'blood') {
-                            tr.local.set(s.id, { x: 0, y, z: trunkR + 0.45, gen: g, onTrunk: true, role: s.role });
+                            // ствол с корой бугристый (до ×1.25) — человек висит перед корой, не в ней
+                            tr.local.set(s.id, { x: 0, y, z: barkZ(y, 0.75), gen: g, onTrunk: true, role: s.role });
                         } else {
                             const ang = Math.PI / 2 - 0.75 - ki * 0.6;
                             ki++;
-                            const rr = trunkR + 1.7;
+                            const rr = barkZ(y, 2.1);
                             tr.local.set(s.id, { x: rr * Math.cos(ang), y, z: rr * Math.sin(ang), gen: g, onTrunk: false, role: s.role, husband: s.husband });
                         }
                     });
@@ -643,25 +663,31 @@
         return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     }
 
+    // Поляна: днём — голубое небо, тёплый горизонт, сочная трава; ночью — синее небо со звёздами, луна.
+    // Люди: мужчина — голубой плод, женщина — розовый тюльпан, ушедшие — золотые (не сливаются с листвой).
     function palette(dark) {
         return dark ? {
-            sky: '#17130d', fog: '#17130d', ground: '#211a12', groundEdge: '#17130d',
-            bark: '#7a5634', barkDark: '#3e2815', barkLight: '#9a714a', branch: '#8a6644',
-            leaf: '#557e2d', leafDark: '#2e4917', leafLight: '#7fa64e', leafMuted: '#68923a',
-            leafGold: '#ddb65e', tulip: '#e98a9a', tulipGold: '#d9a979',
-            link: '#e98a9a', kelinTie: '#ddb65e', orn: '#ddb65e', mine: '#ecc977',
-            shadow: 'rgba(0,0,0,0.65)',
-            labelBg: 'rgba(36,29,20,0.88)', labelFg: '#f1e6cd', labelSub: '#cdb994', labelBorder: 'rgba(221,182,94,0.55)',
-            hemiSky: '#c8b58e', hemiGround: '#2a2116', hemiI: 0.95, sunI: 0.60
+            skyTop: '#0b1428', skyHorizon: '#2a2830', fog: '#2a2830', sunGlow: '#dfe6ff',
+            grass: '#2f4b26', grassLight: '#43653a', grassDark: '#1f3419', hill: '#26402a', farTree: '#18291a',
+            flowers: ['#d9d3e6', '#c9b46a', '#8d86c9', '#a9c7e0'],
+            bark: '#6e4e33', barkDark: '#3a2616', barkLight: '#94704c',
+            leaf: '#3f6b2e', leafDark: '#24421b', leafLight: '#5e8d45',
+            man: '#74b4ec', manGold: '#e2bd62', tulip: '#f07d94', tulipGold: '#e3b27f', halo: '#fff4dc',
+            link: '#e79aaa', linkHi: '#ffb3c2', kelinTie: '#ddb65e', orn: '#ddb65e', mine: '#f1cf7c',
+            shadow: 'rgba(0,0,0,0.55)',
+            labelBg: 'rgba(36,29,20,0.90)', labelFg: '#f6ead0', labelSub: '#d6c29b', labelBorder: 'rgba(221,182,94,0.6)',
+            hemiSky: '#8ea2d6', hemiGround: '#24331d', hemiI: 0.85, sunColor: '#c9d6ff', sunI: 0.75, stars: true
         } : {
-            sky: '#ece3cd', fog: '#ece3cd', ground: '#e2d5b4', groundEdge: '#ece3cd',
-            bark: '#6b4a2b', barkDark: '#4b321d', barkLight: '#9a714a', branch: '#7a5634',
-            leaf: '#5f8a34', leafDark: '#3d621f', leafLight: '#8fb85a', leafMuted: '#7aa548',
-            leafGold: '#c4922f', tulip: '#cf5b6d', tulipGold: '#c98f6a',
-            link: '#cf5b6d', kelinTie: '#b8862a', orn: '#b8862a', mine: '#b8862a',
-            shadow: 'rgba(35,25,15,0.42)',
-            labelBg: 'rgba(255,251,242,0.92)', labelFg: '#3b2914', labelSub: '#6b4c2a', labelBorder: 'rgba(184,134,42,0.55)',
-            hemiSky: '#fff6df', hemiGround: '#b9a47a', hemiI: 1.10, sunI: 0.80
+            skyTop: '#6fa8dc', skyHorizon: '#f1ead4', fog: '#f1ead4', sunGlow: '#fff3c4',
+            grass: '#7cab4c', grassLight: '#9cc463', grassDark: '#5a8a36', hill: '#86b062', farTree: '#4f7d3a',
+            flowers: ['#ffffff', '#f4d03f', '#a78bd8', '#f3f0c8', '#8fc3f0'],
+            bark: '#6b4a2b', barkDark: '#45301b', barkLight: '#9a714a',
+            leaf: '#4f8a2e', leafDark: '#2f5e1d', leafLight: '#7fb348',
+            man: '#2f7fd0', manGold: '#c99a2e', tulip: '#d9435f', tulipGold: '#cf9a6c', halo: '#fffbe8',
+            link: '#c96479', linkHi: '#d8264d', kelinTie: '#b8862a', orn: '#b8862a', mine: '#b8862a',
+            shadow: 'rgba(30,45,15,0.45)',
+            labelBg: 'rgba(255,251,242,0.94)', labelFg: '#3b2914', labelSub: '#6b4c2a', labelBorder: 'rgba(184,134,42,0.6)',
+            hemiSky: '#e8f2ff', hemiGround: '#7b8f4a', hemiI: 1.15, sunColor: '#fff1d2', sunI: 1.25, stars: false
         };
     }
 
@@ -841,17 +867,110 @@
         return canvasTexture(c);
     }
 
-    function makeGroundTexture(pal) {
+    // Трава поляны: бесшовная текстура из мелких штрихов разных оттенков (детерминированно)
+    function makeGrassTexture(pal) {
         const c = document.createElement('canvas');
-        c.width = c.height = 512;
+        c.width = c.height = 256;
         const ctx = c.getContext('2d');
-        const g = ctx.createRadialGradient(256, 256, 30, 256, 256, 256);
-        g.addColorStop(0, pal.ground);
-        g.addColorStop(0.8, pal.ground);
-        g.addColorStop(1, pal.groundEdge);
+        ctx.fillStyle = pal.grass;
+        ctx.fillRect(0, 0, 256, 256);
+        // крупные пятна — трава неровная
+        for (let k = 0; k < 26; k++) {
+            const x = hash(k * 31 + 7) * 256, y = hash(k * 57 + 3) * 256, r = 18 + hash(k * 13) * 40;
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = hash(k * 91) > 0.5 ? pal.grassLight : pal.grassDark;
+            for (let dx = -256; dx <= 256; dx += 256) {
+                for (let dy = -256; dy <= 256; dy += 256) {
+                    ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        }
+        // травинки
+        ctx.lineCap = 'round';
+        for (let k = 0; k < 1400; k++) {
+            const x = hash(k * 1.37 + 11) * 256, y = hash(k * 2.71 + 5) * 256;
+            const len = 3 + hash(k * 3.3) * 6, lean = (hash(k * 5.9) - 0.5) * 3;
+            ctx.globalAlpha = 0.35 + hash(k * 7.1) * 0.4;
+            ctx.strokeStyle = hash(k * 4.4) > 0.5 ? pal.grassLight : pal.grassDark;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + lean, y - len); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        const tex = canvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        // повторяющаяся трава без мипмапов «рябит» вдали
+        tex.generateMipmaps = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.anisotropy = 4;
+        return tex;
+    }
+
+    // Мягкий круглый ореол (для людей, солнца/луны, звёзд)
+    function makeGlowTexture(inner, outerAlpha) {
+        const c = document.createElement('canvas');
+        c.width = c.height = 128;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, inner);
+        g.addColorStop(0.45, inner);
+        g.addColorStop(0.7, 'rgba(255,255,255,' + (outerAlpha === undefined ? 0.35 : outerAlpha) + ')');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, 512, 512);
+        ctx.fillRect(0, 0, 128, 128);
         return canvasTexture(c);
+    }
+
+    // Небо-купол: градиент от горизонта к зениту, без тумана
+    function makeSkyMaterial(pal) {
+        return new THREE.ShaderMaterial({
+            uniforms: {
+                top: { value: new THREE.Color(pal.skyTop) },
+                horizon: { value: new THREE.Color(pal.skyHorizon) }
+            },
+            vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+            fragmentShader: 'uniform vec3 top; uniform vec3 horizon; varying vec3 vDir; void main(){ float h = clamp(vDir.y, 0.0, 1.0); float k = pow(h, 0.55); gl_FragColor = vec4(mix(horizon, top, k), 1.0);\n#include <colorspace_fragment>\n}',
+            side: THREE.BackSide,
+            depthWrite: false,
+            fog: false
+        });
+    }
+
+    // Пучок травы: три травинки крестом (нормали вверх — ровно освещены)
+    function createGrassTuftGeometry() {
+        const pos = [], nor = [];
+        for (let k = 0; k < 3; k++) {
+            const a = k * Math.PI / 3;
+            const ca = Math.cos(a), sa = Math.sin(a);
+            const w = 0.09, h = 0.55 + k * 0.12, lean = 0.12 * (k - 1);
+            // треугольник: два угла у земли, вершина наверху
+            pos.push(-w * ca, 0, -w * sa, w * ca, 0, w * sa, lean * sa, h, -lean * ca);
+            nor.push(0, 1, 0, 0, 1, 0, 0, 1, 0);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+        return geo;
+    }
+
+    // Тюльпан: чашечка вращения (низ закрыт, верх открыт) — узнаваем издалека
+    function createTulipGeometry() {
+        const pts = [
+            new THREE.Vector2(0.0, -0.55), new THREE.Vector2(0.32, -0.48), new THREE.Vector2(0.62, -0.18),
+            new THREE.Vector2(0.72, 0.18), new THREE.Vector2(0.62, 0.52), new THREE.Vector2(0.46, 0.72)
+        ];
+        const geo = new THREE.LatheGeometry(pts, 14);
+        // зубцы лепестков по краю
+        const p = geo.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+            const y = p.getY(i);
+            if (y > 0.7) {
+                const ang = Math.atan2(p.getZ(i), p.getX(i));
+                p.setY(i, y + 0.16 * Math.max(0, Math.cos(ang * 3)));
+            }
+        }
+        geo.computeVertexNormals();
+        return geo;
     }
 
     function makeBarkTexture(pal) {
@@ -905,7 +1024,8 @@
         const tex = canvasTexture(c);
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(2, 4);
+        tex.generateMipmaps = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
         return tex;
     }
 
@@ -926,6 +1046,15 @@
         return canvasTexture(c);
     }
 
+    // Профиль ствола по высоте (v = 0 у земли, 1 — верх): раструб у корней, плавное сужение в крону
+    function trunkFactor(v) {
+        if (v < 0.14) {
+            const t = (0.14 - v) / 0.14;
+            return 1.1 + t * t * 0.9; // до 2.0 у земли
+        }
+        return 1.1 - (v - 0.14) / 0.86 * 0.5;
+    }
+
     function createSculptedTrunkGeometry() {
         const radialSegs = 16;
         const heightSegs = 14;
@@ -936,17 +1065,7 @@
         for (let j = 0; j <= heightSegs; j++) {
             const v = j / heightSegs; // 0..1
             // Раструб у основания ствола (buttress flare, как в 2D)
-            let rFactor;
-            if (v < 0.16) {
-                const t = (0.16 - v) / 0.16;
-                rFactor = 1.15 + t * t * 0.95; // до 2.1 у земли
-            } else if (v < 0.72) {
-                const t = (v - 0.16) / 0.56;
-                rFactor = 1.15 - t * 0.25; // сужение к середине
-            } else {
-                const t = (v - 0.72) / 0.28;
-                rFactor = 0.90 + t * 0.08; // расширение к ветвям
-            }
+            const rFactor = trunkFactor(v);
 
             for (let i = 0; i <= radialSegs; i++) {
                 const u = i / radialSegs;
@@ -987,9 +1106,10 @@
 
         for (let j = 0; j <= segments; j++) {
             const t = j / segments;
+            // корень начинается внутри раструба и уходит в траву на ~3.4 радиуса ствола
             const y = (1.0 - t) * (1.0 - t) * 0.95 + 0.03;
-            const z = 0.75 + t * 1.65;
-            const r = (1.0 - t * 0.78) * 0.32;
+            const z = 0.6 + t * 2.8;
+            const r = (1.0 - t * 0.8) * 0.36;
 
             for (let i = 0; i <= radial; i++) {
                 const u = i / radial;
@@ -1020,18 +1140,21 @@
         return geo;
     }
 
-    function createFoliageClumpGeometry() {
-        const geo = new THREE.IcosahedronGeometry(1.0, 2);
+    function createFoliageClumpGeometry(detail) {
+        // комок листвы: бугристый, слегка приплюснутый; нормали — от центра (мягкий объём, без граней)
+        const geo = new THREE.IcosahedronGeometry(1.0, detail === undefined ? 1 : detail);
         const pos = geo.attributes.position;
+        const nor = geo.attributes.normal;
         const v = new THREE.Vector3();
         for (let i = 0; i < pos.count; i++) {
             v.fromBufferAttribute(pos, i);
-            const noise = 1.0 + 0.16 * Math.sin(v.x * 4.2 + 0.8) * Math.cos(v.y * 3.8) * Math.sin(v.z * 4.2);
+            const n = v.clone().normalize();
+            const noise = 1.0 + 0.18 * Math.sin(v.x * 5.1 + 0.8) * Math.cos(v.y * 4.3) * Math.sin(v.z * 4.7 + 1.3);
             v.multiplyScalar(noise);
-            v.y *= 0.82;
+            v.y *= 0.8;
             pos.setXYZ(i, v.x, v.y, v.z);
+            nor.setXYZ(i, n.x, n.y, n.z);
         }
-        geo.computeVertexNormals();
         return geo;
     }
 
@@ -1091,11 +1214,11 @@
     const ICON = {
         tree: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 22V11"/><path d="M12 15l-4-3M12 13l4-3"/><circle cx="12" cy="7" r="5"/></svg>',
         branch: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 22V4"/><path d="M12 16l-6-4M12 12l6-4M12 8l-4-3"/><path d="M4 20h16" stroke-dasharray="2 2"/></svg>',
-        leaf: '<svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 20C4 10 10 4 20 4c0 10-6 16-16 16z" fill="#5f8a34"/><path d="M4 20L14 10" stroke="#3d621f" stroke-width="1.2"/></svg>',
-        tulip: '<svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 22v-8" stroke="#5f8a34" stroke-width="1.6"/><path d="M6 6l3 3 3-5 3 5 3-3v4a6 6 0 0 1-12 0z" fill="#cf5b6d"/></svg>',
-        gold: '<svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 20C4 10 10 4 20 4c0 10-6 16-16 16z" fill="#c4922f"/></svg>',
-        line: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M2 18C7 4 17 4 22 18" stroke="#cf5b6d" stroke-width="2" stroke-linecap="round"/><path d="M19 13l3 5-5-1" stroke="#cf5b6d" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>',
-        kelin: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="12" r="4" fill="#5f8a34"/><circle cx="17" cy="12" r="4" fill="#cf5b6d"/><path d="M11 12h2" stroke="#b8862a" stroke-width="2"/></svg>',
+        leaf: '<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="13" r="10" fill="#fffbe8" opacity=".8"/><circle cx="12" cy="13" r="6.5" fill="#2f7fd0"/><path d="M12 6.5c1-2 3-3 5-3" stroke="#4f8a2e" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>',
+        tulip: '<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fffbe8" opacity=".8"/><path d="M6.5 7l2.7 2.6L12 5l2.8 4.6L17.5 7v4.2a5.5 5.5 0 0 1-11 0z" fill="#d9435f"/></svg>',
+        gold: '<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fffbe8" opacity=".8"/><circle cx="12" cy="12" r="6.5" fill="#c99a2e"/></svg>',
+        line: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M2 18C7 6 17 6 22 18" stroke="#c96479" stroke-width="1.4" stroke-linecap="round"/><path d="M19.5 14l2.5 4-4.4-.6" stroke="#c96479" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>',
+        kelin: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="12" r="4" fill="#2f7fd0"/><circle cx="17" cy="12" r="4" fill="#d9435f"/><path d="M11 12h2" stroke="#b8862a" stroke-width="2"/></svg>',
         hand: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 13V5a2 2 0 0 1 4 0v6M12 10a2 2 0 0 1 4 0v3M16 12a2 2 0 0 1 4 0v3a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-3l-3-5a2 2 0 0 1 3-2l1 1"/></svg>'
     };
 
@@ -1322,6 +1445,8 @@
             );
             if (this.camera.position.y < 1.2) this.camera.position.y = 1.2;
             this.camera.lookAt(this.target);
+            // матрицы нужны сразу (отбор подписей, наведение) — не ждём render()
+            this.camera.updateMatrixWorld();
             if (this.onChange) this.onChange('camera');
         }
 
@@ -1393,7 +1518,7 @@
             this.renderer.domElement.addEventListener('webglcontextrestored', this._onCtxRestored);
 
             this.scene = new THREE.Scene();
-            this.camera = new THREE.PerspectiveCamera(55, w / h, 0.3, 2000);
+            this.camera = new THREE.PerspectiveCamera(55, w / h, 0.8, 2000);
             this.world = new THREE.Group();
             this.scene.add(this.world);
 
@@ -1453,11 +1578,12 @@
             this.dark = isDarkTheme();
             this.pal = palette(this.dark);
             const p = this.pal;
-            this.scene.background = new THREE.Color(p.sky);
+            this.scene.background = new THREE.Color(p.skyHorizon);
             this.scene.fog = new THREE.Fog(p.fog, 120, 520);
             this.hemi.color.set(p.hemiSky);
             this.hemi.groundColor.set(p.hemiGround);
             this.hemi.intensity = p.hemiI;
+            this.sun.color.set(p.sunColor);
             this.sun.intensity = p.sunI;
             this.needsRender = true;
         }
@@ -1469,6 +1595,10 @@
             this.disposables = [];
             this.labelSprites = [];
             while (this.world.children.length) this.world.remove(this.world.children[0]);
+            // небо, солнце/луна и звёзды живут в scene (идут за камерой) — снимаем их тоже
+            if (this.sky) { this.scene.remove(this.sky); this.sky = null; }
+            (this.skyExtras || []).forEach(o => this.scene.remove(o));
+            this.skyExtras = [];
             this.pickables = [];
             this.instanceMap = new Map();
             this.linkObjs = new Map();
@@ -1513,89 +1643,262 @@
         }
 
         // ---------- сцена ----------
+        // Поляна: небо, трава с пучками и цветами, холмы и дальний лес на горизонте
         buildGround() {
             const M = this.model, p = this.pal;
+            const dummy = new THREE.Object3D();
             const R = M.worldR + 60;
-            const geo = new THREE.CircleGeometry(R, 72);
+
+            // небо-купол (следует за камерой — см. animate)
+            this.sky = this.track(new THREE.Mesh(new THREE.SphereGeometry(1200, 32, 16), makeSkyMaterial(p)));
+            this.sky.renderOrder = -10;
+            this.sky.frustumCulled = false;
+            this.scene.add(this.sky);
+            this.skyExtras = [];
+            // солнце (днём) или луна (ночью) — мягкое пятно света в небе
+            const sunTex = makeGlowTexture(p.sunGlow, 0.25);
+            const sun = this.track(new THREE.Sprite(new THREE.SpriteMaterial({ map: sunTex, depthWrite: false, fog: false, transparent: true, opacity: this.dark ? 0.9 : 0.95 })));
+            sun.scale.setScalar(this.dark ? 70 : 150);
+            sun.userData.skyOffset = new THREE.Vector3(-0.45, 0.38, -0.81).normalize().multiplyScalar(1000);
+            sun.renderOrder = -9;
+            this.scene.add(sun);
+            this.skyExtras.push(sun);
+            if (p.stars) {
+                const sp = [];
+                for (let i = 0; i < 700; i++) {
+                    const u = hash(i * 1.7 + 3), v = 0.08 + hash(i * 2.9 + 1) * 0.92;
+                    const ang = u * Math.PI * 2, y = v, rr = Math.sqrt(1 - y * y);
+                    sp.push(Math.cos(ang) * rr * 1100, y * 1100, Math.sin(ang) * rr * 1100);
+                }
+                const sg = new THREE.BufferGeometry();
+                sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+                const stars = this.track(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xfff6e0, size: 2, sizeAttenuation: false, fog: false, depthWrite: false, transparent: true, opacity: 0.85 })));
+                stars.userData.skyOffset = new THREE.Vector3(0, 0, 0);
+                stars.frustumCulled = false;
+                stars.renderOrder = -9;
+                this.scene.add(stars);
+                this.skyExtras.push(stars);
+            }
+
+            // земля — трава
+            const grassTex = makeGrassTexture(p);
+            const groundR = R + 420;
+            const rep = Math.round(groundR * 2 / 9); // плитка травы ~9 единиц
+            grassTex.repeat.set(rep, rep);
+            const geo = new THREE.CircleGeometry(groundR, 96);
             geo.rotateX(-Math.PI / 2);
-            const mat = new THREE.MeshLambertMaterial({ map: makeGroundTexture(p) });
-            const g = this.track(new THREE.Mesh(geo, mat));
+            const g = this.track(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: grassTex })));
             this.world.add(g);
 
-            // Мягкие тени под раскидистыми кронами деревьев (мягкие тени на траве)
-            const shadowTex = makeShadowTexture(p);
-            this.disposables.push(shadowTex);
-            const shadowGeo = new THREE.PlaneGeometry(1, 1);
-            shadowGeo.rotateX(-Math.PI / 2);
-            this.disposables.push(shadowGeo);
-            M.trees.forEach(tr => {
-                const shadowMat = new THREE.MeshBasicMaterial({
-                    map: shadowTex,
-                    transparent: true,
-                    opacity: this.dark ? 0.65 : 0.45,
-                    depthWrite: false
-                });
-                this.disposables.push(shadowMat);
-                const sh = new THREE.Mesh(shadowGeo, shadowMat);
-                const diam = Math.max(tr.crownR * 2.5, tr.trunkR * 6.5);
-                sh.scale.set(diam, 1, diam);
-                sh.position.set(tr.x, 0.02, tr.z);
-                this.world.add(sh);
+            // где стоят деревья — там пучки и цветы не растут
+            const nearTree = (x, z, pad) => {
+                for (let i = 0; i < M.trees.length; i++) {
+                    const tr = M.trees[i];
+                    const dx = x - tr.x, dz = z - tr.z;
+                    const rr = tr.trunkR * 2.6 + pad;
+                    if (dx * dx + dz * dz < rr * rr) return true;
+                }
+                return false;
+            };
+            const boardSpot = (x, z) => M.trees.some(tr => {
+                const fz = tr.trunkR * 2.2 + 2.2;
+                const bx = tr.x + fz * Math.sin(tr.rotY), bz = tr.z + fz * Math.cos(tr.rotY);
+                return (x - bx) * (x - bx) + (z - bz) * (z - bz) < 9;
             });
 
-            // кольца ою-өрнек под деревьями
+            // пучки травы — сетка с детерминированным сдвигом, не больше ~6000
+            const area = Math.PI * R * R;
+            const step = Math.max(1.6, Math.sqrt(area / 6000));
+            const tufts = [], flowers = [];
+            let k = 0;
+            for (let x = -R; x <= R; x += step) {
+                for (let z = -R; z <= R; z += step) {
+                    k++;
+                    const jx = x + (hash(k * 1.31) - 0.5) * step, jz = z + (hash(k * 2.17) - 0.5) * step;
+                    if (jx * jx + jz * jz > R * R) continue;
+                    if (nearTree(jx, jz, 0) || boardSpot(jx, jz)) continue;
+                    tufts.push([jx, jz, hash(k * 3.7), hash(k * 5.3)]);
+                    if (hash(k * 7.9) > 0.72 && !nearTree(jx, jz, 1.5)) flowers.push([jx + 0.4, jz - 0.3, hash(k * 9.1), hash(k * 4.3)]);
+                }
+            }
+            const tuftGeo = createGrassTuftGeometry();
+            // без освещения: у двусторонних травинок Lambert затемняет обратную сторону
+            const tuftMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+            this.disposables.push(tuftGeo, tuftMat);
+            if (tufts.length) {
+                const im = new THREE.InstancedMesh(tuftGeo, tuftMat, tufts.length);
+                const cA = new THREE.Color(p.grassLight), cB = new THREE.Color(p.grassDark), col = new THREE.Color();
+                tufts.forEach((tf, i) => {
+                    dummy.position.set(tf[0], 0, tf[1]);
+                    dummy.rotation.set(0, tf[2] * Math.PI * 2, 0);
+                    dummy.scale.setScalar(0.8 + tf[3] * 0.9);
+                    dummy.updateMatrix();
+                    im.setMatrixAt(i, dummy.matrix);
+                    im.setColorAt(i, col.copy(cA).lerp(cB, tf[3]));
+                });
+                im.instanceMatrix.needsUpdate = true;
+                if (im.instanceColor) im.instanceColor.needsUpdate = true;
+                this.world.add(im);
+            }
+            // полевые цветы — мелкие, белые/жёлтые/сиреневые (не розовые — розовые тюльпаны это люди)
+            const flowerGeo = new THREE.IcosahedronGeometry(0.16, 0);
+            flowerGeo.translate(0, 0.42, 0);
+            const flowerMat = new THREE.MeshLambertMaterial({ emissive: 0x222222 });
+            this.disposables.push(flowerGeo, flowerMat);
+            if (flowers.length) {
+                const im = new THREE.InstancedMesh(flowerGeo, flowerMat, flowers.length);
+                const col = new THREE.Color();
+                flowers.forEach((f, i) => {
+                    dummy.position.set(f[0], 0, f[1]);
+                    dummy.rotation.set(0, f[3] * 6, 0);
+                    dummy.scale.setScalar(0.8 + f[3] * 0.7);
+                    dummy.updateMatrix();
+                    im.setMatrixAt(i, dummy.matrix);
+                    im.setColorAt(i, col.set(p.flowers[Math.floor(f[2] * p.flowers.length) % p.flowers.length]));
+                });
+                im.instanceMatrix.needsUpdate = true;
+                if (im.instanceColor) im.instanceColor.needsUpdate = true;
+                this.world.add(im);
+            }
+
+            // холмы и дальний лес по кругу — у поляны есть край, это «место»
+            const hillGeo = new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+            const hillMat = new THREE.MeshLambertMaterial({ color: p.hill });
+            this.disposables.push(hillGeo, hillMat);
+            const nH = 28;
+            const hills = new THREE.InstancedMesh(hillGeo, hillMat, nH);
+            for (let i = 0; i < nH; i++) {
+                const a = i / nH * Math.PI * 2 + hash(i * 3.1) * 0.15;
+                const rr = R + 150 + hash(i * 5.7) * 120;
+                dummy.position.set(Math.cos(a) * rr, -2, Math.sin(a) * rr);
+                dummy.rotation.set(0, a, 0);
+                dummy.scale.set(70 + hash(i * 2.3) * 60, 18 + hash(i * 4.9) * 30, 60 + hash(i * 6.1) * 50);
+                dummy.updateMatrix();
+                hills.setMatrixAt(i, dummy.matrix);
+            }
+            hills.instanceMatrix.needsUpdate = true;
+            this.world.add(hills);
+
+            const farConeGeo = new THREE.ConeGeometry(1, 1, 7);
+            farConeGeo.translate(0, 0.5, 0);
+            const farMat = new THREE.MeshLambertMaterial({ color: p.farTree });
+            this.disposables.push(farConeGeo, farMat);
+            const nF = 160;
+            const far = new THREE.InstancedMesh(farConeGeo, farMat, nF);
+            for (let i = 0; i < nF; i++) {
+                const a = i / nF * Math.PI * 2 + hash(i * 7.7) * 0.03;
+                const rr = R + 40 + hash(i * 1.9) * 70;
+                const h = 9 + hash(i * 8.3) * 10;
+                dummy.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+                dummy.rotation.set(0, 0, 0);
+                dummy.scale.set(h * 0.32, h, h * 0.32);
+                dummy.updateMatrix();
+                far.setMatrixAt(i, dummy.matrix);
+            }
+            far.instanceMatrix.needsUpdate = true;
+            this.world.add(far);
+
+            // мягкие тени под кронами (одна отрисовка на все деревья)
+            const shadowTex = makeShadowTexture(p);
+            const shadowGeo = new THREE.PlaneGeometry(1, 1);
+            shadowGeo.rotateX(-Math.PI / 2);
+            // тени и кольца лежат почти на траве — сдвиг глубины, чтобы не мерцали в обзоре
+            const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.8, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+            this.disposables.push(shadowTex, shadowGeo, shadowMat);
+            const shadows = new THREE.InstancedMesh(shadowGeo, shadowMat, M.trees.length);
+            M.trees.forEach((tr, i) => {
+                const diam = Math.max(tr.crownR * 2.3, tr.trunkR * 7);
+                dummy.position.set(tr.x + 1.2, 0.03, tr.z + 0.8);
+                dummy.rotation.set(0, 0, 0);
+                dummy.scale.set(diam, 1, diam);
+                dummy.updateMatrix();
+                shadows.setMatrixAt(i, dummy.matrix);
+            });
+            shadows.instanceMatrix.needsUpdate = true;
+            this.world.add(shadows);
+
+            // тонкое кольцо ою-өрнек вокруг каждого дерева — граница рода на поляне
             const ringTex = makeOrnamentRingTexture(p.orn);
-            this.disposables.push(ringTex);
             const ringGeo = new THREE.PlaneGeometry(1, 1);
             ringGeo.rotateX(-Math.PI / 2);
-            this.disposables.push(ringGeo);
-            M.trees.forEach(tr => {
-                const ringMat = new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, opacity: tr.isMine ? 0.95 : 0.6, depthWrite: false });
+            this.disposables.push(ringTex, ringGeo);
+            [true, false].forEach(mine => {
+                const list = M.trees.filter(tr => !!tr.isMine === mine);
+                if (!list.length) return;
+                const ringMat = new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, opacity: mine ? 0.85 : 0.4, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
                 this.disposables.push(ringMat);
-                const ring = new THREE.Mesh(ringGeo, ringMat);
-                const s = tr.R * 2;
-                ring.scale.set(s, 1, s);
-                ring.position.set(tr.x, 0.04, tr.z);
-                ring.rotation.y = tr.rotY;
-                this.world.add(ring);
+                const rings = new THREE.InstancedMesh(ringGeo, ringMat, list.length);
+                list.forEach((tr, i) => {
+                    dummy.position.set(tr.x, 0.05, tr.z);
+                    dummy.rotation.set(0, tr.rotY, 0);
+                    dummy.scale.set(tr.R * 2, 1, tr.R * 2);
+                    dummy.updateMatrix();
+                    rings.setMatrixAt(i, dummy.matrix);
+                });
+                rings.instanceMatrix.needsUpdate = true;
+                this.world.add(rings);
             });
         }
 
         buildTrees() {
             const M = this.model, p = this.pal, t = this.t;
+            const dummy = new THREE.Object3D();
             const barkTex = makeBarkTexture(p);
-            this.disposables.push(barkTex);
             const barkMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xffffff });
-            const branchMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xf0dfcc });
-            this.disposables.push(barkMat, branchMat);
+            const branchMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xf2e4d2 });
+            this.disposables.push(barkTex, barkMat, branchMat);
 
-            // 1. Скульптурный ствол с раструбом у основания и вертикальными складками коры
+            // 0. Каркас каждого дерева: ярусы (поколения), размер ветви (сколько потомков), высота ствола
+            M.trees.forEach(tr => {
+                const rows = new Map();
+                tr.local.forEach(lp => {
+                    const row = rows.get(lp.gen) || { y: lp.y, r: 0 };
+                    // ярус ветвей — только кровные не на стволе (келін рядом со стволом ярусом не считается)
+                    if (!lp.onTrunk && lp.role === 'blood') row.r = Math.max(row.r, Math.hypot(lp.x, lp.z));
+                    rows.set(lp.gen, row);
+                });
+                tr._rows = Array.from(rows.entries()).sort((a, b) => a[0] - b[0]).map(e => e[1]);
+                const sub = new Map();
+                tr.local.forEach((lp, id) => {
+                    if (lp.role === 'kelin') return;
+                    let cur = id, guard = 0;
+                    while (cur && tr.local.has(cur) && guard++ < 300) {
+                        sub.set(cur, (sub.get(cur) || 0) + 1);
+                        const per = M.byId.get(cur);
+                        cur = per && per.father_id ? Number(per.father_id) : 0;
+                    }
+                });
+                tr._sub = sub;
+                tr._trunkH = tr.trunkH; // высота ствола считается в модели (по ней же стоят люди на коре)
+            });
+
+            // 1. Ствол: раструб у корней, рёбра коры
             const trunkGeo = createSculptedTrunkGeometry();
             this.disposables.push(trunkGeo);
             const trunks = new THREE.InstancedMesh(trunkGeo, barkMat, M.trees.length);
-            const dummy = new THREE.Object3D();
             M.trees.forEach((tr, i) => {
                 dummy.position.set(tr.x, 0, tr.z);
                 dummy.rotation.set(0, tr.rotY, 0);
-                dummy.scale.set(tr.trunkR, tr.trunkTopY, tr.trunkR);
+                dummy.scale.set(tr.trunkR, tr._trunkH, tr.trunkR);
                 dummy.updateMatrix();
                 trunks.setMatrixAt(i, dummy.matrix);
             });
             trunks.instanceMatrix.needsUpdate = true;
             this.world.add(trunks);
 
-            // 2. Мощные корни — 5 раскидистых корневых отростков вокруг каждого дерева
+            // 2. Корни: 7 узловатых корней разной длины уходят в траву (не прямо вперёд — там табличка)
             const rootGeo = createRootArmGeometry();
             this.disposables.push(rootGeo);
-            const numRoots = 5;
+            const numRoots = 7;
             const roots = new THREE.InstancedMesh(rootGeo, barkMat, M.trees.length * numRoots);
             let rootIdx = 0;
             M.trees.forEach(tr => {
                 for (let k = 0; k < numRoots; k++) {
-                    const ang = tr.rotY + (k * Math.PI * 2 / numRoots) + (k * 0.12);
+                    const h = hash(tr.rootId * 3 + k * 7);
+                    const ang = tr.rotY + 0.45 + k * Math.PI * 2 / numRoots + (h - 0.5) * 0.35;
                     dummy.position.set(tr.x, 0, tr.z);
                     dummy.rotation.set(0, ang, 0);
-                    dummy.scale.set(tr.trunkR, Math.min(1.4, Math.max(0.7, tr.trunkTopY * 0.35)), tr.trunkR);
+                    dummy.scale.set(tr.trunkR * (0.85 + h * 0.35), tr.trunkR * 0.9, tr.trunkR * (0.6 + h * 0.3));
                     dummy.updateMatrix();
                     roots.setMatrixAt(rootIdx++, dummy.matrix);
                 }
@@ -1603,8 +1906,9 @@
             roots.instanceMatrix.needsUpdate = true;
             this.world.add(roots);
 
-            // 3. Естественные дуговые ветви: отец → ребёнок со сглаженным подъёмом и сужением
-            const segs = [];
+            // 3. Ветви «отец → ребёнок»: дуга из 4 сегментов, толщина — по числу потомков на этой ветви
+            const segs = [], joints = [], ties = [];
+            const branchR = (n, tr) => Math.min(tr.trunkR * 0.55, 0.11 + 0.08 * Math.sqrt(n || 1));
             M.trees.forEach(tr => {
                 const c = Math.cos(tr.rotY), s = Math.sin(tr.rotY);
                 const toWorld = (lx, ly, lz) => new THREE.Vector3(tr.x + lx * c + lz * s, ly, tr.z - lx * s + lz * c);
@@ -1615,38 +1919,44 @@
                         if (hp) {
                             const pA = toWorld(lp.x, lp.y, lp.z);
                             const pB = hp.onTrunk ? toWorld(0, hp.y, 0) : toWorld(hp.x, hp.y, hp.z);
-                            segs.push({ a: pA, b: pB, r: 0.07, gold: true });
+                            ties.push({ a: pA, b: pB, r: 0.06 });
                         }
                         return;
                     }
                     const person = M.byId.get(id);
                     const fid = person && person.father_id ? Number(person.father_id) : 0;
                     const fp = fid ? tr.local.get(fid) : null;
-                    if (!fp) {
-                        const pA = toWorld(0, Math.min(lp.y, tr.trunkTopY), 0);
-                        const pB = toWorld(lp.x, lp.y, lp.z);
-                        const len = pA.distanceTo(pB);
-                        const mid = pA.clone().add(pB).multiplyScalar(0.5);
-                        mid.y += Math.min(1.2, Math.max(0.3, len * 0.15));
-                        segs.push({ a: pA, b: mid, r: 0.18 });
-                        segs.push({ a: mid, b: pB, r: 0.12 });
-                        return;
+                    let A;
+                    if (!fp) A = toWorld(0, Math.min(lp.y - 1.2, tr._trunkH * 0.8), 0);
+                    else if (fp.onTrunk) A = toWorld(0, fp.y + 0.8, 0);
+                    else A = toWorld(fp.x, fp.y, fp.z);
+                    const B = toWorld(lp.x, lp.y, lp.z);
+                    const len = A.distanceTo(B);
+                    // изгиб: сначала в сторону, потом вверх к ребёнку — как живая ветка
+                    const C = A.clone().lerp(B, 0.55);
+                    C.y = A.y + (B.y - A.y) * 0.25 + Math.min(1.2, Math.max(0.3, len * 0.12));
+                    const r0 = branchR(tr._sub.get(id), tr) * (fp && !fp.onTrunk ? 1.0 : 1.25);
+                    const r1 = r0 * 0.55;
+                    const N = 4;
+                    let prev = A;
+                    for (let i = 1; i <= N; i++) {
+                        const u = i / N;
+                        const q = new THREE.Vector3(
+                            (1 - u) * (1 - u) * A.x + 2 * (1 - u) * u * C.x + u * u * B.x,
+                            (1 - u) * (1 - u) * A.y + 2 * (1 - u) * u * C.y + u * u * B.y,
+                            (1 - u) * (1 - u) * A.z + 2 * (1 - u) * u * C.z + u * u * B.z);
+                        const r = r0 + (r1 - r0) * (u - 0.5 / N);
+                        segs.push({ a: prev, b: q, r });
+                        if (i < N) joints.push({ p: q, r });
+                        prev = q;
                     }
-                    const pA = fp.onTrunk ? toWorld(0, fp.y + 0.6, 0) : toWorld(fp.x, fp.y, fp.z);
-                    const pB = toWorld(lp.x, lp.y, lp.z);
-                    const len = pA.distanceTo(pB);
-                    const mid = pA.clone().add(pB).multiplyScalar(0.5);
-                    mid.y += Math.min(1.4, Math.max(0.35, len * 0.16));
-                    const baseR = Math.max(0.08, 0.32 - lp.gen * 0.035);
-                    segs.push({ a: pA, b: mid, r: baseR * 1.15 });
-                    segs.push({ a: mid, b: pB, r: baseR * 0.75 });
                 });
             });
 
-            const brGeo = new THREE.CylinderGeometry(0.72, 1.0, 1.0, 8, 1);
+            const brGeo = new THREE.CylinderGeometry(1, 1, 1, 7, 1, true);
             brGeo.translate(0, 0.5, 0); // основание в (0,0,0), вершина в (0,1,0)
-            this.disposables.push(brGeo);
-            const plain = segs.filter(sg => !sg.gold), gold = segs.filter(sg => sg.gold);
+            const jointGeo = new THREE.SphereGeometry(1, 8, 6);
+            this.disposables.push(brGeo, jointGeo);
             const up = new THREE.Vector3(0, 1, 0);
             const fill = (list, mat) => {
                 if (!list.length) return;
@@ -1663,106 +1973,134 @@
                 im.instanceMatrix.needsUpdate = true;
                 this.world.add(im);
             };
-            fill(plain, branchMat);
+            fill(segs, branchMat);
+            if (joints.length) {
+                const jm = new THREE.InstancedMesh(jointGeo, branchMat, joints.length);
+                joints.forEach((j, i) => {
+                    dummy.position.copy(j.p);
+                    dummy.quaternion.identity();
+                    dummy.scale.setScalar(j.r);
+                    dummy.updateMatrix();
+                    jm.setMatrixAt(i, dummy.matrix);
+                });
+                jm.instanceMatrix.needsUpdate = true;
+                this.world.add(jm);
+            }
             const tieMat = new THREE.MeshBasicMaterial({ color: p.kelinTie });
             this.disposables.push(tieMat);
-            fill(gold, tieMat);
+            fill(ties, tieMat);
 
-            // 4. Раскидистая пышная крона с листвой (многослойный объёмный купол листвы)
+            // 4. Густая крона: комки листвы заполняют каждый ярус ВНУТРИ кольца людей,
+            //    люди висят на внешней поверхности кроны, как плоды; сверху — купол.
             const foliageGeo = createFoliageClumpGeometry();
-            this.disposables.push(foliageGeo);
-
-            const foliageMatLight = new THREE.MeshLambertMaterial({
-                color: p.leafLight,
-                emissive: p.leaf,
-                emissiveIntensity: this.dark ? 0.32 : 0.12,
-                side: THREE.DoubleSide
-            });
-            const foliageMatMain = new THREE.MeshLambertMaterial({
-                color: p.leaf,
+            const foliageMat = new THREE.MeshLambertMaterial({
+                color: 0xffffff,
                 emissive: p.leafDark,
-                emissiveIntensity: this.dark ? 0.28 : 0.10,
-                side: THREE.DoubleSide
+                emissiveIntensity: this.dark ? 0.35 : 0.22
             });
-            const foliageMatDeep = new THREE.MeshLambertMaterial({
-                color: p.leafDark,
-                emissive: p.leafDark,
-                emissiveIntensity: this.dark ? 0.20 : 0.06,
-                side: THREE.DoubleSide
-            });
-            this.disposables.push(foliageMatLight, foliageMatMain, foliageMatDeep);
-
-            const foliageLight = [];
-            const foliageMain = [];
-            const foliageDeep = [];
-
+            this.disposables.push(foliageGeo, foliageMat);
+            const clumps = [];
+            const cDark = new THREE.Color(p.leafDark), cMid = new THREE.Color(p.leaf), cLight = new THREE.Color(p.leafLight);
             M.trees.forEach(tr => {
                 const c = Math.cos(tr.rotY), s = Math.sin(tr.rotY);
-                const toWorld = (lx, ly, lz) => new THREE.Vector3(tr.x + lx * c + lz * s, ly, tr.z - lx * s + lz * c);
-
-                // Верхний купол кроны — раскидистая вершина
-                const apexY = tr.trunkTopY + (tr.height - tr.trunkTopY) * 0.65;
-                const apexRx = Math.max(2.8, tr.crownR * 0.82);
-                const apexRy = Math.max(2.0, (tr.height - tr.trunkTopY) * 0.55 + 1.2);
-                foliageLight.push({
-                    pos: new THREE.Vector3(tr.x, apexY, tr.z),
-                    scale: new THREE.Vector3(apexRx, apexRy, apexRx),
-                    rotY: tr.rotY
-                });
-
-                // Средний ярус — массивные облака листвы вокруг развилок
-                const numPuffs = Math.min(8, Math.max(3, Math.round(tr.crownR * 0.85)));
-                for (let pf = 0; pf < numPuffs; pf++) {
-                    const ang = tr.rotY + (pf * Math.PI * 2 / numPuffs) + 0.3;
-                    const pr = tr.crownR * (0.45 + hash(tr.rootId * 11 + pf) * 0.4);
-                    const py = tr.trunkTopY + (tr.height - tr.trunkTopY) * (0.3 + hash(tr.rootId * 7 + pf * 5) * 0.45);
-                    const sc = 2.0 + hash(tr.rootId * 13 + pf * 3) * 1.6;
-                    const item = {
-                        pos: new THREE.Vector3(tr.x + Math.cos(ang) * pr, py, tr.z + Math.sin(ang) * pr),
-                        scale: new THREE.Vector3(sc * 1.15, sc * 0.85, sc * 1.15),
-                        rotY: ang
-                    };
-                    if (pf % 3 === 0) foliageDeep.push(item);
-                    else if (pf % 2 === 0) foliageMain.push(item);
-                    else foliageLight.push(item);
+                const seed = tr.rootId * 17;
+                let n = 0;
+                const add = (lx, ly, lz, size) => {
+                    n++;
+                    const h = hash(seed + n * 3.17);
+                    clumps.push({
+                        x: tr.x + lx * c + lz * s, y: ly, z: tr.z - lx * s + lz * c,
+                        s: size, rot: h * Math.PI * 2, h, tree: tr
+                    });
+                };
+                // диск из колец; заполняем только внешний слой толщиной ~6 (внутри не видно)
+                const disc = (y, rIn, base) => {
+                    if (rIn < 0.6) { add(0, y, 0, base + 0.3); return; }
+                    const inner = Math.max(0, rIn - 6);
+                    for (let rr = rIn; rr > inner - 0.01; rr -= 2.1) {
+                        const cnt = Math.max(1, Math.round(Math.PI * 2 * rr / 2.0));
+                        const off = hash(seed + y * 7 + rr) * Math.PI * 2;
+                        for (let i = 0; i < cnt; i++) {
+                            const a = off + i * Math.PI * 2 / cnt;
+                            const hy = hash(seed + i * 5.3 + rr * 1.7 + y);
+                            add(rr * Math.cos(a), y + (hy - 0.5) * 0.7, rr * Math.sin(a), base + hy * 0.5);
+                        }
+                    }
+                    if (inner <= 0.01 && rIn >= 2.1) add(0, y, 0, base + 0.4);
+                };
+                const branched = tr._rows.filter(r => r.r > 0);
+                if (branched.length) {
+                    // нижний свод кроны — чтобы снизу крона была круглой, а не плоской
+                    const b0 = branched[0];
+                    disc(b0.y - 2.0, Math.max(0, b0.r * 0.6 - 1.4), 1.8);
+                    disc(b0.y - 3.2, Math.max(0, b0.r * 0.3 - 1.2), 1.7);
+                    branched.forEach((row, i) => {
+                        disc(row.y - 0.5, Math.max(0, row.r - 2.2), 1.75);
+                        const nx = branched[i + 1];
+                        if (nx) disc((row.y + nx.y) / 2 - 0.2, Math.max(0, (row.r + nx.r) / 2 - 2.1), 1.85);
+                    });
+                    // купол сверху — круглая шапка, а не плоский «зонтик»
+                    const top = branched[branched.length - 1];
+                    disc(top.y + 1.2, Math.max(0, top.r - 2.3), 1.8);
+                    disc(top.y + 2.6, Math.max(0, top.r * 0.78 - 2.0), 1.9);
+                    disc(top.y + 3.9, Math.max(0, top.r * 0.52 - 1.6), 2.0);
+                    disc(top.y + 5.0, Math.max(0, top.r * 0.25 - 1.0), 2.1);
+                    tr._foliageTop = top.y + 5.0 + 2.6 * 0.85;
+                } else {
+                    // род идёт одной линией: люди на стволе, крона — шапка над ними
+                    const y = tr.trunkTopY + 2.3;
+                    disc(y, 1.8, 1.4);
+                    disc(y + 1.4, 0.9, 1.5);
+                    add(0, y + 2.4, 0, 1.6);
+                    tr._foliageTop = y + 2.4 + 1.6;
                 }
-
-                // Лиственные ложа позади персон (люди как плоды/цветы на зеленых ветвях)
+                // мелкие листья вокруг каждого человека на ветке — «плод в листве», но не закрывая его
                 tr.local.forEach((lp, id) => {
                     if (lp.onTrunk) return;
-                    const wpos = toWorld(lp.x * 0.82, lp.y - 0.12, lp.z * 0.82);
-                    const psc = 1.35 + hash(id) * 0.45;
-                    foliageMain.push({
-                        pos: wpos,
-                        scale: new THREE.Vector3(psc * 1.1, psc * 0.8, psc * 1.1),
-                        rotY: (id * 2.399) % (Math.PI * 2)
-                    });
+                    const rr = Math.hypot(lp.x, lp.z) || 1;
+                    const ux = lp.x / rr, uz = lp.z / rr; // наружу
+                    const tx = -uz, tz = ux;              // вдоль кольца
+                    const side = 1.15 + hash(id * 1.3) * 0.2;
+                    add(lp.x - ux * 0.45 + tx * side, lp.y - 0.35, lp.z - uz * 0.45 + tz * side, 0.75);
+                    add(lp.x - ux * 0.45 - tx * side, lp.y - 0.25, lp.z - uz * 0.45 - tz * side, 0.7);
+                    add(lp.x - ux * 1.5, lp.y - 0.55, lp.z - uz * 1.5, 1.0);
                 });
+                // табличка и подпись над кроной учитывают настоящую высоту листвы
+                tr.height = Math.max(tr.height, tr._foliageTop);
             });
-
-            const fillFoliage = (list, mat) => {
-                if (!list.length) return;
-                const im = new THREE.InstancedMesh(foliageGeo, mat, list.length);
-                list.forEach((item, i) => {
-                    dummy.position.copy(item.pos);
-                    dummy.rotation.set(0, item.rotY || 0, 0);
-                    dummy.scale.copy(item.scale);
+            if (clumps.length) {
+                // большой лес — комки попроще (80 вершин вместо 240), чтобы MacBook/Safari шёл плавно
+                let geoUse = foliageGeo;
+                if (clumps.length > 6000) { geoUse = createFoliageClumpGeometry(0); this.disposables.push(geoUse); }
+                const im = new THREE.InstancedMesh(geoUse, foliageMat, clumps.length);
+                const col = new THREE.Color();
+                clumps.forEach((cl, i) => {
+                    dummy.position.set(cl.x, cl.y, cl.z);
+                    dummy.rotation.set(0, cl.rot, 0);
+                    dummy.scale.set(cl.s * 1.15, cl.s * 0.85, cl.s * 1.15);
                     dummy.updateMatrix();
                     im.setMatrixAt(i, dummy.matrix);
+                    // ниже и внутри — темнее, наверху — светлее (солнце на кроне)
+                    const tr = cl.tree;
+                    const f = Math.min(1, Math.max(0, (cl.y - tr.trunkTopY) / Math.max(1, tr._foliageTop - tr.trunkTopY)));
+                    if (f < 0.5) col.copy(cDark).lerp(cMid, f * 2);
+                    else col.copy(cMid).lerp(cLight, (f - 0.5) * 2 * (0.6 + cl.h * 0.4));
+                    col.offsetHSL((cl.h - 0.5) * 0.03, 0, (cl.h - 0.5) * 0.06);
+                    im.setColorAt(i, col);
                 });
                 im.instanceMatrix.needsUpdate = true;
+                if (im.instanceColor) im.instanceColor.needsUpdate = true;
                 this.world.add(im);
-            };
-
-            fillFoliage(foliageLight, foliageMatLight);
-            fillFoliage(foliageMain, foliageMatMain);
-            fillFoliage(foliageDeep, foliageMatDeep);
+            }
 
             // табличка у корней, тамга на стволе, имя рода над кроной
             const boardGeo = new THREE.PlaneGeometry(4.6, 2.16);
             this.disposables.push(boardGeo);
             const discGeo = new THREE.CircleGeometry(1, 28);
-            this.disposables.push(discGeo);
+            const postGeo = new THREE.CylinderGeometry(0.09, 0.11, 1, 6);
+            postGeo.translate(0, 0.5, 0);
+            this.disposables.push(discGeo, postGeo);
+            const posts = [];
             M.trees.forEach(tr => {
                 const c = Math.cos(tr.rotY), s = Math.sin(tr.rotY);
                 const bTex = makeBoard(tr, p, t);
@@ -1772,15 +2110,20 @@
                 const small = tr.members.length <= 2;
                 const sc = small ? 0.6 : (tr.isMine ? 1.25 : 0.95);
                 board.scale.setScalar(sc);
-                const fz = tr.trunkR * 2.2 + 1.6 * sc;
-                board.position.set(tr.x + fz * s, 1.25 * sc + 0.15, tr.z + fz * c);
-                board.rotation.y = tr.rotY;
-                board.rotation.x = 0;
+                // деревянная табличка на двух столбиках перед корнями, чуть откинута назад
+                const fz = tr.trunkR * 2.3 + 1.8 * sc;
+                const by = 1.08 * sc + 0.55;
+                board.position.set(tr.x + fz * s, by, tr.z + fz * c);
+                board.rotation.set(-0.12, tr.rotY, 0, 'YXZ');
                 this.world.add(board);
                 this.pickables.push(board);
                 this.instanceMap.set(board.uuid, { kind: 'tree', key: tr.key });
+                [-1, 1].forEach(side => {
+                    const ox = side * 1.95 * sc;
+                    posts.push({ x: tr.x + fz * s + ox * c, z: tr.z + fz * c - ox * s, h: by + 0.6 * sc });
+                });
 
-                // тамга-медальон на стволе (над корнями)
+                // тамга-медальон на коре ствола, между корнями и первым человеком на стволе
                 if (!small) {
                     const tc = document.createElement('canvas');
                     tc.width = tc.height = 128;
@@ -1792,10 +2135,11 @@
                     const tm = new THREE.MeshBasicMaterial({ map: tt, transparent: true });
                     this.disposables.push(tt, tm);
                     const disc = new THREE.Mesh(discGeo, tm);
-                    const dr = Math.max(0.45, tr.trunkR * 0.75);
+                    const dr = Math.min(1.0, Math.max(0.5, tr.trunkR * 0.4));
                     disc.scale.setScalar(dr);
-                    const dz = tr.trunkR * 0.93 + 0.05;
-                    disc.position.set(tr.x + dz * s, 1.05 + dr, tr.z + dz * c);
+                    const dy = Math.min(Y0 - 0.9 - dr, Math.max(1.0 + dr, tr._trunkH * 0.16 + dr));
+                    const dz = tr.trunkR * trunkFactor(dy / tr._trunkH) * 1.12 + 0.06;
+                    disc.position.set(tr.x + dz * s, dy, tr.z + dz * c);
                     disc.rotation.y = tr.rotY;
                     this.world.add(disc);
                 }
@@ -1803,25 +2147,37 @@
                 // название над кроной — видно издалека
                 const title = makeLabel(tr.name, tr.clanName ? `${t.clan}: ${tr.clanName}` : t.treeKind, p, { big: true, ppu: tr.isMine ? 34 : (small ? 70 : 46), highlight: tr.isMine });
                 this.track(title);
-                title.position.set(tr.x, tr.height + 0.8, tr.z);
+                title.position.set(tr.x, tr.height + 1.0, tr.z);
                 title.userData.alwaysVisible = true;
                 this.world.add(title);
                 this.pickables.push(title);
                 this.instanceMap.set(title.uuid, { kind: 'tree', key: tr.key });
             });
+            if (posts.length) {
+                const pm = new THREE.InstancedMesh(postGeo, barkMat, posts.length);
+                posts.forEach((ps, i) => {
+                    dummy.position.set(ps.x, 0, ps.z);
+                    dummy.rotation.set(0, 0, 0);
+                    dummy.scale.set(1, ps.h, 1);
+                    dummy.updateMatrix();
+                    pm.setMatrixAt(i, dummy.matrix);
+                });
+                pm.instanceMatrix.needsUpdate = true;
+                this.world.add(pm);
+            }
         }
 
         buildPeople() {
             const M = this.model, p = this.pal, t = this.t;
-            const leafGeo = new THREE.SphereGeometry(0.62, 12, 8);
-            leafGeo.scale(1, 0.62, 1.35); // плоский лист
-            const tulipGeo = new THREE.ConeGeometry(0.55, 1.05, 6, 1);
-            tulipGeo.rotateX(Math.PI); // чашечка вверх
-            tulipGeo.translate(0, 0.25, 0);
+            // мужчина — круглый голубой плод, женщина — тюльпан; оба крупнее листвы и другого цвета
+            const leafGeo = new THREE.SphereGeometry(0.78, 18, 12);
+            leafGeo.scale(1, 0.95, 1);
+            const tulipGeo = createTulipGeometry();
+            tulipGeo.scale(1.15, 1.15, 1.15);
             this.disposables.push(leafGeo, tulipGeo);
             const groups = {
-                leaf: { geo: leafGeo, color: p.leaf, ids: [] },
-                leafGold: { geo: leafGeo, color: p.leafGold, ids: [] },
+                leaf: { geo: leafGeo, color: p.man, ids: [] },
+                leafGold: { geo: leafGeo, color: p.manGold, ids: [] },
                 tulip: { geo: tulipGeo, color: p.tulip, ids: [] },
                 tulipGold: { geo: tulipGeo, color: p.tulipGold, ids: [] }
             };
@@ -1836,7 +2192,7 @@
             Object.keys(groups).forEach(k => {
                 const g = groups[k];
                 if (!g.ids.length) return;
-                const mat = new THREE.MeshLambertMaterial({ color: g.color, emissive: g.color, emissiveIntensity: this.dark ? 0.35 : 0.12 });
+                const mat = new THREE.MeshLambertMaterial({ color: g.color, emissive: g.color, emissiveIntensity: this.dark ? 0.45 : 0.28, side: THREE.DoubleSide });
                 this.disposables.push(mat);
                 const im = new THREE.InstancedMesh(g.geo, mat, g.ids.length);
                 g.ids.forEach((id, i) => {
@@ -1854,17 +2210,36 @@
                 this.instanceMap.set(im.uuid, { kind: 'person', ids: g.ids });
             });
 
+            // светлый ореол за каждым человеком — отделяет его от листвы (одна отрисовка на всех)
+            const haloPos = [];
+            M.positions.forEach(pos => { haloPos.push(pos.x, pos.y + 0.05, pos.z); });
+            if (haloPos.length) {
+                const hg = new THREE.BufferGeometry();
+                hg.setAttribute('position', new THREE.Float32BufferAttribute(haloPos, 3));
+                const haloTex = makeGlowTexture(this.dark ? 'rgba(255,240,205,0.55)' : 'rgba(255,253,236,0.85)', this.dark ? 0.18 : 0.3);
+                const halo = this.track(new THREE.Points(hg, new THREE.PointsMaterial({
+                    // размер точки в three ≈ size·tan(fov/2) единиц мира → ~2.7 ед. в поперечнике
+                    map: haloTex, size: 5.2, sizeAttenuation: true, transparent: true, depthWrite: false, fog: true
+                })));
+                halo.renderOrder = 2;
+                // вблизи ореол не раздувается: Safari всё равно режет размер точки (~64 px)
+                halo.material.onBeforeCompile = (sh) => {
+                    sh.vertexShader = sh.vertexShader.replace('#include <logdepthbuf_vertex>', 'gl_PointSize = min(gl_PointSize, 60.0);\n#include <logdepthbuf_vertex>');
+                };
+                this.world.add(halo);
+            }
+
             // «Вы» — золотое кольцо
             if (M.myPersonId && M.positions.has(M.myPersonId)) {
                 const mp = M.positions.get(M.myPersonId);
-                const ring = this.track(new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.09, 8, 32), new THREE.MeshBasicMaterial({ color: p.mine })));
+                const ring = this.track(new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.1, 8, 32), new THREE.MeshBasicMaterial({ color: p.mine })));
                 ring.position.set(mp.x, mp.y, mp.z);
                 ring.rotation.x = Math.PI / 2;
                 this.world.add(ring);
             }
 
             // кольцо выделения
-            this.selRing = this.track(new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.07, 8, 36), new THREE.MeshBasicMaterial({ color: p.link })));
+            this.selRing = this.track(new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.08, 8, 36), new THREE.MeshBasicMaterial({ color: p.linkHi })));
             this.selRing.rotation.x = Math.PI / 2;
             this.selRing.visible = false;
             this.world.add(this.selRing);
@@ -1876,9 +2251,21 @@
                 const yrs = yearsText(per);
                 const line2 = [role, yrs].filter(Boolean).join(' · ');
                 const isMe = id === M.myPersonId;
-                const sp = makeLabel(personName(per) || '?', line2, p, { highlight: isMe, ppu: 105 });
+                const sp = makeLabel(personName(per) || '?', line2, p, { highlight: isMe, ppu: 74 });
                 this.track(sp);
-                sp.position.set(pos.x, pos.y + 0.55, pos.z);
+                sp.position.set(pos.x, pos.y + 1.0, pos.z);
+                // подпись не прячется в листве верхнего яруса; людей с дальней стороны кроны
+                // отсекает updateLabelVisibility (по стороне дерева)
+                sp.material.depthTest = false;
+                sp.renderOrder = 12;
+                sp.userData.base = sp.scale.clone();
+                const trP = M.treeByKey.get(pos.treeKey);
+                if (trP) {
+                    let dx = pos.x - trP.x, dz = pos.z - trP.z;
+                    const L = Math.hypot(dx, dz);
+                    if (pos.onTrunk || L < 0.5) { dx = Math.sin(trP.rotY); dz = Math.cos(trP.rotY); } else { dx /= L; dz /= L; }
+                    sp.userData.face = { tx: trP.x, tz: trP.z, dx, dz };
+                }
                 sp.userData.personId = id;
                 sp.userData.isMe = isMe;
                 sp.visible = false;
@@ -1891,11 +2278,14 @@
             const M = this.model, p = this.pal;
             this.linkObjs = new Map();
             const pairCount = new Map();
-            const lineMat = new THREE.MeshBasicMaterial({ color: p.link, transparent: true, opacity: 0.85 });
-            const lineMatEx = new THREE.MeshBasicMaterial({ color: p.link, transparent: true, opacity: 0.4 });
+            // в покое — тонкая бледная нить, не перечёркивает сцену; при наведении/выборе — яркая и толще
+            const lineMat = new THREE.MeshBasicMaterial({ color: p.link, transparent: true, opacity: this.dark ? 0.5 : 0.45, depthWrite: false });
+            const lineMatEx = new THREE.MeshBasicMaterial({ color: p.link, transparent: true, opacity: 0.22, depthWrite: false });
+            const hiMat = new THREE.MeshBasicMaterial({ color: p.linkHi });
             const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
-            const arrowGeo = new THREE.ConeGeometry(0.32, 0.9, 10);
-            this.disposables.push(lineMat, lineMatEx, hitMat, arrowGeo);
+            const arrowGeo = new THREE.ConeGeometry(0.22, 0.6, 8);
+            const arrowHiGeo = new THREE.ConeGeometry(0.42, 1.1, 10);
+            this.disposables.push(lineMat, lineMatEx, hiMat, hitMat, arrowGeo, arrowHiGeo);
             const up = new THREE.Vector3(0, 1, 0);
             M.links.forEach(l => {
                 const a = M.positions.get(l.wifeId), b = M.positions.get(l.husbandId);
@@ -1906,29 +2296,59 @@
                 const A = new THREE.Vector3(a.x, a.y, a.z), B = new THREE.Vector3(b.x, b.y, b.z);
                 const d = A.distanceTo(B);
                 const mid = A.clone().add(B).multiplyScalar(0.5);
-                mid.y = Math.max(A.y, B.y) + Math.min(18, 3 + d * 0.18);
+                // невысокая дуга над кронами, а не через всё небо
+                mid.y = Math.max(A.y, B.y) + Math.min(9, 2 + d * 0.08);
                 // несколько браков между теми же родами — разводим дуги вбок
                 const side = new THREE.Vector3(B.z - A.z, 0, A.x - B.x).normalize();
                 mid.addScaledVector(side, (n % 2 ? -1 : 1) * Math.ceil(n / 2) * 1.6);
                 const curve = new THREE.QuadraticBezierCurve3(A, mid, B);
-                const tube = this.track(new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.1, 6, false), l.current ? lineMat : lineMatEx));
+                const segN = Math.max(24, Math.min(80, Math.round(d / 2)));
+                const tube = this.track(new THREE.Mesh(new THREE.TubeGeometry(curve, segN, 0.05, 5, false), l.current ? lineMat : lineMatEx));
+                tube.renderOrder = 3;
+                const tubeHi = new THREE.Mesh(new THREE.TubeGeometry(curve, segN, 0.14, 6, false), hiMat);
+                tubeHi.visible = false;
+                this.disposables.push(tubeHi.geometry);
                 const hit = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.75, 5, false), hitMat);
+                hit.visible = false; // только для попадания мышью: Raycaster видимость не проверяет
                 this.disposables.push(hit.geometry);
                 // стрелка у мужа: направление «дочь → род мужа»
+                const tp = curve.getPoint(0.93), tg = curve.getTangent(0.93).normalize();
                 const arrow = new THREE.Mesh(arrowGeo, l.current ? lineMat : lineMatEx);
-                const tp = curve.getPoint(0.93), tg = curve.getTangent(0.93);
                 arrow.position.copy(tp);
-                arrow.quaternion.setFromUnitVectors(up, tg.normalize());
-                this.world.add(tube, hit, arrow);
+                arrow.quaternion.setFromUnitVectors(up, tg);
+                const arrowHi = new THREE.Mesh(arrowHiGeo, hiMat);
+                arrowHi.position.copy(tp);
+                arrowHi.quaternion.setFromUnitVectors(up, tg);
+                arrowHi.visible = false;
+                this.world.add(tube, tubeHi, hit, arrow, arrowHi);
                 this.pickables.push(hit);
                 this.instanceMap.set(hit.uuid, { kind: 'link', key: l.key });
-                const label = makeLabel(l.label, l.sub, p, { ppu: 70, highlight: true });
+                const label = makeLabel(l.label, l.sub, p, { ppu: 60, highlight: true });
                 this.track(label);
-                label.position.copy(curve.getPoint(0.5)).add(new THREE.Vector3(0, 0.4, 0));
+                label.material.depthTest = false; // подпись линии не прячется за кронами
+                label.renderOrder = 20;
+                label.position.copy(curve.getPoint(0.5)).add(new THREE.Vector3(0, 0.5, 0));
                 label.visible = false;
                 this.world.add(label);
-                this.linkObjs.set(l.key, { link: l, tube, label, curve });
+                this.linkObjs.set(l.key, { link: l, tube, tubeHi, arrow, arrowHi, label, curve });
             });
+        }
+
+        // Какие линии подсветить: наведённая/выбранная линия, линии выбранного человека или рода
+        refreshLinkHighlight() {
+            if (!this.linkObjs) return;
+            const hov = this.hover, sel = this.selected;
+            this.linkObjs.forEach((o, key) => {
+                const l = o.link;
+                const on = (h) => !!h && (
+                    (h.kind === 'link' && h.key === key) ||
+                    (h.kind === 'person' && (l.wifeId === h.id || l.husbandId === h.id)) ||
+                    (h.kind === 'tree' && (l.fromTree === h.key || l.toTree === h.key)));
+                const hi = on(hov) || on(sel);
+                o.tubeHi.visible = hi; o.arrowHi.visible = hi;
+                o.tube.visible = !hi; o.arrow.visible = !hi;
+            });
+            this.needsRender = true;
         }
 
         // ---------- выбор и наведение ----------
@@ -1984,7 +2404,8 @@
             if (!this._hoverDirty) return;
             this._hoverDirty = false;
             const hit = this.pick();
-            const same = (a, b) => a && b && a.kind === b.kind && a.id === b.id && a.key === b.key;
+            // «ничего» → «ничего» — тоже без изменений (иначе каждое движение мыши над травой перерисовывает кадр)
+            const same = (a, b) => (!a && !b) || (!!a && !!b && a.kind === b.kind && a.id === b.id && a.key === b.key);
             if (same(hit, this.hover)) { this.positionTip(); return; }
             this.setHoverScale(this.hover, 1);
             if (this.hover && this.hover.kind === 'link') this.setLinkLabel(this.hover.key, this.isSelected(this.hover));
@@ -1993,6 +2414,7 @@
             if (hit && hit.kind === 'link') this.setLinkLabel(hit.key, true);
             this.renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
             this.showTip(hit);
+            this.refreshLinkHighlight();
             this.needsRender = true;
             this._labelsDirty = true;
         }
@@ -2065,7 +2487,7 @@
                 const lab = this.labelSprites.find(x => x.userData.personId === hit.id);
                 if (lab) lab.userData.forced = true;
                 this.showPersonCard(hit.id);
-                if (!fromClick) this.cam.flyTo(new THREE.Vector3(pos.x, pos.y, pos.z), 14, null, 1.2);
+                if (!fromClick) this.flyToPerson(hit.id);
             } else if (hit.kind === 'link') {
                 this.setLinkLabel(hit.key, true);
                 this.showLinkCard(hit.key);
@@ -2073,6 +2495,7 @@
                 this.showTreeCard(hit.key);
                 if (fromClick) this.focusTree(hit.key);
             }
+            this.refreshLinkHighlight();
             this.updateLabelVisibility(true);
             this.needsRender = true;
         }
@@ -2082,7 +2505,7 @@
             this.selected = null;
             if (!s) return;
             if (s.kind === 'person' && this.model.positions.has(s.id)) this.select(s, true);
-            else if (s.kind === 'tree' && this.model.treeByKey.has(s.key)) this.showTreeCard(s.key);
+            else if (s.kind === 'tree' && this.model.treeByKey.has(s.key)) { this.selected = s; this.showTreeCard(s.key); this.refreshLinkHighlight(); }
             else this.clearSelection();
         }
 
@@ -2095,6 +2518,7 @@
             this.selected = null;
             if (this.selRing) this.selRing.visible = false;
             if (this.card) this.card.style.display = 'none';
+            this.refreshLinkHighlight();
             this.updateLabelVisibility(true);
             this.needsRender = true;
         }
@@ -2162,9 +2586,7 @@
                 if (this.onPersonSelect) this.onPersonSelect(p);
                 else if (typeof window.selectPerson === 'function') window.selectPerson(id);
             });
-            this.actionBtn(acts, t.showOnTree, () => {
-                this.cam.flyTo(new THREE.Vector3(pos.x, pos.y, pos.z), 14, null, 1.2);
-            });
+            this.actionBtn(acts, t.showOnTree, () => this.flyToPerson(id));
             card.appendChild(acts);
             this.loadUshZhurt(id, uz);
         }
@@ -2273,6 +2695,20 @@
                 this.cam.flyTo(target, dist, tr.rotY, 1.22);
             }
             this.needsRender = true;
+        }
+
+        // камера — снаружи кроны, с той стороны дерева, где висит человек (а не сквозь листву)
+        flyToPerson(id) {
+            const M = this.model;
+            const pos = M && M.positions.get(id);
+            if (!pos) return;
+            const tr = M.treeByKey.get(pos.treeKey);
+            let theta = null;
+            if (tr) {
+                const dx = pos.x - tr.x, dz = pos.z - tr.z;
+                theta = (pos.onTrunk || Math.hypot(dx, dz) < 0.5) ? tr.rotY : Math.atan2(dx, dz);
+            }
+            this.cam.flyTo(new THREE.Vector3(pos.x, pos.y, pos.z), 20, theta, 1.25);
         }
 
         focusMine(instant) {
@@ -2388,10 +2824,12 @@
         updateLabelVisibility(force) {
             if (!this.labelSprites || !this.camera) return;
             const cp = this.camera.position;
-            const near = 38;
+            const near = 42;
             let changed = false;
             const selTree = this.selected && this.selected.kind === 'person' && this.model.positions.get(this.selected.id)
                 ? this.model.positions.get(this.selected.id).treeKey : null;
+            // 1) кандидаты: близкие, «я», выбранный/наведённый, люди выбранного рода
+            const cand = [];
             for (let i = 0; i < this.labelSprites.length; i++) {
                 const sp = this.labelSprites[i];
                 const d = sp.position.distanceTo(cp);
@@ -2399,6 +2837,39 @@
                 if (!vis && selTree && d < near * 1.6) {
                     const pos = this.model.positions.get(sp.userData.personId);
                     vis = pos && pos.treeKey === selTree;
+                }
+                // человек с дальней стороны кроны (листва между ним и зрителем) — без подписи
+                const f = sp.userData.face;
+                if (vis && f && !sp.userData.forced && !sp.userData.isMe) {
+                    const cx = cp.x - f.tx, cz = cp.z - f.tz, cl = Math.hypot(cx, cz) || 1;
+                    if ((cx * f.dx + cz * f.dz) / cl < -0.15) vis = false;
+                }
+                if (vis) {
+                    // вблизи подпись не растёт бесконечно: дальше ~26 ед. — как есть, ближе — постоянный экранный размер
+                    const b = sp.userData.base;
+                    if (b) { const kk = Math.min(1, Math.max(0.25, d / 26)); sp.scale.set(b.x * kk, b.y * kk, 1); }
+                    cand.push({ sp, d, pri: sp.userData.forced ? 0 : (sp.userData.isMe ? 1 : 2) });
+                } else if (sp.visible) { sp.visible = false; changed = true; }
+            }
+            // 2) без наложений: в порядке важности и близости, перекрывающие подписи прячем
+            const W = this.renderer ? this.renderer.domElement.clientWidth : 1;
+            const H = this.renderer ? this.renderer.domElement.clientHeight : 1;
+            const k = H / (2 * Math.tan(this.camera.fov * Math.PI / 360));
+            cand.sort((a, b) => a.pri - b.pri || a.d - b.d);
+            const placed = [];
+            const v = this._tmpV || (this._tmpV = new THREE.Vector3());
+            for (let i = 0; i < cand.length; i++) {
+                const { sp, pri } = cand[i];
+                v.copy(sp.position).project(this.camera);
+                let vis = v.z < 1 && Math.abs(v.x) < 1.2 && Math.abs(v.y) < 1.2;
+                if (vis) {
+                    const dist = Math.max(0.5, cand[i].d);
+                    const w = sp.scale.x * k / dist, h = sp.scale.y * k / dist;
+                    const x = (v.x + 1) / 2 * W - w / 2, y = (1 - v.y) / 2 * H - h; // низ подписи — над человеком
+                    const r = { x: x - 3, y: y - 2, w: w + 6, h: h + 4 };
+                    const clash = placed.some(q => r.x < q.x + q.w && q.x < r.x + r.w && r.y < q.y + q.h && q.y < r.y + r.h);
+                    if (clash && pri > 1) vis = false;
+                    if (vis) placed.push(r);
                 }
                 if (sp.visible !== vis) { sp.visible = vis; changed = true; }
             }
@@ -2434,6 +2905,10 @@
             }
             this.updateHover();
             if (this.needsRender) {
+                // небо «бесконечно далеко»: купол и светила идут за камерой
+                const cp = this.camera.position;
+                if (this.sky) this.sky.position.copy(cp);
+                (this.skyExtras || []).forEach(o => { o.position.copy(cp).add(o.userData.skyOffset); });
                 this.renderer.render(this.scene, this.camera);
                 this.needsRender = this.cam.isKeyMoving() || !!this.cam.tween;
             }

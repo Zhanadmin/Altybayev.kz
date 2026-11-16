@@ -740,7 +740,19 @@ class AlbumController
         $old->execute([$personId]);
         $oldPath = $old->fetchColumn();
 
-        $url = $this->media->makeAvatar((string)$m['file_path'], dirname(__DIR__, 2) . '/public/uploads/photos');
+        // TASK-018: квадрат, выбранный в окне обрезки (доли 0..1); без него — квадрат по центру
+        $crop = null;
+        $cx = self::str($request, 'crop_x');
+        $cy = self::str($request, 'crop_y');
+        $cs = self::str($request, 'crop_s');
+        if ($cx !== '' && $cy !== '' && $cs !== '') {
+            if (!is_numeric($cx) || !is_numeric($cy) || !is_numeric($cs)) {
+                $this->fail('Қате кесу аймағы', 'Неверная область обрезки', 400);
+            }
+            $crop = ['x' => (float)$cx, 'y' => (float)$cy, 's' => (float)$cs];
+        }
+
+        $url = $this->media->makeAvatar((string)$m['file_path'], dirname(__DIR__, 2) . '/public/uploads/photos', '/uploads/photos/', $crop);
         $db->prepare('UPDATE persons SET avatar_path = ?, updated_at = NOW() WHERE id = ?')->execute([$url, $personId]);
         try {
             $db->prepare("INSERT INTO audit_logs (user_id, user_name, user_email, action, entity_table, entity_id, summary, old_values, new_values, created_at)

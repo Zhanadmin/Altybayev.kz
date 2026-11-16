@@ -64,7 +64,15 @@ class Request
 
     public function get(string $key, mixed $default = null): mixed
     {
-        return $this->query($key, $default);
+        // TASK-020: POST-обработчики читают поля через get() — без запасного чтения из тела
+        // запроса приходило «id is required» (форма ру и др. не сохранялись).
+        if (array_key_exists($key, $this->get)) {
+            return $this->get[$key];
+        }
+        if ($this->jsonBody !== null && array_key_exists($key, $this->jsonBody)) {
+            return $this->jsonBody[$key];
+        }
+        return $this->post[$key] ?? $default;
     }
 
     public function post(string $key, mixed $default = null): mixed

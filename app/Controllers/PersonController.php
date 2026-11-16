@@ -174,7 +174,8 @@ class PersonController
 
             // Старшинство семей внутри поколения считать по возрасту МУЖА
             $seniorityYear = $bYear;
-            if ($p['gender'] === 'F' && !empty($p['spouses'])) {
+            // TASK-020: по возрасту мужа — только если у женщины нет своей даты рождения
+            if ($bYear === 0 && $p['gender'] === 'F' && !empty($p['spouses'])) {
                 $firstSpouse = $allPersonsById[$p['spouses'][0]['spouse_id']] ?? null;
                 if ($firstSpouse && !empty($firstSpouse['birth_year'])) {
                     $seniorityYear = (int)$firstSpouse['birth_year'];
@@ -364,7 +365,28 @@ class PersonController
             $auditLogs = $aStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
+        // 10. TASK-022: контакты (видят все вошедшие, гости сюда не попадают — маршрут за auth) и статус приглашения
+        $contacts = ['phones' => [], 'emails' => [], 'addresses' => []];
+        $inviteState = ['state' => 'none'];
+        $canEditContacts = false;
+        $canInvite = false;
+        if ($user !== null) {
+            try {
+                $contactSvc = new \App\Services\PersonContactService($db);
+                $contacts = \App\Services\PersonContactService::decodeContacts($person['private_contacts'] ?? null);
+                $inviteState = $contactSvc->inviteStatus($id, $contacts['emails']);
+            } catch (\Throwable $e) {
+                // контакты не должны ломать карточку
+            }
+            $canEditContacts = PersonContactController::canEditContacts($id);
+            $canInvite = Auth::canEdit();
+        }
+
         Response::view('persons/show', [
+            'contacts'        => $contacts,
+            'inviteState'     => $inviteState,
+            'canEditContacts' => $canEditContacts,
+            'canInvite'       => $canInvite,
             'user'         => $user,
             'userPersonId' => $userPersonId,
             'person'       => $person,

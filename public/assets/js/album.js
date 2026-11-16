@@ -146,7 +146,10 @@
     function closeModal(m) { if (m) m.style.display = 'none'; }
     AL.openModal = openModal;
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop').forEach(function (m) { if (m.style.display === 'flex') closeModal(m); });
+        if (e.key !== 'Escape') return;
+        var closed = false;
+        document.querySelectorAll('.modal-backdrop').forEach(function (m) { if (m.style.display === 'flex') { closeModal(m); closed = true; } });
+        if (closed) e.preventDefault(); // просмотр под окном не закрываем тем же нажатием
     });
 
     /* ===================================================== сетка */
@@ -398,17 +401,24 @@
         lb.querySelector('[data-lb="delete"]').style.display = it.canDelete ? '' : 'none';
         lb.querySelector('[data-lb="edit"]').style.display = it.canEdit ? '' : 'none';
         var av = lb.querySelector('[data-lb="avatar"]');
-        av.style.display = (it.type === 'photo' && it.people.length && (AL.canEditAll || it.people.some(function (p) { return p.id === AL.myPersonId; }))) ? '' : 'none';
+        var avaPeople = avatarPeople(it);
+        av.style.display = avaPeople.length ? '' : 'none';
 
         var info = lb.querySelector('.al-lb-info');
         var sub = [];
         if (it.date) sub.push(it.date.split('-').reverse().join('.'));
         if (it.uploader) sub.push(t('added_by') + ' ' + it.uploader);
+        var avaIds = avaPeople.map(function (p) { return p.id; });
         info.innerHTML = (it.caption ? '<div class="cap">' + esc(it.caption) + '</div>' : '') +
             (sub.length ? '<div class="sub">' + esc(sub.join(' · ')) + '</div>' : '') +
             (it.people.length ? '<div class="ppl">' + it.people.map(function (p) {
-                return '<a href="/person/' + p.id + '">' + esc(p.name) + '</a>';
-            }).join('') + '</div>' : '');
+                var link = '<a href="/person/' + p.id + '">' + esc(p.name) + '</a>';
+                if (avaIds.indexOf(p.id) < 0) return link;
+                // TASK-018: явная кнопка рядом с человеком — «Аватарға қою»
+                return '<span class="al-pp">' + link + '<button type="button" class="al-ava-btn" data-lb="avatar" data-pid="' + p.id + '"' +
+                    ' aria-label="' + esc(t('avatar_set') + ': ' + p.name) + '">' + esc(t('avatar_set')) + '</button></span>';
+            }).join('') + '</div>' : '') +
+            (it.type === 'photo' && !it.people.length && it.canEdit ? '<div class="ava-hint">' + esc(t('avatar_hint')) + '</div>' : '');
         // соседние фото — заранее
         [cur + 1, cur - 1].forEach(function (j) {
             var n = items[(j + items.length) % items.length];
@@ -426,10 +436,10 @@
             else if (act === 'next') go(1);
             else if (act === 'delete') delCur();
             else if (act === 'edit') editCur();
-            else if (act === 'avatar') avatarCur();
+            else if (act === 'avatar') avatarCur(parseInt(a.getAttribute('data-pid') || '0', 10));
         });
         document.addEventListener('keydown', function (e) {
-            if (!lb.classList.contains('is-open')) return;
+            if (!lb.classList.contains('is-open') || e.defaultPrevented) return;
             if (document.querySelector('.modal-backdrop[style*="flex"]')) return;
             if (e.key === 'Escape') closeLb();
             else if (e.key === 'ArrowLeft') go(-1);
@@ -507,23 +517,142 @@
         });
     }
 
-    function avatarCur() {
-        var it = items[cur];
-        if (!it) return;
-        var opts = it.people.filter(function (p) { return AL.canEditAll || p.id === AL.myPersonId; });
-        if (!opts.length) return;
-        var p = opts[0];
-        if (opts.length > 1) {
-            var list = opts.map(function (o, i) { return (i + 1) + ') ' + o.name; }).join('\n');
-            var ans = prompt(t('avatar_choose') + '\n' + list, '1');
-            if (ans === null) return;
-            p = opts[parseInt(ans, 10) - 1];
+    /* TASK-018: кому можно поставить аватар с этого фото — отмеченные люди (редактор — любой, иначе только сам) */
+    function avatarPeople(it) {
+        if (!it || it.type !== 'photo' || !it.people || !it.people.length) return [];
+        return it.people.filter(function (p) { return AL.canEditAll || p.id === AL.myPersonId; });
+    }
+
+    /* ===================================================== аватар: окно квадратной обрезки */
+    var avaModal = document.getElementById('alAvaModal');
+    var cropWrap = document.getElementById('alCrop');
+    var cropImg = document.getElementById('alCropImg');
+    var cropBox = document.getElementById('alCropBox');
+    var cropSize = document.getElementById('alCropSize');
+    var avaWho = document.getElementById('alAvaWho');
+    var avaSave = document.getElementById('alAvaSave');
+    // квадрат в долях: x — от ширины, y — от высоты, s — от меньшей стороны
+    var crop = { x: 0, y: 0, s: 1 }, cropItem = null;
+
+    function cropDims() {
+        var w = cropImg.clientWidth, h = cropImg.clientHeight;
+        return { w: w, h: h, m: Math.min(w, h) };
+    }
+    function clampCrop() {
+        var d = cropDims();
+        if (!d.w || !d.h) return;
+        crop.s = Math.max(0.2, Math.min(1, crop.s));
+        var side = d.m * crop.s;
+        crop.x = Math.max(0, Math.min(crop.x, (d.w - side) / d.w));
+        crop.y = Math.max(0, Math.min(crop.y, (d.h - side) / d.h));
+    }
+    function drawCrop() {
+        clampCrop();
+        var d = cropDims();
+        var side = d.m * crop.s;
+        cropBox.style.left = (crop.x * d.w) + 'px';
+        cropBox.style.top = (crop.y * d.h) + 'px';
+        cropBox.style.width = side + 'px';
+        cropBox.style.height = side + 'px';
+    }
+    function resetCrop() {
+        var d = cropDims();
+        if (!d.w || !d.h) return;
+        crop.s = 1;
+        crop.x = (d.w - d.m) / 2 / d.w;
+        crop.y = Math.max(0, (d.h - d.m) / 3) / d.h; // как на сервере: чуть выше центра
+        cropSize.value = 100;
+        drawCrop();
+    }
+
+    if (avaModal && cropImg && cropBox) {
+        cropImg.addEventListener('load', function () { resetCrop(); avaSave.disabled = false; });
+        cropImg.addEventListener('error', function () { avaSave.disabled = true; toast(t('err_network')); });
+        window.addEventListener('resize', function () { if (avaModal.style.display === 'flex') drawCrop(); });
+        cropSize.addEventListener('input', function () {
+            var d = cropDims();
+            var oldSide = d.m * crop.s;
+            crop.s = parseInt(cropSize.value, 10) / 100;
+            var newSide = d.m * crop.s;
+            // меняем размер вокруг центра квадрата
+            if (d.w && d.h) {
+                crop.x += (oldSide - newSide) / 2 / d.w;
+                crop.y += (oldSide - newSide) / 2 / d.h;
+            }
+            drawCrop();
+        });
+        // перетаскивание квадрата: мышь и палец (pointer events)
+        var drag = null;
+        cropBox.addEventListener('pointerdown', function (e) {
+            e.preventDefault();
+            if (drag) return;
+            drag = { id: e.pointerId, px: e.clientX, py: e.clientY, x: crop.x, y: crop.y };
+            try { cropBox.setPointerCapture(e.pointerId); } catch (er) { /* старые браузеры */ }
+        });
+        cropBox.addEventListener('pointermove', function (e) {
+            if (!drag || drag.id !== e.pointerId) return;
+            var d = cropDims();
+            if (!d.w || !d.h) return;
+            crop.x = drag.x + (e.clientX - drag.px) / d.w;
+            crop.y = drag.y + (e.clientY - drag.py) / d.h;
+            drawCrop();
+        });
+        var endDrag = function (e) { if (drag && drag.id === e.pointerId) drag = null; };
+        cropBox.addEventListener('pointerup', endDrag);
+        cropBox.addEventListener('pointercancel', endDrag);
+        // клавиатура: стрелки двигают квадрат
+        cropBox.addEventListener('keydown', function (e) {
+            var step = 0.02;
+            if (e.key === 'ArrowLeft') crop.x -= step;
+            else if (e.key === 'ArrowRight') crop.x += step;
+            else if (e.key === 'ArrowUp') crop.y -= step;
+            else if (e.key === 'ArrowDown') crop.y += step;
+            else return;
+            e.preventDefault();
+            e.stopPropagation();
+            drawCrop();
+        });
+
+        avaSave.addEventListener('click', function () {
+            if (!cropItem) return;
+            var pid = parseInt(avaWho.value, 10);
+            var p = cropItem.people.filter(function (x) { return x.id === pid; })[0];
             if (!p) return;
-        } else if (!confirm(t('avatar_confirm') + ' ' + p.name + '?')) {
-            return;
+            clampCrop();
+            avaSave.disabled = true;
+            var label = avaSave.textContent;
+            avaSave.textContent = t('avatar_saving');
+            post('/api/album/media/avatar', {
+                id: cropItem.id, person_id: p.id,
+                crop_x: crop.x.toFixed(5), crop_y: crop.y.toFixed(5), crop_s: crop.s.toFixed(5)
+            }).then(function () {
+                closeModal(avaModal);
+                toast(t('avatar_done') + ' ' + p.name, 'success');
+            }).catch(function (err) { toast(err.message); }).then(function () {
+                avaSave.disabled = false;
+                avaSave.textContent = label;
+            });
+        });
+    }
+
+    function avatarCur(pid) {
+        var it = items[cur];
+        var opts = avatarPeople(it);
+        if (!opts.length || !avaModal) return;
+        cropItem = it;
+        avaWho.innerHTML = opts.map(function (o) {
+            return '<option value="' + o.id + '">' + esc(o.name) + '</option>';
+        }).join('');
+        if (pid && opts.some(function (o) { return o.id === pid; })) avaWho.value = String(pid);
+        document.getElementById('alAvaWhoField').style.display = opts.length > 1 ? '' : 'none';
+        openModal('alAvaModal');
+        if (cropImg.getAttribute('src') === it.full && cropImg.complete && cropImg.naturalWidth) {
+            resetCrop();
+            avaSave.disabled = false;
+        } else {
+            avaSave.disabled = true; // до загрузки нового фото обрезка относится к старому
+            cropImg.src = it.full;
         }
-        post('/api/album/media/avatar', { id: it.id, person_id: p.id }).then(function () {
-            toast(t('avatar_done') + ' ' + p.name, 'success');
-        }).catch(function (err) { toast(err.message); });
+        setTimeout(function () { cropBox.focus(); }, 40);
     }
 })();

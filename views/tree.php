@@ -4147,7 +4147,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         async function setMyPersonFromProfile() {
             if (!selectedPersonId) return;
             try {
-                const res = await fetch(`/api/user/set-my-person?person_id=${selectedPersonId}`);
+                const res = await fetch('/api/user/set-my-person', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: new URLSearchParams({ person_id: String(selectedPersonId), csrf_token: <?= json_encode(\App\Core\Session::csrfToken()) ?> })
+                });
                 const data = await res.json();
                 if (data && data.status === 'success') {
                     userPersonId = selectedPersonId;
@@ -4156,6 +4160,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     alert(currentLang === 'ru' 
                         ? 'Метка «Вы здесь» успешно привязана к выбранной персоне!' 
                         : '«Сіз осындасыз» белгісі осы тұлғаға сәтті орнатылды!');
+                } else if (data && data.error) {
+                    alert(data.error);
                 }
             } catch (e) {
                 alert('Қате: ' + e.message);
@@ -5010,7 +5016,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 p.father_id === focal.id || p.mother_id === focal.id ||
                 (spouse && (p.father_id === spouse.id || p.mother_id === spouse.id))
             );
-            children.sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0));
+            children.sort((a, b) => (a.birth_year || 9999) - (b.birth_year || 9999));
 
             // Ата-аналарын табу
             const father = focal.father_id ? personMap.get(focal.father_id) : null;
@@ -5683,7 +5689,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 clanInput.style.cursor = 'text';
                 if (clanHint) {
                     clanHint.textContent = p.father_id
-                        ? (currentLang === 'ru' ? 'Ру распространится по мужской линии (отцы, братья, потомки) — с предпросмотром' : 'Ру ер жағы бойынша таралады (әкелер, бауырлар, ұрпақ) — алдын ала көрумен')
+                        ? (currentLang === 'ru' ? 'Ру наследуется от отца и не сохраняется отдельно у ребёнка. Если укажете ру здесь, сайт предложит применить его по мужской линии (отец, деды, братья, потомки) — покажет, сколько людей получат ру, и спросит подтверждение. Жёны (келін) не меняются.' : 'Ру әкеден мұраланады және баланың өзінде бөлек сақталмайды. Мұнда ру жазсаңыз, сайт оны ер жағы бойынша (әке, ата, бауырлар, ұрпақ) қолдануды ұсынады: неше адам алатынын көрсетіп, растауды сұрайды. Келіндер өзгермейді.')
                         : '';
                 }
 

@@ -310,7 +310,7 @@ class KinshipService
                     if ($csFatherId === $targetId) {
                         return [
                             'term_kk' => 'Құда',
-                            'term_ru' => 'Құда (отец зятя/снохи)',
+                            'term_ru' => 'Құда (сват)',
                             'code' => 'kuda',
                             'zhurt' => $this->getZhurtForPerson($basePerson, 'in_law'),
                             'explanation' => 'Баласының жұбайының әкесі',
@@ -320,7 +320,7 @@ class KinshipService
                     if ($csMotherId === $targetId) {
                         return [
                             'term_kk' => 'Құдағи',
-                            'term_ru' => 'Құдағи (мать зятя/снохи)',
+                            'term_ru' => 'Құдағи (сватья)',
                             'code' => 'kudaghy',
                             'zhurt' => $this->getZhurtForPerson($basePerson, 'in_law'),
                             'explanation' => 'Баласының жұбайының анасы',
@@ -347,6 +347,52 @@ class KinshipService
                                 'badge_class' => 'badge-inlaw',
                             ];
                         }
+                    }
+                }
+            }
+        }
+
+        // 8б. ҚҰДА / ҚҰДАҒИ — родители супругов братьев/сестёр, внуков, племянников
+        // (жеңге/келін → отец «Құда», мать «Құдағи»; для мужей сестёр/дочерей — так же).
+        if (!empty($allPersonsById) && !empty($marriages) && $baseId) {
+            $kudaOwners = [];
+            foreach ($allPersonsById as $p) {
+                $pid = (int)$p['id'];
+                if ($pid !== $baseId && $this->areSiblings($basePerson, $p)) {
+                    $kudaOwners[] = $pid;
+                    foreach ($this->getChildrenIds($pid, $allPersonsById) as $nid) {
+                        $kudaOwners[] = $nid; // племянники
+                    }
+                }
+            }
+            foreach ($this->getChildrenIds($baseId, $allPersonsById) as $cid) {
+                foreach ($this->getChildrenIds($cid, $allPersonsById) as $gid) {
+                    $kudaOwners[] = $gid; // внуки
+                }
+            }
+            foreach (array_unique($kudaOwners) as $ownerId) {
+                foreach ($this->getSpouseIds($ownerId, $marriages) as $sid) {
+                    $sp = $allPersonsById[$sid] ?? null;
+                    if (!$sp) continue;
+                    if ((int)($sp['father_id'] ?? 0) === $targetId) {
+                        return [
+                            'term_kk' => 'Құда',
+                            'term_ru' => 'Құда (сват)',
+                            'code' => 'kuda',
+                            'zhurt' => $this->getZhurtForPerson($basePerson, 'in_law'),
+                            'explanation' => 'Туысының жұбайының әкесі',
+                            'badge_class' => 'badge-inlaw',
+                        ];
+                    }
+                    if ((int)($sp['mother_id'] ?? 0) === $targetId) {
+                        return [
+                            'term_kk' => 'Құдағи',
+                            'term_ru' => 'Құдағи (сватья)',
+                            'code' => 'kudaghy',
+                            'zhurt' => $this->getZhurtForPerson($basePerson, 'in_law'),
+                            'explanation' => 'Туысының жұбайының анасы',
+                            'badge_class' => 'badge-inlaw',
+                        ];
                     }
                 }
             }
@@ -1739,7 +1785,7 @@ class KinshipService
         }
 
         // Построитель семейных папок
-        $buildFamilies = function(array $personIdSet) use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId) {
+        $buildFamilies = function(array $personIdSet, string $sideKey = '') use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId) {
             $families = [];
             $handledChildren = [];
             $handledSpouses = [];
@@ -1759,6 +1805,14 @@ class KinshipService
                     foreach ($cIds as $cId) {
                         $cPerson = $personsById[$cId] ?? null;
                         if ($cPerson) {
+                            // TASK-017: ребёнок, чья сторона другая, в этой папке не показывается
+                            // (мать — в Өз жұрты/Төркіні рядом с отцом, а не среди детей своих родителей в Нағашы).
+                            $cSide = (string)($allKinships[$cId]['zhurt_key'] ?? '');
+                            if ($sideKey !== '' && $cSide !== '' && $cSide !== $sideKey
+                                && (int)$cId !== $baseId
+                                && (string)($allKinships[$cId]['zhurt_second_key'] ?? '') !== $sideKey) {
+                                continue;
+                            }
                             $childrenList[] = [
                                 'person' => $cPerson,
                                 'kinship' => $allKinships[$cId] ?? null,
@@ -1827,7 +1881,7 @@ class KinshipService
         foreach ($this->zhurtOrder($isFemale) as $key) {
             $meta = $this->zhurtMeta($key, $isFemale, $isMarried);
             $set = array_fill_keys($buckets[$key] ?? [], true);
-            $result[$key . '_zhurt'] = array_merge(['key' => $key] + $meta, $buildFamilies($set));
+            $result[$key . '_zhurt'] = array_merge(['key' => $key] + $meta, $buildFamilies($set, $key));
             $result['order'][] = $key;
         }
 

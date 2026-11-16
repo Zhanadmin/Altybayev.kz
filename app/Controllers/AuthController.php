@@ -149,12 +149,34 @@ class AuthController
                 $updInv->execute([$invitationId]);
             }
 
+            // TASK-022: учётка приглашённого связывается с карточкой человека (invitations.person_id или совпадение email)
+            $linkedPersonId = null;
+            try {
+                $contactSvc = new \App\Services\PersonContactService($db);
+                if (isset($invitation) && is_array($invitation) && !empty($invitation['person_id'])) {
+                    $linkedPersonId = (int)$invitation['person_id'];
+                } else {
+                    $linkedPersonId = $contactSvc->resolvePersonIdByEmail($email);
+                }
+                if ($linkedPersonId) {
+                    $db->prepare("UPDATE users SET person_id = ? WHERE id = ? AND person_id IS NULL")
+                       ->execute([$linkedPersonId, $newUserId]);
+                    if ($invitationId && $contactSvc->hasInvitationPersonColumn()) {
+                        $db->prepare("UPDATE invitations SET person_id = ? WHERE id = ? AND person_id IS NULL")
+                           ->execute([$linkedPersonId, $invitationId]);
+                    }
+                }
+            } catch (Throwable $e) {
+                $linkedPersonId = null; // привязка не должна ломать вход
+            }
+
             Auth::login([
                 'id'         => $newUserId,
                 'email'      => $email,
                 'name'       => $googleUser['name'],
                 'avatar_url' => $googleUser['avatar_url'],
-                'role'       => $assignedRole
+                'role'       => $assignedRole,
+                'person_id'  => $linkedPersonId
             ]);
 
             Response::redirect('/');

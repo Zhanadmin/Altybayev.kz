@@ -32,7 +32,15 @@ class AdminController
         $users = [];
         $stmtU = $db->query("SHOW TABLES LIKE 'users'");
         if ($stmtU->rowCount() > 0) {
-            $uStmt = $db->query("SELECT id, name, email, role, person_id, is_active, last_login_at, created_at FROM users ORDER BY id ASC");
+            // TASK-014 (note 16.11): имя связанной персоны и признак «карточка у нескольких пользователей»
+            $uStmt = $db->query(
+                "SELECT u.id, u.name, u.email, u.role, u.person_id, u.is_active, u.last_login_at, u.created_at,
+                        TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))) AS person_name,
+                        (SELECT COUNT(*) FROM users u2 WHERE u2.person_id = u.person_id) AS person_shared
+                 FROM users u
+                 LEFT JOIN persons p ON p.id = u.person_id
+                 ORDER BY u.id ASC"
+            );
             $users = $uStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
@@ -252,6 +260,13 @@ class AdminController
             if ($existingUser) {
                 $db->prepare("UPDATE users SET role = ?, is_active = 1, updated_at = NOW() WHERE id = ?")
                    ->execute([$role, (int)$existingUser['id']]);
+            }
+
+            // TASK-022: приглашение из админки — привязать к карточке, если email совпал с контактом человека
+            try {
+                (new \App\Services\PersonContactService($db))->linkByEmailMatch($email);
+            } catch (\Throwable $e) {
+                \App\Core\Logger::error('createInvitation link person: ' . $e->getMessage(), $e);
             }
 
             $this->auditInvitation(

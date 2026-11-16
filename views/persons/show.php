@@ -114,7 +114,7 @@ require __DIR__ . '/../layout/master_start.php';
                 <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>
                 <span><?= htmlspecialchars(I18n::t('btn_show_in_tree')) ?></span>
             </a>
-            <?php if ($canEdit): ?>
+            <?php if ($canEdit || !empty($canEditContacts)): /* TASK-032: «своя семья» тоже */ ?>
                 <button type="button" class="btn" onclick="openAddChildModal('M')">
                     <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_add_son')) ?></span>
@@ -127,7 +127,7 @@ require __DIR__ . '/../layout/master_start.php';
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
                 </button>
-            <?php elseif (!empty($canEditContacts)): ?>
+            <?php elseif (false): ?>
                 <!-- TASK-022: сам человек (не editor) — фото, обложка, контакты в том же окне -->
                 <button type="button" class="btn btn-primary" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
@@ -172,7 +172,7 @@ require __DIR__ . '/../layout/master_start.php';
                 <div class="island-head pc-kin-head"><svg class="orn orn-horn pc-horn-sm" aria-hidden="true"><use href="#o-horn"/></svg><h3><?= $lang === 'ru' ? 'Родовая принадлежность (Ру)' : 'Рулық мәліметі' ?></h3></div>
                 <dl class="props pc-props-tight">
                     <dt><?= $lang === 'ru' ? 'Род (Ру)' : 'Руы' ?></dt>
-                    <dd><?= htmlspecialchars((string)($person['clan_ru'] ?: ($lang === 'ru' ? 'не указан' : 'белгісіз'))) ?></dd>
+                    <dd><?= clan_tamga_html($person['clan_ru'] ?? '') ?><?= htmlspecialchars((string)($person['clan_ru'] ?:($lang === 'ru' ? 'не указан' : 'белгісіз'))) ?></dd>
                     <?php if (!empty($person['clan_subru'])): ?>
                         <dt><?= $lang === 'ru' ? 'Подрод' : 'Тармағы' ?></dt>
                         <dd><?= htmlspecialchars((string)$person['clan_subru']) ?></dd>
@@ -197,7 +197,14 @@ require __DIR__ . '/../layout/master_start.php';
                 </div>
 
                 <div id="ctView">
-                    <?php if (empty($ctPhones) && $ctEmail === ''): ?>
+                    <?php
+                    // TASK-035: соцсети — только вошедшим (контакты уже за auth), только https-ссылки
+                    $ctSocials = $contacts['socials'] ?? [];
+                    $ctSocialMeta = ['instagram' => ['IG', '#c13584'], 'facebook' => ['f', '#1877f2'], 'telegram' => ['TG', '#229ed9'],
+                        'whatsapp' => ['WA', '#25d366'], 'tiktok' => ['TT', '#111'], 'youtube' => ['YT', '#e00'],
+                        'vk' => ['VK', '#0077ff'], 'linkedin' => ['in', '#0a66c2'], 'other' => ['↗', '#6b7280']];
+                    ?>
+                    <?php if (empty($ctPhones) && $ctEmail === '' && empty($ctSocials)): ?>
                         <div class="muted"><?= htmlspecialchars(I18n::t('contacts_empty')) ?></div>
                     <?php else: ?>
                         <dl class="props pc-props-tight">
@@ -217,6 +224,23 @@ require __DIR__ . '/../layout/master_start.php';
                             <?php if ($ctEmail !== ''): ?>
                                 <dt><?= htmlspecialchars(I18n::t('contacts_email')) ?></dt>
                                 <dd><a href="mailto:<?= htmlspecialchars($ctEmail) ?>"><?= htmlspecialchars($ctEmail) ?></a></dd>
+                            <?php endif; ?>
+                            <?php if (!empty($ctSocials)): ?>
+                                <dt><?= htmlspecialchars(I18n::t('socials_title')) ?></dt>
+                                <dd>
+                                    <span class="ct-socials" style="display:inline-flex; gap:8px; flex-wrap:wrap;">
+                                    <?php foreach ($ctSocials as $so):
+                                        if (!preg_match('#^https://#', (string)$so['url'])) { continue; }
+                                        $sm = $ctSocialMeta[$so['type']] ?? $ctSocialMeta['other'];
+                                        $sName = \App\Services\PersonContactService::SOCIALS[$so['type']][0] ?? '';
+                                        if ($sName === '') { $sName = (string)(parse_url($so['url'], PHP_URL_HOST) ?: I18n::t('socials_other')); }
+                                    ?>
+                                        <a class="ct-social" href="<?= htmlspecialchars($so['url'], ENT_QUOTES) ?>" target="_blank" rel="noopener noreferrer nofollow"
+                                           title="<?= htmlspecialchars($sName, ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars($sName, ENT_QUOTES) ?>"
+                                           style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:<?= $sm[1] ?>; color:#fff; font-weight:700; font-size:13px; text-decoration:none;"><?= htmlspecialchars($sm[0]) ?></a>
+                                    <?php endforeach; ?>
+                                    </span>
+                                </dd>
                             <?php endif; ?>
                         </dl>
                     <?php endif; ?>

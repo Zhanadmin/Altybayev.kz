@@ -56,6 +56,9 @@ $navItems = [
     'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => ($lang === 'ru' ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
     'history'  => ['href' => '/history',  'icon' => 'i-history',  'label' => I18n::t('nav_history'),  'count' => null,  'group' => 2],
 ];
+if ($canEdit) {
+    $navItems['clans'] = ['href' => '/admin/clans', 'icon' => 'i-tree', 'label' => 'Ру таңбалары', 'count' => null, 'group' => 3]; // TASK-030
+}
 if ($isAdmin) {
     $navItems['admin'] = ['href' => '/admin', 'icon' => 'i-settings', 'label' => I18n::t('nav_admin'), 'count' => null, 'group' => 3];
 }
@@ -101,7 +104,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- TASK-012: заголовки — Cormorant Garamond, текст — PT Sans (обе с казахскими буквами ә ғ қ ң ө ұ ү һ і) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=15">
     <link rel="stylesheet" href="/assets/css/book.css?v=6">
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
@@ -119,6 +122,7 @@ $dsThemeReady = !empty($dsThemeReady);
            :where() — нулевая специфичность, классы дизайн-системы его перекрывают. */
         :where(.ds-page) *, :where(.ds-page) *::before, :where(.ds-page) *::after { margin: 0; padding: 0; }
     </style>
+    <?php include __DIR__ . '/../partials/clan_tamga.php'; // TASK-030 ?>
 </head>
 <body>
 

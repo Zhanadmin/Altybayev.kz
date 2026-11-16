@@ -658,7 +658,7 @@ p { margin: 0; }
 .fm-ancestors { border-color: var(--c-accent); }
 .fm-card-head { display: flex; align-items: center; gap: var(--sp-2); }
 .fm-card-head .small { margin-right: auto; }
-.fm-together { margin-right: auto; font-size: 1.05rem; color: var(--text, inherit); }
+.fm-together { margin: 0; font-size: var(--fs-xs); font-weight: 400; line-height: 1.2; text-align: center; white-space: nowrap; }
 /* TASK-020: вложенные семьи детей */
 /* TASK-025: ряд детей — на всю ширину сетки сразу под карточкой семьи, карточки в строку с переносом */
 /* Все карточки семей — одной ширины (колонки фиксированной ширины) */

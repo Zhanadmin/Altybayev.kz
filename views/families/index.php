@@ -99,7 +99,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php if ($h): ?>
                                         <a href="/person/<?= (int)$h['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['h_name']) ?>"><?= htmlspecialchars($f['h_name']) ?></a>
                                         <div class="small muted">
-                                            <?= $h['clan_ru'] ? htmlspecialchars($h['clan_ru']) : '' ?>
+                                            <?= $h['clan_ru'] ? clan_tamga_html($h['clan_ru']) . htmlspecialchars($h['clan_ru']) : '' ?>
                                             <?php $hl = I18n::lifeLabel($h); if ($hl['short'] !== ''): ?> · <span title="<?= htmlspecialchars($hl['title']) ?>"><?= htmlspecialchars($hl['short']) ?></span><?php endif; ?>
                                         </div>
                                     <?php else: ?>
@@ -109,7 +109,7 @@ require __DIR__ . '/../layout/master_start.php';
 
                                 <div class="fm-rings-col" style="display:flex;flex-direction:column;align-items:center;gap:2px">
                                     <svg class="couple-rings fm-rings<?= $isMarried ? '' : ' is-apart' ?>" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
-                                    <?php if ($together !== ''): ?><span class="fm-together small"<?= $mStart !== '' ? ' title="' . htmlspecialchars(($lang === 'ru' ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><strong><?= htmlspecialchars($together) ?></strong></span><?php endif; ?>
+                                    <?php if ($together !== ''): ?><span class="fm-together small muted"<?= $mStart !== '' ? ' title="' . htmlspecialchars(($lang === 'ru' ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><?= htmlspecialchars($together) ?></span><?php endif; ?>
                                 </div>
 
                                 <div class="island-sub fm-spouse is-f">
@@ -162,7 +162,7 @@ require __DIR__ . '/../layout/master_start.php';
                                                 <?php $ul = I18n::lifeLabel($c); if ($ul['short'] !== ''): ?>
                                                     <span title="<?= htmlspecialchars($ul['title']) ?>">· <?= htmlspecialchars($ul['short']) ?></span>
                                                 <?php endif; ?>
-                                                <span><?= $lang === 'ru' ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
+                                                <span class="fm-uz-note">⚭ <?= $lang === 'ru' ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
                                             </a>
                                         <?php continue; endif; ?>
                                             <a href="/person/<?= (int)$c['id'] ?>" class="badge pc-tag" title="<?= ($c['gender'] === 'M') ? ($lang === 'ru' ? 'Сын' : 'Ұлы') : ($lang === 'ru' ? 'Дочь' : 'Қызы') ?>">

@@ -184,7 +184,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             <td class="col-opt-lg pp-gender-cell"><span class="g-badge g-icon <?= $isMale ? 'is-m' : 'is-f' ?>" title="<?= $isMale ? 'Ер / Мужской' : 'Әйел / Женский' ?>" aria-label="<?= $isMale ? 'Ер / Мужской' : 'Әйел / Женский' ?>" role="img"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= $isMale ? 'g-m' : 'g-f' ?><?= $isDeceased ? 'G' : '' ?>"/></svg></span></td>
 
             <!-- Руы -->
-            <td class="col-opt-xl clip"><span class="badge" title="<?= htmlspecialchars($clanText) ?>"><?= htmlspecialchars($clanText) ?></span></td>
+            <td class="col-opt-xl clip"><span class="badge" title="<?= htmlspecialchars($clanText) ?>"><?= clan_tamga_html($p['clan_ru'] ?? '') ?><?= htmlspecialchars($clanText) ?></span></td>
 
             <!-- Жылдары -->
             <?php $yearsParts = explode(' · ', $yearsDisp, 2); ?>

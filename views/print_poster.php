@@ -428,7 +428,12 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
                     <div class="poster-ornament">◆ ◆ ◆</div>
                     <h1 class="poster-main-title"><?= $isKk ? 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ' : 'ШЕЖИРЕ РОДА АЛТЫБАЕВТАР' ?></h1>
                     <div class="poster-subtitle">
-                        <?= htmlspecialchars($posterData['title_kk']) ?> &bull; <?= $isKk ? 'Руы:' : 'Род:' ?> <strong><?= htmlspecialchars($clan) ?></strong>
+                        <?= htmlspecialchars($posterData['title_kk']) ?> &bull; <?= $isKk ? 'Руы:' : 'Род:' ?> <?php
+                        $__tm = [];
+                        try { $__tm = (new \App\Services\ClanService())->tamgaMap(); } catch (\Throwable $e) {}
+                        $__tu = $__tm[mb_strtolower(trim((string)$clan))] ?? '';
+                        if ($__tu !== '') { echo '<img src="' . htmlspecialchars($__tu, ENT_QUOTES) . '" alt="" style="height:1.1em;width:auto;max-width:1.6em;vertical-align:-0.2em;margin-right:.2em;">'; }
+                    ?><strong><?= htmlspecialchars($clan) ?></strong>
                     </div>
                     <div class="poster-meta">
                         <span><?= $isKk ? 'Буын саны:' : 'Колен:' ?> <strong><?= count($levels) ?></strong></span>

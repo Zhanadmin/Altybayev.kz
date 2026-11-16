@@ -1,6 +1,7 @@
 <?php
 // TASK-022 (замечание 16.11 19:26): фото (портрет) и обложка человека в окне «Өңдеу».
-// Подключается внутрь формы редактирования (master_end.php и tree.php). Логика — public/assets/js/person-media-edit.js.
+// TASK-033: обложка — настоящий фон вверху окна, поверх аватарка; мелкие кнопки «Изменить» в углу.
+// Подключается в начале формы редактирования (master_end.php и tree.php). Логика — public/assets/js/person-media-edit.js.
 declare(strict_types=1);
 
 use App\Core\I18n;
@@ -9,33 +10,29 @@ $pmeE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
 $pmeJs = static fn(string $k): string => (string)json_encode(I18n::t($k), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $pmeAccept = 'image/jpeg,image/png,image/webp';
 ?>
-<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=1">
+<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=2">
 <div id="pmeBox" class="pme" style="display:none;">
-    <div class="pme-title"><?= $pmeE('pme_title') ?></div>
+    <div id="pmeNoMigration" class="pme-note" style="display:none;"><?= $pmeE('pme_no_migration') ?></div>
 
-    <div class="pme-block">
-        <div class="pme-label"><?= $pmeE('pme_avatar') ?></div>
-        <div class="pme-row">
-            <div class="pme-avatar" id="pmeAvatar"></div>
-            <div class="pme-actions">
-                <label class="pme-btn" for="pmeAvatarInput"><?= $pmeE('pme_upload') ?></label>
-                <input type="file" id="pmeAvatarInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeAvatarFile(this)">
-                <button type="button" class="pme-btn" onclick="pmeOpenPicker('avatar')"><?= $pmeE('pme_from_album') ?></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="pme-block" id="pmeCoverBlock">
-        <div class="pme-label"><?= $pmeE('pme_cover') ?></div>
-        <div id="pmeNoMigration" class="pme-note" style="display:none;"><?= $pmeE('pme_no_migration') ?></div>
+    <div class="pme-hero" id="pmeCoverBlock">
         <div class="pme-cover" id="pmeCover">
             <div class="pme-cover-dim" id="pmeCoverDim"></div>
             <div class="pme-cover-empty-text" id="pmeCoverEmptyText"><?= $pmeE('pme_cover_default') ?></div>
-        </div>
-        <div class="pme-actions">
-            <label class="pme-btn" for="pmeCoverInput"><?= $pmeE('pme_upload') ?></label>
+            <label class="pme-mini pme-mini-cover" for="pmeCoverInput" title="<?= $pmeE('pme_cover') ?>"><?= $pmeE('pme_change') ?></label>
             <input type="file" id="pmeCoverInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeCoverFile(this)">
-            <button type="button" class="pme-btn" onclick="pmeOpenPicker('cover')"><?= $pmeE('pme_from_album') ?></button>
+        </div>
+        <div class="pme-avatar-wrap">
+            <div class="pme-avatar" id="pmeAvatar"></div>
+            <label class="pme-mini pme-mini-avatar" for="pmeAvatarInput" title="<?= $pmeE('pme_avatar') ?>" aria-label="<?= $pmeE('pme_avatar') ?>">&#9998;</label>
+            <input type="file" id="pmeAvatarInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeAvatarFile(this)">
+        </div>
+    </div>
+
+    <details class="pme-more">
+        <summary><?= $pmeE('pme_more_opts') ?></summary>
+        <div class="pme-actions">
+            <button type="button" class="pme-btn" onclick="pmeOpenPicker('avatar')"><?= $pmeE('pme_avatar') ?>: <?= $pmeE('pme_from_album') ?></button>
+            <button type="button" class="pme-btn" onclick="pmeOpenPicker('cover')"><?= $pmeE('pme_cover') ?>: <?= $pmeE('pme_from_album') ?></button>
             <button type="button" class="pme-btn" id="pmeCoverRemove" onclick="pmeCoverRemove()"><?= $pmeE('pme_remove') ?></button>
         </div>
         <div class="pme-presets">
@@ -53,7 +50,7 @@ $pmeAccept = 'image/jpeg,image/png,image/webp';
             <label class="pme-slider"><span><?= $pmeE('pme_dim') ?></span>
                 <input type="range" id="pmeDim" min="0" max="70" value="30" oninput="pmeTune()"></label>
         </div>
-    </div>
+    </details>
 </div>
 
 <div id="pmeOverlay" class="pme-overlay" style="display:none;" role="dialog" aria-modal="true">

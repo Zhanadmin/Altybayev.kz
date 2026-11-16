@@ -1,5 +1,15 @@
 /* TASK-022: фото и обложка в окне «Өңдеу» */
-.pme { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(128,128,128,.25); }
+.pme { margin: 0 0 14px; }
+/* TASK-033: обложка как фон, аватарка поверх, мелкие кнопки «Изменить» */
+.pme-hero { position: relative; margin-bottom: 54px; }
+.pme-avatar-wrap { position: absolute; left: 16px; bottom: -48px; width: 96px; height: 96px; }
+.pme-avatar-wrap .pme-avatar { width: 96px; height: 96px; border: 3px solid var(--c-surface, #fff); box-sizing: border-box; }
+.pme-mini { position: absolute; padding: 3px 9px; font-size: 12px; line-height: 1.4; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; z-index: 2; }
+.pme-mini:hover { background: rgba(0,0,0,.8); }
+.pme-mini-cover { right: 8px; top: 8px; }
+.pme-mini-avatar { right: -2px; bottom: 2px; width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; }
+.pme-more { font-size: 13px; }
+.pme-more summary { cursor: pointer; opacity: .75; }
 .pme-title { font-weight: 600; margin-bottom: 8px; }
 .pme-block { margin-bottom: 14px; }
 .pme-label { font-size: 13px; opacity: .8; margin-bottom: 6px; }

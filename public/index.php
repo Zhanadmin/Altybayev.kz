@@ -36,6 +36,13 @@ $router->post('/api/admin/invitations/create', 'App\Controllers\AdminController@
 $router->post('/api/admin/invitations/role', 'App\Controllers\AdminController@updateInvitationRole', ['auth', 'admin']);
 $router->post('/api/admin/invitations/revoke', 'App\Controllers\AdminController@revokeInvitation', ['auth', 'admin']);
 $router->post('/api/history/rollback', 'App\Controllers\HistoryController@rollback', ['auth', 'admin']);
+// TASK-030: справочник ру с таңба-знаками (editor и admin)
+$router->get('/admin/clans', 'App\Controllers\ClanController@index', ['auth', 'editor']);
+$router->get('/api/clans', 'App\Controllers\ClanController@list', ['auth']);
+$router->post('/api/clans/save', 'App\Controllers\ClanController@save', ['auth', 'editor']);
+$router->post('/api/clans/delete', 'App\Controllers\ClanController@delete', ['auth', 'editor']);
+$router->post('/api/clans/tamga/upload', 'App\Controllers\ClanController@tamgaUpload', ['auth', 'editor']);
+$router->post('/api/clans/tamga/delete', 'App\Controllers\ClanController@tamgaDelete', ['auth', 'editor']);
 
 // 3. Маршруты авторизации и аутентификации через Google
 $router->get('/login', 'App\Controllers\AuthController@showLogin');

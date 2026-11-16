@@ -51,96 +51,30 @@ $adRoleLabels = [
         </div>
     </div>
 
-    <!-- Список пользователей и управление ролями -->
-    <div class="island ad-island">
+    <!-- TASK-031: единый раздел «Доступ» — пользователи и приглашения -->
+    <?php
+    $acStatusLabels = [
+        'invited'  => $lang === 'ru' ? 'Приглашён' : 'Шақырылды',
+        'joined'   => $lang === 'ru' ? 'Вошёл' : 'Кірді',
+        'disabled' => $lang === 'ru' ? 'Отключён' : 'Өшірулі',
+    ];
+    $superEmail = strtolower(trim((string)\App\Core\Config::get('SUPER_ADMIN_EMAIL', 'zhandos.alt06@gmail.com')));
+    $meEmail = strtolower((string)($user['email'] ?? ''));
+    ?>
+    <div class="island ad-island" id="access">
         <div class="island-head ad-head">
             <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>
-            <h3><?= $lang === 'ru' ? 'Пользователи портала и управление доступом' : 'Пайдаланушылар және құқықтарды басқару' ?></h3>
+            <h3><?= $lang === 'ru' ? 'Доступ' : 'Қолжетімділік' ?></h3>
+            <div class="ad-head-actions">
+                <button type="button" class="btn btn-primary" id="inviteToggle" onclick="toggleInviteForm(true)">
+                    <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
+                    <span><?= $lang === 'ru' ? 'Пригласить' : 'Шақыру' ?></span>
+                </button>
+            </div>
         </div>
 
-        <div class="table-wrap">
-            <table class="table ad-table">
-                <thead>
-                    <tr>
-                        <th class="num" title="<?= $lang === 'ru' ? 'Номер пользователя' : 'Пайдаланушы нөмірі' ?>">№</th>
-                        <th><?= $lang === 'ru' ? 'Имя / Email' : 'Аты / Email' ?></th>
-                        <th class="ad-w-person col-opt-lg"><?= $lang === 'ru' ? 'Связанная персона' : 'Байланысты тұлға' ?></th>
-                        <th class="ad-w-role"><?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?></th>
-                        <th class="ad-w-login col-opt-md"><?= $lang === 'ru' ? 'Последний вход' : 'Соңғы кіруі' ?></th>
-                        <th class="ad-w-save actions"><span class="ad-sr"><?= $lang === 'ru' ? 'Действие' : 'Әрекет' ?></span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($users as $u):
-                        $uName = (string)$u['name'];
-                        $uEmail = (string)$u['email'];
-                        $uInitial = mb_substr($uName !== '' ? $uName : $uEmail, 0, 1);
-                    ?>
-                        <tr>
-                            <td class="num"><?= (int)$u['id'] ?></td>
-                            <td>
-                                <div class="person">
-                                    <span class="avatar" aria-hidden="true"><?= htmlspecialchars($uInitial) ?></span>
-                                    <div>
-                                        <div class="name" title="<?= htmlspecialchars($uName) ?>"><?= htmlspecialchars($uName) ?></div>
-                                        <div class="meta ad-mono" title="<?= htmlspecialchars($uEmail) ?>"><?= htmlspecialchars($uEmail) ?></div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="clip col-opt-lg">
-                                <?php if (!empty($u['person_id'])):
-                                    $pName = trim((string)($u['person_name'] ?? ''));
-                                ?>
-                                    <a href="/person/<?= (int)$u['person_id'] ?>" class="pp-name"
-                                       title="<?= $lang === 'ru' ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?> #<?= (int)$u['person_id'] ?>"><?= htmlspecialchars($pName !== '' ? $pName : ('#' . (int)$u['person_id'])) ?></a>
-                                    <?php if ((int)($u['person_shared'] ?? 0) > 1): ?>
-                                        <div class="small ad-warn" role="note"><?= $lang === 'ru' ? '⚠ Эта карточка привязана к нескольким пользователям' : '⚠ Бұл карточка бірнеше пайдаланушыға байланған' ?></div>
-                                    <?php endif; ?>
-                                <?php else: ?>
-                                    <span class="muted">—</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="ad-role">
-                                <select id="userRoleSelect_<?= (int)$u['id'] ?>" class="select" aria-label="<?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?>">
-                                    <?php foreach ($adRoleLabels as $roleKey => $roleLabel): ?>
-                                        <option value="<?= $roleKey ?>" <?= $u['role'] === $roleKey ? 'selected' : '' ?>><?= htmlspecialchars($roleLabel) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </td>
-                            <td class="clip muted small col-opt-md">
-                                <?= !empty($u['last_login_at']) ? date('d.m.Y H:i', strtotime($u['last_login_at'])) : '—' ?>
-                            </td>
-                            <td class="actions">
-                                <button type="button" class="btn btn-sm btn-icon" onclick="saveUserRole(<?= (int)$u['id'] ?>)"
-                                        aria-label="<?= $lang === 'ru' ? 'Сохранить роль' : 'Рөлді сақтау' ?>"
-                                        data-tip="<?= $lang === 'ru' ? 'Сохранить' : 'Сақтау' ?>">
-                                    <svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>
-                                </button>
-                                <?php if (strtolower($uEmail) !== strtolower(trim((string)\App\Core\Config::get('SUPER_ADMIN_EMAIL', 'zhandos.alt06@gmail.com'))) && (int)$u['id'] !== (int)($user['id'] ?? 0)): ?>
-                                    <button type="button" class="btn btn-sm" onclick="unlinkUser(<?= (int)$u['id'] ?>)">
-                                        <?= $lang === 'ru' ? 'Отвязать аккаунт' : 'Аккаунтты ажырату' ?>
-                                    </button>
-                                    <button type="button" class="btn btn-sm" onclick="deleteUser(<?= (int)$u['id'] ?>)">
-                                        <?= $lang === 'ru' ? 'Удалить' : 'Өшіру' ?>
-                                    </button>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Список приглашений -->
-    <div class="island ad-island">
-        <div class="island-head ad-head">
-            <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
-            <h3><?= $lang === 'ru' ? 'Приглашения (доступ в закрытую систему)' : 'Шақырулар (жабық жүйеге кіру)' ?></h3>
-        </div>
-
-        <!-- TASK-014: форма «Шақыру / Пригласить» -->
-        <form id="inviteForm" class="ad-invite" onsubmit="createInvitation(event)" novalidate>
+        <!-- Форма «Пригласить» (email, роль, карточка) -->
+        <form id="inviteForm" class="ad-invite" onsubmit="createInvitation(event)" novalidate hidden>
             <div class="form-row">
                 <div class="field">
                     <label for="inviteEmail">Gmail *</label>
@@ -155,6 +89,11 @@ $adRoleLabels = [
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="field">
+                    <label for="invitePerson"><?= $lang === 'ru' ? 'Карточка в шежіре (№)' : 'Шежіредегі карточка (№)' ?></label>
+                    <input type="number" id="invitePerson" name="person_id" class="input" min="1" step="1" inputmode="numeric"
+                           placeholder="<?= $lang === 'ru' ? 'необязательно' : 'міндетті емес' ?>">
+                </div>
             </div>
             <div class="field">
                 <label for="inviteNotes"><?= $lang === 'ru' ? 'Заметка — кто это' : 'Ескертпе — бұл кім' ?></label>
@@ -162,6 +101,7 @@ $adRoleLabels = [
                        placeholder="<?= $lang === 'ru' ? 'например: Әкем — Ғабит' : 'мысалы: Әкем — Ғабит' ?>">
             </div>
             <div class="ad-invite-actions">
+                <button type="button" class="btn" onclick="toggleInviteForm(false)"><?= $lang === 'ru' ? 'Отмена' : 'Бас тарту' ?></button>
                 <button type="submit" class="btn btn-primary" id="inviteSubmit">
                     <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
                     <span>Шақыру / Пригласить</span>
@@ -169,81 +109,148 @@ $adRoleLabels = [
             </div>
         </form>
 
-        <?php
-        $invStatusLabels = [
-            'pending'  => $lang === 'ru' ? 'Ожидает' : 'Күтуде',
-            'accepted' => $lang === 'ru' ? 'Принято' : 'Қабылданды',
-            'revoked'  => $lang === 'ru' ? 'Отозвано' : 'Қайтарылды',
-        ];
-        ?>
-        <?php if (empty($invitations)): ?>
-            <div class="hm-empty ad-empty">
-                <?= $lang === 'ru' ? 'Приглашений пока нет' : 'Берілген шақырулар жоқ' ?>
-            </div>
+        <?php if (empty($accessRows)): ?>
+            <div class="hm-empty ad-empty"><?= $lang === 'ru' ? 'Пользователей и приглашений пока нет' : 'Пайдаланушылар мен шақырулар жоқ' ?></div>
         <?php else: ?>
-            <div class="table-wrap">
-                <table class="table ad-table">
-                    <thead>
+        <div class="table-wrap">
+            <table class="table ad-table">
+                <thead>
+                    <tr>
+                        <th><?= $lang === 'ru' ? 'Имя / Email' : 'Аты / Email' ?></th>
+                        <th><?= $lang === 'ru' ? 'Статус' : 'Күйі' ?></th>
+                        <th class="ad-w-role"><?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?></th>
+                        <th class="ad-w-person col-opt-lg"><?= $lang === 'ru' ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?></th>
+                        <th class="ad-w-login col-opt-md"><?= $lang === 'ru' ? 'Последний вход' : 'Соңғы кіруі' ?></th>
+                        <th class="actions"><span class="ad-sr"><?= $lang === 'ru' ? 'Действия' : 'Әрекеттер' ?></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($accessRows as $r):
+                        $rEmail = (string)$r['email'];
+                        $rName = (string)$r['name'];
+                        $isUser = $r['kind'] === 'user';
+                        $isProtected = (strtolower($rEmail) === $superEmail) || (strtolower($rEmail) === $meEmail);
+                        $rid = $isUser ? 'u' . (int)$r['user_id'] : 'i' . (int)$r['invitation_id'];
+                        $rInitial = mb_substr($rName !== '' ? $rName : $rEmail, 0, 1);
+                        $rStatus = (string)$r['status'];
+                    ?>
                         <tr>
-                            <th><?= $lang === 'ru' ? 'Email / заметка' : 'Email / ескертпе' ?></th>
-                            <th class="ad-w-invrole"><?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?></th>
-                            <th><?= $lang === 'ru' ? 'Статус' : 'Күйі' ?></th>
-                            <th class="ad-w-login col-opt-md"><?= $lang === 'ru' ? 'Дата' : 'Уақыты' ?></th>
-                            <th class="actions"><span class="ad-sr"><?= $lang === 'ru' ? 'Действие' : 'Әрекет' ?></span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($invitations as $inv):
-                            $invId = (int)$inv['id'];
-                            $invEmail = (string)($inv['email'] ?? '');
-                            $invNotes = (string)($inv['notes'] ?? '');
-                            $invStatus = (string)($inv['status'] ?? 'pending');
-                            $invRevoked = ($invStatus === 'revoked');
-                        ?>
-                            <tr>
-                                <td>
-                                    <div class="ad-mono clip" title="<?= htmlspecialchars($invEmail) ?>"><?= htmlspecialchars($invEmail) ?></div>
-                                    <?php if ($invNotes !== ''): ?>
-                                        <div class="meta muted small"><?= htmlspecialchars($invNotes) ?></div>
+                            <td>
+                                <div class="person">
+                                    <span class="avatar" aria-hidden="true"><?= htmlspecialchars($rInitial) ?></span>
+                                    <div>
+                                        <?php if ($rName !== ''): ?>
+                                            <div class="name" title="<?= htmlspecialchars($rName) ?>"><?= htmlspecialchars($rName) ?></div>
+                                        <?php endif; ?>
+                                        <div class="meta ad-mono" title="<?= htmlspecialchars($rEmail) ?>"><?= htmlspecialchars($rEmail) ?></div>
+                                        <?php if ((string)$r['notes'] !== ''): ?>
+                                            <div class="meta muted small"><?= htmlspecialchars((string)$r['notes']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="clip">
+                                <span class="badge <?= $rStatus === 'joined' ? 'badge-accent' : '' ?>"><?= htmlspecialchars($acStatusLabels[$rStatus] ?? $rStatus) ?></span>
+                            </td>
+                            <td class="ad-role">
+                                <?php if ($isProtected): ?>
+                                    <span class="badge"><?= htmlspecialchars($adRoleLabels[$r['role']] ?? (string)$r['role']) ?></span>
+                                <?php else: ?>
+                                    <select id="roleSelect_<?= $rid ?>" class="select" aria-label="<?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?>">
+                                        <?php foreach ($adRoleLabels as $roleKey => $roleLabel): ?>
+                                            <option value="<?= $roleKey ?>" <?= $r['role'] === $roleKey ? 'selected' : '' ?>><?= htmlspecialchars($roleLabel) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endif; ?>
+                            </td>
+                            <td class="clip col-opt-lg">
+                                <?php if ((int)$r['person_id'] > 0):
+                                    $pName = trim((string)$r['person_name']);
+                                ?>
+                                    <a href="/person/<?= (int)$r['person_id'] ?>" class="pp-name"
+                                       title="<?= $lang === 'ru' ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?> #<?= (int)$r['person_id'] ?>"><?= htmlspecialchars($pName !== '' ? $pName : ('#' . (int)$r['person_id'])) ?></a>
+                                    <?php if ((int)$r['person_shared'] > 1): ?>
+                                        <div class="small ad-warn" role="note"><?= $lang === 'ru' ? '⚠ Эта карточка привязана к нескольким пользователям' : '⚠ Бұл карточка бірнеше пайдаланушыға байланған' ?></div>
                                     <?php endif; ?>
-                                </td>
-                                <td class="ad-role">
-                                    <?php if ($invRevoked): ?>
-                                        <span class="badge"><?= htmlspecialchars($adRoleLabels[$inv['role']] ?? (string)$inv['role']) ?></span>
-                                    <?php else: ?>
-                                        <select id="invRoleSelect_<?= $invId ?>" class="select" aria-label="<?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?>">
-                                            <?php foreach ($adRoleLabels as $roleKey => $roleLabel): ?>
-                                                <option value="<?= $roleKey ?>" <?= ($inv['role'] ?? '') === $roleKey ? 'selected' : '' ?>><?= htmlspecialchars($roleLabel) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                <?php else: ?>
+                                    <span class="muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="clip muted small col-opt-md">
+                                <?= !empty($r['last_login_at']) ? date('d.m.Y H:i', strtotime((string)$r['last_login_at'])) : '—' ?>
+                            </td>
+                            <td class="actions">
+                                <div class="ad-actions">
+                                <?php if (!$isProtected): ?>
+                                    <button type="button" class="btn btn-sm" onclick="saveAccessRole('<?= $rid ?>')">
+                                        <?= $lang === 'ru' ? 'Сменить роль' : 'Рөлді өзгерту' ?>
+                                    </button>
+                                    <?php if ($isUser && (int)$r['person_id'] > 0): ?>
+                                        <button type="button" class="btn btn-sm" onclick="unlinkUser(<?= (int)$r['user_id'] ?>)">
+                                            <?= $lang === 'ru' ? 'Отвязать' : 'Ажырату' ?>
+                                        </button>
                                     <?php endif; ?>
-                                </td>
-                                <td class="clip">
-                                    <span class="badge <?= $invStatus === 'accepted' ? 'badge-accent' : '' ?>"><?= htmlspecialchars($invStatusLabels[$invStatus] ?? $invStatus) ?></span>
-                                </td>
-                                <td class="clip muted small col-opt-md">
-                                    <?= !empty($inv['created_at']) ? date('d.m.Y H:i', strtotime($inv['created_at'])) : '—' ?>
-                                </td>
-                                <td class="actions">
-                                    <?php if ($invRevoked): ?>
+                                    <?php if ($rStatus !== 'disabled' && (int)$r['invitation_id'] > 0): ?>
+                                        <button type="button" class="btn btn-sm" onclick="revokeInvitation(<?= (int)$r['invitation_id'] ?>)">
+                                            <?= $lang === 'ru' ? 'Отключить' : 'Бұғаттау' ?>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if ($rStatus === 'invited'): ?>
+                                        <button type="button" class="btn btn-sm" onclick="copyInviteText(this)"
+                                                data-email="<?= htmlspecialchars($rEmail) ?>">
+                                            <?= $lang === 'ru' ? 'Повторно отправить' : 'Қайта жіберу' ?>
+                                        </button>
+                                    <?php elseif ($rStatus === 'disabled'): ?>
                                         <button type="button" class="btn btn-sm"
-                                                data-email="<?= htmlspecialchars($invEmail) ?>"
-                                                data-role="<?= htmlspecialchars((string)$inv['role']) ?>"
-                                                data-notes="<?= htmlspecialchars($invNotes) ?>"
+                                                data-email="<?= htmlspecialchars($rEmail) ?>"
+                                                data-role="<?= htmlspecialchars((string)$r['role']) ?>"
+                                                data-notes="<?= htmlspecialchars((string)$r['notes']) ?>"
+                                                data-person="<?= (int)$r['person_id'] ?>"
                                                 onclick="prefillInvite(this)">
                                             <?= $lang === 'ru' ? 'Пригласить снова' : 'Қайта шақыру' ?>
                                         </button>
-                                    <?php else: ?>
-                                        <button type="button" class="btn btn-sm" onclick="saveInvitationRole(<?= $invId ?>)">
-                                            <?= $lang === 'ru' ? 'Сменить роль' : 'Рөлді өзгерту' ?>
-                                        </button>
-                                        <button type="button" class="btn btn-sm" onclick="revokeInvitation(<?= $invId ?>)">
-                                            <?= $lang === 'ru' ? 'Отозвать' : 'Қайтару' ?>
+                                    <?php endif; ?>
+                                    <?php if ($isUser): ?>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser(<?= (int)$r['user_id'] ?>)">
+                                            <?= $lang === 'ru' ? 'Удалить' : 'Жою' ?>
                                         </button>
                                     <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
+                                <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- TASK-032: добавления и правки обычных родственников -->
+    <div class="island ad-island" id="additions">
+        <div class="island-head ad-head">
+            <h3><?= $lang === 'ru' ? 'Новое от родственников' : 'Туыстардан жаңалар' ?></h3>
+        </div>
+        <?php if (empty($recentAdditions)): ?>
+            <p class="muted" style="margin:0 0 12px;"><?= $lang === 'ru' ? 'Пока ничего не добавляли.' : 'Әзірге ештеңе қосылған жоқ.' ?></p>
+        <?php else: ?>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr>
+                        <th><?= $lang === 'ru' ? 'Когда' : 'Уақыты' ?></th>
+                        <th><?= $lang === 'ru' ? 'Кто' : 'Кім' ?></th>
+                        <th><?= $lang === 'ru' ? 'Что' : 'Не' ?></th>
+                        <th></th>
+                    </tr></thead>
+                    <tbody>
+                    <?php foreach ($recentAdditions as $ra): ?>
+                        <tr>
+                            <td><?= htmlspecialchars((string)$ra['created_at']) ?></td>
+                            <td><?= htmlspecialchars((string)$ra['who']) ?></td>
+                            <td><?= htmlspecialchars((string)$ra['action']) ?> · <?= htmlspecialchars((string)$ra['summary']) ?></td>
+                            <td><a href="/history?table=<?= urlencode((string)$ra['entity_table']) ?>"><?= $lang === 'ru' ? 'История / откат' : 'Тарих / қайтару' ?></a></td>
+                        </tr>
+                    <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
@@ -284,19 +291,25 @@ $adRoleLabels = [
 </div>
 
 <style>
-    /* TASK-014: форма приглашения в стиле островов админки */
+    /* TASK-014/031: раздел «Доступ» */
     .ad-warn { color: var(--danger, #b42318); white-space: normal; }
+    .ad-head { display: flex; align-items: center; gap: var(--sp-3, 12px); flex-wrap: wrap; }
+    .ad-head h3 { margin: 0; }
+    .ad-head-actions { margin-left: auto; }
     .ad-invite { margin: 0 0 var(--sp-5, 20px); display: grid; gap: var(--sp-3, 12px); }
-    .ad-invite-actions { display: flex; justify-content: flex-end; }
+    .ad-invite[hidden] { display: none; }
+    .ad-invite-actions { display: flex; justify-content: flex-end; gap: 8px; }
     .ad-table td.actions { white-space: nowrap; }
-    .ad-table td.actions .btn + .btn { margin-left: 6px; }
+    /* кнопки строки — всегда в одну линию, при нехватке места прокручивается таблица, а не ломаются кнопки */
+    .ad-actions { display: flex; flex-wrap: nowrap; gap: 6px; justify-content: flex-end; align-items: center; }
+    .ad-actions .btn { white-space: nowrap; flex: 0 0 auto; }
 </style>
 
 <script>
     const AD_CSRF = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
     const AD_RU = <?= $lang === 'ru' ? 'true' : 'false' ?>;
 
-    // TASK-014: общий POST для приглашений (CSRF в теле запроса)
+    // общий POST для действий админки (CSRF в теле запроса)
     async function adPost(url, fields) {
         const body = new URLSearchParams();
         body.append('csrf_token', AD_CSRF);
@@ -314,11 +327,21 @@ $adRoleLabels = [
         return data;
     }
 
+    function toggleInviteForm(show) {
+        const f = document.getElementById('inviteForm');
+        f.hidden = !show;
+        if (show) {
+            f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            document.getElementById('inviteEmail').focus();
+        }
+    }
+
     async function createInvitation(e) {
         e.preventDefault();
         const email = document.getElementById('inviteEmail').value.trim().toLowerCase();
         const role = document.getElementById('inviteRole').value;
         const notes = document.getElementById('inviteNotes').value.trim();
+        const person_id = document.getElementById('invitePerson').value.trim();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             showAppToast(AD_RU ? 'Введите корректный e-mail' : 'Дұрыс e-mail енгізіңіз', 'error');
             document.getElementById('inviteEmail').focus();
@@ -327,7 +350,7 @@ $adRoleLabels = [
         const btn = document.getElementById('inviteSubmit');
         btn.disabled = true;
         try {
-            await adPost('/api/admin/invitations/create', { email, role, notes });
+            await adPost('/api/admin/invitations/create', { email, role, notes, person_id });
             showAppToast(AD_RU ? 'Приглашение сохранено. Человек может входить через Google.' : 'Шақыру сақталды. Енді ол Google арқылы кіре алады.', 'success');
             setTimeout(() => window.location.reload(), 900);
         } catch (err) {
@@ -336,10 +359,18 @@ $adRoleLabels = [
         }
     }
 
-    async function saveInvitationRole(id) {
-        const role = document.getElementById(`invRoleSelect_${id}`).value;
+    // Смена роли: строка пользователя (u<id>) или приглашения без входа (i<id>)
+    async function saveAccessRole(rid) {
+        const sel = document.getElementById('roleSelect_' + rid);
+        if (!sel) return;
+        const role = sel.value;
+        const id = parseInt(rid.slice(1), 10);
         try {
-            await adPost('/api/admin/invitations/role', { id, role });
+            if (rid.charAt(0) === 'u') {
+                await adPost('/api/admin/user/role', { user_id: id, role });
+            } else {
+                await adPost('/api/admin/invitations/role', { id, role });
+            }
             showAppToast(AD_RU ? 'Роль изменена' : 'Рөл өзгертілді', 'success');
             setTimeout(() => window.location.reload(), 900);
         } catch (err) {
@@ -349,12 +380,12 @@ $adRoleLabels = [
 
     async function revokeInvitation(id) {
         const msg = AD_RU
-            ? 'Отозвать приглашение? Если человек уже входил, его доступ будет закрыт (данные не удаляются).'
-            : 'Шақыруды қайтару керек пе? Егер ол кірген болса, кіру құқығы жабылады (деректер өшірілмейді).';
+            ? 'Отключить доступ? Если человек уже входил, его аккаунт будет заблокирован (данные не удаляются). Потом можно пригласить снова.'
+            : 'Қолжетімділікті өшіру керек пе? Егер ол кірген болса, аккаунты бұғатталады (деректер өшірілмейді).';
         if (!window.confirm(msg)) return;
         try {
             await adPost('/api/admin/invitations/revoke', { id });
-            showAppToast(AD_RU ? 'Приглашение отозвано' : 'Шақыру қайтарылды', 'success');
+            showAppToast(AD_RU ? 'Доступ отключён' : 'Қолжетімділік өшірілді', 'success');
             setTimeout(() => window.location.reload(), 900);
         } catch (err) {
             showAppToast('Қате / Ошибка: ' + err.message, 'error');
@@ -390,36 +421,27 @@ $adRoleLabels = [
         }
     }
 
+    // Отключённого — заново пригласить: открыть форму с его данными
     function prefillInvite(btn) {
+        toggleInviteForm(true);
         document.getElementById('inviteEmail').value = btn.dataset.email || '';
         document.getElementById('inviteRole').value = btn.dataset.role || 'viewer';
         document.getElementById('inviteNotes').value = btn.dataset.notes || '';
-        document.getElementById('inviteForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        document.getElementById('inviteEmail').focus();
+        const p = parseInt(btn.dataset.person || '0', 10);
+        document.getElementById('invitePerson').value = p > 0 ? String(p) : '';
     }
 
-    async function saveUserRole(userId) {
-        const select = document.getElementById(`userRoleSelect_${userId}`);
-        const role = select.value;
-        const formData = new URLSearchParams();
-        formData.append('csrf_token', AD_CSRF);
-        formData.append('user_id', userId);
-        formData.append('role', role);
-
+    // «Повторно отправить»: письма с сайта не уходят — копируем текст приглашения, чтобы переслать вручную
+    async function copyInviteText(btn) {
+        const url = window.location.origin + '/login';
+        const text = AD_RU
+            ? 'Вас пригласили в семейное шежіре. Войдите через Google (' + btn.dataset.email + '): ' + url
+            : 'Сізді шежіреге шақырды. Google (' + btn.dataset.email + ') арқылы кіріңіз: ' + url;
         try {
-            const res = await fetch('/api/admin/user/role', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData.toString()
-            });
-            const data = await res.json();
-            if (data && (data.success || data.status === 'success')) {
-                showAppToast(<?= json_encode($lang === 'ru' ? 'Роль пользователя успешно сохранена!' : 'Пайдаланушы рөлі сәтті сақталды!', JSON_UNESCAPED_UNICODE) ?>, 'success');
-            } else {
-                showAppToast('Қате: ' + ((data && data.error) || 'Сақтау мүмкін болмады'), 'error');
-            }
-        } catch (err) {
-            showAppToast('Сұраныс қатесі: ' + err.message, 'error');
+            await navigator.clipboard.writeText(text);
+            showAppToast(AD_RU ? 'Текст приглашения скопирован — отправьте его человеку' : 'Шақыру мәтіні көшірілді — адамға жіберіңіз', 'success');
+        } catch (e) {
+            window.prompt(AD_RU ? 'Скопируйте текст приглашения:' : 'Шақыру мәтінін көшіріңіз:', text);
         }
     }
 

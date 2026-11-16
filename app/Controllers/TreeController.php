@@ -49,6 +49,10 @@ class TreeController
             'userPersonId' => $userPersonId,
             'canEdit' => Auth::canEdit(),
             'isAdmin' => Auth::isAdmin(),
+            // TASK-032: свой круг (я, супруг(а), дети) — кнопка «Өңдеу» только у них; сервер проверяет заново
+            'ownCircle' => (!Auth::canEdit() && !empty($user['person_id']))
+                ? \App\Services\PersonAccessService::make()->circleOf((int)$user['person_id'])
+                : [],
             'kinshipTerms' => $allTerms,
             'conceptArtUrl' => $conceptArtUrl,
         ]);
@@ -441,6 +445,7 @@ class TreeController
                 $contactsOut = [
                     'phones'       => array_map(static fn($ph) => \App\Services\PersonContactService::formatPhone($ph), $ct['phones']),
                     'email'        => $ct['emails'][0] ?? '',
+                    'socials'      => $ct['socials'], // TASK-035
                     'invite_state' => $ctState['state'],
                     'can_invite'   => Auth::canEdit(),
                     'is_admin'     => Auth::isAdmin(),
@@ -469,7 +474,7 @@ class TreeController
                 'spouses' => $spouses,
                 'children' => $children,
                 'audit_logs' => $auditLogs,
-                'can_edit' => Auth::canEdit(),
+                'can_edit' => \App\Services\PersonAccessService::make()->canEditPerson((int)$person['id']),
                 'contacts' => $contactsOut,
             ]);
         } catch (\Throwable $e) {
@@ -617,14 +622,14 @@ class TreeController
      */
     public function apiPersonUpdate(Request $request): void
     {
-        if (!Auth::canEdit()) {
-            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав на редактирование (только просмотр)'], 403);
-            return;
-        }
-
+        // TASK-032: редактор/админ — любого; обычный родственник — только свой круг (я, супруг(а), дети, добавленные мной)
         $id = (int)$request->get('id', 0);
         if (!$id) {
             Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+        if (!Auth::check() || !\App\Services\PersonAccessService::make()->canEditPerson($id)) {
+            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав на редактирование (только просмотр)'], 403);
             return;
         }
 
@@ -683,7 +688,11 @@ class TreeController
             // Род задается только у родоначальника/отца без отца в БД.
             // У детей род строго наследуется от отца с подсказкой «әкесінен / по отцу».
             $clanChanged = false;
-            if (!empty($oldPerson['father_id'])) {
+            if (!Auth::canEdit()) {
+                // TASK-032: обычный родственник ру не меняет (справочник и наследование — за редактором)
+                $clanId = $oldPerson['clan_id'] !== null ? (int)$oldPerson['clan_id'] : null;
+                $clanRu = $oldPerson['clan_ru'] ?? null;
+            } elseif (!empty($oldPerson['father_id'])) {
                 $fStmt = $db->prepare("SELECT clan_id, clan_ru FROM persons WHERE id = ?");
                 $fStmt->execute([$oldPerson['father_id']]);
                 $fRow = $fStmt->fetch(PDO::FETCH_ASSOC);
@@ -692,6 +701,21 @@ class TreeController
             } else {
                 $clanRu = trim((string)$request->get('clan_ru', '')) ?: null;
                 $clanId = (int)$request->get('clan_id', 0) ?: null;
+                // TASK-030: ру — только из справочника; clan_id ставится по названию
+                $clanSvc = new \App\Services\ClanService($db);
+                if ($clanSvc->hasRegistry() && $clanRu !== null && $clanRu !== ($oldPerson['clan_ru'] ?? null)
+                    && mb_strtolower($clanRu) !== 'белгісіз') {
+                    $found = $clanSvc->resolveByName($clanRu);
+                    if (!$found) {
+                        Response::json(['error' => 'Бұл ру «Ру таңбалары» тізімінде жоқ. Алдымен тізімге қосыңыз / Такого ру нет в справочнике «Ру таңбалары» — сначала добавьте его'], 422);
+                        return;
+                    }
+                    $clanRu = $found['name'];
+                    $clanId = $found['id'];
+                } elseif ($clanRu !== null && !$clanId && $clanSvc->hasRegistry()) {
+                    $found = $clanSvc->resolveByName($clanRu);
+                    $clanId = $found['id'] ?? null;
+                }
                 if ($clanRu !== ($oldPerson['clan_ru'] ?? null) || $clanId !== (int)($oldPerson['clan_id'] ?? 0)) {
                     $clanChanged = true;
                 }
@@ -804,8 +828,9 @@ class TreeController
      */
     public function apiPersonCreateRelative(Request $request): void
     {
-        if (!Auth::canEdit()) {
-            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав на редактирование'], 403);
+        // TASK-032: добавлять новых людей может любой вошедший; существующих он не меняет (см. canAddRelativeTo)
+        if (!Auth::check()) {
+            Response::json(['error' => 'Кіру қажет / Нужен вход'], 401);
             return;
         }
 
@@ -830,8 +855,12 @@ class TreeController
             $stmtTarget->execute([$targetId]);
             $target = $stmtTarget->fetch(PDO::FETCH_ASSOC);
 
-            if (!$target) {
+            if (!$target || !empty($target['is_deleted'])) {
                 Response::json(['error' => 'Мақсатты тұлға табылмады / Целевая персона не найдена'], 404);
+                return;
+            }
+            if (!\App\Services\PersonAccessService::make()->canAddRelativeTo($target, $relationType)) {
+                Response::json(['error' => 'Бұл тұлғаның байланысын өзгертуге рұқсат жоқ / Нет прав менять связи этой карточки (только просмотр)'], 403);
                 return;
             }
 
@@ -1026,14 +1055,14 @@ class TreeController
      */
     public function apiMarriageUpdate(Request $request): void
     {
-        if (!Auth::canEdit()) {
-            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав'], 403);
-            return;
-        }
-
         $id = (int)$request->get('id', 0);
         if (!$id) {
             Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+        // TASK-032: брак правит редактор/админ или один из супругов
+        if (!Auth::check() || !\App\Services\PersonAccessService::make()->canEditMarriage($id)) {
+            Response::json(['error' => 'Өңдеуге рұқсат жоқ / Нет прав'], 403);
             return;
         }
 
@@ -1109,6 +1138,18 @@ class TreeController
         $personId = (int)$request->post('person_id', 0);
         if (!$personId) {
             Response::json(['error' => 'person_id is required'], 400);
+            return;
+        }
+
+        // TASK-032: привязка к карточке даёт право править «свою семью», поэтому обычный родственник
+        // сам себя привязать не может (иначе любой «станет» чужим предком) — привязку делает админ/редактор
+        // или приглашение (users.person_id из invitations).
+        if (!Auth::canEdit() && empty($user['person_id'])) {
+            Response::json(['error' => 'Карточканы әкімші байланыстырады — Жандосқа жазыңыз / Привязку к карточке делает администратор — напишите Жандосу'], 403);
+            return;
+        }
+        if (!Auth::canEdit()) {
+            Response::json(['error' => 'Карточка байланған, өзгерту әкімшіге / Карточка уже привязана, менять может администратор'], 403);
             return;
         }
 

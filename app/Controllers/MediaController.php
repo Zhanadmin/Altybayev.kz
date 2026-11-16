@@ -145,7 +145,7 @@ class MediaController
         }
 
         try {
-            $this->service->deleteMedia($mediaId, (int)$user['id'], Auth::isAdmin());
+            $this->service->deleteMedia($mediaId, (int)$user['id'], Auth::canEdit()); // TASK-032: редактор тоже может всё
             Response::success([], 'Жазба жойылды / Запись успешно удалена');
         } catch (Throwable $e) {
             Response::error($e->getMessage(), 403);

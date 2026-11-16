@@ -440,8 +440,8 @@ h1, h2, h3, .book { font-family: var(--font-book); letter-spacing: 0; }
 .fm .pc-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-book); font-size: 16px; font-weight: 600; }
 .fm .pc-tag .gmark { width: 13px; height: 13px; }
 /* TASK-013: след ұзатылған — дочь, выданная замуж; её место в семье мужа */
-.fm .pc-tag.fm-uzatylgan { opacity: .6; font-style: italic; font-weight: 400; border-style: dashed; }
-.fm .pc-tag.fm-uzatylgan:hover { opacity: 1; }
+/* TASK-029: обычный вид, как у остальных детей; пометка о замужестве — мелко */
+.fm .pc-tag.fm-uzatylgan .fm-uz-note { font-size: 12px; font-weight: 400; color: var(--c-muted, inherit); }
 .fm-card:target { border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent); }
 .fm-foot { border-top: 1px dashed var(--c-border-strong); }
 @media (max-width: 480px) {

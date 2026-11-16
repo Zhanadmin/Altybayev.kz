@@ -14,6 +14,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php include __DIR__ . '/partials/clan_tamga.php'; // TASK-030 ?>
     <title><?= htmlspecialchars(\App\Core\I18n::siteTitle()) ?> — <?= htmlspecialchars(\App\Core\I18n::t('nav_tree')) ?> («Өңдеу» / «Шежіре-Орман»)</title>
     <script>
         /* TASK-008: тема — сохранённый выбор, иначе как в системе */
@@ -29,7 +30,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
     <!-- TASK-013 (шаг 9): шрифты и слой «Шежіре-кітап», как на остальных страницах -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=14">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=15">
     <link rel="stylesheet" href="/assets/css/book.css?v=6">
     <style>
         :root {
@@ -3480,6 +3481,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             <form id="editPersonForm" onsubmit="handleSavePersonEdit(event)">
                 <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
                     <input type="hidden" id="editPersonId" value="">
+                    <?php require __DIR__ . '/layout/person_media_fields.php'; // TASK-022/033: обложка-фон и аватарка — вверху окна ?>
 
                     <div class="form-row-2">
                         <div class="form-group">
@@ -3534,7 +3536,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <input type="text" class="form-input" id="editBirthPlace" placeholder="Мысалы: ШҚО, Үржар ауданы">
                     </div>
 
-                    <div class="ds-subbox">
+                    <!-- TASK-033: отметка о кончине — в свёрнутом блоке «Дополнительно» -->
+                    <details class="ds-subbox" id="editExtraBox">
+                        <summary style="cursor:pointer; margin-bottom:8px;">Қосымша / Дополнительно</summary>
                         <label class="checkbox-label" style="margin-bottom:8px;">
                             <input type="checkbox" id="editIsDeceased" onchange="toggleEditDeathInputs()">
                             <span data-i18n="form_is_deceased_checkbox">Қайтыс болған / Ушёл из жизни</span>
@@ -3556,14 +3560,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 <input type="text" class="form-input" id="editDeathPlace" placeholder="Мысалы: Алматы қ.">
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="form-group">
                         <label data-i18n="form_biography">Өмірбаяны мен естеліктер</label>
                         <textarea class="form-textarea" id="editBiography" rows="3" placeholder="Өмірбаяны, естеліктері, еңбек жолы..."></textarea>
                     </div>
 
-                    <?php require __DIR__ . '/layout/person_media_fields.php'; // TASK-022: фото и обложка ?>
                     <?php
                     // TASK-022: телефон(ы), email, приглашение
                     $pcfInputCls = 'form-input';
@@ -3913,6 +3916,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         let userPersonId = <?= (int)$userPersonId ?>;
         const canEdit = <?= !empty($canEdit) ? 'true' : 'false' ?>;
         const isAdmin = <?= !empty($isAdmin) ? 'true' : 'false' ?>;
+        // TASK-032: свой круг для не-редактора (подсказка интерфейсу; права проверяет сервер)
+        const ownCircle = <?= json_encode(array_map('intval', $ownCircle ?? []), JSON_NUMERIC_CHECK) ?>;
+        const canEditPersonUi = (pid) => canEdit || ownCircle.indexOf(parseInt(pid, 10)) !== -1;
         const urlParams = new URLSearchParams(window.location.search);
         const focusFromUrl = urlParams.get('focus') || urlParams.get('id');
         let initialFocusId = focusFromUrl ? parseInt(focusFromUrl) : (<?= (int)($focusId ?? 0) ?> || userPersonId || 6);
@@ -4417,7 +4423,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         </div>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:2px;">
-                        <span class="card-clan-tag">${node.clan_ru || (currentLang === 'ru' ? 'не указан' : 'белгісіз')}</span>
+                        <span class="card-clan-tag">${window.clanTamga(node.clan_ru)}${node.clan_ru || (currentLang === 'ru' ? 'не указан' : 'белгісіз')}</span>
                         ${(() => {
                             const kin = activeKinships[node.id];
                             if (!kin || !kin.zhurt) return '';
@@ -5320,7 +5326,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
             document.getElementById('panelPersonName').innerText = fullNameDisplay;
             const clanDisplay = p.clan_ru || (currentLang === 'ru' ? 'не указан' : 'белгісіз');
-            document.getElementById('panelPersonClan').innerText = clanDisplay;
+            document.getElementById('panelPersonClan').innerHTML = window.clanTamga(p.clan_ru) + uzEsc(clanDisplay);
             document.getElementById('panelGender').innerText = p.gender === 'M' ? (currentLang === 'ru' ? 'Мужской' : 'Ер азамат') : (currentLang === 'ru' ? 'Женский' : 'Әйел адам');
             
             // Жылдары: живые — только год/дата рождения! Ушедшие — годы жизни
@@ -5715,8 +5721,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // РЕАЛЬНОЕ РЕДАКТИРОВАНИЕ ПЕРСОНЫ (API -> AUDIT LOGS)
         // ========================================================
         async function openEditPersonModal(id) {
-            if (!canEdit) {
-                alert(currentLang === 'ru' ? 'У вас режим только чтения' : 'Өңдеу тек рұқсаты бар пайдаланушыларға қолжетімді');
+            if (!canEditPersonUi(id)) {
+                alert(currentLang === 'ru' ? 'Чужую карточку можно только смотреть' : 'Бөтен тұлғаның картасын тек қарауға болады');
                 return;
             }
             try {
@@ -5755,6 +5761,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const isDeceased = (p.is_deceased == 1 || p.death_year || p.death_date);
                 document.getElementById('editIsDeceased').checked = !!isDeceased;
                 document.getElementById('editDeathSection').style.display = isDeceased ? 'block' : 'none';
+                document.getElementById('editExtraBox').open = !!isDeceased; // TASK-033
                 document.getElementById('editDeathYear').value = p.death_year || '';
                 document.getElementById('editDeathDate').value = p.death_date || '';
                 document.getElementById('editDeathPlace').value = p.death_place || '';
@@ -6146,7 +6153,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div class="lt-actions">
                             <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id}); event.stopPropagation();" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
                             <button type="button" class="btn-table-action" onclick="togglePersonUshZhurt(${p.id}); event.stopPropagation();" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
-                            ${canEdit ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id}); event.stopPropagation();" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
+                            ${canEditPersonUi(p.id) ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id}); event.stopPropagation();" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
                         </div>
                     </td>
                 `;
@@ -6263,7 +6270,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 <strong>${uzEsc(p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')))}</strong>
                                 ${p.maiden_name ? `<span class="lt-sub is-maiden">(${currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'} ${uzEsc(p.maiden_name)})</span>` : ''}
                                 <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? (currentLang === 'ru' ? 'Мужчина' : 'Ер') : (currentLang === 'ru' ? 'Женщина' : 'Әйел')}</span>
-                                <span class="clan-pill">${uzEsc(p.clan_ru || 'белгісіз')}</span>
+                                <span class="clan-pill">${window.clanTamga(p.clan_ru)}${uzEsc(p.clan_ru || 'белгісіз')}</span>
                             </div>
                             <div class="lt-sub">
                                 ${(isDeceased || lifeLabel(p).deceased) ? (currentLang === 'ru' ? 'Годы жизни:' : 'Өмір сүрген жылдары:') : (currentLang === 'ru' ? 'Возраст:' : 'Жасы:')} <strong>${lifeHtml(p, uzEsc(p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')))}</strong>
@@ -6318,7 +6325,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     ? (tableData.empty_ru || 'Пока никого не добавили')
                     : (tableData.empty_kk || 'Әзірге ешкім қосылмаған');
                 const addLbl = currentLang === 'ru' ? 'Добавить' : 'Қосу';
-                const addBtn = canEdit
+                const addBtn = true // TASK-032: добавлять новых людей может любой вошедший
                     ? ` <button type="button" class="btn-table-action lt-ush-add-btn" onclick="event.stopPropagation(); openAddModal('${ushZhurtAddRelation(zhurtKey, !!isFemale)}', ${parseInt(basePersonId, 10)})">${addLbl}</button>`
                     : '';
                 rowsHtml = `<tr><td colspan="3" class="lt-ush-empty-cell">${uzEsc(emptyText)}${addBtn}</td></tr>`;
@@ -6360,7 +6367,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                     <div class="lt-ush-person-text">
                                         <span class="lt-ush-person-name" title="${uzEsc(p.full_name)}">${uzEsc(p.full_name)}</span>
                                         ${p.maiden_name ? `<span class="lt-sub is-maiden">(${uzEsc(p.maiden_name)})</span>` : ''}
-                                        <span class="lt-sub">${uzEsc(p.clan_ru || 'белгісіз')}</span>
+                                        <span class="lt-sub">${window.clanTamga(p.clan_ru)}${uzEsc(p.clan_ru || 'белгісіз')}</span>
                                     </div>
                                 </div>
                             </td>
@@ -6508,7 +6515,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 const p = data.person || (data.ush_zhurt && data.ush_zhurt.base_person);
                 const pGender = p && p.gender === 'M' ? (currentLang === 'ru' ? 'мужчина' : 'ер') : (currentLang === 'ru' ? 'женщина' : 'әйел');
-                const pTitle = p ? `${p.full_name} (${pGender})` : '';
+                const pTitle = p ? `${p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')).trim()} (${pGender})` : '';
                 document.getElementById('ushZhurtModalSubtitle').textContent = pTitle;
 
                 const tabsBox = document.getElementById('ushZhurtTabButtons');
@@ -6554,7 +6561,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     ? (group.empty_ru || 'Пока никого не добавили')
                     : (group.empty_kk || 'Әзірге ешкім қосылмаған');
                 const baseId = currentUshZhurtData.base_id || selectedPersonId;
-                const addBtn = canEdit
+                const addBtn = true // TASK-032
                     ? ` <button type="button" class="btn btn-profile-action" onclick="closeUshZhurtModal(); openAddModal('${ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female)}', ${parseInt(baseId, 10)})">${currentLang === 'ru' ? 'Добавить' : 'Қосу'}</button>`
                     : '';
                 container.innerHTML = `<div class="uz-msg" style="font-style:italic;">${uzEsc(emptyText)}${addBtn}</div>`;
@@ -6573,15 +6580,16 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         function renderUshZhurtFolderHtml(fam, depth) {
-            const h = fam.husband;
-            const w = fam.wife;
+            const nm = (x) => x ? (x.full_name || ((x.first_name || '') + ' ' + (x.last_name || '')).trim()) : '';
+            const h = fam.husband ? Object.assign({}, fam.husband, { full_name: nm(fam.husband) }) : null;
+            const w = fam.wife ? Object.assign({}, fam.wife, { full_name: nm(fam.wife) }) : null;
             const indent = depth * 16;
             let coupleTitle = '';
             if (h) {
-                coupleTitle += `<span class="uz-person"><strong>${h.full_name}</strong> <span class="uz-meta">${lifeLabel(h).short ? `(${lifeHtml(h)})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
+                coupleTitle += `<span class="uz-person"><strong>${uzEsc(h.full_name)}</strong> <span class="uz-meta">${lifeLabel(h).short ? `(${lifeHtml(h)})` : ''} [${h.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (w) {
-                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${w.full_name}</strong> <span class="uz-meta">${lifeLabel(w).short ? `(${lifeHtml(w)})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
+                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${uzEsc(w.full_name)}</strong> <span class="uz-meta">${lifeLabel(w).short ? `(${lifeHtml(w)})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (!coupleTitle) coupleTitle = (currentLang === 'ru' ? 'Семья' : 'Отбасы');
             const togetherStr = togetherText(fam.marriage);
@@ -6590,7 +6598,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const children = fam.children || [];
             let childrenHtml = '';
             if (children.length > 0) {
-                childrenHtml = children.map(c => {
+                childrenHtml = children.map(cRaw => {
+                    // TASK-034: сервер отдаёт ребёнка как {person, kinship}; допускаем и плоскую запись
+                    const c = Object.assign({}, cRaw.person || cRaw);
+                    if (!c.full_name) c.full_name = ((c.first_name || '') + ' ' + (c.last_name || '')).trim();
                     const cIcon = `<span class="uz-dot ${c.gender === 'F' ? 'f' : ''}"></span>`;
                     const cClan = c.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз');
                     const cYears = lifeLabel(c).short ? `(${lifeHtml(c)})` : '';
@@ -6602,7 +6613,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div class="uz-child">
                             <div class="uz-child-row">
                                 ${cIcon}
-                                <a href="/person/${c.id}">${c.full_name}</a>
+                                <a href="/person/${parseInt(c.id, 10)}">${uzEsc(c.full_name)}</a>
                                 <span class="uz-meta">${cYears} [${cClan}]</span>
                             </div>
                             ${nested}

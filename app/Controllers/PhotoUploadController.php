@@ -28,8 +28,10 @@ class PhotoUploadController
     {
         $lang = I18n::lang();
 
-        // Проверка прав: только admin и editor
-        if (!Auth::canEdit()) {
+        // Проверка прав: admin/editor или владелец «своего круга» (TASK-032: я, супруг(а), дети) — по person_id
+        $reqPersonId = (int)$request->post('person_id', 0);
+        if (!Auth::canEdit()
+            && !($reqPersonId > 0 && Auth::check() && \App\Services\PersonAccessService::make()->canEditPerson($reqPersonId))) {
             Response::json([
                 'success' => false,
                 'error'   => $lang === 'ru' 

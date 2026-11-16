@@ -22,6 +22,11 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
         <label for="pcfEmail" style="display:block; margin-bottom:4px;"><?= $pcfE('contacts_email') ?></label>
         <input type="email" id="pcfEmail" class="<?= htmlspecialchars($pcfInputCls) ?>" maxlength="191" autocomplete="off" oninput="pcfOnEmailInput()">
     </div>
+    <div style="margin-bottom:8px;">
+        <label style="display:block; margin-bottom:4px;"><?= $pcfE('socials_title') ?></label>
+        <div id="pcfSocialRows"></div>
+        <button type="button" class="<?= htmlspecialchars($pcfBtnCls) ?>" id="pcfAddSocial" onclick="pcfAddSocial('', '')"><?= $pcfE('socials_add') ?></button>
+    </div>
     <div style="font-size:12px; opacity:.7; margin-bottom:8px;"><?= $pcfE('contacts_hint') ?></div>
     <div id="pcfInvite" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
         <span id="pcfInviteBadge" style="display:none; padding:2px 10px; border-radius:999px; background:rgba(128,128,128,.2); font-size:13px;"></span>
@@ -87,6 +92,40 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
         rows.appendChild(row);
     };
 
+    // TASK-035: соцсети (тип + ссылка/@ник)
+    var SOCIAL_TYPES = <?= json_encode(array_map(
+        static fn($s, $k) => ['k' => $k, 'n' => $s[0] !== '' ? $s[0] : I18n::t('socials_other')],
+        \App\Services\PersonContactService::SOCIALS,
+        array_keys(\App\Services\PersonContactService::SOCIALS)
+    ), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    var MAX_SOCIALS = <?= (int)\App\Services\PersonContactService::MAX_SOCIALS ?>;
+    var SOCIAL_PH = <?= json_encode(I18n::t('socials_placeholder'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+    window.pcfAddSocial = function (type, value) {
+        var rows = document.getElementById('pcfSocialRows');
+        if (!rows || rows.children.length >= MAX_SOCIALS) return;
+        var row = document.createElement('div');
+        row.className = 'pcf-social-row';
+        row.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap;';
+        var sel = document.createElement('select');
+        sel.className = <?= json_encode($pcfInputCls) ?> + ' pcf-social-type'; sel.style.width = 'auto';
+        SOCIAL_TYPES.forEach(function (t) {
+            var o = document.createElement('option'); o.value = t.k; o.textContent = t.n;
+            if (t.k === type) o.selected = true;
+            sel.appendChild(o);
+        });
+        var inp = document.createElement('input');
+        inp.type = 'text'; inp.className = <?= json_encode($pcfInputCls) ?> + ' pcf-social-value';
+        inp.maxLength = 300; inp.placeholder = SOCIAL_PH; inp.autocomplete = 'off';
+        inp.style.flex = '1 1 160px'; inp.value = value || '';
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.textContent = '×'; btn.setAttribute('aria-label', T.removePhone);
+        btn.className = <?= json_encode($pcfBtnCls) ?>;
+        btn.addEventListener('click', function () { row.remove(); });
+        row.appendChild(sel); row.appendChild(inp); row.appendChild(btn);
+        rows.appendChild(row);
+    };
+
     function renderInvite() {
         var box = document.getElementById('pcfInvite');
         var badge = document.getElementById('pcfInviteBadge');
@@ -110,6 +149,7 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
     window.pcfLoad = function (personId, data) {
         var box = document.getElementById('pcfBox');
         document.getElementById('pcfPhoneRows').innerHTML = '';
+        var sRows = document.getElementById('pcfSocialRows'); if (sRows) sRows.innerHTML = '';
         st = { personId: personId, csrf: '', savedEmail: '', state: 'none', canInvite: false, available: false };
         if (!box) return;
         if (!data || !personId) { box.style.display = 'none'; return; }
@@ -118,6 +158,7 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
         st.canInvite = !!data.can_invite;
         (data.phones && data.phones.length ? data.phones : ['']).forEach(function (p) { window.pcfAddPhone(p); });
         document.getElementById('pcfEmail').value = data.email || '';
+        (data.socials || []).forEach(function (s) { window.pcfAddSocial(s.type, s.url); });
         var adm = document.getElementById('pcfRoleAdmin');
         if (adm) { adm.hidden = !data.is_admin; adm.disabled = !data.is_admin; }
         document.getElementById('pcfInviteRole').value = 'viewer';
@@ -149,6 +190,13 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
             if (i.value.trim() !== '') body.append('phones[]', i.value.trim());
         });
         body.append('email', document.getElementById('pcfEmail').value.trim());
+        body.append('socials_sent', '1');
+        document.querySelectorAll('#pcfSocialRows .pcf-social-row').forEach(function (r) {
+            var v = r.querySelector('.pcf-social-value').value.trim();
+            if (v === '') return;
+            body.append('social_type[]', r.querySelector('.pcf-social-type').value);
+            body.append('social_value[]', v);
+        });
         return post('/api/person/contacts/save', body).then(function (data) {
             st.savedEmail = (data.email || '').toLowerCase();
             st.state = data.invite_state || 'none';

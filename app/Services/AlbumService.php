@@ -198,7 +198,8 @@ class AlbumService
         if (!$row || !$user) {
             return false;
         }
-        if (($user['role'] ?? '') === 'admin') {
+        // TASK-032: редактор и админ управляют всем; остальные — только созданным ими
+        if (in_array(($user['role'] ?? ''), ['admin', 'editor'], true)) {
             return true;
         }
         return !empty($row['created_by']) && (int)$row['created_by'] === (int)($user['id'] ?? 0);
@@ -209,7 +210,7 @@ class AlbumService
         if (!$user) {
             return false;
         }
-        if (($user['role'] ?? '') === 'admin') {
+        if (in_array(($user['role'] ?? ''), ['admin', 'editor'], true)) {
             return true;
         }
         return !empty($media['uploaded_by']) && (int)$media['uploaded_by'] === (int)($user['id'] ?? 0);
@@ -421,6 +422,14 @@ class AlbumService
     public function uploadsLastHour(int $userId): int
     {
         $st = $this->db->prepare('SELECT COUNT(*) FROM album_media WHERE uploaded_by = ? AND created_at > (NOW() - INTERVAL 1 HOUR)');
+        $st->execute([$userId]);
+        return (int)$st->fetchColumn();
+    }
+
+    /** TASK-032: сколько байт уже загрузил пользователь (для лимита на человека) */
+    public function userBytesTotal(int $userId): int
+    {
+        $st = $this->db->prepare('SELECT COALESCE(SUM(file_size), 0) FROM album_media WHERE uploaded_by = ?');
         $st->execute([$userId]);
         return (int)$st->fetchColumn();
     }

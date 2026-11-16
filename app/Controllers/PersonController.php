@@ -366,7 +366,7 @@ class PersonController
         }
 
         // 10. TASK-022: контакты (видят все вошедшие, гости сюда не попадают — маршрут за auth) и статус приглашения
-        $contacts = ['phones' => [], 'emails' => [], 'addresses' => []];
+        $contacts = ['phones' => [], 'emails' => [], 'addresses' => [], 'socials' => []];
         $inviteState = ['state' => 'none'];
         $canEditContacts = false;
         $canInvite = false;
@@ -402,7 +402,7 @@ class PersonController
             'albumsReady'     => $albumsReady,
             'personEvents'    => $personEvents,
             'personPhotos'    => $personPhotos,
-            'canCreateEvent'  => Auth::canEdit(),
+            'canCreateEvent'  => Auth::check(), // TASK-032
             'contacts'        => $contacts,
             'inviteState'     => $inviteState,
             'canEditContacts' => $canEditContacts,

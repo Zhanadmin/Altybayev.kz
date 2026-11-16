@@ -1784,8 +1784,17 @@ class KinshipService
             }
         }
 
+        // TASK-034: клиент (окно «Үш жұрт») читает full_name — у «сырой» строки персоны его нет
+        $withName = function (?array $p): ?array {
+            if ($p === null) {
+                return null;
+            }
+            $p['full_name'] = trim((string)($p['first_name'] ?? '') . ' ' . (string)($p['last_name'] ?? ''));
+            return $p;
+        };
+
         // Построитель семейных папок
-        $buildFamilies = function(array $personIdSet, string $sideKey = '') use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId) {
+        $buildFamilies = function(array $personIdSet, string $sideKey = '') use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId, $withName) {
             $families = [];
             $handledChildren = [];
             $handledSpouses = [];
@@ -1795,8 +1804,8 @@ class KinshipService
                 $wId = (int)($m['wife_id'] ?? 0);
 
                 if (isset($personIdSet[$hId]) || isset($personIdSet[$wId])) {
-                    $h = $personsById[$hId] ?? null;
-                    $w = $personsById[$wId] ?? null;
+                    $h = $withName($personsById[$hId] ?? null);
+                    $w = $withName($personsById[$wId] ?? null);
 
                     $coupleKey = "{$hId}_{$wId}";
                     $cIds = $childrenByCouple[$coupleKey] ?? [];
@@ -1814,7 +1823,7 @@ class KinshipService
                                 continue;
                             }
                             $childrenList[] = [
-                                'person' => $cPerson,
+                                'person' => $withName($cPerson),
                                 'kinship' => $allKinships[$cId] ?? null,
                                 // TASK-020: по своей дате рождения (год или дата), без даты — в конец
                                 'seniority' => $this->extractYear($cPerson['birth_year'] ?? null)
@@ -1865,7 +1874,7 @@ class KinshipService
                     $p = $personsById[$pId] ?? null;
                     if ($p) {
                         $standalone[] = [
-                            'person' => $p,
+                            'person' => $withName($p),
                             'kinship' => $allKinships[$pId] ?? null,
                             'seniority' => (int)($p['birth_year'] ?? 9999),
                         ];
@@ -1883,7 +1892,7 @@ class KinshipService
 
         // TASK-013: стороны по порядку; ключи «{key}_zhurt» (oz_zhurt, torkin_zhurt, nagashy_zhurt, kaiyn_zhurt)
         $result = [
-            'base_person' => $base,
+            'base_person' => $withName($base),
             'is_female' => $isFemale,
             'is_married' => $isMarried,
             'order' => [],

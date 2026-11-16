@@ -48,8 +48,63 @@ class AdminController
         $invitations = [];
         $stmtI = $db->query("SHOW TABLES LIKE 'invitations'");
         if ($stmtI->rowCount() > 0) {
-            $iStmt = $db->query("SELECT * FROM invitations ORDER BY id DESC LIMIT 50");
-            $invitations = $iStmt->fetchAll(PDO::FETCH_ASSOC);
+            // TASK-031: имя карточки, привязанной к приглашению (если колонка person_id есть)
+            $hasInvPerson = (new \App\Services\PersonContactService($db))->hasInvitationPersonColumn();
+            $iSql = $hasInvPerson
+                ? "SELECT i.*, TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))) AS person_name
+                   FROM invitations i LEFT JOIN persons p ON p.id = i.person_id ORDER BY i.id DESC LIMIT 200"
+                : "SELECT * FROM invitations ORDER BY id DESC LIMIT 200";
+            $invitations = $db->query($iSql)->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        // TASK-031: единый список «Доступ» — пользователи и приглашения, склеенные по e-mail
+        $invByEmail = [];
+        foreach ($invitations as $inv) {
+            $invByEmail[strtolower((string)$inv['email'])] = $inv;
+        }
+        $accessRows = [];
+        $seen = [];
+        foreach ($users as $u) {
+            $em = strtolower((string)$u['email']);
+            $inv = $invByEmail[$em] ?? null;
+            $seen[$em] = true;
+            $disabled = ((int)$u['is_active'] !== 1) || ($inv && $inv['status'] === 'revoked');
+            $accessRows[] = [
+                'kind'          => 'user',
+                'status'        => $disabled ? 'disabled' : 'joined',
+                'user_id'       => (int)$u['id'],
+                'invitation_id' => $inv ? (int)$inv['id'] : 0,
+                'email'         => (string)$u['email'],
+                'name'          => (string)$u['name'],
+                'notes'         => $inv ? (string)($inv['notes'] ?? '') : '',
+                'role'          => (string)$u['role'],
+                'person_id'     => !empty($u['person_id']) ? (int)$u['person_id'] : 0,
+                'person_name'   => (string)($u['person_name'] ?? ''),
+                'person_shared' => (int)($u['person_shared'] ?? 0),
+                'last_login_at' => $u['last_login_at'] ?? null,
+                'date'          => $u['created_at'] ?? null,
+            ];
+        }
+        foreach ($invitations as $inv) {
+            $em = strtolower((string)$inv['email']);
+            if (isset($seen[$em])) {
+                continue;
+            }
+            $accessRows[] = [
+                'kind'          => 'invite',
+                'status'        => $inv['status'] === 'revoked' ? 'disabled' : 'invited',
+                'user_id'       => 0,
+                'invitation_id' => (int)$inv['id'],
+                'email'         => (string)$inv['email'],
+                'name'          => '',
+                'notes'         => (string)($inv['notes'] ?? ''),
+                'role'          => (string)$inv['role'],
+                'person_id'     => !empty($inv['person_id']) ? (int)$inv['person_id'] : 0,
+                'person_name'   => (string)($inv['person_name'] ?? ''),
+                'person_shared' => 0,
+                'last_login_at' => null,
+                'date'          => $inv['created_at'] ?? null,
+            ];
         }
 
         // 3. Статистика
@@ -57,6 +112,21 @@ class AdminController
         $marriagesCount = (int)$db->query("SELECT COUNT(*) FROM marriages")->fetchColumn();
         $auditCount = (int)$db->query("SELECT COUNT(*) FROM audit_logs")->fetchColumn();
         $mediaCount = (int)$db->query("SELECT COUNT(*) FROM person_media")->fetchColumn();
+
+        // TASK-032: что добавили обычные родственники (не editor/admin) — новые люди, мероприятия, фото
+        $recentAdditions = [];
+        try {
+            $recentAdditions = $db->query(
+                "SELECT a.id, a.action, a.entity_table, a.entity_id, a.summary, a.created_at,
+                        COALESCE(u.name, a.user_name, '') AS who, u.email AS who_email
+                 FROM audit_logs a
+                 JOIN users u ON u.id = a.user_id AND u.role = 'viewer'
+                 WHERE a.action IN ('CREATE', 'UPDATE', 'DELETE')
+                 ORDER BY a.id DESC LIMIT 40"
+            )->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            $recentAdditions = [];
+        }
 
         $faceSvc = new \App\Services\FaceRecognitionService($db);
         $faceReady = $faceSvc->isReady();
@@ -67,10 +137,12 @@ class AdminController
             'userPersonId'           => $userPersonId,
             'users'                  => $users,
             'invitations'            => $invitations,
+            'accessRows'             => $accessRows,
             'personsCount'           => $personsCount,
             'marriagesCount'         => $marriagesCount,
             'auditCount'             => $auditCount,
             'mediaCount'             => $mediaCount,
+            'recentAdditions'        => $recentAdditions,
             'canEdit'                => true,
             'isAdmin'                => true,
             'faceRecognitionReady'   => $faceReady,
@@ -359,6 +431,21 @@ class AdminController
             if ($existingUser) {
                 $db->prepare("UPDATE users SET role = ?, is_active = 1, updated_at = NOW() WHERE id = ?")
                    ->execute([$role, (int)$existingUser['id']]);
+            }
+
+            // TASK-031: явная привязка к карточке шежіре (вход через Google подхватит invitations.person_id)
+            $personId = (int)$request->post('person_id', 0);
+            if ($personId > 0) {
+                $pc = new \App\Services\PersonContactService($db);
+                $pChk = $db->prepare('SELECT id FROM persons WHERE id = ? AND is_deleted = 0 LIMIT 1');
+                $pChk->execute([$personId]);
+                if (!$pChk->fetchColumn()) {
+                    $db->rollBack();
+                    Response::json(['error' => 'Карточка табылмады / Карточка с таким номером не найдена'], 422);
+                }
+                if ($pc->hasInvitationPersonColumn()) {
+                    $db->prepare('UPDATE invitations SET person_id = ? WHERE id = ?')->execute([$personId, $invitationId]);
+                }
             }
 
             // TASK-022: приглашение из админки — привязать к карточке, если email совпал с контактом человека

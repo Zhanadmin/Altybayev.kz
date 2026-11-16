@@ -3180,7 +3180,19 @@
             const card = this.openCard();
             card.appendChild(el('div', 'sf3-sub', t.treeKind));
             card.appendChild(el('h3', null, tr.name));
-            if (tr.clanName) card.appendChild(el('div', 'sf3-sub', `${t.clan}: ${tr.clanName}`));
+            if (tr.clanName) {
+                // TASK-030: таңба из справочника ру рядом с названием ру
+                const clanEl = el('div', 'sf3-sub', `${t.clan}: ${tr.clanName}`);
+                const tUrl = (window.CLAN_TAMGA && window.CLAN_TAMGA[String(tr.clanName).trim().toLowerCase()]) || '';
+                if (tUrl) {
+                    const im = document.createElement('img');
+                    im.className = 'clan-tamga';
+                    im.alt = '';
+                    im.src = tUrl;
+                    clanEl.insertBefore(im, clanEl.firstChild);
+                }
+                card.appendChild(clanEl);
+            }
             card.appendChild(el('div', 'sf3-sub', tr.tamga ? `${t.tamga}: ${tr.tamga}` : t.tamgaUnknown));
             card.appendChild(el('div', 'sf3-sub', `${t.people(tr.members.length)} · ${t.gens(tr.generations)}`));
             const rootP = M.byId.get(tr.rootId);

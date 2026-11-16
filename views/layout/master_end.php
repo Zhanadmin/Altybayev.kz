@@ -26,6 +26,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             <form id="globalPersonEditForm" onsubmit="handleGlobalPersonSave(event)">
                 <input type="hidden" id="editModalPersonId" name="id" value="">
                 <div class="modal-body">
+                    <?php require __DIR__ . '/person_media_fields.php'; // TASK-022/033: обложка-фон и аватарка — вверху окна ?>
                     <div class="form-row">
                         <div class="field">
                             <label for="editModalFirstName"><?= $__t('Аты', 'Имя') ?> *</label>
@@ -74,8 +75,10 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         <label for="editModalBirthPlace"><?= $__t('Туған жері', 'Место рождения') ?></label>
                         <input type="text" id="editModalBirthPlace" class="input">
                     </div>
-                    <div class="island-sub">
-                        <label class="check">
+                    <!-- TASK-033: отметка о кончине спрятана в свёрнутый блок «Дополнительно» -->
+                    <details class="island-sub" id="editModalExtra">
+                        <summary style="cursor:pointer;"><?= $__t('Қосымша', 'Дополнительно') ?></summary>
+                        <label class="check" style="margin-top:10px;">
                             <input type="checkbox" id="editModalIsDeceased" onchange="toggleEditModalDeceasedFields(this.checked)">
                             <span><?= $__t('Өмірден өткен', 'Умер(ла)') ?></span>
                         </label>
@@ -89,8 +92,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                                 <input type="text" id="editModalDeathYear" class="input" placeholder="<?= $__t('мысалы, 2020', 'например, 2020') ?>">
                             </div>
                         </div>
-                    </div>
-                    <?php require __DIR__ . '/person_media_fields.php'; // TASK-022: фото и обложка ?>
+                    </details>
                     <?php require __DIR__ . '/person_contact_fields.php'; ?>
                 </div>
                 <div class="modal-foot">
@@ -201,6 +203,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         const isDec = (p.is_deceased == 1);
                         document.getElementById('editModalIsDeceased').checked = isDec;
                         toggleEditModalDeceasedFields(isDec);
+                        var exTr = document.getElementById('editModalExtra'); if (exTr) { exTr.open = isDec; } // TASK-033: у ушедших блок раскрыт
                         document.getElementById('editModalDeathDate').value = p.death_date || '';
                         document.getElementById('editModalDeathYear').value = p.death_year || '';
                         if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022

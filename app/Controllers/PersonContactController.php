@@ -27,8 +27,8 @@ class PersonContactController
         if (Auth::canEdit()) {
             return true;
         }
-        $user = Auth::user();
-        return $user !== null && !empty($user['person_id']) && (int)$user['person_id'] === $personId;
+        // TASK-032: контакты/фото — у себя, супруга(и), детей и добавленных мной
+        return Auth::check() && \App\Services\PersonAccessService::make()->canEditPerson($personId);
     }
 
     private function guardPost(Request $request): void
@@ -97,7 +97,19 @@ class PersonContactController
         $svc = new PersonContactService($db);
 
         try {
-            $res = $svc->saveContacts($personId, array_map('strval', array_slice($phones, 0, 20)), $email);
+            // TASK-035: соцсети — social_type[] + social_value[]; без флага socials_sent не трогаем
+            $socials = null;
+            if ((string)$request->post('socials_sent', '') === '1') {
+                $types = $request->post('social_type', []);
+                $values = $request->post('social_value', []);
+                $types = is_array($types) ? array_values($types) : [];
+                $values = is_array($values) ? array_values($values) : [];
+                $socials = [];
+                foreach (array_slice($types, 0, 30) as $i => $t) {
+                    $socials[] = ['type' => (string)$t, 'value' => (string)($values[$i] ?? '')];
+                }
+            }
+            $res = $svc->saveContacts($personId, array_map('strval', array_slice($phones, 0, 20)), $email, $socials);
         } catch (\Throwable $e) {
             Logger::error('contacts save: ' . $e->getMessage(), $e);
             Response::json(['error' => 'Серверде қате / Ошибка сервера'], 500);
@@ -113,8 +125,8 @@ class PersonContactController
             'persons',
             $personId,
             "Байланыс / Контакты: {$name}",
-            ['phones' => $res['old']['phones'], 'emails' => $res['old']['emails']],
-            ['phones' => $res['contacts']['phones'], 'emails' => $res['contacts']['emails']]
+            ['phones' => $res['old']['phones'], 'emails' => $res['old']['emails'], 'socials' => $res['old']['socials']],
+            ['phones' => $res['contacts']['phones'], 'emails' => $res['contacts']['emails'], 'socials' => $res['contacts']['socials']]
         );
 
         $status = $svc->inviteStatus($personId, $res['contacts']['emails']);

@@ -92,6 +92,28 @@ class HistoryController
         $action = $log['action'];
         $oldVals = !empty($log['old_values']) ? json_decode($log['old_values'], true) : null;
 
+        // TASK-032: откат добавления человека родственником — мягкое удаление карточки (данные остаются, можно вернуть)
+        if ($action === 'CREATE' && $table === 'persons') {
+            try {
+                $db->prepare('UPDATE `persons` SET `is_deleted` = 1, `updated_at` = NOW() WHERE `id` = ?')->execute([$entityId]);
+                $u = Auth::user();
+                $db->prepare("INSERT INTO audit_logs (user_id, user_name, user_email, action, entity_table, entity_id, summary, old_values, new_values, created_at)
+                              VALUES (?, ?, ?, 'ROLLBACK', 'persons', ?, ?, ?, ?, NOW())")->execute([
+                    $u['id'] ?? null,
+                    $u['name'] ?? 'Әкімші',
+                    $u['email'] ?? null,
+                    $entityId,
+                    "Откат добавления #{$logId}: карточка скрыта (soft-delete)",
+                    $log['new_values'],
+                    json_encode(['is_deleted' => 1]),
+                ]);
+                Response::json(['success' => true, 'message' => 'Қосылған тұлға жасырылды / Добавленная карточка скрыта']);
+            } catch (\Throwable $e) {
+                Response::json(['error' => $e->getMessage()], 500);
+            }
+            return;
+        }
+
         // Откатить можно UPDATE или DELETE, если есть old_values
         if (empty($oldVals) || !is_array($oldVals)) {
             Response::json(['error' => 'Бұл жазба бойынша бұрынғы мәндер жоқ / Откат невозможен: нет сохраненных исходных данных'], 400);

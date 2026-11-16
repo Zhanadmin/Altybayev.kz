@@ -178,8 +178,8 @@ class AlbumController
 
     private function canCreateEvent(?array $user): bool
     {
-        // создают мероприятия и выбирают участников только editor/admin; участники-viewer добавляют в него фото
-        return $user !== null && Auth::canEdit();
+        // TASK-032: мероприятие может создать любой вошедший родственник (править/удалять — только своё)
+        return $user !== null;
     }
 
     /** Предзаполнение из «Есте қаларлық күндер»: ?person_id=&date=&kind=birthday|memorial|wedding&marriage_id= */
@@ -459,6 +459,14 @@ class AlbumController
         }
         if ($this->svc()->uploadsLastHour($uid) >= self::MAX_UPLOADS_PER_HOUR) {
             $this->fail('Бір сағатқа шектеу — кейінірек жалғастырыңыз', 'Лимит на час исчерпан — продолжите позже', 429);
+        }
+        // TASK-032: общий лимит на человека (editor/admin без лимита); ALBUM_USER_QUOTA_MB в .env, по умолчанию 3000 МБ
+        if (!Auth::canEdit()) {
+            $quota = (int)\App\Core\Config::get('ALBUM_USER_QUOTA_MB', 3000) * 1048576;
+            if ($quota > 0 && $this->svc()->userBytesTotal($uid) + $size > $quota) {
+                $mbq = (int)round($quota / 1048576);
+                $this->fail("Жеке жүктеу шегі аяқталды ({$mbq} МБ) — Жандосқа жазыңыз", "Личный лимит загрузок исчерпан ({$mbq} МБ) — напишите Жандосу", 413);
+            }
         }
 
         // лимит частоты начатых загрузок (в т.ч. отменённых) — по сессии, 600 в час

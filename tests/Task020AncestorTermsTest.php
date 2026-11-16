@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../app/Config/KinshipDictionary.php';
+require_once __DIR__ . '/../app/Services/KinshipService.php';
 
 use App\Services\KinshipService;
 

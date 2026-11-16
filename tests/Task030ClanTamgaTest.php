@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../app/Services/ClanService.php';
 
 use App\Services\ClanService as C;
 

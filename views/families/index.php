@@ -77,7 +77,9 @@ require __DIR__ . '/../layout/master_start.php';
                                     $mStart = (string)($m['start_date'] ?: $m['marriage_date']);
                                     $mEnd = (string)($m['end_date'] ?: $m['divorce_date']);
                                     // TASK-023: у разведённых без даты развода срок не считаем (иначе «до сегодня»)
-                                    $together = (!$isMarried && $mEnd === '') ? '' : I18n::togetherLabel($mStart, $isMarried ? null : $mEnd, $lang);
+                                    // в браке — до сегодня, но если супруг умер раньше — до даты смерти
+                                    $endForCount = $isMarried ? I18n::earliestDeath($h ?: null, $w ?: null) : $mEnd;
+                                    $together = (!$isMarried && $mEnd === '') ? '' : I18n::togetherLabel($mStart, $endForCount, $lang);
                                 ?>
                                                                 <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">
                                     <?= $isMarried ? ($lang === 'ru' ? 'В браке' : 'Некеде') : ($lang === 'ru' ? 'В разводе' : 'Ажырасқан') ?>

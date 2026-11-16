@@ -366,7 +366,8 @@ require __DIR__ . '/../layout/master_start.php';
                                         <?php
                                             // TASK-023: «N жыл бірге» / «N лет вместе» — полные годы по дате свадьбы
                                             $spEnd = (string)(($sp['end_date'] ?? '') ?: ($sp['divorce_date'] ?? ''));
-                                            $spTogether = ($isDiv && $spEnd === '') ? '' : I18n::togetherLabel($spDate, $isDiv ? $spEnd : null, $lang);
+                                            $spEndForCount = $isDiv ? $spEnd : I18n::earliestDeath($person ?? null, $sp);
+                                            $spTogether = ($isDiv && $spEnd === '') ? '' : I18n::togetherLabel($spDate, $spEndForCount, $lang);
                                         ?>
                                         <?php if ($spTogether !== ''): ?><span class="meta pc-block"><strong><?= htmlspecialchars($spTogether) ?></strong></span><?php endif; ?>
                                         <?php if ($spDate !== ''): ?><span class="meta pc-block"><?= htmlspecialchars($spDate) ?></span><?php endif; ?>

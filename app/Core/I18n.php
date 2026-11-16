@@ -281,6 +281,30 @@ class I18n
             if (preg_match('/^([0-9]{4})/', $raw, $m)) {
                 return [(int)$m[1], null, null];
             }
+            // TASK-023: текстовые даты («8 марта 1979года», «7 июл 2007», «23 MAY 1998»)
+            if (preg_match('/(?<![0-9])([0-9]{4})(?![0-9])/u', $raw, $ym)) {
+                $yy = (int)$ym[1];
+                $low = mb_strtolower($raw, 'UTF-8');
+                $prefixes = [
+                    1 => ['янв', 'jan', 'қаң'], 2 => ['фев', 'feb', 'ақп'], 3 => ['мар', 'mar', 'нау'],
+                    4 => ['апр', 'apr', 'сәу'], 5 => ['мая', 'май', 'may', 'мам'], 6 => ['июн', 'jun', 'мау'],
+                    7 => ['июл', 'jul', 'шіл'], 8 => ['авг', 'aug', 'там'], 9 => ['сен', 'sep', 'қыр'],
+                    10 => ['окт', 'oct', 'қаз'], 11 => ['ноя', 'nov', 'қар'], 12 => ['дек', 'dec', 'жел'],
+                ];
+                $month = null;
+                if (preg_match('/(?<![0-9])([0-9]{1,2})\s+([^\s0-9.,]+)/u', $low, $dm)) {
+                    $dd = (int)$dm[1];
+                    foreach ($prefixes as $mi => $list) {
+                        foreach ($list as $pf) {
+                            if (str_starts_with($dm[2], $pf)) { $month = $mi; break 2; }
+                        }
+                    }
+                    if ($month !== null && $dd >= 1 && $dd <= 31) {
+                        return [$yy, $month, $dd];
+                    }
+                }
+                return [$yy, null, null];
+            }
         }
         $y = (int)($year ?? 0);
         return $y > 0 ? [$y, null, null] : null;
@@ -313,6 +337,24 @@ class I18n
             $d = new \DateTimeImmutable('now', $tz);
         }
         return [(int)$d->format('Y'), (int)$d->format('n'), (int)$d->format('j')];
+    }
+
+    /** TASK-023: ранняя дата смерти среди супругов (строка для togetherLabel) или null. */
+    public static function earliestDeath(?array $a, ?array $b): ?string
+    {
+        $best = null;
+        $bestKey = null;
+        foreach ([$a, $b] as $p) {
+            if (!$p) continue;
+            $pt = self::lifeParts($p['death_date'] ?? null, $p['death_year'] ?? null);
+            if (!$pt) continue;
+            $key = $pt[0] * 10000 + ($pt[1] ?? 0) * 100 + (int)($pt[2] ?? 0);
+            if ($bestKey === null || $key < $bestKey) {
+                $bestKey = $key;
+                $best = $pt[1] !== null ? sprintf('%04d-%02d-%02d', $pt[0], $pt[1], (int)$pt[2]) : (string)$pt[0];
+            }
+        }
+        return $best;
     }
 
     /** Русское склонение: 1 год, 2 года, 5 лет. */

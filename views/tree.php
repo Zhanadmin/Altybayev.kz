@@ -4533,6 +4533,19 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 if ((m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)) && +m[2] > 0 && +m[3] > 0) return [+m[1], +m[2], +m[3]];
                 if ((m = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/))) return [+m[3], +m[2], +m[1]];
                 if ((m = raw.match(/^(\d{4})/))) return [+m[1], null, null];
+                // TASK-023: текстовые даты («8 марта 1979года», «7 июл 2007», «23 MAY 1998»)
+                if ((m = raw.match(/(?<!\d)(\d{4})(?!\d)/))) {
+                    const yy = +m[1];
+                    const low = raw.toLowerCase();
+                    const pf = [null, ['янв','jan','қаң'], ['фев','feb','ақп'], ['мар','mar','нау'], ['апр','apr','сәу'], ['мая','май','may','мам'], ['июн','jun','мау'], ['июл','jul','шіл'], ['авг','aug','там'], ['сен','sep','қыр'], ['окт','oct','қаз'], ['ноя','nov','қар'], ['дек','dec','жел']];
+                    const dm = low.match(/(?<!\d)(\d{1,2})\s+([^\s\d.,]+)/);
+                    if (dm && +dm[1] >= 1 && +dm[1] <= 31) {
+                        for (let i = 1; i <= 12; i++) {
+                            if (pf[i].some(p => dm[2].startsWith(p))) return [yy, i, +dm[1]];
+                        }
+                    }
+                    return [yy, null, null];
+                }
             }
             const y = parseInt(year, 10);
             return y > 0 ? [y, null, null] : null;

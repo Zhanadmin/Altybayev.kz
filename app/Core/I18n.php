@@ -291,11 +291,28 @@ class I18n
     {
         $n = $to[0] - $from[0];
         if ($from[1] !== null && $to[1] !== null) {
-            if ($to[1] < $from[1] || ($to[1] === $from[1] && (int)$to[2] < (int)$from[2])) {
+            $fd = (int)$from[2];
+            // TASK-023: 29 февраля в невисокосный год отмечается 28 февраля (как в MemorialService)
+            if ($from[1] === 2 && $fd === 29 && !checkdate(2, 29, (int)$to[0])) {
+                $fd = 28;
+            }
+            if ($to[1] < $from[1] || ($to[1] === $from[1] && (int)$to[2] < $fd)) {
                 $n--;
             }
         }
         return $n;
+    }
+
+    /** TASK-023: «сегодня» как [год, месяц, день] в часовом поясе Asia/Almaty (или из заданной строки даты). */
+    private static function todayParts(?string $today = null): array
+    {
+        $tz = new \DateTimeZone('Asia/Almaty');
+        try {
+            $d = $today !== null ? new \DateTimeImmutable($today, $tz) : new \DateTimeImmutable('now', $tz);
+        } catch (\Throwable $e) {
+            $d = new \DateTimeImmutable('now', $tz);
+        }
+        return [(int)$d->format('Y'), (int)$d->format('n'), (int)$d->format('j')];
     }
 
     /** Русское склонение: 1 год, 2 года, 5 лет. */
@@ -341,12 +358,14 @@ class I18n
             if ($birth && $death) {
                 $n = self::yearsBetween($birth, $death);
                 if ($n >= 0 && $n <= 130) {
+                    // TASK-023: если у одной из дат нет месяца/дня — возраст приблизительный («≈»)
+                    $apx = ($birth[1] === null || $death[1] === null) ? '≈' : '';
                     if ($ru) {
                         $g = $p['gender'] ?? '';
                         $verb = $g === 'F' ? 'прожила' : ($g === 'M' ? 'прожил' : 'прожил(а)');
-                        $span .= " · {$verb} " . self::ruYears($n);
+                        $span .= " · {$verb} {$apx}" . self::ruYears($n);
                     } else {
-                        $span .= " · {$n} жыл ғұмыр";
+                        $span .= " · {$apx}{$n} жыл ғұмыр";
                     }
                 }
             }
@@ -354,9 +373,7 @@ class I18n
         }
 
         if (!$birth) return ['short' => '', 'title' => '', 'deceased' => false];
-        $ts = $today !== null ? strtotime($today) : false;
-        if ($ts === false) $ts = time();
-        $now = [(int)date('Y', $ts), (int)date('n', $ts), (int)date('j', $ts)];
+        $now = self::todayParts($today);
         $n = self::yearsBetween($birth, $now);
         if ($n < 0 || $n > 130) {
             return ['short' => (string)$birth[0], 'title' => $title, 'deceased' => false];
@@ -375,15 +392,14 @@ class I18n
         $lang = $lang ?? self::lang();
         $from = self::lifeParts($start, null);
         if (!$from) return '';
-        $ts = $today !== null ? strtotime($today) : false;
-        if ($ts === false) $ts = time();
-        $to = self::lifeParts($end, null) ?? [(int)date('Y', $ts), (int)date('n', $ts), (int)date('j', $ts)];
+        $to = self::lifeParts($end, null) ?? self::todayParts($today);
         $n = self::yearsBetween($from, $to);
         if ($n < 0 || $n > 100) return '';
+        $apx = ($from[1] === null || ($end && ($to[1] ?? null) === null)) ? '≈' : '';
         if ($lang === 'ru') {
-            return ($end ? 'прожили ' : '') . self::ruYears($n) . ($end ? '' : ' вместе');
+            return ($end ? 'прожили ' : '') . $apx . self::ruYears($n) . ($end ? '' : ' вместе');
         }
-        return $n . ' жыл' . ($end ? ' бірге болды' : ' бірге');
+        return $apx . $n . ' жыл' . ($end ? ' бірге болды' : ' бірге');
     }
 
     /** TASK-020: дата брака для карточки: «8 марта 1979 года» / «1979 ж. 8 наурыз» (месяц — на языке интерфейса). */
@@ -624,6 +640,31 @@ class I18n
             'contacts_whatsapp' => ['kk' => 'WhatsApp-қа жазу', 'ru' => 'Написать в WhatsApp'],
             'contacts_hint' => ['kk' => 'Байланыс деректерін тек сайтқа кірген туыстар көреді', 'ru' => 'Контакты видят только родственники, вошедшие на сайт'],
             'lbl_remove_phone' => ['kk' => 'Нөмірді өшіру', 'ru' => 'Удалить номер'],
+            // TASK-022: фото и обложка в окне «Өңдеу»
+            'pme_title' => ['kk' => 'Фото және мұқаба', 'ru' => 'Фото и обложка'],
+            'pme_avatar' => ['kk' => 'Портрет (аватар)', 'ru' => 'Портрет (аватар)'],
+            'pme_cover' => ['kk' => 'Мұқаба (карточка фоны)', 'ru' => 'Обложка (фон карточки)'],
+            'pme_cover_default' => ['kk' => 'Стандартты фон', 'ru' => 'Стандартный фон'],
+            'pme_upload' => ['kk' => 'Жүктеу', 'ru' => 'Загрузить'],
+            'pme_from_album' => ['kk' => 'Альбомнан таңдау', 'ru' => 'Выбрать из альбомов'],
+            'pme_remove' => ['kk' => 'Жою', 'ru' => 'Удалить'],
+            'pme_presets' => ['kk' => 'Дайын фондар', 'ru' => 'Готовые фоны'],
+            'pme_preset_ornament' => ['kk' => 'Өрнек', 'ru' => 'Орнамент'],
+            'pme_preset_steppe' => ['kk' => 'Дала', 'ru' => 'Степь'],
+            'pme_preset_mountains' => ['kk' => 'Тау', 'ru' => 'Горы'],
+            'pme_pos' => ['kk' => 'Орны (жоғары–төмен)', 'ru' => 'Положение (верх–низ)'],
+            'pme_dim' => ['kk' => 'Қараңғылау', 'ru' => 'Затемнение'],
+            'pme_zoom' => ['kk' => 'Масштаб', 'ru' => 'Масштаб'],
+            'pme_apply' => ['kk' => 'Қолдану', 'ru' => 'Применить'],
+            'pme_cancel' => ['kk' => 'Бас тарту', 'ru' => 'Отмена'],
+            'pme_more' => ['kk' => 'Тағы', 'ru' => 'Ещё'],
+            'pme_empty_albums' => ['kk' => 'Альбомдарда фото жоқ', 'ru' => 'В альбомах нет фото'],
+            'pme_saved' => ['kk' => 'Сақталды', 'ru' => 'Сохранено'],
+            'pme_no_migration' => ['kk' => 'Мұқаба үшін деректер қорын жаңарту керек (миграция)', 'ru' => 'Для обложки нужно обновить БД (миграция)'],
+            'pme_crop_hint' => ['kk' => 'Суретті сүйреп, шаршы аймақты таңдаңыз', 'ru' => 'Перетащите фото и выберите квадрат'],
+            'pme_pick_avatar' => ['kk' => 'Портретке фото таңдаңыз', 'ru' => 'Выберите фото для портрета'],
+            'pme_pick_cover' => ['kk' => 'Мұқабаға фото таңдаңыз', 'ru' => 'Выберите фото для обложки'],
+            'pme_img_error' => ['kk' => 'Суретті ашу мүмкін болмады', 'ru' => 'Не удалось открыть изображение'],
             'invite_send' => ['kk' => 'Шақыру жіберу', 'ru' => 'Отправить приглашение'],
             'invite_role' => ['kk' => 'Рөлі', 'ru' => 'Роль'],
             'invite_invited' => ['kk' => 'Шақырылды', 'ru' => 'Приглашён'],

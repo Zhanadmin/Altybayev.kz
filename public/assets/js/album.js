@@ -293,6 +293,8 @@
             job.row.classList.add('is-ok');
             status(job, t('done'), 100);
             if (res.item) { items.push(res.item); renderGrid(); }
+            // TASK-019: после загрузки фото предложить найти лица
+            if (res.item && res.item.type === 'photo' && window.FaceRecognition) { window.FaceRecognition.onUploaded(res.item); }
             setTimeout(function () { if (job.row.parentNode) job.row.parentNode.removeChild(job.row); }, 4000);
         }).catch(function (err) {
             fail(job, err.message || t('err_server'));
@@ -412,7 +414,9 @@
             el.alt = it.caption || '';
             el.draggable = false;
         }
+        el.dataset.mediaId = it.id; // TASK-019: для рамок лиц
         stage.insertBefore(el, stage.firstChild);
+        if (window.FaceRecognition) window.FaceRecognition.renderLightbox(); // TASK-019: рамки с именами
         lb.querySelector('.al-lb-count').textContent = (cur + 1) + ' / ' + items.length;
         var dl = lb.querySelector('[data-lb="download"]');
         dl.href = it.download;

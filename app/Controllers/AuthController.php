@@ -158,6 +158,10 @@ class AuthController
                 } else {
                     $linkedPersonId = $contactSvc->resolvePersonIdByEmail($email);
                 }
+                // TASK-024: карточка, уже занятая другим пользователем, не привязывается второй раз
+                if ($linkedPersonId && $contactSvc->personHasOtherUser($linkedPersonId, $newUserId)) {
+                    $linkedPersonId = null;
+                }
                 if ($linkedPersonId) {
                     $db->prepare("UPDATE users SET person_id = ? WHERE id = ? AND person_id IS NULL")
                        ->execute([$linkedPersonId, $newUserId]);

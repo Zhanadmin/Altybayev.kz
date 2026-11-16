@@ -187,7 +187,8 @@ class PersonContactController
             if ($existing && $existing['status'] !== 'revoked') {
                 // Приглашение из админки без привязки — просто привязываем к карточке, роль не меняем
                 $db->prepare('UPDATE invitations SET person_id = ? WHERE id = ?')->execute([$personId, (int)$existing['id']]);
-                if ($existingUser && empty($existingUser['person_id'])) {
+                if ($existingUser && empty($existingUser['person_id'])
+                    && !(new \App\Services\PersonContactService($db))->personHasOtherUser($personId, (int)$existingUser['id'])) {
                     $db->prepare('UPDATE users SET person_id = ?, updated_at = NOW() WHERE id = ?')->execute([$personId, (int)$existingUser['id']]);
                 }
                 $this->audit($db, 'UPDATE', 'invitations', (int)$existing['id'],
@@ -201,7 +202,8 @@ class PersonContactController
                 ]);
             }
             if (!$existing && $existingUser && (int)$existingUser['is_active'] === 1) {
-                if (empty($existingUser['person_id'])) {
+                if (empty($existingUser['person_id'])
+                    && !(new \App\Services\PersonContactService($db))->personHasOtherUser($personId, (int)$existingUser['id'])) {
                     $db->prepare('UPDATE users SET person_id = ?, updated_at = NOW() WHERE id = ?')->execute([$personId, (int)$existingUser['id']]);
                 }
                 $db->commit();
@@ -225,7 +227,9 @@ class PersonContactController
             }
             if ($existingUser) {
                 $db->prepare('UPDATE users SET role = ?, is_active = 1, person_id = COALESCE(person_id, ?), updated_at = NOW() WHERE id = ?')
-                    ->execute([$role, $personId, (int)$existingUser['id']]);
+                    ->execute([$role,
+                        (new \App\Services\PersonContactService($db))->personHasOtherUser($personId, (int)$existingUser['id']) ? null : $personId,
+                        (int)$existingUser['id']]);
             }
 
             $this->audit($db, $existing ? 'UPDATE' : 'CREATE', 'invitations', $invId,

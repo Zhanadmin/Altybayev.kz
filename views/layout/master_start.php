@@ -50,6 +50,7 @@ $roleBadgeText = match ($userRole) {
 $navItems = [
     'home'     => ['href' => '/',         'icon' => 'i-home',     'label' => I18n::t('nav_home'),     'count' => null,  'group' => 1],
     'persons'  => ['href' => '/persons',  'icon' => 'i-users',    'label' => I18n::t('nav_persons'),  'count' => '270', 'group' => 1],
+    'faces'    => ['href' => '/faces',    'icon' => 'i-face',     'label' => ($lang === 'ru' ? 'Лица' : 'Тұлғалар'), 'count' => null, 'group' => 1], // TASK-019
     'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => '71',  'group' => 1],
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
@@ -126,6 +127,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
         <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></symbol>
         <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.8.2 4.9 1.9 5.5 5.4"/></symbol>
+        <symbol id="i-face" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 9.5v.01M15.5 9.5v.01M8.5 14.2c.9 1.4 2.2 2 3.5 2s2.6-.6 3.5-2"/></symbol>
         <symbol id="i-family" viewBox="0 0 24 24"><circle cx="7" cy="6" r="2.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="12" cy="13" r="2"/><path d="M3 20v-4.5A3.5 3.5 0 0 1 6.5 12H8"/><path d="M21 20v-4.5a3.5 3.5 0 0 0-3.5-3.5H16"/><path d="M9 20v-1.5a3 3 0 0 1 6 0V20"/></symbol>
         <symbol id="i-tree" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><circle cx="5" cy="19.5" r="2"/><circle cx="12" cy="19.5" r="2"/><circle cx="19" cy="19.5" r="2"/><path d="M12 6.5v6M5 17.5v-2.5h14v2.5M12 12.5v5"/></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>

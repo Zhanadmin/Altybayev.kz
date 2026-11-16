@@ -1,0 +1,1 @@
+﻿<?php $t = token_get_all(file_get_contents($argv[1])); echo "tokens=" . count($t) . PHP_EOL; foreach ($t as $i => $tok) { if (is_array($tok) && $tok[0] === T_STRING && $tok[1] === "FACEUNKNOWN") {} } 

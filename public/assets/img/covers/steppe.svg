@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 480" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb4d9"/><stop offset="1" stop-color="#f6e7c1"/></linearGradient>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9bb55a"/><stop offset="1" stop-color="#6d8a3a"/></linearGradient>
+  </defs>
+  <rect width="1600" height="480" fill="url(#sky)"/>
+  <circle cx="1230" cy="150" r="52" fill="#fff3c4" opacity=".9"/>
+  <path d="M0 270 Q200 230 420 262 T860 252 T1300 266 T1600 250 V480 H0Z" fill="#b8c97a"/>
+  <path d="M0 330 Q260 292 520 322 T1040 314 T1600 320 V480 H0Z" fill="url(#g1)"/>
+  <path d="M0 400 Q300 372 640 396 T1280 392 T1600 396 V480 H0Z" fill="#587532"/>
+  <g fill="#fff" opacity=".85"><ellipse cx="300" cy="110" rx="90" ry="22"/><ellipse cx="370" cy="98" rx="60" ry="18"/><ellipse cx="820" cy="150" rx="110" ry="24"/><ellipse cx="900" cy="138" rx="70" ry="18"/></g>
+</svg>

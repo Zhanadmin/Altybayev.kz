@@ -139,6 +139,99 @@ class AdminController
     }
 
     // ------------------------------------------------------------------
+    // TASK-024: отвязка аккаунта и удаление пользователя (люди в дереве не затрагиваются)
+    // ------------------------------------------------------------------
+
+    /** Общая проверка: admin + CSRF + цель существует и это не я / не главный админ. Возвращает строку users. */
+    private function guardUserTarget(Request $request, PDO $db): array
+    {
+        $this->guardInvitePost($request);
+        $userId = (int)$request->post('user_id', 0);
+        if ($userId <= 0) {
+            Response::json(['error' => 'Деректер қате / Некорректные параметры'], 422);
+        }
+        $st = $db->prepare('SELECT id, email, role, person_id, google_id FROM users WHERE id = ? LIMIT 1');
+        $st->execute([$userId]);
+        $target = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$target) {
+            Response::json(['error' => 'Пайдаланушы табылмады / Пользователь не найден'], 404);
+        }
+        if (strtolower((string)$target['email']) === $this->superAdminEmail() || (int)$target['id'] === (int)Auth::id()) {
+            Response::json(['error' => 'Өзіңізді және бас әкімшіні өзгертуге болмайды / Нельзя трогать себя и главного администратора'], 422);
+        }
+        return $target;
+    }
+
+    private function auditUser(PDO $db, string $action, int $userId, string $summary, ?array $old, ?array $new): void
+    {
+        $c = Auth::user();
+        $db->prepare("
+            INSERT INTO audit_logs (user_id, user_name, user_email, action, entity_table, entity_id, summary, old_values, new_values, created_at)
+            VALUES (?, ?, ?, ?, 'users', ?, ?, ?, ?, NOW())
+        ")->execute([
+            $c['id'] ?? null, $c['name'] ?? 'Әкімші', $c['email'] ?? null, $action, $userId,
+            mb_substr($summary, 0, 255),
+            $old !== null ? json_encode($old, JSON_UNESCAPED_UNICODE) : null,
+            $new !== null ? json_encode($new, JSON_UNESCAPED_UNICODE) : null,
+        ]);
+    }
+
+    /**
+     * POST /api/admin/user/unlink — отвязать аккаунт: сбрасываются привязка к карточке и Google-ID.
+     * Роль, активность и e-mail остаются; следующий вход через Google привяжет заново.
+     */
+    public function unlinkUser(Request $request): void
+    {
+        $db = Database::getConnection();
+        $t = $this->guardUserTarget($request, $db);
+        try {
+            $db->beginTransaction();
+            $db->prepare('UPDATE users SET person_id = NULL, google_id = NULL, updated_at = NOW() WHERE id = ?')->execute([(int)$t['id']]);
+            // приглашение этого e-mail больше не держит чужую карточку
+            $svc = new \App\Services\PersonContactService($db);
+            if ($svc->hasInvitationPersonColumn()) {
+                $db->prepare('UPDATE invitations SET person_id = NULL WHERE email = ?')->execute([strtolower((string)$t['email'])]);
+            }
+            $this->auditUser($db, 'UPDATE', (int)$t['id'], "Аккаунт ажыратылды / Аккаунт отвязан: #{$t['id']} {$t['email']}",
+                ['person_id' => $t['person_id'], 'google_id' => $t['google_id'] ? 'set' : null], ['person_id' => null, 'google_id' => null]);
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            \App\Core\Logger::error('unlinkUser: ' . $e->getMessage(), $e);
+            Response::json(['error' => 'Серверде қате / Ошибка сервера'], 500);
+        }
+        Response::json(['success' => true, 'message' => 'Аккаунт ажыратылды / Аккаунт отвязан']);
+    }
+
+    /**
+     * POST /api/admin/user/delete — удалить пользователя (запись users). Персоны и правки в дереве остаются.
+     * Приглашение возвращается в «ожидает», чтобы человек мог войти заново и получить новый ID.
+     */
+    public function deleteUser(Request $request): void
+    {
+        $db = Database::getConnection();
+        $t = $this->guardUserTarget($request, $db);
+        try {
+            $db->beginTransaction();
+            $email = strtolower((string)$t['email']);
+            $db->prepare('DELETE FROM users WHERE id = ?')->execute([(int)$t['id']]);
+            $db->prepare("UPDATE invitations SET status = 'pending', accepted_at = NULL WHERE email = ? AND status = 'accepted'")->execute([$email]);
+            $this->auditUser($db, 'DELETE', (int)$t['id'], "Пайдаланушы өшірілді / Пользователь удалён: #{$t['id']} {$email}",
+                ['email' => $email, 'role' => $t['role'], 'person_id' => $t['person_id']], null);
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            \App\Core\Logger::error('deleteUser: ' . $e->getMessage(), $e);
+            Response::json(['error' => 'Серверде қате / Ошибка сервера (возможна связь с другими данными)'], 500);
+        }
+        Response::json(['success' => true, 'message' => 'Пайдаланушы өшірілді / Пользователь удалён']);
+    }
+
+    // ------------------------------------------------------------------
     // TASK-014: Приглашения (Шақырулар)
     // ------------------------------------------------------------------
 

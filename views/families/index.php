@@ -76,7 +76,8 @@ require __DIR__ . '/../layout/master_start.php';
                                     /* TASK-020: служебное «#N (ID)» скрыто; главное — «N лет вместе» */
                                     $mStart = (string)($m['start_date'] ?: $m['marriage_date']);
                                     $mEnd = (string)($m['end_date'] ?: $m['divorce_date']);
-                                    $together = I18n::togetherLabel($mStart, $isMarried ? null : ($mEnd !== '' ? $mEnd : null), $lang);
+                                    // TASK-023: у разведённых без даты развода срок не считаем (иначе «до сегодня»)
+                                    $together = (!$isMarried && $mEnd === '') ? '' : I18n::togetherLabel($mStart, $isMarried ? null : $mEnd, $lang);
                                 ?>
                                 <span class="fm-together"<?= $mStart !== '' ? ' title="' . htmlspecialchars(($lang === 'ru' ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><?= $together !== '' ? '<strong>' . htmlspecialchars($together) . '</strong>' : '' ?></span>
                                 <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">

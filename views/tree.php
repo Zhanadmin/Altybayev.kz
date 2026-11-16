@@ -3563,6 +3563,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <textarea class="form-textarea" id="editBiography" rows="3" placeholder="Өмірбаяны, естеліктері, еңбек жолы..."></textarea>
                     </div>
 
+                    <?php require __DIR__ . '/layout/person_media_fields.php'; // TASK-022: фото и обложка ?>
                     <?php
                     // TASK-022: телефон(ы), email, приглашение
                     $pcfInputCls = 'form-input';
@@ -4538,8 +4539,41 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
         function yearsBetween(a, b) {
             let n = b[0] - a[0];
-            if (a[1] != null && b[1] != null && (b[1] < a[1] || (b[1] === a[1] && b[2] < a[2]))) n--;
+            if (a[1] != null && b[1] != null) {
+                let ad = a[2];
+                // TASK-023: 29 февраля в невисокосный год отмечается 28 февраля (как в I18n.php)
+                const leap = (b[0] % 4 === 0 && b[0] % 100 !== 0) || b[0] % 400 === 0;
+                if (a[1] === 2 && ad === 29 && !leap) ad = 28;
+                if (b[1] < a[1] || (b[1] === a[1] && b[2] < ad)) n--;
+            }
             return n;
+        }
+        // TASK-023: «сегодня» в часовом поясе Asia/Almaty, а не браузера
+        function todayParts() {
+            try {
+                const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Almaty', year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(new Date());
+                const g = t => +f.find(x => x.type === t).value;
+                return [g('year'), g('month'), g('day')];
+            } catch (e) {
+                const d = new Date();
+                return [d.getFullYear(), d.getMonth() + 1, d.getDate()];
+            }
+        }
+        // TASK-023: «N жыл бірге / N лет вместе» — полные годы от даты брака (до развода, если есть)
+        function togetherText(m) {
+            if (!m) return '';
+            const ru = currentLang === 'ru';
+            const from = lifeParts(m.start_date || m.marriage_date, null);
+            if (!from) return '';
+            const endRaw = m.end_date || m.divorce_date;
+            const isDiv = m.status === 'divorced' || (m.is_current != null && String(m.is_current) === '0' && !!endRaw);
+            const to = lifeParts(endRaw, null);
+            if (isDiv && !to) return '';
+            const n = yearsBetween(from, isDiv ? to : todayParts());
+            if (n < 0 || n > 100) return '';
+            const apx = (from[1] == null || (isDiv && to[1] == null)) ? '≈' : '';
+            if (ru) return isDiv ? 'прожили ' + apx + ruYears(n) : apx + ruYears(n) + ' вместе';
+            return apx + n + (isDiv ? ' жыл бірге болды' : ' жыл бірге');
         }
         function ruYears(n) {
             const m10 = n % 10, m100 = n % 100;
@@ -4568,15 +4602,15 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 if (birth && death) {
                     const n = yearsBetween(birth, death);
                     if (n >= 0 && n <= 130) {
+                        const apx = (birth[1] == null || death[1] == null) ? '≈' : '';
                         const verb = p.gender === 'F' ? 'прожила' : (p.gender === 'M' ? 'прожил' : 'прожил(а)');
-                        s += ru ? ` · ${verb} ${ruYears(n)}` : ` · ${n} жыл ғұмыр`;
+                        s += ru ? ` · ${verb} ${apx}${ruYears(n)}` : ` · ${apx}${n} жыл ғұмыр`;
                     }
                 }
                 return { short: s, title, deceased: true };
             }
             if (!birth) return { short: '', title: '' };
-            const d = new Date();
-            const n = yearsBetween(birth, [d.getFullYear(), d.getMonth() + 1, d.getDate()]);
+            const n = yearsBetween(birth, todayParts());
             if (n < 0 || n > 130) return { short: String(birth[0]), title };
             return { short: (birth[1] == null ? '≈' : '') + (ru ? ruYears(n) : n + ' жас'), title };
         }
@@ -5713,6 +5747,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 document.getElementById('editDeathPlace').value = p.death_place || '';
                 document.getElementById('editBiography').value = p.biography || '';
                 if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
+                if (typeof pmeLoad === 'function') { pmeLoad(p.id, data.media_edit || null); } // TASK-022: фото и обложка
 
                 const btnDel = document.getElementById('btnDeletePerson');
                 if (btnDel) {
@@ -5818,6 +5853,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = await res.json();
                 if (data.status === 'success') {
                     // TASK-022: контакты — тем же нажатием «Сақтау»
+                    if (typeof pmeSave === 'function') { await pmeSave(); } // положение/затемнение обложки
                     const ct = (typeof pcfSave === 'function') ? await pcfSave() : { ok: true, offerInvite: false };
                     if (ct.ok && !ct.offerInvite) {
                         closeEditPersonModal();
@@ -6535,6 +6571,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${w.full_name}</strong> <span class="uz-meta">${lifeLabel(w).short ? `(${lifeHtml(w)})` : ''} [${w.clan_ru || (currentLang === 'ru' ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (!coupleTitle) coupleTitle = (currentLang === 'ru' ? 'Семья' : 'Отбасы');
+            const togetherStr = togetherText(fam.marriage);
+            if (togetherStr) coupleTitle += ` <span class="uz-meta uz-together">— ${uzEsc(togetherStr)}</span>`;
 
             const children = fam.children || [];
             let childrenHtml = '';

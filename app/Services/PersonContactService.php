@@ -183,8 +183,20 @@ class PersonContactService
             $this->db->prepare('UPDATE invitations SET person_id = ? WHERE email = ? AND person_id IS NULL')
                 ->execute([$personId, $email]);
         }
-        $this->db->prepare('UPDATE users SET person_id = ?, updated_at = NOW() WHERE email = ? AND person_id IS NULL')
-            ->execute([$personId, $email]);
+        // TASK-024: не привязываем карточку, если ею уже владеет другая учётка
+        $this->db->prepare(
+            'UPDATE users SET person_id = ?, updated_at = NOW()
+             WHERE email = ? AND person_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM (SELECT id FROM users WHERE person_id = ? AND email <> ?) x)'
+        )->execute([$personId, $email, $personId, $email]);
+    }
+
+    /** TASK-024: есть ли у карточки другая учётка (кроме $exceptUserId) */
+    public function personHasOtherUser(int $personId, int $exceptUserId): bool
+    {
+        $st = $this->db->prepare('SELECT 1 FROM users WHERE person_id = ? AND id <> ? LIMIT 1');
+        $st->execute([$personId, $exceptUserId]);
+        return (bool)$st->fetchColumn();
     }
 
     /** Привязка по email из админки (совпадение email с контактом карточки) */

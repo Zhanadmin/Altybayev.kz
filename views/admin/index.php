@@ -116,6 +116,14 @@ $adRoleLabels = [
                                         data-tip="<?= $lang === 'ru' ? 'Сохранить' : 'Сақтау' ?>">
                                     <svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>
                                 </button>
+                                <?php if (strtolower($uEmail) !== strtolower(trim((string)\App\Core\Config::get('SUPER_ADMIN_EMAIL', 'zhandos.alt06@gmail.com'))) && (int)$u['id'] !== (int)($user['id'] ?? 0)): ?>
+                                    <button type="button" class="btn btn-sm" onclick="unlinkUser(<?= (int)$u['id'] ?>)">
+                                        <?= $lang === 'ru' ? 'Отвязать аккаунт' : 'Аккаунтты ажырату' ?>
+                                    </button>
+                                    <button type="button" class="btn btn-sm" onclick="deleteUser(<?= (int)$u['id'] ?>)">
+                                        <?= $lang === 'ru' ? 'Удалить' : 'Өшіру' ?>
+                                    </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -315,6 +323,35 @@ $adRoleLabels = [
         try {
             await adPost('/api/admin/invitations/revoke', { id });
             showAppToast(AD_RU ? 'Приглашение отозвано' : 'Шақыру қайтарылды', 'success');
+            setTimeout(() => window.location.reload(), 900);
+        } catch (err) {
+            showAppToast('Қате / Ошибка: ' + err.message, 'error');
+        }
+    }
+
+    // TASK-024: отвязка аккаунта / удаление пользователя (люди в дереве не удаляются)
+    async function unlinkUser(id) {
+        const msg = AD_RU
+            ? 'Отвязать аккаунт? Сбросятся привязка к карточке и Google-ID; роль и правки сохранятся. Человек сможет войти заново.'
+            : 'Аккаунтты ажырату керек пе? Карточкаға байлану мен Google-ID тазаланады; рөл мен өзгерістер сақталады.';
+        if (!window.confirm(msg)) return;
+        try {
+            await adPost('/api/admin/user/unlink', { user_id: id });
+            showAppToast(AD_RU ? 'Аккаунт отвязан' : 'Аккаунт ажыратылды', 'success');
+            setTimeout(() => window.location.reload(), 900);
+        } catch (err) {
+            showAppToast('Қате / Ошибка: ' + err.message, 'error');
+        }
+    }
+
+    async function deleteUser(id) {
+        const msg = AD_RU
+            ? 'Удалить пользователя? Запись входа будет удалена, люди в дереве и их данные останутся. При новом входе через Google будет создан новый ID.'
+            : 'Пайдаланушыны өшіру керек пе? Кіру жазбасы өшеді, шежіредегі адамдар сақталады.';
+        if (!window.confirm(msg)) return;
+        try {
+            await adPost('/api/admin/user/delete', { user_id: id });
+            showAppToast(AD_RU ? 'Пользователь удалён' : 'Пайдаланушы өшірілді', 'success');
             setTimeout(() => window.location.reload(), 900);
         } catch (err) {
             showAppToast('Қате / Ошибка: ' + err.message, 'error');

@@ -1,0 +1,69 @@
+/* TASK-019: распознавание лиц — рамки на фото и экран «Лица» */
+
+/* прогресс обработки (фиксированная плашка внизу) */
+.fr-progress {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    width: min(460px, calc(100vw - 32px));
+    background: var(--c-island, #fff);
+    border: 1px solid var(--c-border, #e3e6ea);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(20, 30, 50, .16);
+    padding: 10px 14px;
+    z-index: 3000;
+    display: none;
+}
+.fr-progress.is-on { display: block; }
+.fr-progress-txt { display: block; font-size: 13px; margin-bottom: 6px; color: var(--c-text, #222); }
+.fr-bar { display: block; height: 5px; border-radius: 4px; background: var(--c-island-2, #eef1f5); overflow: hidden; }
+.fr-bar > i { display: block; height: 100%; width: 0; background: #0f66e0; border-radius: 4px; transition: width .2s ease; }
+
+/* рамки лиц в полноэкранном просмотре */
+.al-lb-stage .fr-boxes {
+    position: absolute;
+    z-index: 5;
+    border: 2px solid rgba(255, 255, 255, .92);
+    box-shadow: 0 0 0 1px rgba(15, 102, 224, .65);
+    border-radius: 6px;
+    pointer-events: none;
+    transition: border-color .12s;
+}
+.al-lb-stage .fr-boxes.is-named { border-color: #0f66e0; }
+.fr-box-name {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 5px);
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: rgba(15, 102, 224, .95);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.2;
+    padding: 3px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity .12s;
+    pointer-events: none;
+}
+.al-lb-stage .fr-boxes:hover .fr-box-name,
+.al-lb-stage:hover .fr-boxes .fr-box-name { opacity: 1; }
+
+/* экран «Лица» */
+.faces-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-3, 12px); }
+.faces-card { background: var(--c-island, #fff); border: 1px solid var(--c-border, #e3e6ea); border-radius: 12px; overflow: hidden; }
+.faces-card .fc-photo { position: relative; aspect-ratio: 1; background: var(--c-island-2, #eef1f5); }
+.faces-card .fc-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.faces-card .fc-body { padding: 8px 10px 10px; }
+.faces-card .fc-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.faces-card .fc-count { color: var(--c-muted, #6b7280); font-size: 12px; margin-top: 2px; }
+.faces-card .fc-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.faces-card .btn { font-size: 12px; padding: 5px 9px; }
+.faces-empty { text-align: center; padding: 36px 16px; color: var(--c-muted, #6b7280); }
+.faces-section { margin-top: var(--sp-4, 16px); }
+.faces-section h2 { font-size: 16px; margin: 0 0 12px; }
+
+/* карточка-форма подписи группы */
+.faces-assign { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.faces-assign select, .faces-assign input { flex: 1; }

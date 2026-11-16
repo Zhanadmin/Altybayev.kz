@@ -42,13 +42,33 @@ $heroLife = I18n::lifeLabel($person);
 // В шапке полные даты уже есть — у ушедшего добавляем только «73 жыл ғұмыр»
 $heroAge = !empty($heroLife['deceased']) ? (string)(explode(' · ', $heroLife['short'], 2)[1] ?? '') : $heroLife['short'];
 
+// TASK-022: обложка карточки (только безопасные пути: загрузки и готовые фоны)
+$coverUrl = (string)($person['cover_path'] ?? '');
+if ($coverUrl !== '' && !preg_match('#^/(uploads/photos|assets/img/covers)/[A-Za-z0-9._-]+$#', $coverUrl)) {
+    $coverUrl = '';
+}
+$coverPos = max(0, min(100, (int)($person['cover_pos_y'] ?? 50)));
+$coverDim = max(0, min(70, (int)($person['cover_dim'] ?? 30)));
+
 require __DIR__ . '/../layout/master_start.php';
 ?>
+
+<style>
+/* TASK-022: обложка карточки (как в Facebook): полоса сверху, портрет поверх неё */
+.pc-book.has-cover { position: relative; }
+.pc-book .pc-cover { position: absolute; top: 0; left: 0; right: 0; height: 190px; background-size: cover; background-repeat: no-repeat; pointer-events: none; }
+.pc-book .pc-cover::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--cover-dim, .3); }
+.pc-book.has-cover .photo-frame { margin-top: 84px; z-index: 1; }
+.pc-book.has-cover > .orn-corner { z-index: 2; }
+</style>
 
 <div class="pc">
 
     <!-- TASK-012: заголовок карточки — страница семейной книги: фото в рисованной рамке, имя на ленте, годы, действия -->
-    <div class="island book-page pc-book">
+    <div class="island book-page pc-book<?= $coverUrl !== '' ? ' has-cover' : '' ?>">
+        <?php if ($coverUrl !== ''): ?>
+            <div class="pc-cover" style="background-image:url('<?= htmlspecialchars($coverUrl, ENT_QUOTES) ?>'); background-position:50% <?= $coverPos ?>%; --cover-dim:<?= $coverDim / 100 ?>;" aria-hidden="true"></div>
+        <?php endif; ?>
         <svg class="orn orn-corner tl" aria-hidden="true"><use href="#o-corner"/></svg><svg class="orn orn-corner tr" aria-hidden="true"><use href="#o-corner"/></svg>
         <svg class="orn orn-corner bl" aria-hidden="true"><use href="#o-corner"/></svg><svg class="orn orn-corner br" aria-hidden="true"><use href="#o-corner"/></svg>
         <div class="photo-frame">
@@ -107,6 +127,12 @@ require __DIR__ . '/../layout/master_start.php';
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
                 </button>
+            <?php elseif (!empty($canEditContacts)): ?>
+                <!-- TASK-022: сам человек (не editor) — фото, обложка, контакты в том же окне -->
+                <button type="button" class="btn btn-primary" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
+                    <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
+                    <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
+                </button>
             <?php endif; ?>
         </div>
     </div>
@@ -130,18 +156,13 @@ require __DIR__ . '/../layout/master_start.php';
                 <?php endif; ?>
 
                 <!-- Безопасная загрузка фото -->
-                <?php if ($canEdit): ?>
+                <?php if ($canEdit || !empty($canEditContacts)): ?>
+                    <!-- TASK-022: смена фото и обложки — в окне «Өңдеу» (отдельная загрузка сбоку убрана) -->
                     <div class="pc-upload">
-                        <form id="avatarUploadForm" enctype="multipart/form-data" onsubmit="handlePhotoUpload(event)">
-                            <input type="hidden" name="person_id" value="<?= (int)$person['id'] ?>">
-                            <input type="hidden" name="set_as_avatar" value="1">
-                            <label for="photoFileInput" class="pc-drop">
-                                <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
-                                <span><?= $lang === 'ru' ? 'Загрузить / Сменить фото' : 'Фотосурет жүктеу' ?></span>
-                            </label>
-                            <input type="file" id="photoFileInput" name="photo" accept="image/jpeg,image/png,image/webp" style="display: none;" onchange="this.form.dispatchEvent(new Event('submit'))">
-                        </form>
-                        <div id="uploadStatusMsg" class="small" style="margin-top: 6px; display: none;"></div>
+                        <button type="button" class="pc-drop" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
+                            <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
+                            <span><?= $lang === 'ru' ? 'Фото и обложка — в окне «Редактировать»' : 'Фото және мұқаба — «Өңдеу» терезесінде' ?></span>
+                        </button>
                     </div>
                 <?php endif; ?>
             </div>
@@ -171,7 +192,7 @@ require __DIR__ . '/../layout/master_start.php';
             <div class="island" id="contactsIsland">
                 <div class="island-head pc-kin-head"><h3><?= htmlspecialchars(I18n::t('contacts_title')) ?></h3>
                     <?php if ($canEditContacts): ?>
-                        <button type="button" class="btn btn-ghost btn-sm" id="ctEditBtn" onclick="ctToggleEdit(true)"><?= htmlspecialchars(I18n::t('btn_edit')) ?></button>
+                        <button type="button" class="btn btn-ghost btn-sm" id="ctEditBtn" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)"><?= htmlspecialchars(I18n::t('btn_edit')) ?></button>
                     <?php endif; ?>
                 </div>
 
@@ -342,6 +363,12 @@ require __DIR__ . '/../layout/master_start.php';
                                     </a>
                                     <span class="right">
                                         <span class="badge"><?= $isDiv ? ($lang === 'ru' ? 'Развод' : 'Ажырасқан') : ($lang === 'ru' ? 'Брак' : 'Некеде') ?></span>
+                                        <?php
+                                            // TASK-023: «N жыл бірге» / «N лет вместе» — полные годы по дате свадьбы
+                                            $spEnd = (string)(($sp['end_date'] ?? '') ?: ($sp['divorce_date'] ?? ''));
+                                            $spTogether = ($isDiv && $spEnd === '') ? '' : I18n::togetherLabel($spDate, $isDiv ? $spEnd : null, $lang);
+                                        ?>
+                                        <?php if ($spTogether !== ''): ?><span class="meta pc-block"><strong><?= htmlspecialchars($spTogether) ?></strong></span><?php endif; ?>
                                         <?php if ($spDate !== ''): ?><span class="meta pc-block"><?= htmlspecialchars($spDate) ?></span><?php endif; ?>
                                     </span>
                                 </div>

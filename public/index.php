@@ -30,6 +30,8 @@ $router->get('/admin', 'App\Controllers\AdminController@index', ['auth', 'admin'
 $router->get('/lang/{code}', 'App\Controllers\AuthController@switchLanguage');
 $router->post('/api/photo/upload', 'App\Controllers\PhotoUploadController@upload', ['auth']);
 $router->post('/api/admin/user/role', 'App\Controllers\AdminController@updateUserRole', ['auth', 'admin']);
+$router->post('/api/admin/user/unlink', 'App\Controllers\AdminController@unlinkUser', ['auth', 'admin']);
+$router->post('/api/admin/user/delete', 'App\Controllers\AdminController@deleteUser', ['auth', 'admin']);
 $router->post('/api/admin/invitations/create', 'App\Controllers\AdminController@createInvitation', ['auth', 'admin']);
 $router->post('/api/admin/invitations/role', 'App\Controllers\AdminController@updateInvitationRole', ['auth', 'admin']);
 $router->post('/api/admin/invitations/revoke', 'App\Controllers\AdminController@revokeInvitation', ['auth', 'admin']);
@@ -55,6 +57,9 @@ $router->post('/api/person/create-relative', 'App\Controllers\TreeController@api
 $router->post('/api/person/delete', 'App\Controllers\TreeController@apiPersonDelete', ['auth']);
 $router->post('/api/person/contacts/save', 'App\Controllers\PersonContactController@save', ['auth']); // TASK-022
 $router->post('/api/person/invite', 'App\Controllers\PersonContactController@invite', ['auth']); // TASK-022
+$router->get('/api/album/photos', 'App\Controllers\PersonCoverController@photos', ['auth']); // TASK-022: выбор фото из альбомов
+$router->post('/api/person/avatar/upload', 'App\Controllers\PersonCoverController@avatarUpload', ['auth']); // TASK-022
+$router->post('/api/person/cover/save', 'App\Controllers\PersonCoverController@save', ['auth']); // TASK-022
 $router->post('/api/marriage/update', 'App\Controllers\TreeController@apiMarriageUpdate', ['auth']);
 $router->post('/api/user/set-my-person', 'App\Controllers\TreeController@apiSetMyPerson', ['auth']);
 $router->get('/api/kinship', 'App\Controllers\TreeController@apiKinship', ['auth']);
@@ -95,6 +100,18 @@ $router->post('/api/album/upload/cancel', 'App\Controllers\AlbumController@apiUp
 $router->post('/api/album/media/update', 'App\Controllers\AlbumController@apiMediaUpdate', ['auth']);
 $router->post('/api/album/media/delete', 'App\Controllers\AlbumController@apiMediaDelete', ['auth']);
 $router->post('/api/album/media/avatar', 'App\Controllers\AlbumController@apiSetAvatar', ['auth']);
+
+// TASK-019: распознавание лиц в фотоальбомах (в браузере; сервер хранит только отпечатки)
+$router->get('/faces', 'App\Controllers\FaceController@faces', ['auth']);
+$router->get('/api/face/clusters', 'App\Controllers\FaceController@apiSummary', ['auth']);
+$router->get('/api/face/media/{id}', 'App\Controllers\FaceController@apiMediaFaces', ['auth']);
+$router->post('/api/face/save', 'App\Controllers\FaceController@apiSave', ['auth']);
+$router->post('/api/face/cluster/assign', 'App\Controllers\FaceController@apiAssign', ['auth']);
+$router->post('/api/face/cluster/unassign', 'App\Controllers\FaceController@apiUnassign', ['auth']);
+$router->post('/api/face/remove', 'App\Controllers\FaceController@apiRemove', ['auth']);
+$router->post('/api/face/settings', 'App\Controllers\FaceController@apiSettings', ['auth']);
+$router->post('/api/face/delete-person', 'App\Controllers\FaceController@apiDeletePerson', ['auth']);
+$router->post('/api/face/opt-out', 'App\Controllers\FaceController@apiOptOut', ['auth']);
 
 // 6. Админ-панель: Импорт GEDCOM из MyHeritage и управление откатами (TASK-005)
 $router->get('/admin/import', 'App\Controllers\AdminImportController@index', ['auth', 'admin']);

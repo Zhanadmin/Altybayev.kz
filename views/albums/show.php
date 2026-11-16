@@ -56,6 +56,11 @@ require __DIR__ . '/../layout/master_start.php';
             <?php endif; ?>
         </div>
         <div class="actions">
+            <?php if ($canContribute): ?>
+                <button type="button" class="btn btn-ghost" id="alFindFaces" title="<?= htmlspecialchars($L('Беттерді табу', 'Найти лица')) ?>">
+                    <svg class="ic" aria-hidden="true"><use href="#i-face"/></svg><?= $L('Беттерді табу', 'Найти лица') ?>
+                </button>
+            <?php endif; ?>
             <?php if ($canManage || $canEditAll): ?>
                 <button type="button" class="btn btn-ghost" data-open-modal="alInfoModal">
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg><?= $L('Өзгерту', 'Изменить') ?>
@@ -295,5 +300,7 @@ window.AL = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
 <script src="/assets/js/album.js?v=7" defer></script>
+<link rel="stylesheet" href="/assets/css/faces.css?v=1">
+<script src="/assets/js/face-recognition.js?v=1" defer></script>
 
 <?php require __DIR__ . '/../layout/master_end.php'; ?>

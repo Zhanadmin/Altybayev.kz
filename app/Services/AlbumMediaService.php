@@ -363,6 +363,37 @@ class AlbumMediaService
         return rtrim($publicPrefix, '/') . '/' . $name;
     }
 
+    /**
+     * TASK-022: обложка карточки человека — фото альбома, уменьшенное до ширины 1600 px (пропорции сохраняются).
+     * @return string публичный URL
+     */
+    public function makeCover(string $photoRel, string $publicDir, string $publicPrefix = '/uploads/photos/'): string
+    {
+        $src = $this->abs($photoRel);
+        $info = $this->inspectImage($src, 'kk');
+        $this->raiseMemoryLimit();
+        $img = $this->decodeImage($src, $info['type'], 'kk');
+        $w = imagesx($img);
+        $h = imagesy($img);
+        $scale = min(1.0, 1600 / max(1, $w));
+        $ow = max(1, (int)round($w * $scale));
+        $oh = max(1, (int)round($h * $scale));
+        $canvas = imagecreatetruecolor($ow, $oh);
+        imagecopyresampled($canvas, $img, 0, 0, 0, 0, $ow, $oh, $w, $h);
+        imagedestroy($img);
+
+        if (!is_dir($publicDir)) {
+            @mkdir($publicDir, 0755, true);
+        }
+        $name = 'cover_' . self::uuid() . '.jpg';
+        $ok = imagejpeg($canvas, rtrim($publicDir, '/\\') . DIRECTORY_SEPARATOR . $name, 86);
+        imagedestroy($canvas);
+        if (!$ok) {
+            throw new RuntimeException('cover save failed');
+        }
+        return rtrim($publicPrefix, '/') . '/' . $name;
+    }
+
     public static function uuid(): string
     {
         $d = random_bytes(16);

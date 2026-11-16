@@ -223,6 +223,7 @@
     const GAP = 2.5;        // минимальное расстояние между соседями на ярусе
     const LEVEL_H = 3.4;    // высота одного поколения
     const Y0 = 4.0;         // высота родоначальника над землёй (выше таблички рода у корней)
+    const STEM_Y = 0.82;    // черешок жёлудя над его центром: сюда подходит ветка (верх createAcornGeometry × 1.05)
     const TREE_GAP = 7;     // зазор между деревьями
 
     function buildForestModel(data, opts) {
@@ -484,8 +485,8 @@
                     let ki = 0;
                     row.forEach(s => {
                         if (s.role === 'blood') {
-                            // ствол с корой бугристый (до ×1.25) — человек висит перед корой, не в ней
-                            tr.local.set(s.id, { x: 0, y, z: barkZ(y, 0.75), gen: g, onTrunk: true, role: s.role });
+                            // предок — наплыв на коре: срез с годовыми кольцами прямо на стволе, не висит в воздухе
+                            tr.local.set(s.id, { x: 0, y, z: barkZ(y, 0.3), gen: g, onTrunk: true, role: s.role });
                         } else {
                             const ang = Math.PI / 2 - 0.75 - ki * 0.6;
                             ki++;
@@ -1010,20 +1011,6 @@
         return geo;
     }
 
-    // Резной деревянный медальон для предков на стволе и у корней
-    function createTrunkMedallionGeometry() {
-        const pts = [
-            new THREE.Vector2(0.00, 0.09),
-            new THREE.Vector2(0.44, 0.07),
-            new THREE.Vector2(0.50, 0.03),
-            new THREE.Vector2(0.52, -0.04),
-            new THREE.Vector2(0.00, -0.04)
-        ];
-        const geo = new THREE.LatheGeometry(pts, 20);
-        geo.computeVertexNormals();
-        return geo;
-    }
-
     // Текстура годовых колец дуба с гравировкой для первопредков у корней
     function makeTreeRingMedallionTexture(p, pal) {
         const c = document.createElement('canvas');
@@ -1264,10 +1251,17 @@
                 const b = (j + 1) * (radialSegs + 1) + i;
                 const c = (j + 1) * (radialSegs + 1) + (i + 1);
                 const d = j * (radialSegs + 1) + (i + 1);
-                indices.push(a, b, d);
-                indices.push(b, c, d);
+                // грани лицом наружу (раньше были внутрь — при облёте была видна «изнанка» ствола)
+                indices.push(a, d, b);
+                indices.push(b, d, c);
             }
         }
+        // крышка сверху: в кроне ствол закрыт, внутрь не заглянуть
+        const topRing = heightSegs * (radialSegs + 1);
+        const capIdx = positions.length / 3;
+        positions.push(0, 1.04, 0);
+        uvs.push(0.5, 3.5);
+        for (let i = 0; i < radialSegs; i++) indices.push(capIdx, topRing + i, topRing + i + 1);
 
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -1816,11 +1810,67 @@
                 this.target.y + this.dist * Math.cos(this.phi),
                 this.target.z + this.dist * sp * Math.cos(this.theta)
             );
+            this._avoidObstacles(this.camera.position);
             if (this.camera.position.y < 1.2) this.camera.position.y = 1.2;
+            // камеру вытолкнуло — дистанция = фактическая, иначе колесо «залипает» (вперёд уже некуда, назад не отзывается)
+            if (!this.tween) {
+                const real = this.camera.position.distanceTo(this.target);
+                if (real > this.dist + 0.01) this.dist = this._clampDist(real);
+            }
             this.camera.lookAt(this.target);
             // матрицы нужны сразу (отбор подписей, наведение) — не ждём render()
             this.camera.updateMatrixWorld();
             if (this.onChange) this.onChange('camera');
+        }
+
+        // Камера не заходит внутрь ствола и веток (TASK-016, 16.11 18:54): выталкиваем её наружу.
+        // Запас больше ближней плоскости отсечения (0.8), иначе кора «срезается» и видна изнанка.
+        _avoidObstacles(pos) {
+            const ob = this.obstacles;
+            if (!ob) return;
+            const PAD_TRUNK = 1.4, PAD_BRANCH = 1.0;
+            const pushTrunks = () => {
+                const trunks = ob.trunks || [];
+                for (let i = 0; i < trunks.length; i++) {
+                    const t = trunks[i];
+                    if (!(t.h > 0) || pos.y > t.h + PAD_TRUNK) continue;
+                    const dx = pos.x - t.x, dz = pos.z - t.z;
+                    const lim = t.r * 2.3 + PAD_TRUNK;
+                    if (Math.abs(dx) > lim || Math.abs(dz) > lim) continue;
+                    // радиус коры на этой высоте (рёбра коры до ×1.1) + запас
+                    const R = t.r * trunkFactor(Math.min(1, Math.max(0, pos.y / t.h))) * 1.12 + PAD_TRUNK;
+                    let d = Math.hypot(dx, dz);
+                    if (d >= R) continue;
+                    let nx, nz;
+                    if (d < 1e-4) { nx = Math.sin(this.theta); nz = Math.cos(this.theta); } else { nx = dx / d; nz = dz / d; }
+                    pos.x = t.x + nx * R;
+                    pos.z = t.z + nz * R;
+                }
+            };
+            for (let pass = 0; pass < 2; pass++) {
+                pushTrunks();
+                const segs = ob.segs || [];
+                for (let i = 0; i < segs.length; i++) {
+                    const s = segs[i];
+                    // быстрый отсев по заранее посчитанной рамке отрезка
+                    if (pos.x < s.x0 || pos.x > s.x1 || pos.y < s.y0 || pos.y > s.y1 || pos.z < s.z0 || pos.z > s.z1) continue;
+                    const R = s.r + PAD_BRANCH;
+                    const ux = s.bx - s.ax, uy = s.by - s.ay, uz = s.bz - s.az;
+                    const L2 = ux * ux + uy * uy + uz * uz || 1e-6;
+                    let k = ((pos.x - s.ax) * ux + (pos.y - s.ay) * uy + (pos.z - s.az) * uz) / L2;
+                    k = Math.max(0, Math.min(1, k));
+                    const cx = s.ax + ux * k, cy = s.ay + uy * k, cz = s.az + uz * k;
+                    const ex = pos.x - cx, ey = pos.y - cy, ez = pos.z - cz;
+                    const d = Math.hypot(ex, ey, ez);
+                    if (d >= R || d < 1e-4) continue;
+                    pos.x = cx + ex / d * R;
+                    pos.y = cy + ey / d * R;
+                    pos.z = cz + ez / d * R;
+                }
+            }
+            // последним — ствол (ветка могла подтолкнуть к коре); земля — до него
+            if (pos.y < 1.2) pos.y = 1.2;
+            pushTrunks();
         }
 
         destroy() {
@@ -1962,6 +2012,9 @@
         }
 
         clearWorld() {
+            // препятствия камеры — от старой модели, сбрасываем
+            if (this.cam) this.cam.obstacles = null;
+            this._camSegs = null;
             // буферы матриц InstancedMesh освобождаются только через dispose() самого меша
             this.world.traverse(o => { if (o.isInstancedMesh && typeof o.dispose === 'function') o.dispose(); });
             this.disposables.forEach(d => { try { d.dispose(); } catch (e) { /* уже освобождено */ } });
@@ -2009,6 +2062,12 @@
             this.buildTrees();
             this.buildPeople();
             this.buildLinks();
+            // (16.11 18:54) камера не заходит внутрь стволов и веток
+            this.cam.obstacles = {
+                trunks: M.trees.map(tr => ({ x: tr.x, z: tr.z, r: tr.trunkR, h: tr._trunkH || tr.trunkH })),
+                segs: this._camSegs || []
+            };
+            this.cam.apply();
             if (first) this.focusMine(true);
             if (this.selected) this.reselect();
             this.updateLabelVisibility(true);
@@ -2238,6 +2297,8 @@
             const barkMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xffffff });
             const branchMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xf2e4d2 });
             this.disposables.push(barkTex, barkMat, branchMat);
+            this._barkMat = barkMat;      // наплывы предков на стволе (buildPeople)
+            this._branchMat = branchMat;  // черешки желудей
 
             // 0. Каркас каждого дерева: ярусы (поколения), размер ветви (сколько потомков), высота ствола
             M.trees.forEach(tr => {
@@ -2298,7 +2359,7 @@
             this.world.add(roots);
 
             // 3. Ветви «отец → ребёнок»: дуга из 4 сегментов, толщина — по числу потомков на этой ветви
-            const segs = [], joints = [], ties = [];
+            const segs = [], joints = [], ties = [], knots = [];
             const branchR = (n, tr) => Math.min(tr.trunkR * 0.55, 0.11 + 0.08 * Math.sqrt(n || 1));
             M.trees.forEach(tr => {
                 const c = Math.cos(tr.rotY), s = Math.sin(tr.rotY);
@@ -2308,9 +2369,10 @@
                     if (lp.role === 'kelin') {
                         const hp = tr.local.get(lp.husband);
                         if (hp) {
-                            const pA = toWorld(lp.x, lp.y, lp.z);
+                            const pA = toWorld(lp.x, lp.y + STEM_Y, lp.z);
                             const pB = hp.onTrunk ? toWorld(0, hp.y, 0) : toWorld(hp.x, hp.y, hp.z);
                             ties.push({ a: pA, b: pB, r: 0.06 });
+                            knots.push({ p: pA, r: 0.16 });
                         }
                         return;
                     }
@@ -2320,14 +2382,17 @@
                     let A;
                     if (!fp) A = toWorld(0, Math.min(lp.y - 1.2, tr._trunkH * 0.8), 0);
                     else if (fp.onTrunk) A = toWorld(0, fp.y + 0.8, 0);
-                    else A = toWorld(fp.x, fp.y, fp.z);
-                    const B = toWorld(lp.x, lp.y, lp.z);
+                    else A = toWorld(fp.x, fp.y + STEM_Y, fp.z);
+                    // (16.11 18:54) ветка подходит к черешку жёлудя сверху — жёлудь растёт из ветки, а не парит рядом
+                    const B = toWorld(lp.x, lp.y + STEM_Y, lp.z);
                     const len = A.distanceTo(B);
                     // изгиб: сначала в сторону, потом вверх к ребёнку — как живая ветка
                     const C = A.clone().lerp(B, 0.55);
                     C.y = A.y + (B.y - A.y) * 0.25 + Math.min(1.2, Math.max(0.3, len * 0.12));
                     const r0 = branchR(tr._sub.get(id), tr) * (fp && !fp.onTrunk ? 1.0 : 1.25);
-                    const r1 = r0 * 0.55;
+                    const r1 = Math.max(r0 * 0.55, 0.1);
+                    // сучок-нарост в месте, где висит жёлудь
+                    knots.push({ p: B, r: r1 * 1.9 });
                     const N = 4;
                     let prev = A;
                     for (let i = 1; i <= N; i++) {
@@ -2365,9 +2430,19 @@
                 this.world.add(im);
             };
             fill(segs, branchMat);
-            if (joints.length) {
-                const jm = new THREE.InstancedMesh(jointGeo, branchMat, joints.length);
-                joints.forEach((j, i) => {
+            // для камеры: ветки — препятствия (не залетать внутрь веток)
+            // рамка (с запасом) считается один раз — в цикле камеры только сравнения
+            const CAM_BOX = 1.6;
+            this._camSegs = segs.map(sg => ({
+                ax: sg.a.x, ay: sg.a.y, az: sg.a.z, bx: sg.b.x, by: sg.b.y, bz: sg.b.z, r: sg.r,
+                x0: Math.min(sg.a.x, sg.b.x) - sg.r - CAM_BOX, x1: Math.max(sg.a.x, sg.b.x) + sg.r + CAM_BOX,
+                y0: Math.min(sg.a.y, sg.b.y) - sg.r - CAM_BOX, y1: Math.max(sg.a.y, sg.b.y) + sg.r + CAM_BOX,
+                z0: Math.min(sg.a.z, sg.b.z) - sg.r - CAM_BOX, z1: Math.max(sg.a.z, sg.b.z) + sg.r + CAM_BOX
+            }));
+            const allJoints = joints.concat(knots);
+            if (allJoints.length) {
+                const jm = new THREE.InstancedMesh(jointGeo, branchMat, allJoints.length);
+                allJoints.forEach((j, i) => {
                     dummy.position.copy(j.p);
                     dummy.quaternion.identity();
                     dummy.scale.setScalar(j.r);
@@ -2437,6 +2512,11 @@
                     add(0, y + 2.2, 0, 2.0);
                     tr._foliageTop = y + 4.2;
                 }
+                // пучок листьев у черешка каждого жёлудя (чуть ближе к стволу и выше — лицо медальона открыто)
+                tr.local.forEach(lp => {
+                    if (lp.onTrunk) return;
+                    add(lp.x * 0.9, lp.y + STEM_Y + 0.35, lp.z * 0.9, 0.8);
+                });
                 tr.height = Math.max(tr.height, tr._foliageTop);
             });
             if (clumps.length) {
@@ -2571,8 +2651,12 @@
             this.personMesh = new Map();
 
             // 1. Предки на стволе: резные древесные медальоны (годовые кольца дуба у корней, не жёлтые круги-пуговицы)
-            const trunkMedallionGeo = createTrunkMedallionGeometry();
-            this.disposables.push(trunkMedallionGeo);
+            // наплыв: короткий конус коры уходит в ствол, спереди — спил (лицом наружу, по +Z)
+            const burlGeo = new THREE.CylinderGeometry(0.56, 0.8, 1.3, 18, 1, false);
+            burlGeo.rotateX(Math.PI / 2);
+            burlGeo.translate(0, 0, -0.55);
+            const ringFaceGeo = new THREE.CircleGeometry(0.5, 28);
+            this.disposables.push(burlGeo, ringFaceGeo);
 
             // 2. Люди на ветках: жёлуди с плюской и медальоном (с фото портрета или инициалами)
             const acornGeo = createAcornGeometry();
@@ -2593,28 +2677,35 @@
 
                 if (pos.onTrunk) {
                     // Резной деревянный медальон первопредка у корней/на стволе
+                    // (TASK-016, 16.11 18:54): наплыв коры, растущий из ствола, на нём срез с кольцами
                     const medTex = makeTreeRingMedallionTexture(per, p);
-                    const medMat = new THREE.MeshLambertMaterial({ map: medTex, side: THREE.DoubleSide });
+                    // срез почти вплотную к торцу наплыва — без мерцания за счёт polygonOffset
+                    const medMat = new THREE.MeshLambertMaterial({ map: medTex, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
                     this.disposables.push(medTex, medMat);
-                    const mesh = new THREE.Mesh(trunkMedallionGeo, medMat);
-                    mesh.scale.setScalar(1.2);
-                    mesh.position.set(pos.x, pos.y, pos.z);
-                    if (trP) {
-                        const ang = Math.atan2(pos.x - trP.x, pos.z - trP.z);
-                        mesh.rotation.y = ang + Math.PI / 2;
-                    }
-                    this.world.add(mesh);
-                    this.pickables.push(mesh);
-                    this.instanceMap.set(mesh.uuid, { kind: 'person', id });
-                    this.personMesh.set(id, { obj: mesh, isGroup: true, baseScale: 1.2 });
-                } else {
-                    // Жёлудь на ветке с медальоном портрета/инициалов
                     const grp = new THREE.Group();
                     grp.position.set(pos.x, pos.y, pos.z);
+                    if (trP) grp.rotation.y = Math.atan2(pos.x - trP.x, pos.z - trP.z); // лицо наружу от оси ствола
+                    const burl = new THREE.Mesh(burlGeo, this._barkMat || acornMatGold);
+                    grp.add(burl);
+                    const face = new THREE.Mesh(ringFaceGeo, medMat);
+                    face.position.z = 0.11;
+                    grp.add(face);
+                    grp.scale.setScalar(1.2);
+                    this.world.add(grp);
+                    this.pickables.push(face, burl);
+                    this.instanceMap.set(face.uuid, { kind: 'person', id });
+                    this.instanceMap.set(burl.uuid, { kind: 'person', id });
+                    this.personMesh.set(id, { obj: grp, isGroup: true, baseScale: 1.2 });
+                } else {
+                    // Жёлудь на ветке с медальоном портрета/инициалов
+                    // начало группы — в точке крепления к ветке: при наведении жёлудь растёт от черешка и не отрывается
+                    const grp = new THREE.Group();
+                    grp.position.set(pos.x, pos.y + STEM_Y, pos.z);
 
                     const acMat = isDead ? acornMatGold : (isFem ? acornMatWoman : acornMatMan);
                     const acMesh = new THREE.Mesh(acornGeo, acMat);
                     acMesh.scale.setScalar(1.05);
+                    acMesh.position.y = -STEM_Y;
                     grp.add(acMesh);
 
                     // Медальон с портретом (если есть аватар) или инициалами
@@ -2622,7 +2713,7 @@
                     const medMat = new THREE.MeshBasicMaterial({ map: medTex, transparent: true, side: THREE.DoubleSide });
                     this.disposables.push(medTex, medMat);
                     const medMesh = new THREE.Mesh(acornDiscGeo, medMat);
-                    medMesh.position.set(0, 0.04, 0.38);
+                    medMesh.position.set(0, 0.04 - STEM_Y, 0.38);
                     grp.add(medMesh);
 
                     // Поворачиваем лицо желудя наружу от центра дерева
@@ -2647,7 +2738,7 @@
                 hg.setAttribute('position', new THREE.Float32BufferAttribute(haloPos, 3));
                 const haloTex = makeGlowTexture(this.dark ? 'rgba(255,240,205,0.45)' : 'rgba(255,253,236,0.65)', this.dark ? 0.15 : 0.22);
                 const halo = this.track(new THREE.Points(hg, new THREE.PointsMaterial({
-                    map: haloTex, size: 4.6, sizeAttenuation: true, transparent: true, depthWrite: false, fog: true
+                    map: haloTex, size: 3.0, sizeAttenuation: true, transparent: true, depthWrite: false, fog: true
                 })));
                 halo.renderOrder = 2;
                 halo.material.onBeforeCompile = (sh) => {
@@ -2681,7 +2772,8 @@
                 const isMe = id === M.myPersonId;
                 const sp = makeLabel(personName(per) || '?', line2, p, { highlight: isMe, ppu: 74 });
                 this.track(sp);
-                sp.position.set(pos.x, pos.y + 1.0, pos.z);
+                // над черешком и сучком, не на них
+                sp.position.set(pos.x, pos.y + (pos.onTrunk ? 1.0 : STEM_Y + 0.6), pos.z);
                 // подпись не прячется в листве верхнего яруса; людей с дальней стороны кроны
                 // отсекает updateLabelVisibility (по стороне дерева)
                 sp.material.depthTest = false;
@@ -2814,7 +2906,8 @@
                 const h = hits[i];
                 const info = this.instanceMap.get(h.object.uuid);
                 if (!info) continue;
-                const closeEnough = !link || (h.distance - link.distance) < 3;
+                // запас растёт с удалением: издалека зона линии в кадре толще, а человек под курсором важнее
+                const closeEnough = !link || (h.distance - link.distance) < Math.max(3, link.distance * 0.2);
                 if (info.kind === 'person') {
                     const pid = (info.id !== undefined) ? info.id : (h.instanceId !== undefined && info.ids ? info.ids[h.instanceId] : undefined);
                     if (pid !== undefined) {

@@ -90,6 +90,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                             </div>
                         </div>
                     </div>
+                    <?php require __DIR__ . '/person_media_fields.php'; // TASK-022: фото и обложка ?>
                     <?php require __DIR__ . '/person_contact_fields.php'; ?>
                 </div>
                 <div class="modal-foot">
@@ -203,6 +204,12 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.getElementById('editModalDeathDate').value = p.death_date || '';
                         document.getElementById('editModalDeathYear').value = p.death_year || '';
                         if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
+                        if (typeof pmeLoad === 'function') { pmeLoad(p.id, data.media_edit || null); } // TASK-022: фото и обложка
+                        // TASK-022: сам человек (не editor) правит только фото, обложку и контакты; основные поля — только чтение
+                        window.__pcFullEdit = !!data.can_edit;
+                        document.querySelectorAll('#globalPersonEditForm [id^="editModal"]').forEach(function (el) {
+                            if (el.id !== 'editModalPersonId' && el.id !== 'editModalClanHint') { el.disabled = !data.can_edit; }
+                        });
                     }
                 })
                 .catch(e => showAppToast('Қате / Ошибка: ' + e.message, 'error'));
@@ -234,14 +241,20 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             formData.append('death_year', isDec ? document.getElementById('editModalDeathYear').value.trim() : '');
 
             try {
-                const res = await fetch('/api/person/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                });
-                const data = await res.json();
+                let data;
+                if (window.__pcFullEdit === false) {
+                    data = { success: true }; // не editor: основные данные не отправляем (TASK-022)
+                } else {
+                    const res = await fetch('/api/person/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    });
+                    data = await res.json();
+                }
                 if (data && (data.status === 'success' || data.success)) {
                     // TASK-022: контакты — тем же нажатием «Сақтау»
+                    if (typeof pmeSave === 'function') { await pmeSave(); } // положение/затемнение обложки
                     const ct = (typeof pcfSave === 'function') ? await pcfSave() : { ok: true, offerInvite: false };
                     if (!ct.ok) { window.pcfDirty = true; return; } // остаёмся в окне, ошибка уже показана
                     if (ct.offerInvite) {

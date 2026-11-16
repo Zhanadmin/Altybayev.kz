@@ -1,0 +1,38 @@
+/* TASK-022: фото и обложка в окне «Өңдеу» */
+.pme { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(128,128,128,.25); }
+.pme-title { font-weight: 600; margin-bottom: 8px; }
+.pme-block { margin-bottom: 14px; }
+.pme-label { font-size: 13px; opacity: .8; margin-bottom: 6px; }
+.pme-sub { font-size: 12px; opacity: .75; }
+.pme-note { font-size: 12px; padding: 6px 10px; border-radius: 8px; background: rgba(200,140,0,.15); margin-bottom: 8px; }
+.pme-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pme-avatar { width: 72px; height: 96px; border-radius: 50%; overflow: hidden; background: rgba(128,128,128,.2); display: flex; align-items: center; justify-content: center; flex: none; }
+.pme-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pme-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.pme-row .pme-actions { margin-top: 0; }
+.pme-btn { display: inline-block; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(128,128,128,.45); background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer; line-height: 1.3; }
+.pme-btn:hover { background: rgba(128,128,128,.15); }
+.pme-btn.pme-primary { background: var(--c-accent, #2f6f5e); border-color: transparent; color: #fff; }
+.pme-busy { opacity: .5; pointer-events: none; }
+.pme-disabled .pme-actions, .pme-disabled .pme-presets, .pme-disabled #pmeCoverTuning { opacity: .45; pointer-events: none; }
+
+.pme-cover { position: relative; width: 100%; aspect-ratio: 3 / 1; border-radius: 10px; overflow: hidden; background-color: rgba(128,128,128,.2); background-size: cover; background-position: 50% 50%; }
+.pme-cover-dim { position: absolute; inset: 0; background: #000; opacity: .3; pointer-events: none; }
+.pme-cover-empty-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; opacity: .7; text-align: center; padding: 8px; }
+.pme-presets { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.pme-preset { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; border: 1px solid rgba(128,128,128,.4); border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 11px; cursor: pointer; }
+.pme-preset img { border-radius: 5px; display: block; object-fit: cover; }
+.pme-preset:hover { background: rgba(128,128,128,.15); }
+.pme-slider { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 13px; }
+.pme-slider span { min-width: 150px; }
+.pme-slider input { flex: 1; }
+
+.pme-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,.6); align-items: center; justify-content: center; padding: 12px; }
+.pme-dialog { background: var(--c-surface, #fff); color: var(--c-text, #222); border-radius: 12px; padding: 14px; width: min(640px, 100%); max-height: 90vh; overflow-y: auto; }
+.pme-dialog-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.pme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.pme-thumb { padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: rgba(128,128,128,.2); cursor: pointer; aspect-ratio: 1; }
+.pme-thumb:hover, .pme-thumb:focus-visible { border-color: var(--c-accent, #2f6f5e); }
+.pme-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pme-canvas { width: 300px; max-width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; cursor: grab; touch-action: none; background: #000; }
+@media (max-width: 480px) { .pme-slider span { min-width: 100px; } }

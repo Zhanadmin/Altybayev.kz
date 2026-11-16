@@ -448,9 +448,22 @@ class TreeController
                 ];
             }
 
+            // TASK-022: фото и обложка в окне «Өңдеу» — только тем, кто может править карточку
+            $mediaOut = null;
+            if (\App\Controllers\PersonContactController::canEditContacts((int)$person['id'])) {
+                $mediaOut = [
+                    'avatar'      => (string)($person['avatar_path'] ?? ''),
+                    'cover'       => \App\Controllers\PersonCoverController::coverState($person),
+                    'cover_ready' => \App\Controllers\PersonCoverController::hasCoverColumns($db),
+                    'csrf_token'  => \App\Core\Session::csrfToken(),
+                    'presets'     => \App\Controllers\PersonCoverController::PRESETS,
+                ];
+            }
+
             Response::json([
                 'status' => 'success',
                 'person' => $person,
+                'media_edit' => $mediaOut,
                 'father' => $father,
                 'mother' => $mother,
                 'spouses' => $spouses,

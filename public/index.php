@@ -101,14 +101,13 @@ $router->post('/api/album/media/update', 'App\Controllers\AlbumController@apiMed
 $router->post('/api/album/media/delete', 'App\Controllers\AlbumController@apiMediaDelete', ['auth']);
 $router->post('/api/album/media/avatar', 'App\Controllers\AlbumController@apiSetAvatar', ['auth']);
 
-// TASK-019: распознавание лиц в фотоальбомах (в браузере; сервер хранит только отпечатки)
-$router->get('/faces', 'App\Controllers\FaceController@faces', ['auth']);
-$router->get('/api/face/clusters', 'App\Controllers\FaceController@apiSummary', ['auth']);
+// TASK-019: распознавание лиц в фотоальбомах (в браузере; эталон — аватарка; отдельной страницы «Лица» нет — замечание 16.11)
+$router->get('/api/face/album/{id}', 'App\Controllers\FaceController@apiAlbum', ['auth']);
 $router->get('/api/face/media/{id}', 'App\Controllers\FaceController@apiMediaFaces', ['auth']);
 $router->post('/api/face/save', 'App\Controllers\FaceController@apiSave', ['auth']);
-$router->post('/api/face/cluster/assign', 'App\Controllers\FaceController@apiAssign', ['auth']);
-$router->post('/api/face/cluster/unassign', 'App\Controllers\FaceController@apiUnassign', ['auth']);
-$router->post('/api/face/remove', 'App\Controllers\FaceController@apiRemove', ['auth']);
+$router->post('/api/face/references', 'App\Controllers\FaceController@apiReferences', ['auth']);
+$router->post('/api/face/confirm', 'App\Controllers\FaceController@apiConfirm', ['auth']);
+$router->post('/api/face/reject', 'App\Controllers\FaceController@apiReject', ['auth']);
 $router->post('/api/face/settings', 'App\Controllers\FaceController@apiSettings', ['auth']);
 $router->post('/api/face/delete-person', 'App\Controllers\FaceController@apiDeletePerson', ['auth']);
 $router->post('/api/face/opt-out', 'App\Controllers\FaceController@apiOptOut', ['auth']);

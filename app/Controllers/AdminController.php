@@ -58,17 +58,23 @@ class AdminController
         $auditCount = (int)$db->query("SELECT COUNT(*) FROM audit_logs")->fetchColumn();
         $mediaCount = (int)$db->query("SELECT COUNT(*) FROM person_media")->fetchColumn();
 
+        $faceSvc = new \App\Services\FaceRecognitionService($db);
+        $faceReady = $faceSvc->isReady();
+        $faceEnabled = $faceReady && $faceSvc->enabled();
+
         Response::view('admin/index', [
-            'user'           => $user,
-            'userPersonId'   => $userPersonId,
-            'users'          => $users,
-            'invitations'    => $invitations,
-            'personsCount'   => $personsCount,
-            'marriagesCount' => $marriagesCount,
-            'auditCount'     => $auditCount,
-            'mediaCount'     => $mediaCount,
-            'canEdit'        => true,
-            'isAdmin'        => true,
+            'user'                   => $user,
+            'userPersonId'           => $userPersonId,
+            'users'                  => $users,
+            'invitations'            => $invitations,
+            'personsCount'           => $personsCount,
+            'marriagesCount'         => $marriagesCount,
+            'auditCount'             => $auditCount,
+            'mediaCount'             => $mediaCount,
+            'canEdit'                => true,
+            'isAdmin'                => true,
+            'faceRecognitionReady'   => $faceReady,
+            'faceRecognitionEnabled' => $faceEnabled,
         ]);
     }
 

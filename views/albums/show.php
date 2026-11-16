@@ -17,6 +17,9 @@ $dsThemeReady = true;
 $jsItems = array_map(fn($m) => AlbumController::itemForJs($m, $user, (bool)$canEditAll), $items);
 $fmtDate = fn(?string $d) => $d ? I18n::formatDate($d) : '';
 
+$faceSvc = new \App\Services\FaceRecognitionService();
+$faceReady = $faceSvc->isReady() && $faceSvc->enabled();
+
 require __DIR__ . '/../layout/master_start.php';
 ?>
 <link rel="stylesheet" href="/assets/css/album.css?v=5">
@@ -56,7 +59,7 @@ require __DIR__ . '/../layout/master_start.php';
             <?php endif; ?>
         </div>
         <div class="actions">
-            <?php if ($canContribute): ?>
+            <?php if ($canContribute && $faceReady): ?>
                 <button type="button" class="btn btn-ghost" id="alFindFaces" title="<?= htmlspecialchars($L('Беттерді табу', 'Найти лица')) ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-face"/></svg><?= $L('Беттерді табу', 'Найти лица') ?>
                 </button>
@@ -268,6 +271,10 @@ window.AL = <?= json_encode([
     'canEditAll' => (bool)$canEditAll,
     'myPersonId' => (int)($user['person_id'] ?? 0),
     'lang'       => $lang,
+    'face'       => [
+        'enabled'       => (bool)$faceReady,
+        'canContribute' => (bool)$canContribute,
+    ],
     't'          => [
         'photo' => $L('Фото', 'Фото'), 'video' => $L('Бейне', 'Видео'),
         'waiting' => $L('кезекте', 'в очереди'), 'starting' => $L('басталды…', 'начинаем…'),
@@ -300,7 +307,9 @@ window.AL = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
 <script src="/assets/js/album.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/css/faces.css?v=1">
-<script src="/assets/js/face-recognition.js?v=1" defer></script>
+<?php if ($faceReady): ?>
+<link rel="stylesheet" href="/assets/css/faces.css?v=2">
+<script src="/assets/js/face-recognition.js?v=2" defer></script>
+<?php endif; ?>
 
 <?php require __DIR__ . '/../layout/master_end.php'; ?>

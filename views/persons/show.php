@@ -429,6 +429,15 @@ require __DIR__ . '/../layout/master_start.php';
                 $pcPhotos = $personPhotos['items'] ?? [];
                 $pcPhotosTotal = (int)($personPhotos['total'] ?? 0);
                 $pcNewEventUrl = '/events?' . http_build_query(['kind' => 'other', 'person_id' => (int)$person['id']]);
+
+                // TASK-019: проверка готовности распознавания лиц и прав на приватность
+                $faceSvc = new \App\Services\FaceRecognitionService();
+                $faceReady = $faceSvc->isReady() && $faceSvc->enabled();
+                $canManageFacePrivacy = ($isAdmin || (!empty($userPersonId) && (int)$userPersonId === (int)$person['id']));
+                $neededPersonRefs = [];
+                if ($faceReady && !empty($person['avatar_path']) && empty($person['face_opt_out'])) {
+                    $neededPersonRefs = $faceSvc->referencesNeeded(1, [(int)$person['id']]);
+                }
             ?>
                 <link rel="stylesheet" href="/assets/css/album.css?v=5">
                 <div class="island" id="pcEventsIsland">
@@ -488,6 +497,22 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php endif; ?>
                                 </a>
                             <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($canManageFacePrivacy && $faceReady): ?>
+                        <div class="island-sub pc-face-optout" style="margin-top:14px;padding:12px;background:var(--c-island-2,#f9fafb);border-radius:8px;border:1px solid var(--c-border,#e5e7eb);">
+                            <div style="font-weight:600;font-size:13px;margin-bottom:6px;"><?= $pcRu ? 'Приватность и распознавание лиц' : 'Құпиялылық және бет тану' ?></div>
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin:4px 0 8px;">
+                                <input type="checkbox" id="personFaceOptOut" <?= !empty($person['face_opt_out']) ? 'checked' : '' ?> onchange="togglePersonFaceOptOut(<?= (int)$person['id'] ?>, this.checked)">
+                                <span><?= $pcRu ? 'Запретить распознавание этого человека на фото' : 'Бұл адамды фотолардан тануға тыйым салу' ?></span>
+                            </label>
+                            <div>
+                                <button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger,#b42318);" onclick="deletePersonFaceData(<?= (int)$person['id'] ?>)">
+                                    <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>
+                                    <span><?= $pcRu ? 'Удалить отпечатки лица' : 'Бет бейнелерін өшіру' ?></span>
+                                </button>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -932,7 +957,57 @@ require __DIR__ . '/../layout/master_start.php';
             if (btn) btn.classList.toggle('active', t === tab);
         });
     }
+
+    async function togglePersonFaceOptOut(personId, optOut) {
+        try {
+            const res = await fetch('/api/face/opt-out', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ csrf_token: <?= json_encode(\App\Core\Session::csrfToken()) ?>, person_id: personId, opt_out: optOut })
+            });
+            const data = await res.json();
+            if (res.ok && data && (data.success || data.status === 'success')) {
+                showAppToast(<?= json_encode($lang === 'ru' ? 'Настройки приватности обновлены' : 'Құпиялылық баптаулары сақталды', JSON_UNESCAPED_UNICODE) ?>, 'success');
+            } else {
+                showAppToast('Қате / Ошибка: ' + ((data && data.error) || 'Ошибка'), 'error');
+            }
+        } catch (e) {
+            showAppToast('Қате / Ошибка: ' + e.message, 'error');
+        }
+    }
+
+    async function deletePersonFaceData(personId) {
+        const msg = <?= json_encode($lang === 'ru' ? 'Удалить все отпечатки лица этого человека? Ручные отметки на фото останутся.' : 'Бұл адамның барлық бет бейнелерін өшіру керек пе?', JSON_UNESCAPED_UNICODE) ?>;
+        if (!window.confirm(msg)) return;
+        try {
+            const res = await fetch('/api/face/delete-person', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ csrf_token: <?= json_encode(\App\Core\Session::csrfToken()) ?>, person_id: personId })
+            });
+            const data = await res.json();
+            if (res.ok && data && (data.success || data.status === 'success')) {
+                showAppToast(<?= json_encode($lang === 'ru' ? 'Отпечатки лица удалены' : 'Бет бейнелері өшірілді', JSON_UNESCAPED_UNICODE) ?>, 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showAppToast('Қате / Ошибка: ' + ((data && data.error) || 'Ошибка'), 'error');
+            }
+        } catch (e) {
+            showAppToast('Қате / Ошибка: ' + e.message, 'error');
+        }
+    }
 </script>
+
+<?php if (!empty($neededPersonRefs)): ?>
+<script>
+window.FR_PERSON = <?= json_encode([
+    'csrf' => \App\Core\Session::csrfToken(),
+    'lang' => $lang,
+    'refs' => $neededPersonRefs,
+], JSON_UNESCAPED_UNICODE) ?>;
+</script>
+<script src="/assets/js/face-recognition.js?v=2" defer></script>
+<?php endif; ?>
 
 <?php
 require __DIR__ . '/../layout/master_end.php';

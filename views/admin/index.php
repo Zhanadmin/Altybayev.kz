@@ -249,6 +249,38 @@ $adRoleLabels = [
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- TASK-019: Управление распознаванием лиц (приватность и включение) -->
+    <div class="island ad-island">
+        <div class="island-head ad-head">
+            <svg class="ic" aria-hidden="true"><use href="#i-face"/></svg>
+            <h3><?= $lang === 'ru' ? 'Распознавание лиц в фотоальбомах' : 'Фотоальбомдардағы бет тану жүйесі' ?></h3>
+        </div>
+        <div style="padding: 4px 0 12px; display: flex; flex-direction: column; gap: 12px;">
+            <p class="muted" style="margin: 0; font-size: 14px;">
+                <?= $lang === 'ru'
+                    ? 'Распознавание работает исключительно в браузере (без внешних облаков). Сервер хранит только анонимные координаты рамок и векторные отпечатки. Эталон лица каждого человека — его аватарка.'
+                    : 'Бет тану тек браузерде жұмыс істейді (сыртқы бұлтсыз). Сервер тек жақтау координаталары мен векторлық бейнелерді сақтайды. Әр адамның бет эталоны — оның аватары.' ?>
+            </p>
+            <?php if (!$faceRecognitionReady): ?>
+                <div style="padding: 8px 12px; background: #fef3c7; color: #92400e; border-radius: 8px; font-size: 13px;">
+                    <?= $lang === 'ru' ? 'Таблицы распознавания лиц ещё не созданы (нужно применить миграцию database/migrate.php).' : 'Бет тану кестелері әлі жасалмаған (database/migrate.php миграциясын орындау қажет).' ?>
+                </div>
+            <?php else: ?>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--c-island-2, #f9fafb); border-radius: 8px; border: 1px solid var(--c-border, #e5e7eb);">
+                    <div>
+                        <strong><?= $lang === 'ru' ? 'Статус распознавания лиц для всего сайта' : 'Бүкіл сайт үшін бет тану күйі' ?></strong>
+                        <div class="small muted"><?= $lang === 'ru' ? ($faceRecognitionEnabled ? 'Включено: фото в альбомах проверяются, лица сопоставляются с аватарками' : 'Выключено: фото не сканируются') : ($faceRecognitionEnabled ? 'Қосулы: альбомдардағы фотолар тексеріледі' : 'Өшірулі: фотолар тексерілмейді') ?></div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn <?= $faceRecognitionEnabled ? 'btn-danger' : 'btn-primary' ?>" onclick="toggleFaceRecognition(<?= $faceRecognitionEnabled ? 'false' : 'true' ?>)">
+                            <?= $faceRecognitionEnabled ? ($lang === 'ru' ? 'Выключить' : 'Өшіру') : ($lang === 'ru' ? 'Включить' : 'Қосу') ?>
+                        </button>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -388,6 +420,25 @@ $adRoleLabels = [
             }
         } catch (err) {
             showAppToast('Сұраныс қатесі: ' + err.message, 'error');
+        }
+    }
+
+    async function toggleFaceRecognition(enable) {
+        try {
+            const res = await fetch('/api/face/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ csrf_token: AD_CSRF, enabled: enable })
+            });
+            const data = await res.json();
+            if (res.ok && data && (data.success || data.status === 'success')) {
+                showAppToast(AD_RU ? 'Настройки распознавания лиц сохранены' : 'Бет тану баптаулары сақталды', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showAppToast('Қате / Ошибка: ' + ((data && data.error) || 'Ошибка сохранения'), 'error');
+            }
+        } catch (e) {
+            showAppToast('Қате / Ошибка: ' + e.message, 'error');
         }
     }
 </script>

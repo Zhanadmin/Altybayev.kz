@@ -79,8 +79,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     // TASK-023: у разведённых без даты развода срок не считаем (иначе «до сегодня»)
                                     $together = (!$isMarried && $mEnd === '') ? '' : I18n::togetherLabel($mStart, $isMarried ? null : $mEnd, $lang);
                                 ?>
-                                <span class="fm-together"<?= $mStart !== '' ? ' title="' . htmlspecialchars(($lang === 'ru' ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><?= $together !== '' ? '<strong>' . htmlspecialchars($together) . '</strong>' : '' ?></span>
-                                <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">
+                                                                <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">
                                     <?= $isMarried ? ($lang === 'ru' ? 'В браке' : 'Некеде') : ($lang === 'ru' ? 'В разводе' : 'Ажырасқан') ?>
                                 </span>
                                 <?php if ($canEdit): ?>
@@ -106,7 +105,10 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php endif; ?>
                                 </div>
 
-                                <svg class="couple-rings fm-rings<?= $isMarried ? '' : ' is-apart' ?>" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
+                                <div class="fm-rings-col" style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                                    <svg class="couple-rings fm-rings<?= $isMarried ? '' : ' is-apart' ?>" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
+                                    <?php if ($together !== ''): ?><span class="fm-together small"<?= $mStart !== '' ? ' title="' . htmlspecialchars(($lang === 'ru' ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><strong><?= htmlspecialchars($together) ?></strong></span><?php endif; ?>
+                                </div>
 
                                 <div class="island-sub fm-spouse is-f">
                                     <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg><?= $lang === 'ru' ? 'Жена' : 'Отанасы' ?></div>
@@ -213,10 +215,10 @@ document.addEventListener('click', function (e) {
     if (!btn) return;
     var card = btn.closest('.fm-card');
     /* TASK-025: дети — отдельный ряд-панель сразу под карточкой семьи, карточки в строку */
-    var nxt = card.nextElementSibling;
-    var existing = (nxt && nxt.classList.contains('fm-kids-row')) ? nxt : null;
+    var existing = card._kidsBox || null;
     if (existing) {
         existing.remove();
+        card._kidsBox = null;
         btn.setAttribute('aria-expanded', 'false');
         btn.title = btn.dataset.closed;
         return;
@@ -248,7 +250,11 @@ document.addEventListener('click', function (e) {
         if (ib) { ib.setAttribute('aria-expanded', 'false'); }
         box.appendChild(clone);
     });
-    card.parentNode.insertBefore(box, card.nextSibling);
+    /* вставляем под последней карточкой того же визуального ряда — без пустот сбоку */
+    var anchor = card, top = card.offsetTop, s = card.nextElementSibling;
+    while (s && s.classList.contains('fm-card') && s.offsetTop === top) { anchor = s; s = s.nextElementSibling; }
+    anchor.parentNode.insertBefore(box, anchor.nextSibling);
+    card._kidsBox = box;
     btn.setAttribute('aria-expanded', 'true');
     btn.title = btn.dataset.open;
 });

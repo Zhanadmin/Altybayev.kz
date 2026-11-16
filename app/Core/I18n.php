@@ -397,9 +397,9 @@ class I18n
         if ($n < 0 || $n > 100) return '';
         $apx = ($from[1] === null || ($end && ($to[1] ?? null) === null)) ? '≈' : '';
         if ($lang === 'ru') {
-            return ($end ? 'прожили ' : '') . $apx . self::ruYears($n) . ($end ? '' : ' вместе');
+            return $apx . self::ruYears($n) . ' вместе';
         }
-        return $apx . $n . ' жыл' . ($end ? ' бірге болды' : ' бірге');
+        return $apx . $n . ' жыл бірге';
     }
 
     /** TASK-020: дата брака для карточки: «8 марта 1979 года» / «1979 ж. 8 наурыз» (месяц — на языке интерфейса). */

@@ -731,8 +731,30 @@ class TreeLayoutService
 
         // TASK-015: родители ұзатылған дочери (корень без детей-юнитов) стоят прямо над ней,
         // а не в конце ряда корней. Центрируем пару над карточкой дочери; наложения разрулит шаг 6.
+        // Также: если у пары свёрнуты дети и виден один ребёнок, живущий в паре (отец+мать), пара стоит
+        // строго над своим ребёнком (родители отца — над отцом, родители матери — над матерью).
+        // Если развёрнуты несколько юнитов детей — остаётся центровка над всеми детьми.
         foreach ($rootUnits as $rId) {
-            if (!empty($units[$rId]['children_units'])) continue;
+            $rootChildUnits = $units[$rId]['children_units'] ?? [];
+            if (count($rootChildUnits) > 1) continue;
+            if (count($rootChildUnits) === 1) {
+                $cuId = $rootChildUnits[0];
+                if (count($units[$cuId]['members']) < 2) continue;
+                $hasUzatylgan = false;
+                $childCenters = [];
+                foreach ($units[$rId]['members'] as $memId) {
+                    foreach ($childrenMap[$memId] ?? [] as $cId) {
+                        if (isset($uzatylganUnits[$cId])) { $hasUzatylgan = true; continue; }
+                        if (($personToUnitMap[$cId] ?? null) !== $cuId) continue;
+                        $idx = array_search($cId, $units[$cuId]['members'], true);
+                        if ($idx === false) continue;
+                        $childCenters[] = $units[$cuId]['x'] + $idx * (self::CARD_WIDTH + self::GAP_SPOUSE) + self::CARD_WIDTH / 2.0;
+                    }
+                }
+                if ($hasUzatylgan || empty($childCenters)) continue;
+                $units[$rId]['x'] = array_sum($childCenters) / count($childCenters) - $units[$rId]['width'] / 2.0;
+                continue;
+            }
             $daughterCenters = [];
             foreach ($units[$rId]['members'] as $memId) {
                 foreach ($childrenMap[$memId] ?? [] as $cId) {
@@ -754,16 +776,41 @@ class TreeLayoutService
         ksort($unitsByGen);
 
         foreach ($unitsByGen as $g => $unitList) {
-            usort($unitList, fn($a, $b) => $units[$a]['x'] <=> $units[$b]['x']);
-            for ($i = 1; $i < count($unitList); $i++) {
-                $prevU = &$units[$unitList[$i - 1]];
-                $currU = &$units[$unitList[$i]];
-                $minReqX = $prevU['x'] + $prevU['width'] + self::GAP_SIBLING;
-                if ($currU['x'] < $minReqX) {
-                    $shift = $minReqX - $currU['x'];
-                    for ($k = $i; $k < count($unitList); $k++) {
-                        $units[$unitList[$k]]['x'] += $shift;
+            usort($unitList, function ($a, $b) use ($units) {
+                return ($units[$a]['x'] <=> $units[$b]['x']) ?: ($a <=> $b);
+            });
+            // TASK-015: перекрывающиеся юниты раздвигаются симметрично (каждый остаётся как можно
+            // ближе к желаемому месту над своим ребёнком), а не сдвигаются все вправо.
+            $blocks = [];
+            foreach ($unitList as $uid) {
+                $cur = [
+                    'units' => [$uid],
+                    'offs' => [0.0],
+                    'len' => (float)$units[$uid]['width'],
+                    'sum' => (float)$units[$uid]['x'],
+                    'n' => 1,
+                ];
+                $cur['x'] = $cur['sum'];
+                while (!empty($blocks)) {
+                    $prev = $blocks[count($blocks) - 1];
+                    if ($prev['x'] + $prev['len'] + self::GAP_SIBLING <= $cur['x'] + 0.001) break;
+                    array_pop($blocks);
+                    $shiftOff = $prev['len'] + self::GAP_SIBLING;
+                    foreach ($cur['offs'] as $k => $o) {
+                        $cur['offs'][$k] = $o + $shiftOff;
                     }
+                    $cur['units'] = array_merge($prev['units'], $cur['units']);
+                    $cur['offs'] = array_merge($prev['offs'], $cur['offs']);
+                    $cur['sum'] = $prev['sum'] + $cur['sum'] - $shiftOff * $cur['n'];
+                    $cur['n'] += $prev['n'];
+                    $cur['len'] = $shiftOff + $cur['len'];
+                    $cur['x'] = $cur['sum'] / $cur['n'];
+                }
+                $blocks[] = $cur;
+            }
+            foreach ($blocks as $blk) {
+                foreach ($blk['units'] as $k => $uid) {
+                    $units[$uid]['x'] = $blk['x'] + $blk['offs'][$k];
                 }
             }
         }

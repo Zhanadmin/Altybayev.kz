@@ -209,6 +209,12 @@
         return palette[h % palette.length];
     }
 
+    function hash(n) {
+        let x = (Math.floor(Math.abs(n) * 1000) * 2654435761) >>> 0;
+        x = (x ^ (x >>> 15)) >>> 0;
+        return (x % 1000) / 1000;
+    }
+
     // =========================================================================
     // 1. МОДЕЛЬ ЛЕСА (чистая функция, без THREE)
     // =========================================================================
@@ -640,18 +646,22 @@
     function palette(dark) {
         return dark ? {
             sky: '#17130d', fog: '#17130d', ground: '#211a12', groundEdge: '#17130d',
-            bark: '#8a6644', branch: '#9b7650',
-            leaf: '#8fb85a', leafGold: '#ddb65e', tulip: '#e98a9a', tulipGold: '#d9a979',
+            bark: '#7a5634', barkDark: '#3e2815', barkLight: '#9a714a', branch: '#8a6644',
+            leaf: '#557e2d', leafDark: '#2e4917', leafLight: '#7fa64e', leafMuted: '#68923a',
+            leafGold: '#ddb65e', tulip: '#e98a9a', tulipGold: '#d9a979',
             link: '#e98a9a', kelinTie: '#ddb65e', orn: '#ddb65e', mine: '#ecc977',
+            shadow: 'rgba(0,0,0,0.65)',
             labelBg: 'rgba(36,29,20,0.88)', labelFg: '#f1e6cd', labelSub: '#cdb994', labelBorder: 'rgba(221,182,94,0.55)',
-            hemiSky: '#c8b58e', hemiGround: '#2a2116', hemiI: 0.9, sunI: 0.55
+            hemiSky: '#c8b58e', hemiGround: '#2a2116', hemiI: 0.95, sunI: 0.60
         } : {
             sky: '#ece3cd', fog: '#ece3cd', ground: '#e2d5b4', groundEdge: '#ece3cd',
-            bark: '#6b4a2b', branch: '#7a5634',
-            leaf: '#5f8a34', leafGold: '#c4922f', tulip: '#cf5b6d', tulipGold: '#c98f6a',
+            bark: '#6b4a2b', barkDark: '#4b321d', barkLight: '#9a714a', branch: '#7a5634',
+            leaf: '#5f8a34', leafDark: '#3d621f', leafLight: '#8fb85a', leafMuted: '#7aa548',
+            leafGold: '#c4922f', tulip: '#cf5b6d', tulipGold: '#c98f6a',
             link: '#cf5b6d', kelinTie: '#b8862a', orn: '#b8862a', mine: '#b8862a',
+            shadow: 'rgba(35,25,15,0.42)',
             labelBg: 'rgba(255,251,242,0.92)', labelFg: '#3b2914', labelSub: '#6b4c2a', labelBorder: 'rgba(184,134,42,0.55)',
-            hemiSky: '#fff6df', hemiGround: '#b9a47a', hemiI: 1.05, sunI: 0.75
+            hemiSky: '#fff6df', hemiGround: '#b9a47a', hemiI: 1.10, sunI: 0.80
         };
     }
 
@@ -842,6 +852,187 @@
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, 512, 512);
         return canvasTexture(c);
+    }
+
+    function makeBarkTexture(pal) {
+        const c = document.createElement('canvas');
+        c.width = 512; c.height = 512;
+        const ctx = c.getContext('2d');
+
+        // Базовый вертикальный градиент коры (как rs-gBarkV в 2D)
+        const bgGrad = ctx.createLinearGradient(0, 0, 512, 0);
+        bgGrad.addColorStop(0, pal.barkLight);
+        bgGrad.addColorStop(0.45, pal.bark);
+        bgGrad.addColorStop(1, pal.barkDark);
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Продольные борозды коры (детерминированный шум по хешу)
+        ctx.lineCap = 'round';
+        for (let x = 0; x < 512; x += 6) {
+            const h1 = hash(x * 7 + 13);
+            const h2 = hash(x * 13 + 37);
+            const w = 1.2 + h1 * 3.5;
+            const dark = h2 > 0.45;
+            ctx.strokeStyle = dark ? pal.barkDark : pal.barkLight;
+            ctx.globalAlpha = 0.35 + h1 * 0.45;
+            ctx.lineWidth = w;
+            ctx.beginPath();
+            let px = x;
+            ctx.moveTo(px, 0);
+            for (let y = 32; y <= 512; y += 32) {
+                const shift = (hash(x * 19 + y) - 0.5) * 12;
+                px += shift;
+                ctx.lineTo(px, y);
+            }
+            ctx.stroke();
+        }
+
+        // Поперечные узлы и шероховатости коры
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = pal.barkDark;
+        for (let k = 0; k < 28; k++) {
+            const kx = hash(k * 23) * 480 + 16;
+            const ky = hash(k * 41) * 480 + 16;
+            const krw = 8 + hash(k * 17) * 20;
+            const krh = 2 + hash(k * 29) * 4;
+            ctx.beginPath();
+            ctx.ellipse(kx, ky, krw, krh, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        const tex = canvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(2, 4);
+        return tex;
+    }
+
+    function makeShadowTexture(pal) {
+        const c = document.createElement('canvas');
+        c.width = 256; c.height = 256;
+        const ctx = c.getContext('2d');
+        const cx = 128, cy = 128;
+        const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, 126);
+        g.addColorStop(0, pal.shadow);
+        g.addColorStop(0.35, pal.shadow);
+        g.addColorStop(0.7, 'rgba(0,0,0,0.18)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 126, 0, Math.PI * 2);
+        ctx.fill();
+        return canvasTexture(c);
+    }
+
+    function createSculptedTrunkGeometry() {
+        const radialSegs = 16;
+        const heightSegs = 14;
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+
+        for (let j = 0; j <= heightSegs; j++) {
+            const v = j / heightSegs; // 0..1
+            // Раструб у основания ствола (buttress flare, как в 2D)
+            let rFactor;
+            if (v < 0.16) {
+                const t = (0.16 - v) / 0.16;
+                rFactor = 1.15 + t * t * 0.95; // до 2.1 у земли
+            } else if (v < 0.72) {
+                const t = (v - 0.16) / 0.56;
+                rFactor = 1.15 - t * 0.25; // сужение к середине
+            } else {
+                const t = (v - 0.72) / 0.28;
+                rFactor = 0.90 + t * 0.08; // расширение к ветвям
+            }
+
+            for (let i = 0; i <= radialSegs; i++) {
+                const u = i / radialSegs;
+                const theta = u * Math.PI * 2;
+                // Рельефные вертикальные складки и ребра коры
+                const rib = 1.0 + 0.07 * Math.cos(theta * 5) + 0.03 * Math.sin(theta * 3 + v * 3);
+                const r = rFactor * rib;
+                positions.push(Math.sin(theta) * r, v, Math.cos(theta) * r);
+                uvs.push(u * 2.5, v * 3.5);
+            }
+        }
+
+        for (let j = 0; j < heightSegs; j++) {
+            for (let i = 0; i < radialSegs; i++) {
+                const a = j * (radialSegs + 1) + i;
+                const b = (j + 1) * (radialSegs + 1) + i;
+                const c = (j + 1) * (radialSegs + 1) + (i + 1);
+                const d = j * (radialSegs + 1) + (i + 1);
+                indices.push(a, b, d);
+                indices.push(b, c, d);
+            }
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geo.setIndex(indices);
+        geo.computeVertexNormals();
+        return geo;
+    }
+
+    function createRootArmGeometry() {
+        const segments = 8;
+        const radial = 8;
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+
+        for (let j = 0; j <= segments; j++) {
+            const t = j / segments;
+            const y = (1.0 - t) * (1.0 - t) * 0.95 + 0.03;
+            const z = 0.75 + t * 1.65;
+            const r = (1.0 - t * 0.78) * 0.32;
+
+            for (let i = 0; i <= radial; i++) {
+                const u = i / radial;
+                const theta = u * Math.PI * 2;
+                const x = Math.sin(theta) * r;
+                const yr = Math.cos(theta) * r;
+                positions.push(x, Math.max(0.01, y + yr * 0.6), z);
+                uvs.push(u, t * 2);
+            }
+        }
+
+        for (let j = 0; j < segments; j++) {
+            for (let i = 0; i < radial; i++) {
+                const a = j * (radial + 1) + i;
+                const b = (j + 1) * (radial + 1) + i;
+                const c = (j + 1) * (radial + 1) + (i + 1);
+                const d = j * (radial + 1) + (i + 1);
+                indices.push(a, b, d);
+                indices.push(b, c, d);
+            }
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geo.setIndex(indices);
+        geo.computeVertexNormals();
+        return geo;
+    }
+
+    function createFoliageClumpGeometry() {
+        const geo = new THREE.IcosahedronGeometry(1.0, 2);
+        const pos = geo.attributes.position;
+        const v = new THREE.Vector3();
+        for (let i = 0; i < pos.count; i++) {
+            v.fromBufferAttribute(pos, i);
+            const noise = 1.0 + 0.16 * Math.sin(v.x * 4.2 + 0.8) * Math.cos(v.y * 3.8) * Math.sin(v.z * 4.2);
+            v.multiplyScalar(noise);
+            v.y *= 0.82;
+            pos.setXYZ(i, v.x, v.y, v.z);
+        }
+        geo.computeVertexNormals();
+        return geo;
     }
 
     // =========================================================================
@@ -1330,6 +1521,28 @@
             const mat = new THREE.MeshLambertMaterial({ map: makeGroundTexture(p) });
             const g = this.track(new THREE.Mesh(geo, mat));
             this.world.add(g);
+
+            // Мягкие тени под раскидистыми кронами деревьев (мягкие тени на траве)
+            const shadowTex = makeShadowTexture(p);
+            this.disposables.push(shadowTex);
+            const shadowGeo = new THREE.PlaneGeometry(1, 1);
+            shadowGeo.rotateX(-Math.PI / 2);
+            this.disposables.push(shadowGeo);
+            M.trees.forEach(tr => {
+                const shadowMat = new THREE.MeshBasicMaterial({
+                    map: shadowTex,
+                    transparent: true,
+                    opacity: this.dark ? 0.65 : 0.45,
+                    depthWrite: false
+                });
+                this.disposables.push(shadowMat);
+                const sh = new THREE.Mesh(shadowGeo, shadowMat);
+                const diam = Math.max(tr.crownR * 2.5, tr.trunkR * 6.5);
+                sh.scale.set(diam, 1, diam);
+                sh.position.set(tr.x, 0.02, tr.z);
+                this.world.add(sh);
+            });
+
             // кольца ою-өрнек под деревьями
             const ringTex = makeOrnamentRingTexture(p.orn);
             this.disposables.push(ringTex);
@@ -1350,15 +1563,15 @@
 
         buildTrees() {
             const M = this.model, p = this.pal, t = this.t;
-            const barkMat = new THREE.MeshLambertMaterial({ color: p.bark });
-            const branchMat = new THREE.MeshLambertMaterial({ color: p.branch });
+            const barkTex = makeBarkTexture(p);
+            this.disposables.push(barkTex);
+            const barkMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xffffff });
+            const branchMat = new THREE.MeshLambertMaterial({ map: barkTex, color: 0xf0dfcc });
             this.disposables.push(barkMat, branchMat);
-            const trunkGeo = new THREE.CylinderGeometry(0.72, 1, 1, 10, 1);
-            trunkGeo.translate(0, 0.5, 0);
-            this.disposables.push(trunkGeo);
-            const rootGeo = new THREE.ConeGeometry(1, 1, 8, 1, true);
-            this.disposables.push(rootGeo);
 
+            // 1. Скульптурный ствол с раструбом у основания и вертикальными складками коры
+            const trunkGeo = createSculptedTrunkGeometry();
+            this.disposables.push(trunkGeo);
             const trunks = new THREE.InstancedMesh(trunkGeo, barkMat, M.trees.length);
             const dummy = new THREE.Object3D();
             M.trees.forEach((tr, i) => {
@@ -1370,19 +1583,27 @@
             });
             trunks.instanceMatrix.needsUpdate = true;
             this.world.add(trunks);
-            // корни — широкий конус у земли
-            const roots = new THREE.InstancedMesh(rootGeo, barkMat, M.trees.length);
-            M.trees.forEach((tr, i) => {
-                dummy.position.set(tr.x, 0.6, tr.z);
-                dummy.rotation.set(0, 0, 0);
-                dummy.scale.set(tr.trunkR * 2.1, 1.2, tr.trunkR * 2.1);
-                dummy.updateMatrix();
-                roots.setMatrixAt(i, dummy.matrix);
+
+            // 2. Мощные корни — 5 раскидистых корневых отростков вокруг каждого дерева
+            const rootGeo = createRootArmGeometry();
+            this.disposables.push(rootGeo);
+            const numRoots = 5;
+            const roots = new THREE.InstancedMesh(rootGeo, barkMat, M.trees.length * numRoots);
+            let rootIdx = 0;
+            M.trees.forEach(tr => {
+                for (let k = 0; k < numRoots; k++) {
+                    const ang = tr.rotY + (k * Math.PI * 2 / numRoots) + (k * 0.12);
+                    dummy.position.set(tr.x, 0, tr.z);
+                    dummy.rotation.set(0, ang, 0);
+                    dummy.scale.set(tr.trunkR, Math.min(1.4, Math.max(0.7, tr.trunkTopY * 0.35)), tr.trunkR);
+                    dummy.updateMatrix();
+                    roots.setMatrixAt(rootIdx++, dummy.matrix);
+                }
             });
             roots.instanceMatrix.needsUpdate = true;
             this.world.add(roots);
 
-            // ветви: отец → ребёнок (instanced)
+            // 3. Естественные дуговые ветви: отец → ребёнок со сглаженным подъёмом и сужением
             const segs = [];
             M.trees.forEach(tr => {
                 const c = Math.cos(tr.rotY), s = Math.sin(tr.rotY);
@@ -1391,23 +1612,39 @@
                     if (lp.onTrunk) return;
                     if (lp.role === 'kelin') {
                         const hp = tr.local.get(lp.husband);
-                        if (hp) segs.push({ a: toWorld(lp.x, lp.y, lp.z), b: hp.onTrunk ? toWorld(0, hp.y, 0) : toWorld(hp.x, hp.y, hp.z), r: 0.06, gold: true });
+                        if (hp) {
+                            const pA = toWorld(lp.x, lp.y, lp.z);
+                            const pB = hp.onTrunk ? toWorld(0, hp.y, 0) : toWorld(hp.x, hp.y, hp.z);
+                            segs.push({ a: pA, b: pB, r: 0.07, gold: true });
+                        }
                         return;
                     }
                     const person = M.byId.get(id);
                     const fid = person && person.father_id ? Number(person.father_id) : 0;
                     const fp = fid ? tr.local.get(fid) : null;
                     if (!fp) {
-                        // корень дерева вне ствола (бывает при нескольких кровных в 0-м поколении)
-                        segs.push({ a: toWorld(0, Math.min(lp.y, tr.trunkTopY), 0), b: toWorld(lp.x, lp.y, lp.z), r: 0.14 });
+                        const pA = toWorld(0, Math.min(lp.y, tr.trunkTopY), 0);
+                        const pB = toWorld(lp.x, lp.y, lp.z);
+                        const len = pA.distanceTo(pB);
+                        const mid = pA.clone().add(pB).multiplyScalar(0.5);
+                        mid.y += Math.min(1.2, Math.max(0.3, len * 0.15));
+                        segs.push({ a: pA, b: mid, r: 0.18 });
+                        segs.push({ a: mid, b: pB, r: 0.12 });
                         return;
                     }
-                    const a = fp.onTrunk ? toWorld(0, fp.y + 0.6, 0) : toWorld(fp.x, fp.y, fp.z);
-                    const r = Math.max(0.07, 0.3 - lp.gen * 0.03);
-                    segs.push({ a, b: toWorld(lp.x, lp.y, lp.z), r });
+                    const pA = fp.onTrunk ? toWorld(0, fp.y + 0.6, 0) : toWorld(fp.x, fp.y, fp.z);
+                    const pB = toWorld(lp.x, lp.y, lp.z);
+                    const len = pA.distanceTo(pB);
+                    const mid = pA.clone().add(pB).multiplyScalar(0.5);
+                    mid.y += Math.min(1.4, Math.max(0.35, len * 0.16));
+                    const baseR = Math.max(0.08, 0.32 - lp.gen * 0.035);
+                    segs.push({ a: pA, b: mid, r: baseR * 1.15 });
+                    segs.push({ a: mid, b: pB, r: baseR * 0.75 });
                 });
             });
-            const brGeo = new THREE.CylinderGeometry(0.7, 1, 1, 6, 1);
+
+            const brGeo = new THREE.CylinderGeometry(0.72, 1.0, 1.0, 8, 1);
+            brGeo.translate(0, 0.5, 0); // основание в (0,0,0), вершина в (0,1,0)
             this.disposables.push(brGeo);
             const plain = segs.filter(sg => !sg.gold), gold = segs.filter(sg => sg.gold);
             const up = new THREE.Vector3(0, 1, 0);
@@ -1415,10 +1652,9 @@
                 if (!list.length) return;
                 const im = new THREE.InstancedMesh(brGeo, mat, list.length);
                 list.forEach((sg, i) => {
-                    // ось цилиндра — к ребёнку: узкий верх (0.7) у ребёнка, широкий низ у отца
                     const dir = new THREE.Vector3().subVectors(sg.b, sg.a);
                     const len = dir.length() || 0.01;
-                    dummy.position.copy(sg.a).add(sg.b).multiplyScalar(0.5);
+                    dummy.position.copy(sg.a);
                     dummy.quaternion.setFromUnitVectors(up, dir.normalize());
                     dummy.scale.set(sg.r, len, sg.r);
                     dummy.updateMatrix();
@@ -1431,6 +1667,96 @@
             const tieMat = new THREE.MeshBasicMaterial({ color: p.kelinTie });
             this.disposables.push(tieMat);
             fill(gold, tieMat);
+
+            // 4. Раскидистая пышная крона с листвой (многослойный объёмный купол листвы)
+            const foliageGeo = createFoliageClumpGeometry();
+            this.disposables.push(foliageGeo);
+
+            const foliageMatLight = new THREE.MeshLambertMaterial({
+                color: p.leafLight,
+                emissive: p.leaf,
+                emissiveIntensity: this.dark ? 0.32 : 0.12,
+                side: THREE.DoubleSide
+            });
+            const foliageMatMain = new THREE.MeshLambertMaterial({
+                color: p.leaf,
+                emissive: p.leafDark,
+                emissiveIntensity: this.dark ? 0.28 : 0.10,
+                side: THREE.DoubleSide
+            });
+            const foliageMatDeep = new THREE.MeshLambertMaterial({
+                color: p.leafDark,
+                emissive: p.leafDark,
+                emissiveIntensity: this.dark ? 0.20 : 0.06,
+                side: THREE.DoubleSide
+            });
+            this.disposables.push(foliageMatLight, foliageMatMain, foliageMatDeep);
+
+            const foliageLight = [];
+            const foliageMain = [];
+            const foliageDeep = [];
+
+            M.trees.forEach(tr => {
+                const c = Math.cos(tr.rotY), s = Math.sin(tr.rotY);
+                const toWorld = (lx, ly, lz) => new THREE.Vector3(tr.x + lx * c + lz * s, ly, tr.z - lx * s + lz * c);
+
+                // Верхний купол кроны — раскидистая вершина
+                const apexY = tr.trunkTopY + (tr.height - tr.trunkTopY) * 0.65;
+                const apexRx = Math.max(2.8, tr.crownR * 0.82);
+                const apexRy = Math.max(2.0, (tr.height - tr.trunkTopY) * 0.55 + 1.2);
+                foliageLight.push({
+                    pos: new THREE.Vector3(tr.x, apexY, tr.z),
+                    scale: new THREE.Vector3(apexRx, apexRy, apexRx),
+                    rotY: tr.rotY
+                });
+
+                // Средний ярус — массивные облака листвы вокруг развилок
+                const numPuffs = Math.min(8, Math.max(3, Math.round(tr.crownR * 0.85)));
+                for (let pf = 0; pf < numPuffs; pf++) {
+                    const ang = tr.rotY + (pf * Math.PI * 2 / numPuffs) + 0.3;
+                    const pr = tr.crownR * (0.45 + hash(tr.rootId * 11 + pf) * 0.4);
+                    const py = tr.trunkTopY + (tr.height - tr.trunkTopY) * (0.3 + hash(tr.rootId * 7 + pf * 5) * 0.45);
+                    const sc = 2.0 + hash(tr.rootId * 13 + pf * 3) * 1.6;
+                    const item = {
+                        pos: new THREE.Vector3(tr.x + Math.cos(ang) * pr, py, tr.z + Math.sin(ang) * pr),
+                        scale: new THREE.Vector3(sc * 1.15, sc * 0.85, sc * 1.15),
+                        rotY: ang
+                    };
+                    if (pf % 3 === 0) foliageDeep.push(item);
+                    else if (pf % 2 === 0) foliageMain.push(item);
+                    else foliageLight.push(item);
+                }
+
+                // Лиственные ложа позади персон (люди как плоды/цветы на зеленых ветвях)
+                tr.local.forEach((lp, id) => {
+                    if (lp.onTrunk) return;
+                    const wpos = toWorld(lp.x * 0.82, lp.y - 0.12, lp.z * 0.82);
+                    const psc = 1.35 + hash(id) * 0.45;
+                    foliageMain.push({
+                        pos: wpos,
+                        scale: new THREE.Vector3(psc * 1.1, psc * 0.8, psc * 1.1),
+                        rotY: (id * 2.399) % (Math.PI * 2)
+                    });
+                });
+            });
+
+            const fillFoliage = (list, mat) => {
+                if (!list.length) return;
+                const im = new THREE.InstancedMesh(foliageGeo, mat, list.length);
+                list.forEach((item, i) => {
+                    dummy.position.copy(item.pos);
+                    dummy.rotation.set(0, item.rotY || 0, 0);
+                    dummy.scale.copy(item.scale);
+                    dummy.updateMatrix();
+                    im.setMatrixAt(i, dummy.matrix);
+                });
+                im.instanceMatrix.needsUpdate = true;
+                this.world.add(im);
+            };
+
+            fillFoliage(foliageLight, foliageMatLight);
+            fillFoliage(foliageMain, foliageMatMain);
+            fillFoliage(foliageDeep, foliageMatDeep);
 
             // табличка у корней, тамга на стволе, имя рода над кроной
             const boardGeo = new THREE.PlaneGeometry(4.6, 2.16);

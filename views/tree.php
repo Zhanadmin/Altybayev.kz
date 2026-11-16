@@ -4585,8 +4585,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const n = yearsBetween(from, isDiv ? to : todayParts());
             if (n < 0 || n > 100) return '';
             const apx = (from[1] == null || (isDiv && to[1] == null)) ? '≈' : '';
-            if (ru) return apx + ruYears(n) + ' вместе';
-            return apx + n + ' жыл бірге';
+            if (ru) return apx + ruYears(n);
+            return apx + n + ' жыл';
         }
         function ruYears(n) {
             const m10 = n % 10, m100 = n % 100;

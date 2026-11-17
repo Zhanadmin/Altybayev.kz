@@ -63,6 +63,7 @@
         c.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
         c.style.backgroundPosition = '50% ' + st.cover.pos_y + '%';
         c.style.setProperty('--cover-dim', String(st.cover.dim / 100));
+        if (window.pcCoverTone) { window.pcCoverTone(); }
         var rm = $('pmeCoverRemove'); if (rm) { rm.style.display = ''; }
         var tn = $('pmeCoverTuning'); if (tn) { tn.style.display = ''; }
         var p = $('pmePos'); if (p) { p.value = st.cover.pos_y; }
@@ -207,6 +208,7 @@
         if (cc) {
             cc.style.backgroundPosition = '50% ' + st.cover.pos_y + '%';
             cc.style.setProperty('--cover-dim', String(st.cover.dim / 100));
+            if (window.pcCoverTone) { window.pcCoverTone(); }
         }
     };
 

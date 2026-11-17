@@ -24,6 +24,13 @@ $initials = mb_substr((string)($person['first_name'] ?? ''), 0, 1) . mb_substr((
 $birthDisp = !empty($person['birth_date']) ? I18n::formatDate($person['birth_date']) : ($person['birth_year'] ? I18n::formatDate($person['birth_year']) : ($lang === 'ru' ? 'не указан' : 'белгісіз'));
 $deathDisp = !empty($person['death_date']) ? I18n::formatDate($person['death_date']) : ($person['death_year'] ? I18n::formatDate($person['death_year']) : ($lang === 'ru' ? 'не указан' : 'белгісіз'));
 
+// ALT-002: у умершего вместо даты рождения — годы жизни «1940–2015»
+$pcBirthY = !empty($person['birth_date']) ? substr((string)$person['birth_date'], 0, 4) : (string)($person['birth_year'] ?? '');
+$pcDeathY = !empty($person['death_date']) ? substr((string)$person['death_date'], 0, 4) : (string)($person['death_year'] ?? '');
+if ($isDeceased && ($pcBirthY !== '' || $pcDeathY !== '')) {
+    $birthDisp = ($pcBirthY !== '' ? $pcBirthY : '?') . '–' . ($pcDeathY !== '' ? $pcDeathY : '?');
+}
+
 // Маленький круглый аватар с инициалами (родственники)
 $pcInitials = static function (array $p): string {
     $i = mb_substr((string)($p['first_name'] ?? ''), 0, 1) . mb_substr((string)($p['last_name'] ?? ''), 0, 1);
@@ -71,7 +78,61 @@ require __DIR__ . '/../layout/master_start.php';
 .pc-book.has-cover .years b { color: #222; }
 .pc-book.has-cover .place { margin-top: 6px; }
 .pc-book.has-cover .photo-frame .oval { border: 3px solid var(--c-island, #fff); box-sizing: border-box; }
+/* ALT-001 note: тон надписей и кнопок подстраивается под яркость обложки (data-tone ставит JS ниже) */
+.pc-book.has-cover .btn:not(.btn-primary),
+.pc-book.has-cover .chips .badge { backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.pc-book.has-cover[data-tone="dark"] .btn:not(.btn-primary),
+.pc-book.has-cover[data-tone="dark"] .chips .badge { background: rgba(0,0,0,.5); color: #fff; border-color: rgba(255,255,255,.55); text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.pc-book.has-cover[data-tone="dark"] .years,
+.pc-book.has-cover[data-tone="dark"] .place,
+.pc-book.has-cover[data-tone="dark"] .years b { background: rgba(0,0,0,.5); color: #fff; }
+.pc-book.has-cover[data-tone="dark"] .years b,
+.pc-book.has-cover[data-tone="dark"] .pc-age { background: transparent; color: #fff; }
+.pc-book.has-cover[data-tone="light"] .btn:not(.btn-primary),
+.pc-book.has-cover[data-tone="light"] .chips .badge { background: rgba(255,255,255,.85); color: #222; border-color: rgba(0,0,0,.2); }
 </style>
+<script>
+/* ALT-001 note: средняя яркость обложки под областью кнопок/надписей → data-tone="dark|light" */
+window.pcCoverTone = function () {
+    var book = document.querySelector('.pc-book'), cov = book && book.querySelector('.pc-cover');
+    if (!book || !cov) { if (book) { book.removeAttribute('data-tone'); } return; }
+    var m = /url\(["']?(.*?)["']?\)/.exec(cov.style.backgroundImage || '');
+    if (!m) { return; }
+    var img = new Image();
+    img.onload = function () {
+        try {
+            var bw = book.clientWidth, bh = book.clientHeight, iw = img.naturalWidth, ih = img.naturalHeight;
+            if (!bw || !bh || !iw || !ih) { return; }
+            var k = 0.25, cw = Math.max(1, Math.round(bw * k)), ch = Math.max(1, Math.round(bh * k));
+            var sc = Math.max(bw / iw, bh / ih), dw = iw * sc, dh = ih * sc;
+            var posY = parseFloat((cov.style.backgroundPosition || '50% 50%').split(' ')[1]);
+            if (isNaN(posY)) { posY = 50; }
+            var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+            var cx = cv.getContext('2d');
+            cx.drawImage(img, (bw - dw) / 2 * k, (bh - dh) * posY / 100 * k, dw * k, dh * k);
+            var br = book.getBoundingClientRect(), sum = 0, n = 0;
+            ['.years', '.place', '.chips', '.actions'].forEach(function (sel) {
+                var e = book.querySelector(sel); if (!e) { return; }
+                var r = e.getBoundingClientRect();
+                var x = Math.max(0, Math.floor((r.left - br.left) * k)), y = Math.max(0, Math.floor((r.top - br.top) * k));
+                var w = Math.min(cw - x, Math.ceil(r.width * k)), h = Math.min(ch - y, Math.ceil(r.height * k));
+                if (w < 1 || h < 1) { return; }
+                var d = cx.getImageData(x, y, w, h).data;
+                for (var i = 0; i < d.length; i += 4) { sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; n++; }
+            });
+            if (!n) { return; }
+            var dim = parseFloat(getComputedStyle(cov).getPropertyValue('--cover-dim')); if (isNaN(dim)) { dim = 0.3; }
+            var lum = (sum / n) * (1 - dim); /* с учётом затемнения обложки */
+            book.setAttribute('data-tone', lum > 140 ? 'light' : 'dark');
+        } catch (e) { book.setAttribute('data-tone', 'dark'); }
+    };
+    img.onerror = function () { book.setAttribute('data-tone', 'dark'); };
+    img.crossOrigin = 'anonymous';
+    img.src = m[1];
+};
+window.addEventListener('load', window.pcCoverTone);
+window.addEventListener('resize', (function () { var t; return function () { clearTimeout(t); t = setTimeout(window.pcCoverTone, 250); }; })());
+</script>
 
 <div class="pc">
 
@@ -116,16 +177,11 @@ require __DIR__ . '/../layout/master_start.php';
             </svg>
         </div>
         <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg<?= $isDeceased ? ' gold' : '' ?>"><?= htmlspecialchars($fullName) ?></h1></div>
-        <div class="years"><b><?= htmlspecialchars($birthDisp) ?><?= $isDeceased ? ' — ' . htmlspecialchars($deathDisp) : '' ?></b><?php if ($heroAge !== ''): ?> · <span class="pc-age"><?= htmlspecialchars($heroAge) ?></span><?php endif; ?></div>
+        <div class="years"><b><?= htmlspecialchars($birthDisp) ?></b><?php if ($heroAge !== ''): ?> · <span class="pc-age"><?= htmlspecialchars($heroAge) ?></span><?php endif; ?></div>
         <?php if (!empty($person['birth_place'])): ?>
             <div class="place"><?= htmlspecialchars((string)$person['birth_place']) ?></div>
         <?php endif; ?>
         <div class="chips">
-            <?php if ($isDeceased): ?>
-                <span class="badge badge-accent"><?= $lang === 'ru' ? 'Ушедший(ая) предок' : 'Уақыттан озған баба' ?></span>
-            <?php else: ?>
-                <span class="badge badge-leaf"><svg class="gmark" aria-hidden="true"><use href="<?= $isMale ? '#g-m' : '#g-f' ?>"/></svg><?= $lang === 'ru' ? 'Живущий(ая) родственник' : 'Тірі ұрпақ' ?></span>
-            <?php endif; ?>
             <?php if (!empty($person['maiden_name'])): ?>
                 <span class="badge"><?= $lang === 'ru' ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
             <?php endif; ?>
@@ -355,8 +411,6 @@ require __DIR__ . '/../layout/master_start.php';
                         <?php endif;
                     endforeach; ?>
                     <?php if ($isDeceased): ?>
-                        <dt><?= htmlspecialchars(I18n::t('field_death_date')) ?></dt>
-                        <dd class="pc-accent"><?= htmlspecialchars($deathDisp) ?></dd>
                         <dt><?= htmlspecialchars(I18n::t('field_death_place')) ?></dt>
                         <dd><?= htmlspecialchars((string)($person['death_place'] ?: ($lang === 'ru' ? 'не указано' : 'көрсетілмеген'))) ?></dd>
                     <?php endif; ?>

@@ -54,12 +54,23 @@ require __DIR__ . '/../layout/master_start.php';
 ?>
 
 <style>
-/* TASK-022: обложка карточки (как в Facebook): полоса сверху, портрет поверх неё */
+/* ALT-001: обложка заполняет весь фон шапки (как в Facebook), аватарка и текст поверх */
 .pc-book.has-cover { position: relative; }
-.pc-book .pc-cover { position: absolute; top: 0; left: 0; right: 0; height: 190px; background-size: cover; background-repeat: no-repeat; pointer-events: none; }
+.pc-book .pc-cover { position: absolute; inset: 0; z-index: 0; background-size: cover; background-repeat: no-repeat; pointer-events: none; }
 .pc-book .pc-cover::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--cover-dim, .3); }
-.pc-book.has-cover .photo-frame { margin-top: 84px; z-index: 1; }
+.pc-book.has-cover .photo-frame,
+.pc-book.has-cover .ribbon-wrap,
+.pc-book.has-cover .years,
+.pc-book.has-cover .place,
+.pc-book.has-cover .chips,
+.pc-book.has-cover .actions { position: relative; z-index: 1; }
 .pc-book.has-cover > .orn-corner { z-index: 2; }
+/* подложка под текстом, чтобы читался на любой картинке */
+.pc-book.has-cover .years,
+.pc-book.has-cover .place { width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; padding: 2px 14px; border-radius: 999px; background: rgba(255,255,255,.82); color: #222; }
+.pc-book.has-cover .years b { color: #222; }
+.pc-book.has-cover .place { margin-top: 6px; }
+.pc-book.has-cover .photo-frame .oval { border: 3px solid var(--c-island, #fff); box-sizing: border-box; }
 </style>
 
 <div class="pc">

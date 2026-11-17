@@ -29,3 +29,7 @@ Thumbs.db
 *.swp
 
 .claude/
+
+# Временные файлы агента
+tmp_*
+/tmp/

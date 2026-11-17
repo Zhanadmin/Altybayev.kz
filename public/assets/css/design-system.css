@@ -510,8 +510,12 @@ p { margin: 0; }
 .pp-table td { vertical-align: top; }
 .pp-table td.actions { vertical-align: middle; padding-top: 6px; padding-bottom: 6px; overflow: visible; }
 .pp-table .actions .btn-icon { width: 32px; height: 32px; }
-.pp-w-gender { width: 52px; }
-.pp-w-clan { width: 120px; }
+.pp-w-gender { width: 96px; }
+.pp-w-clan { width: 150px; }
+/* ALT-002: номер целиком, заголовки колонок не наезжают друг на друга, иконка пола без обрезки */
+.pp-table .num { width: 64px; }
+.pp-table th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-table td.pp-gender-cell { overflow: visible; }
 .pp-w-years { width: 150px; }
 /* TASK-020: текст в таблице «Адамдар» переносится, а не обрезается */
 .pp-table .clip { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }

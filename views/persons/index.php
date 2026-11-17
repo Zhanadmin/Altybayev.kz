@@ -24,7 +24,7 @@ $buildSortUrl = function(string $sortKey) use ($filters): string {
     return '/persons?' . http_build_query($params);
 };
 
-$hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($filters['gender']) || !empty($filters['status']) || $currentSort !== 'generation';
+$hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($filters['gender']) || $currentSort !== 'generation';
 ?>
 
 <div class="ds-page-head">
@@ -48,8 +48,6 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
 
 <div class="pp-stats">
     <span class="badge"><?= $lang === 'ru' ? 'Всего:' : 'Барлығы:' ?> <b><?= (int)$totalAll ?></b></span>
-    <span class="badge badge-success"><?= $lang === 'ru' ? 'Живых:' : 'Тірі:' ?> <b><?= (int)$totalLiving ?></b></span>
-    <span class="badge badge-accent"><?= $lang === 'ru' ? 'Ушедших:' : 'Өмірден өткен:' ?> <b><?= (int)$totalDeceased ?></b></span>
 </div>
 
 <!-- Панель поиска и фильтров -->
@@ -73,12 +71,6 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
         <option value=""><?= htmlspecialchars(I18n::t('filter_gender_all')) ?></option>
         <option value="M" <?= ($filters['gender'] ?? '') === 'M' ? 'selected' : '' ?>><?= htmlspecialchars(I18n::t('filter_gender_m')) ?></option>
         <option value="F" <?= ($filters['gender'] ?? '') === 'F' ? 'selected' : '' ?>><?= htmlspecialchars(I18n::t('filter_gender_f')) ?></option>
-    </select>
-
-    <select name="status" class="select" onchange="document.getElementById('personsFilterForm').submit()">
-        <option value=""><?= htmlspecialchars(I18n::t('filter_status_all')) ?></option>
-        <option value="living" <?= ($filters['status'] ?? '') === 'living' ? 'selected' : '' ?>><?= htmlspecialchars(I18n::t('filter_status_living')) ?></option>
-        <option value="deceased" <?= ($filters['status'] ?? '') === 'deceased' ? 'selected' : '' ?>><?= htmlspecialchars(I18n::t('filter_status_deceased')) ?></option>
     </select>
 
     <select name="sort" class="select" onchange="document.getElementById('personsFilterForm').submit()">

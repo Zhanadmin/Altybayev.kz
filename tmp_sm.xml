@@ -1,0 +1,47 @@
+User-agent: *
+Disallow: /search/
+Disallow: /ru/search/
+Disallow: /en/search/
+Disallow: /ajax/
+Disallow: /ru/ajax/
+Disallow: /en/ajax/
+Disallow: /*index.php$
+Disallow: /amp-news/
+Disallow: /ru/amp-news/
+Disallow: /en/amp-news/
+Disallow: /qaz/
+Disallow: /*kandastar/
+Disallow: /multimedia/infografika/
+Disallow: /ru/multimedia/infografika/
+Disallow: /en/multimedia/infografika/
+Disallow: /multimedia/audio/
+Disallow: /ru/multimedia/audio/
+Disallow: /en/multimedia/audio/
+Disallow: /multimedia/photos/
+Disallow: /ru/multimedia/photos/
+Disallow: /en/multimedia/photos/
+Disallow: /*?month=
+Disallow: /*?year=
+Disallow: /*?SECTION_CODE=
+Disallow: /*?ELEMENT_CODE=
+Disallow: /*?PAGEN_1=
+Disallow: /*?PAGEN_2=
+Disallow: /*?PAGEN_3=
+Disallow: /*?TAG=
+Disallow: /news/*?date=
+Disallow: /ru/news/*?date=
+Disallow: /en/news/*?date=
+Disallow: /upload/storage_el///
+Disallow: /previews/*
+Disallow: /ru/previews/*
+Disallow: /en/previews/*
+Disallow: /ajax/block-read-also-materials-redirect/
+
+Sitemap: https://el.kz/sitemap.xml
+Host: https://el.kz/
+
+User-agent: Googlebot
+Sitemap: https://el.kz/sitemap-google.xml
+
+User-agent: Yandex
+Sitemap: https://el.kz/sitemap-yandex.xml

@@ -50,19 +50,48 @@ require __DIR__ . '/../layout/master_start.php';
             <span class="muted small"><?= $lang === 'ru' ? 'Попробуйте изменить параметры поиска' : 'Іздеу параметрлерін өзгертіп көріңіз' ?></span>
         </div>
     <?php else: ?>
+        <div class="pp-bar">
+            <div class="pp-bar-actions">
+                <div class="pp-toggle-btns" role="group" aria-label="<?= $lang === 'ru' ? 'Сворачивание поколений' : 'Ұрпақтарды жию немесе ашу' ?>">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnCollapseAll" onclick="fmCollapseAll()">
+                        <svg class="ic" aria-hidden="true"><use href="#i-chevron-up"/></svg>
+                        <span><?= $lang === 'ru' ? 'Свернуть все' : 'Барлығын жию' ?></span>
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnExpandAll" onclick="fmExpandAll()">
+                        <svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                        <span><?= $lang === 'ru' ? 'Развернуть все' : 'Барлығын ашу' ?></span>
+                    </button>
+                </div>
+                <nav class="seg" aria-label="<?= $lang === 'ru' ? 'Поколения' : 'Ұрпақтар' ?>">
+                    <a href="#fm-top" class="active"><?= $lang === 'ru' ? 'Все' : 'Барлығы' ?></a>
+                    <?php foreach ($generationGroups as $gKey => $group): if (empty($group['families'])) continue; ?>
+                        <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>" onclick="fmEnsureOpen('<?= htmlspecialchars((string)$gKey) ?>')"><?= htmlspecialchars($lang === 'ru' ? $group['title_ru'] : $group['title_kk']) ?></a>
+                    <?php endforeach; ?>
+                </nav>
+            </div>
+        </div>
+        <div id="fm-top"></div>
+        <div class="pp-groups">
         <?php foreach ($generationGroups as $gKey => $group):
             if (empty($group['families'])) continue;
             $gTitle = ($lang === 'ru') ? $group['title_ru'] : $group['title_kk'];
             $isAncestors = ($gKey === 'ancestors');
+            $gk = htmlspecialchars((string)$gKey);
         ?>
-            <section class="fm-group">
-                <div class="island-head fm-gen-head">
-                    <span class="ribbon-wrap"><h3 class="ribbon ribbon-sm<?= $isAncestors ? ' gold' : '' ?>"><?= htmlspecialchars($gTitle) ?></h3></span>
-                    <span class="badge pp-group-count"><?= count($group['families']) ?> <?= $lang === 'ru' ? 'союзов' : 'шаңырақ' ?></span>
-                    <span class="pp-gen-line" aria-hidden="true"></span>
+            <section class="fm-group pp-group" id="gen-<?= $gk ?>" data-gen-key="<?= $gk ?>">
+                <div class="pp-group-head" role="button" tabindex="0" aria-expanded="true" aria-controls="gen-body-<?= $gk ?>"
+                     onclick="fmToggle('<?= $gk ?>')"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();fmToggle('<?= $gk ?>');}"
+                     title="<?= $lang === 'ru' ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
+                    <div class="pp-group-head-main">
+                        <svg class="ic pp-group-chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                        <span class="ribbon-wrap"><h3 class="ribbon ribbon-sm<?= $isAncestors ? ' gold' : '' ?>"><?= htmlspecialchars($gTitle) ?></h3></span>
+                        <span class="badge pp-group-count"><?= count($group['families']) ?> <?= $lang === 'ru' ? 'союзов' : 'отбасы' ?></span>
+                        <span class="pp-gen-line" aria-hidden="true"></span>
+                    </div>
                 </div>
 
-                <div class="fm-grid">
+                <div class="fm-grid pp-group-body" id="gen-body-<?= $gk ?>">
                     <?php foreach ($group['families'] as $idx => $f):
                         $m = $f['marriage'];
                         $isMarried = ($f['status'] === 'married');
@@ -207,8 +236,50 @@ require __DIR__ . '/../layout/master_start.php';
                 </div>
             </section>
         <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 </div>
+
+<script>
+/* ALT-005: сворачивание поколений (состояние — в localStorage) */
+(function () {
+    var KEY = 'shezhire_collapsed_family_generations';
+    function load() { try { var a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a.map(String) : []; } catch (e) { return []; } }
+    function save(a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} }
+    function groups() { return document.querySelectorAll('.pp-group[data-gen-key]'); }
+    function setState(g, collapsed) {
+        g.classList.toggle('is-collapsed', collapsed);
+        var h = g.querySelector('.pp-group-head');
+        if (h) h.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+    function collect() {
+        var a = [];
+        groups().forEach(function (g) { if (g.classList.contains('is-collapsed')) a.push(String(g.dataset.genKey)); });
+        save(a);
+    }
+    window.fmToggle = function (k) {
+        var g = document.querySelector('.pp-group[data-gen-key="' + k + '"]');
+        if (!g) return;
+        setState(g, !g.classList.contains('is-collapsed'));
+        collect();
+    };
+    window.fmCollapseAll = function () { groups().forEach(function (g) { setState(g, true); }); collect(); };
+    window.fmExpandAll = function () { groups().forEach(function (g) { setState(g, false); }); collect(); };
+    window.fmEnsureOpen = function (k) {
+        var g = document.querySelector('.pp-group[data-gen-key="' + k + '"]');
+        if (g) { setState(g, false); collect(); }
+    };
+    var stored = load();
+    var hash = (location.hash || '').replace('#', '');
+    groups().forEach(function (g) {
+        var collapsed = stored.indexOf(String(g.dataset.genKey)) !== -1;
+        /* переход по ссылке на конкретную семью (#fam-N) — раскрываем её группу */
+        if (collapsed && hash && g.querySelector('#' + CSS.escape(hash))) collapsed = false;
+        setState(g, collapsed);
+    });
+    if (hash) { var t = document.getElementById(hash); if (t) t.scrollIntoView(); }
+})();
+</script>
 
 <script>
 /* TASK-020: «Семьи детей» — раскрытие вниз по поколениям (клоны карточек со страницы) */

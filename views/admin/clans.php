@@ -98,7 +98,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                     </div>
                     <div>
                         <div class="cl-name"><?= $e($c['name']) ?><?= !empty($c['name_ru']) ? ' · ' . $e($c['name_ru']) : '' ?></div>
-                        <div class="cl-sub"><?= $e($zhuzLabels[$c['zhuz']] ?? '') ?> · <?= (int)$c['persons_count'] ?> <?= $ru ? 'чел.' : 'адам' ?></div>
+                        <div class="cl-sub"><?= $e($zhuzLabels[$c['zhuz']] ?? '') ?><?= !empty($c['parent_name']) ? ' → ' . $e($c['parent_name']) : '' ?> · <?= (int)$c['persons_count'] ?> <?= $ru ? 'чел.' : 'адам' ?></div>
                     </div>
                 </div>
                 <?php if (!empty($c['summary'])): ?><div class="cl-sub"><?= $e($c['summary']) ?></div><?php endif; ?>

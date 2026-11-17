@@ -113,6 +113,44 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                                 <input type="text" id="editModalDeathYear" class="input" placeholder="<?= $__t('мысалы, 2020', 'например, 2020') ?>">
                             </div>
                         </div>
+                        <?php /* ALT-002: «Место упокоения» раскрывается сразу под датой смерти, только при отметке «Умер(ла)» */ ?>
+                        <div id="editModalBurialBlock" style="display:none; margin-top:12px;">
+                            <div class="field">
+                                <label for="editModalDeathPlace"><?= $__t('Мәңгілік мекені (жерленген жері)', 'Место упокоения') ?></label>
+                                <input type="text" id="editModalDeathPlace" class="input" maxlength="255" placeholder="<?= $__t('мысалы, Алматы қ.', 'например, г. Алматы') ?>">
+                            </div>
+                            <div id="editModalBurialExtra" style="display:none;">
+                                <div class="form-row">
+                                    <div class="field">
+                                        <label for="editModalBurialSettlement"><?= $__t('Елді мекен', 'Населённый пункт') ?></label>
+                                        <input type="text" id="editModalBurialSettlement" class="input" maxlength="255">
+                                    </div>
+                                    <div class="field">
+                                        <label for="editModalBurialCemetery"><?= $__t('Зираттың атауы', 'Название кладбища') ?></label>
+                                        <input type="text" id="editModalBurialCemetery" class="input" maxlength="255">
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label for="editModalBurialAddress"><?= $__t('Толық мекенжайы', 'Полный адрес') ?></label>
+                                    <input type="text" id="editModalBurialAddress" class="input" maxlength="255">
+                                </div>
+                                <div class="field">
+                                    <label for="editModalBurialPlot"><?= $__t('Қабірдің орны (учаске / қатар / бағдар)', 'Расположение могилы (участок / ряд / ориентир)') ?></label>
+                                    <input type="text" id="editModalBurialPlot" class="input" maxlength="255">
+                                </div>
+                                <div class="field">
+                                    <label><?= $__t('Картадағы нүкте', 'Точка на карте') ?></label>
+                                    <div id="editModalBurialMap" style="height:260px; border-radius:8px; border:1px solid var(--border, #d0d5dd); overflow:hidden;"></div>
+                                    <div class="hint"><?= $__t('Картаны басып белгі қойыңыз, белгіні сүйреп жылжытуға болады', 'Нажмите на карту, чтобы поставить метку; метку можно перетащить') ?></div>
+                                    <div class="form-row" style="margin-top:6px; align-items:center;">
+                                        <input type="text" id="editModalBurialLat" class="input" placeholder="lat" readonly aria-label="lat">
+                                        <input type="text" id="editModalBurialLng" class="input" placeholder="lng" readonly aria-label="lng">
+                                        <button type="button" class="btn btn-sm" id="editModalBurialClear" onclick="burialClearPoint()"><?= $__t('Белгіні өшіру', 'Убрать метку') ?></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hint" id="editModalBurialNotReady" style="display:none;"><?= $__t('Зират пен карта өрістері дерекқор жаңартылғаннан кейін қосылады', 'Поля кладбища и карты появятся после обновления базы данных') ?></div>
+                        </div>
                     </details>
                     <?php require __DIR__ . '/person_contact_fields.php'; ?>
                 </div>
@@ -244,7 +282,90 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             if (fields) {
                 fields.style.display = isDeceased ? 'grid' : 'none';
             }
+            // ALT-002: «Место упокоения» — сразу под датой смерти, только у умерших
+            const burial = document.getElementById('editModalBurialBlock');
+            if (burial) {
+                burial.style.display = isDeceased ? 'block' : 'none';
+                const extra = document.getElementById('editModalBurialExtra');
+                const note = document.getElementById('editModalBurialNotReady');
+                if (extra) { extra.style.display = (isDeceased && window.__pcBurialReady) ? 'block' : 'none'; }
+                if (note) { note.style.display = (isDeceased && !window.__pcBurialReady) ? 'block' : 'none'; }
+                if (isDeceased && window.__pcBurialReady) { burialMapShow(); }
+            }
         }
+
+        // ALT-002: карта OpenStreetMap (Leaflet, без ключей) для точки места упокоения
+        var burialMap = null, burialMarker = null, burialLeafletLoading = null;
+        function burialLoadLeaflet() {
+            if (window.L) { return Promise.resolve(); }
+            if (burialLeafletLoading) { return burialLeafletLoading; }
+            burialLeafletLoading = new Promise(function (resolve, reject) {
+                const css = document.createElement('link');
+                css.rel = 'stylesheet';
+                css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(css);
+                const js = document.createElement('script');
+                js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                js.onload = function () { resolve(); };
+                js.onerror = function () { burialLeafletLoading = null; reject(new Error('Leaflet')); };
+                document.head.appendChild(js);
+            });
+            return burialLeafletLoading;
+        }
+        function burialSetPoint(lat, lng) {
+            document.getElementById('editModalBurialLat').value = (lat === null) ? '' : Number(lat).toFixed(6);
+            document.getElementById('editModalBurialLng').value = (lng === null) ? '' : Number(lng).toFixed(6);
+            if (!burialMap) { return; }
+            if (lat === null) {
+                if (burialMarker) { burialMap.removeLayer(burialMarker); burialMarker = null; }
+                return;
+            }
+            if (!burialMarker) {
+                burialMarker = L.marker([lat, lng], { draggable: true }).addTo(burialMap);
+                burialMarker.on('dragend', function () {
+                    const ll = burialMarker.getLatLng();
+                    burialSetPoint(ll.lat, ll.lng);
+                });
+            } else {
+                burialMarker.setLatLng([lat, lng]);
+            }
+        }
+        function burialClearPoint() { burialSetPoint(null, null); }
+        function burialMapShow() {
+            const box = document.getElementById('editModalBurialMap');
+            if (!box) { return; }
+            burialLoadLeaflet().then(function () {
+                if (!burialMap) {
+                    burialMap = L.map(box).setView([48.0, 67.0], 4); // Казахстан
+                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(burialMap);
+                    burialMap.on('click', function (ev) { burialSetPoint(ev.latlng.lat, ev.latlng.lng); });
+                }
+                const lat = parseFloat(document.getElementById('editModalBurialLat').value);
+                const lng = parseFloat(document.getElementById('editModalBurialLng').value);
+                setTimeout(function () {
+                    burialMap.invalidateSize();
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        burialSetPoint(lat, lng);
+                        burialMap.setView([lat, lng], 15);
+                    } else if (burialMarker) {
+                        burialSetPoint(null, null);
+                    }
+                }, 50);
+            }).catch(function () {
+                box.textContent = 'Карта жүктелмеді / Карта не загрузилась';
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const ex = document.getElementById('editModalExtra');
+            if (ex) {
+                ex.addEventListener('toggle', function () {
+                    if (ex.open && window.__pcBurialReady && document.getElementById('editModalIsDeceased').checked) { burialMapShow(); }
+                });
+            }
+        });
 
         function openGlobalPersonEditModal(id) {
             const modal = document.getElementById('globalPersonEditModal');
@@ -285,6 +406,15 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         resBox.innerHTML = '';
                         (data.residences || []).forEach(function (r) { resAddRow(r); });
                         const isDec = (p.is_deceased == 1);
+                        // ALT-002: место упокоения (значения — до показа блока, чтобы карта сразу встала на точку)
+                        window.__pcBurialReady = !!data.burial_ready;
+                        document.getElementById('editModalDeathPlace').value = p.death_place || '';
+                        document.getElementById('editModalBurialSettlement').value = p.burial_settlement || '';
+                        document.getElementById('editModalBurialCemetery').value = p.burial_cemetery || '';
+                        document.getElementById('editModalBurialAddress').value = p.burial_address || '';
+                        document.getElementById('editModalBurialPlot').value = p.burial_plot || '';
+                        document.getElementById('editModalBurialLat').value = p.burial_lat || '';
+                        document.getElementById('editModalBurialLng').value = p.burial_lng || '';
                         document.getElementById('editModalIsDeceased').checked = isDec;
                         toggleEditModalDeceasedFields(isDec);
                         var exTr = document.getElementById('editModalExtra'); if (exTr) { exTr.open = isDec; } // TASK-033: у ушедших блок раскрыт
@@ -334,6 +464,15 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             formData.append('is_deceased', isDec);
             formData.append('death_date', isDec ? document.getElementById('editModalDeathDate').value : '');
             formData.append('death_year', isDec ? document.getElementById('editModalDeathYear').value.trim() : '');
+            formData.append('death_place', isDec ? document.getElementById('editModalDeathPlace').value.trim() : '');
+            if (window.__pcBurialReady) {
+                formData.append('burial_settlement', document.getElementById('editModalBurialSettlement').value.trim());
+                formData.append('burial_cemetery', document.getElementById('editModalBurialCemetery').value.trim());
+                formData.append('burial_address', document.getElementById('editModalBurialAddress').value.trim());
+                formData.append('burial_plot', document.getElementById('editModalBurialPlot').value.trim());
+                formData.append('burial_lat', document.getElementById('editModalBurialLat').value);
+                formData.append('burial_lng', document.getElementById('editModalBurialLng').value);
+            }
 
             try {
                 let data;

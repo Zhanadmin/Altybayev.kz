@@ -413,8 +413,53 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <?php if ($isDeceased): ?>
                         <dt><?= htmlspecialchars(I18n::t('field_death_place')) ?></dt>
                         <dd><?= htmlspecialchars((string)($person['death_place'] ?: ($lang === 'ru' ? 'не указано' : 'көрсетілмеген'))) ?></dd>
+                        <?php
+                        // ALT-002: подробности места упокоения — только заполненное
+                        foreach ([
+                            'burial_settlement' => ['Елді мекен', 'Населённый пункт'],
+                            'burial_cemetery'   => ['Зират', 'Кладбище'],
+                            'burial_address'    => ['Мекенжайы', 'Адрес'],
+                            'burial_plot'       => ['Қабірдің орны', 'Расположение могилы'],
+                        ] as $bKey => $bLbl):
+                            if (!empty($person[$bKey])): ?>
+                                <dt><?= $lang === 'ru' ? $bLbl[1] : $bLbl[0] ?></dt>
+                                <dd><?= htmlspecialchars((string)$person[$bKey]) ?></dd>
+                            <?php endif;
+                        endforeach; ?>
                     <?php endif; ?>
                 </dl>
+
+                <?php
+                // ALT-002: мини-карта OpenStreetMap и маршрут — только если у умершего есть точка
+                $bLat = (isset($person['burial_lat']) && $person['burial_lat'] !== '' && is_numeric($person['burial_lat'])) ? (float)$person['burial_lat'] : null;
+                $bLng = (isset($person['burial_lng']) && $person['burial_lng'] !== '' && is_numeric($person['burial_lng'])) ? (float)$person['burial_lng'] : null;
+                if ($isDeceased && $bLat !== null && $bLng !== null):
+                    $bLatS = number_format($bLat, 6, '.', '');
+                    $bLngS = number_format($bLng, 6, '.', '');
+                ?>
+                    <div class="pc-burial-map">
+                        <div id="burialViewMap" style="height:220px; border-radius:8px; overflow:hidden; border:1px solid var(--border, #d0d5dd);"></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center;">
+                            <span class="muted small"><?= $lang === 'ru' ? 'Маршрут:' : 'Бағыт:' ?></span>
+                            <a class="btn btn-sm" target="_blank" rel="noopener" href="https://2gis.kz/?m=<?= $bLngS ?>,<?= $bLatS ?>/17">2GIS</a>
+                            <a class="btn btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=<?= $bLatS ?>,<?= $bLngS ?>">Google</a>
+                            <a class="btn btn-sm" target="_blank" rel="noopener" href="https://yandex.kz/maps/?rtext=~<?= $bLatS ?>,<?= $bLngS ?>&rtt=auto">Яндекс</a>
+                        </div>
+                    </div>
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                    <script>
+                    (function () {
+                        var lat = <?= $bLatS ?>, lng = <?= $bLngS ?>;
+                        var m = L.map('burialViewMap', { scrollWheelZoom: false }).setView([lat, lng], 15);
+                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        }).addTo(m);
+                        L.marker([lat, lng]).addTo(m);
+                    })();
+                    </script>
+                <?php endif; ?>
 
                 <?php if (!empty($person['biography'])):
                     $bioLines = explode("\n", trim((string)$person['biography']));
@@ -806,7 +851,51 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             <?php endif; ?>
 
             <!-- Служебное (только для администратора, свёрнуто) -->
-            <?php if ($isAdmin): ?>
+            <?php if ($isAdmin): /* ALT-004: история изменений этого человека */ ?>
+                <details class="island-sub pc-tech" id="personHistory">
+                    <summary>
+                        <svg class="ic" aria-hidden="true"><use href="#i-history"/></svg>
+                        <span><?= $lang === 'ru' ? 'История изменений' : 'Өзгерістер тарихы' ?> (<?= count($auditLogs ?? []) ?>)</span>
+                    </summary>
+                    <?php if (empty($auditLogs)): ?>
+                        <p class="muted small"><?= $lang === 'ru' ? 'Изменений пока нет' : 'Өзгерістер әлі жоқ' ?></p>
+                    <?php else: ?>
+                        <ul class="pc-hist" style="list-style:none;margin:0;padding:0;display:grid;gap:10px">
+                            <?php foreach ($auditLogs as $l): ?>
+                                <li data-log-id="<?= (int)$l['id'] ?>">
+                                    <div class="small">
+                                        <span class="muted"><?= htmlspecialchars(date('d.m.Y H:i', strtotime((string)$l['created_at']))) ?></span>
+                                        · <b><?= htmlspecialchars((string)($l['who'] ?: '—')) ?></b>
+                                        · <span class="badge"><?= htmlspecialchars($l['verb']) ?></span>
+                                        <?php if ($l['entity_table'] !== 'persons'): ?><span class="muted">(<?= htmlspecialchars($l['object_label']) ?>)</span><?php endif; ?>
+                                        <?php if (!empty($l['rolled_back'])): ?>
+                                            <span class="badge"><?= $lang === 'ru' ? 'откачено' : 'қайтарылды' ?></span>
+                                        <?php elseif (!empty($l['can_rollback'])): ?>
+                                            <button type="button" class="btn btn-sm" onclick="pcRollback(<?= (int)$l['id'] ?>)"><?= $lang === 'ru' ? 'Откатить' : 'Қайтару' ?></button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php include __DIR__ . '/../history/_changes.php'; ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <p class="small"><a href="/history?person=<?= (int)$person['id'] ?>"><?= $lang === 'ru' ? 'Открыть в журнале изменений →' : 'Өзгерістер журналында ашу →' ?></a></p>
+                    <?php endif; ?>
+                </details>
+                <script>
+                    async function pcRollback(logId) {
+                        if (!confirm('<?= $lang === 'ru' ? 'Вернуть прежние значения?' : 'Бұрынғы мәндерді қайтару керек пе?' ?>')) return;
+                        try {
+                            const res = await fetch('/api/history/rollback', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: new URLSearchParams({ log_id: logId }).toString()
+                            });
+                            const data = await res.json();
+                            if (data && data.success) { window.location.reload(); }
+                            else { alert(data.error || 'Error'); }
+                        } catch (e) { alert(e.message); }
+                    }
+                </script>
                 <details class="island-sub pc-tech">
                     <summary>
                         <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>

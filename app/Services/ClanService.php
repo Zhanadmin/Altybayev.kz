@@ -56,8 +56,11 @@ class ClanService
     /** @return array<int,array<string,mixed>> */
     public function all(): array
     {
-        $sql = "SELECT c.*, (SELECT COUNT(*) FROM persons p WHERE p.clan_id = c.id AND p.is_deleted = 0) AS persons_count
-                FROM clans c ORDER BY c.name ASC";
+        // ALT-003: сначала по жузам (Ұлы, Орта, Кіші, прочие), внутри — по названию; parent_name — ветвь/бас ру
+        $sql = "SELECT c.*, pc.name AS parent_name,
+                       (SELECT COUNT(*) FROM persons p WHERE p.clan_id = c.id AND p.is_deleted = 0) AS persons_count
+                FROM clans c LEFT JOIN clans pc ON pc.id = c.parent_id
+                ORDER BY FIELD(c.zhuz, 'senior', 'middle', 'junior', 'other'), c.name ASC";
         $rows = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$r) {
             $r['tamga_url'] = $this->urlFor($r['tamga_file'] ?? null);

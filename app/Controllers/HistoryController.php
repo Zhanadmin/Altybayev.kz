@@ -9,60 +9,74 @@ use App\Core\Database;
 use App\Core\I18n;
 use App\Core\Request;
 use App\Core\Response;
+use App\Services\ChangeLogService;
 use PDO;
 
 class HistoryController
 {
     /**
-     * Раздел «Тарих / История правок» (audit_logs)
+     * ALT-004: «Журнал изменений» — только для администратора (маршрут с middleware admin + проверка здесь).
+     * Фильтры: пользователь, дата, человек, тип действия, объект; поиск по имени.
      */
     public function index(Request $request): void
     {
+        if (!Auth::isAdmin()) {
+            Response::json(['error' => 'Тек әкімшіге рұқсат / Доступно только администратору'], 403);
+            return;
+        }
+
         $user = Auth::user();
         $userPersonId = !empty($user['person_id']) ? (int)$user['person_id'] : 6;
         $db = Database::getConnection();
+        $svc = new ChangeLogService($db, I18n::lang());
 
-        $actionFilter = trim((string)$request->get('action', ''));
-        $tableFilter = trim((string)$request->get('table', ''));
+        $filters = [
+            'user'      => (int)$request->get('user', 0),
+            'date_from' => trim((string)$request->get('date_from', '')),
+            'date_to'   => trim((string)$request->get('date_to', '')),
+            'person'    => (int)$request->get('person', 0),
+            'action'    => trim((string)$request->get('action', '')),
+            'table'     => trim((string)$request->get('table', '')),
+            'q'         => trim((string)$request->get('q', '')),
+        ];
+        $page = max(1, (int)$request->get('page', 1));
 
         $logs = [];
-        $stmtT = $db->query("SHOW TABLES LIKE 'audit_logs'");
-        if ($stmtT->rowCount() > 0) {
-            $sql = "SELECT * FROM audit_logs WHERE 1=1";
-            $params = [];
-
-            if ($actionFilter !== '') {
-                $sql .= " AND action = ?";
-                $params[] = $actionFilter;
+        $total = 0;
+        $users = [];
+        $personName = '';
+        if ($svc->isReady()) {
+            $res = $svc->search($filters, $page);
+            $logs = $res['rows'];
+            $total = $res['total'];
+            $users = $svc->users();
+            if ($filters['person'] > 0) {
+                $st = $db->prepare("SELECT TRIM(CONCAT_WS(' ', last_name, first_name, middle_name)) FROM persons WHERE id = ?");
+                $st->execute([$filters['person']]);
+                $personName = (string)$st->fetchColumn();
             }
-
-            if ($tableFilter !== '') {
-                $sql .= " AND entity_table = ?";
-                $params[] = $tableFilter;
-            }
-
-            $sql .= " ORDER BY id DESC LIMIT 150";
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
-            $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         Response::view('history/index', [
             'user'         => $user,
             'userPersonId' => $userPersonId,
             'logs'         => $logs,
-            'totalCount'   => count($logs),
-            'filters'      => [
-                'action' => $actionFilter,
-                'table'  => $tableFilter,
-            ],
+            'totalCount'   => $total,
+            'page'         => $page,
+            'perPage'      => ChangeLogService::PER_PAGE,
+            'users'        => $users,
+            'personName'   => $personName,
+            'filters'      => $filters,
+            'tableLabels'  => ChangeLogService::tableLabels(I18n::lang()),
             'canEdit'      => Auth::canEdit(),
-            'isAdmin'      => Auth::isAdmin(),
+            'isAdmin'      => true,
         ]);
     }
 
     /**
-     * Откат изменения (только для роли admin)
+     * Откат изменения (только для роли admin).
+     * UPDATE/DELETE — возвращаются только поля, изменённые этой записью; CREATE человека — мягкое удаление.
+     * Сама запись журнала не меняется: откат добавляет новую строку ROLLBACK.
      */
     public function rollback(Request $request): void
     {
@@ -87,26 +101,39 @@ class HistoryController
             return;
         }
 
-        $table = $log['entity_table'];
+        $table = (string)$log['entity_table'];
         $entityId = (int)$log['entity_id'];
-        $action = $log['action'];
-        $oldVals = !empty($log['old_values']) ? json_decode($log['old_values'], true) : null;
+        $action = (string)$log['action'];
 
-        // TASK-032: откат добавления человека родственником — мягкое удаление карточки (данные остаются, можно вернуть)
+        // повторный откат той же записи не допускаем
+        $dup = $db->prepare("SELECT 1 FROM audit_logs WHERE action = 'ROLLBACK' AND entity_table = ? AND entity_id = ?
+                              AND (summary LIKE ? OR summary LIKE ?) LIMIT 1");
+        $dup->execute([$table, $entityId, "%#{$logId} для%", "%#{$logId}:%"]);
+        if ($dup->fetchColumn()) {
+            Response::json(['error' => 'Бұл өзгеріс бұрын қайтарылған / Это изменение уже откачено'], 409);
+            return;
+        }
+
+        $u = Auth::user();
+        $logRollback = function (string $summary, ?string $old, ?string $new) use ($db, $u, $table, $entityId): void {
+            $db->prepare("INSERT INTO audit_logs (user_id, user_name, user_email, action, entity_table, entity_id, summary, old_values, new_values, created_at)
+                          VALUES (?, ?, ?, 'ROLLBACK', ?, ?, ?, ?, ?, NOW())")->execute([
+                $u['id'] ?? null,
+                $u['name'] ?? 'Әкімші',
+                $u['email'] ?? null,
+                $table,
+                $entityId,
+                $summary,
+                $old,
+                $new,
+            ]);
+        };
+
+        // TASK-032: откат добавления человека — мягкое удаление карточки (данные остаются, можно вернуть)
         if ($action === 'CREATE' && $table === 'persons') {
             try {
                 $db->prepare('UPDATE `persons` SET `is_deleted` = 1, `updated_at` = NOW() WHERE `id` = ?')->execute([$entityId]);
-                $u = Auth::user();
-                $db->prepare("INSERT INTO audit_logs (user_id, user_name, user_email, action, entity_table, entity_id, summary, old_values, new_values, created_at)
-                              VALUES (?, ?, ?, 'ROLLBACK', 'persons', ?, ?, ?, ?, NOW())")->execute([
-                    $u['id'] ?? null,
-                    $u['name'] ?? 'Әкімші',
-                    $u['email'] ?? null,
-                    $entityId,
-                    "Откат добавления #{$logId}: карточка скрыта (soft-delete)",
-                    $log['new_values'],
-                    json_encode(['is_deleted' => 1]),
-                ]);
+                $logRollback("Откат добавления #{$logId}: карточка скрыта (soft-delete)", $log['new_values'], json_encode(['is_deleted' => 1]));
                 Response::json(['success' => true, 'message' => 'Қосылған тұлға жасырылды / Добавленная карточка скрыта']);
             } catch (\Throwable $e) {
                 Response::json(['error' => $e->getMessage()], 500);
@@ -114,58 +141,25 @@ class HistoryController
             return;
         }
 
-        // Откатить можно UPDATE или DELETE, если есть old_values
-        if (empty($oldVals) || !is_array($oldVals)) {
-            Response::json(['error' => 'Бұл жазба бойынша бұрынғы мәндер жоқ / Откат невозможен: нет сохраненных исходных данных'], 400);
+        $plan = (new ChangeLogService($db, I18n::lang()))->rollbackPlan($log);
+        if ($plan === null) {
+            Response::json(['error' => 'Бұл жазбаны қайтару мүмкін емес / Откат невозможен: нет сохранённых исходных данных или таблица не поддерживается'], 400);
             return;
         }
 
         try {
-            $allowedTables = ['persons', 'marriages', 'person_media', 'clans'];
-            if (!in_array($table, $allowedTables, true)) {
-                Response::json(['error' => 'Кесте үшін откатқа тыйым салынған / Откат для этой таблицы запрещен'], 403);
-                return;
-            }
-
-            // Получаем поля для UPDATE
             $setParts = [];
-            $setParams = [];
-            foreach ($oldVals as $col => $val) {
-                if ($col === 'id' || $col === 'created_at') continue;
+            $params = [];
+            foreach ($plan['values'] as $col => $val) {
                 $setParts[] = "`{$col}` = ?";
-                $setParams[] = $val;
+                $params[] = is_array($val) ? json_encode($val, JSON_UNESCAPED_UNICODE) : $val;
             }
+            $params[] = $plan['id'];
+            $db->prepare("UPDATE `{$plan['table']}` SET " . implode(', ', $setParts) . " WHERE `id` = ?")->execute($params);
 
-            if (!empty($setParts)) {
-                $setParams[] = $entityId;
-                $updateSql = "UPDATE `{$table}` SET " . implode(', ', $setParts) . " WHERE `id` = ?";
-                $uStmt = $db->prepare($updateSql);
-                $uStmt->execute($setParams);
-            }
+            $logRollback("Откат изменения #{$logId} для {$table} ID {$entityId} администратором", $log['new_values'], $log['old_values']);
 
-            // Запись в audit_logs о выполненном откате
-            $user = Auth::user();
-            $logStmt = $db->prepare("
-                INSERT INTO audit_logs 
-                (user_id, user_name, user_email, action, entity_table, entity_id, summary, old_values, new_values, created_at)
-                VALUES (?, ?, ?, 'ROLLBACK', ?, ?, ?, ?, ?, NOW())
-            ");
-            $summary = "Откат изменения #{$logId} для {$table} ID {$entityId} администратором";
-            $logStmt->execute([
-                $user['id'] ?? null,
-                $user['name'] ?? 'Әкімші',
-                $user['email'] ?? null,
-                $table,
-                $entityId,
-                $summary,
-                $log['new_values'],
-                $log['old_values'],
-            ]);
-
-            Response::json([
-                'success' => true,
-                'message' => 'Өзгерту сәтті кері қайтарылды / Изменение успешно откачено',
-            ]);
+            Response::json(['success' => true, 'message' => 'Өзгерту сәтті кері қайтарылды / Изменение успешно откачено']);
         } catch (\Throwable $e) {
             Response::json(['error' => $e->getMessage()], 500);
         }

@@ -480,6 +480,7 @@ class TreeController
                 'residences' => (new \App\Services\PersonResidenceService($db))->list((int)$person['id']),
                 'residences_ready' => (new \App\Services\PersonResidenceService($db))->hasTable(),
                 'profile_ready' => (new \App\Services\PersonResidenceService($db))->hasProfileColumns(),
+                'burial_ready' => (new \App\Services\PersonBurialService($db))->isReady(),
             ]);
         } catch (\Throwable $e) {
             Response::json(['error' => $e->getMessage()], 500);
@@ -767,6 +768,19 @@ class TreeController
                 $biography,
                 $id
             ]);
+
+            // ALT-002: подробное место упокоения (если миграция применена)
+            // сохраняем только если форма прислала эти поля (форма в tree.php их не шлёт — данные не затираем)
+            if ($request->get('burial_lat', null) !== null) {
+            (new \App\Services\PersonBurialService($db))->save($id, [
+                'burial_settlement' => $request->get('burial_settlement', ''),
+                'burial_cemetery'   => $request->get('burial_cemetery', ''),
+                'burial_address'    => $request->get('burial_address', ''),
+                'burial_plot'       => $request->get('burial_plot', ''),
+                'burial_lat'        => $request->get('burial_lat', ''),
+                'burial_lng'        => $request->get('burial_lng', ''),
+            ], (bool)$isDeceased);
+            }
 
             // TASK-036: религия, национальность, образование и история проживания (если миграция применена)
             $resSvc = new \App\Services\PersonResidenceService($db);

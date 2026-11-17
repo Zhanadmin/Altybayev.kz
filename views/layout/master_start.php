@@ -54,8 +54,11 @@ $navItems = [
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
     'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => ($lang === 'ru' ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
-    'history'  => ['href' => '/history',  'icon' => 'i-history',  'label' => I18n::t('nav_history'),  'count' => null,  'group' => 2],
 ];
+if ($isAdmin) {
+    // ALT-004: журнал изменений виден только администратору
+    $navItems['history'] = ['href' => '/history', 'icon' => 'i-history', 'label' => ($lang === 'ru' ? 'Журнал изменений' : 'Өзгерістер журналы'), 'count' => null, 'group' => 3];
+}
 if ($canEdit) {
     $navItems['clans'] = ['href' => '/admin/clans', 'icon' => 'i-tree', 'label' => 'Ру таңбалары', 'count' => null, 'group' => 3]; // TASK-030
 }

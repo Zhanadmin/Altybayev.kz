@@ -358,11 +358,16 @@ class PersonController
 
         // 9. Аудит логи
         $auditLogs = [];
-        $aStmtTable = $db->query("SHOW TABLES LIKE 'audit_logs'");
-        if ($aStmtTable->rowCount() > 0) {
-            $aStmt = $db->prepare("SELECT * FROM audit_logs WHERE entity_table = 'persons' AND entity_id = ? ORDER BY id DESC LIMIT 15");
-            $aStmt->execute([$id]);
-            $auditLogs = $aStmt->fetchAll(PDO::FETCH_ASSOC);
+        // ALT-004: вкладка «История изменений» человека — только для администратора
+        if (Auth::isAdmin()) {
+            try {
+                $clSvc = new \App\Services\ChangeLogService($db, I18n::lang());
+                if ($clSvc->isReady()) {
+                    $auditLogs = $clSvc->forPerson($id, 50);
+                }
+            } catch (\Throwable $e) {
+                $auditLogs = []; // журнал не должен ломать карточку
+            }
         }
 
         // 10. TASK-022: контакты (видят все вошедшие, гости сюда не попадают — маршрут за auth) и статус приглашения

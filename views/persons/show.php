@@ -69,6 +69,12 @@ require __DIR__ . '/../layout/master_start.php';
         <?php if ($coverUrl !== ''): ?>
             <div class="pc-cover" style="background-image:url('<?= htmlspecialchars($coverUrl, ENT_QUOTES) ?>'); background-position:50% <?= $coverPos ?>%; --cover-dim:<?= $coverDim / 100 ?>;" aria-hidden="true"></div>
         <?php endif; ?>
+        <?php if ($canEdit || !empty($canEditContacts)): /* TASK-037: смена обложки/аватарки прямо на карточке */ ?>
+            <button type="button" class="pme-fab pme-fab-cover" id="pmeCoverBtn" onclick="pmeMenuToggle(event)" title="<?= htmlspecialchars(I18n::t('pme_change_cover'), ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::t('pme_change_cover'), ENT_QUOTES) ?>">
+                <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg><span><?= htmlspecialchars(I18n::t('pme_change_cover')) ?></span>
+            </button>
+            <?php require __DIR__ . '/../layout/person_media_card.php'; ?>
+        <?php endif; ?>
         <svg class="orn orn-corner tl" aria-hidden="true"><use href="#o-corner"/></svg><svg class="orn orn-corner tr" aria-hidden="true"><use href="#o-corner"/></svg>
         <svg class="orn orn-corner bl" aria-hidden="true"><use href="#o-corner"/></svg><svg class="orn orn-corner br" aria-hidden="true"><use href="#o-corner"/></svg>
         <div class="photo-frame">
@@ -79,6 +85,11 @@ require __DIR__ . '/../layout/master_start.php';
                     <span id="personAvatarImg"><?= htmlspecialchars($initials ?: 'Ш') ?></span>
                 <?php endif; ?>
             </div>
+            <?php if ($canEdit || !empty($canEditContacts)): ?>
+                <label class="pme-fab pme-fab-avatar" for="pmeAvatarInput" title="<?= htmlspecialchars(I18n::t('pme_change_avatar'), ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::t('pme_change_avatar'), ENT_QUOTES) ?>" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+                    <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
+                </label>
+            <?php endif; ?>
             <!-- рисованная рамка: мүйіз сверху, венок из листьев снизу (у марқұм — золотые листья) -->
             <svg class="wreath" viewBox="0 0 168 196" aria-hidden="true" focusable="false">
                 <use href="#o-horn" x="62" y="-8" width="44" height="26" class="pc-horn"/>
@@ -156,15 +167,7 @@ require __DIR__ . '/../layout/master_start.php';
                 <?php endif; ?>
 
                 <!-- Безопасная загрузка фото -->
-                <?php if ($canEdit || !empty($canEditContacts)): ?>
-                    <!-- TASK-022: смена фото и обложки — в окне «Өңдеу» (отдельная загрузка сбоку убрана) -->
-                    <div class="pc-upload">
-                        <button type="button" class="pc-drop" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
-                            <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
-                            <span><?= $lang === 'ru' ? 'Фото и обложка — в окне «Редактировать»' : 'Фото және мұқаба — «Өңдеу» терезесінде' ?></span>
-                        </button>
-                    </div>
-                <?php endif; ?>
+                <!-- TASK-037: фото и обложка меняются кнопками прямо на карточке (подсказка в окне «Өңдеу» убрана) -->
             </div>
 
             <!-- Краткая информация о роде -->

@@ -26,6 +26,21 @@
 .pme-busy { opacity: .5; pointer-events: none; }
 .pme-disabled .pme-actions, .pme-disabled .pme-presets, .pme-disabled #pmeCoverTuning { opacity: .45; pointer-events: none; }
 
+/* TASK-037: кнопки на самой карточке (как в Facebook) */
+.pme-fab { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; font: inherit; font-size: 12px; line-height: 1.2; z-index: 5; }
+.pme-fab:hover { background: rgba(0,0,0,.82); }
+.pme-fab .ic { width: 16px; height: 16px; }
+.pme-fab-cover { position: absolute; top: 10px; right: 10px; padding: 6px 12px; }
+.pme-fab-avatar { position: absolute; right: 10px; bottom: 34px; width: 34px; height: 34px; padding: 0; z-index: 6; }
+.pme-menu { position: absolute; top: 46px; right: 10px; z-index: 7; width: min(300px, calc(100% - 20px)); padding: 8px; border-radius: 12px; background: var(--c-surface, #fff); color: var(--c-text, #222); box-shadow: 0 6px 24px rgba(0,0,0,.28); font-size: 13px; text-align: left; }
+.pme-menu[hidden] { display: none; }
+.pme-menu-item { display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.pme-menu-item:hover { background: rgba(128,128,128,.15); }
+.pme-menu-danger { color: #c0392b; }
+.pme-menu-sub { margin: 6px 10px 0; font-size: 12px; opacity: .7; }
+.pme-menu .pme-presets { margin: 4px 6px 6px; }
+.pme-menu .pme-slider span { min-width: 110px; }
+
 .pme-cover { position: relative; width: 100%; aspect-ratio: 3 / 1; border-radius: 10px; overflow: hidden; background-color: rgba(128,128,128,.2); background-size: cover; background-position: 50% 50%; }
 .pme-cover-dim { position: absolute; inset: 0; background: #000; opacity: .3; pointer-events: none; }
 .pme-cover-empty-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; opacity: .7; text-align: center; padding: 8px; }

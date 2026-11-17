@@ -33,7 +33,71 @@
     }
 
     // ---------------------------------------------------------------- предпросмотр
+    // TASK-037: смена прямо на карточке человека (views/layout/person_media_card.php)
+    function renderCardAvatar(url) {
+        var el = $('personAvatarImg');
+        if (!el || !url) return;
+        var src = url + (url.indexOf('?') < 0 ? '?t=' + Date.now() : '');
+        if (el.tagName === 'IMG') { el.src = src; return; }
+        var im = document.createElement('img');
+        im.id = 'personAvatarImg'; im.alt = ''; im.src = src;
+        el.parentNode.replaceChild(im, el);
+    }
+
+    function renderCardCover() {
+        var book = document.querySelector('.pc-book');
+        if (!book) return;
+        var c = book.querySelector('.pc-cover'), url = st.cover.url;
+        if (!url) {
+            if (c) { c.parentNode.removeChild(c); }
+            book.classList.remove('has-cover');
+            return;
+        }
+        if (!c) {
+            c = document.createElement('div');
+            c.className = 'pc-cover';
+            c.setAttribute('aria-hidden', 'true');
+            book.insertBefore(c, book.firstChild);
+        }
+        book.classList.add('has-cover');
+        c.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+        c.style.backgroundPosition = '50% ' + st.cover.pos_y + '%';
+        c.style.setProperty('--cover-dim', String(st.cover.dim / 100));
+        var rm = $('pmeCoverRemove'); if (rm) { rm.style.display = ''; }
+        var tn = $('pmeCoverTuning'); if (tn) { tn.style.display = ''; }
+        var p = $('pmePos'); if (p) { p.value = st.cover.pos_y; }
+        var d = $('pmeDim'); if (d) { d.value = st.cover.dim; }
+    }
+
+    // cfg: {personId, csrf, cover:{url,pos_y,dim}}
+    window.pmeCardInit = function (cfg) {
+        st.personId = cfg.personId;
+        st.csrf = cfg.csrf || '';
+        st.coverReady = true;
+        st.cover = { url: cfg.cover.url || null, pos_y: cfg.cover.pos_y, dim: cfg.cover.dim };
+        st.saved = { pos_y: st.cover.pos_y, dim: st.cover.dim };
+        var rm = $('pmeCoverRemove'); if (rm) { rm.style.display = st.cover.url ? '' : 'none'; }
+        var tn = $('pmeCoverTuning'); if (tn) { tn.style.display = st.cover.url ? '' : 'none'; }
+        var p = $('pmePos'); if (p) { p.value = st.cover.pos_y; }
+        var d = $('pmeDim'); if (d) { d.value = st.cover.dim; }
+    };
+    window.pmeMenuToggle = function (ev) {
+        if (ev) { ev.stopPropagation(); }
+        var m = $('pmeCoverMenu');
+        if (m) { m.hidden = !m.hidden; }
+    };
+    document.addEventListener('click', function (e) {
+        var m = $('pmeCoverMenu');
+        if (m && !m.hidden && !m.contains(e.target)) { m.hidden = true; }
+    });
+    // ползунки меню: сохранить по отпусканию
+    window.pmeTuneSave = function () {
+        window.pmeTune();
+        window.pmeSave();
+    };
+
     function renderAvatar(url) {
+        renderCardAvatar(url);
         var box = $('pmeAvatar');
         if (!box) return;
         box.innerHTML = '';
@@ -48,6 +112,7 @@
     }
 
     function renderCover() {
+        renderCardCover();
         var c = $('pmeCover');
         if (!c) return;
         var url = st.cover.url;
@@ -95,6 +160,7 @@
 
     // ---------------------------------------------------------------- обложка
     function coverAction(fd) {
+        var mn = $('pmeCoverMenu'); if (mn) { mn.hidden = true; }
         var btns = document.querySelectorAll('#pmeBox button, #pmeBox label.pme-btn');
         btns.forEach(function (b) { b.classList.add('pme-busy'); });
         fd.append('pos_y', String(st.cover.pos_y));
@@ -132,8 +198,16 @@
     window.pmeTune = function () {
         st.cover.pos_y = parseInt($('pmePos').value, 10) || 0;
         st.cover.dim = parseInt($('pmeDim').value, 10) || 0;
-        $('pmeCover').style.backgroundPosition = '50% ' + st.cover.pos_y + '%';
-        $('pmeCoverDim').style.opacity = String(st.cover.dim / 100);
+        var pc = $('pmeCover');
+        if (pc) {
+            pc.style.backgroundPosition = '50% ' + st.cover.pos_y + '%';
+            $('pmeCoverDim').style.opacity = String(st.cover.dim / 100);
+        }
+        var cc = document.querySelector('.pc-book .pc-cover');
+        if (cc) {
+            cc.style.backgroundPosition = '50% ' + st.cover.pos_y + '%';
+            cc.style.setProperty('--cover-dim', String(st.cover.dim / 100));
+        }
     };
 
     // ---------------------------------------------------------------- окно выбора / обрезки

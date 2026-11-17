@@ -3481,7 +3481,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             <form id="editPersonForm" onsubmit="handleSavePersonEdit(event)">
                 <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
                     <input type="hidden" id="editPersonId" value="">
-                    <?php require __DIR__ . '/layout/person_media_fields.php'; // TASK-022/033: обложка-фон и аватарка — вверху окна ?>
+                    <?php /* TASK-037: аватарка и обложка убраны из окна — меняются на карточке человека */ ?>
 
                     <div class="form-row-2">
                         <div class="form-group">
@@ -6578,16 +6578,33 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 : '';
             // TASK-034: супруг(а) и дети — отдельным блоком «Отбасы», не внутри жұртов
             const ownF = (currentUshZhurtData && currentUshZhurtData.ush_zhurt && currentUshZhurtData.ush_zhurt.own_family) || {};
-            const ownNm = (x) => uzEsc(x.full_name || ((x.first_name || '') + ' ' + (x.last_name || '')).trim());
-            const ownSp = (ownF.spouses || []).map(ownNm).join(', ');
-            const ownCh = (ownF.children || []).map(ownNm).join(', ');
-            const ownHtml = (ownSp || ownCh)
-                ? `<div class="uz-msg"><strong>${currentLang === 'ru' ? 'Семья' : 'Отбасы'}</strong>${ownSp ? ` — ${currentLang === 'ru' ? 'супруг(а)' : 'жұбайы'}: ${ownSp}` : ''}${ownCh ? `; ${currentLang === 'ru' ? 'дети' : 'балалары'}: ${ownCh}` : ''}</div>`
-                : '';
+            // Оформление — как у жұртов: та же папка-<details> (uz-fam), заголовок «пара», дети строками
+            const ownBase = (currentUshZhurtData && currentUshZhurtData.ush_zhurt && currentUshZhurtData.ush_zhurt.base_person) || (currentUshZhurtData && currentUshZhurtData.person) || null;
+            const ownSpouses = ownF.spouses || [];
+            const ownChildren = ownF.children || [];
+            let ownHtml = '';
+            if (ownSpouses.length || ownChildren.length) {
+                const baseIsFemale = !!(ownBase && ownBase.gender === 'F');
+                const members = [ownBase].concat(ownSpouses).filter(Boolean);
+                const ownFam = {
+                    husband: baseIsFemale ? (ownSpouses[0] || null) : ownBase,
+                    wife: baseIsFemale ? ownBase : (ownSpouses[0] || null),
+                    marriage: null,
+                    children: ownChildren
+                };
+                ownHtml = renderUshZhurtFolderHtml(ownFam, 0, (currentLang === 'ru' ? 'Семья' : 'Отбасы'));
+                // дополнительные супруги (многобрачие) — отдельными папками без детей
+                ownHtml += ownSpouses.slice(1).map(sp => renderUshZhurtFolderHtml({
+                    husband: baseIsFemale ? sp : ownBase,
+                    wife: baseIsFemale ? ownBase : sp,
+                    marriage: null,
+                    children: []
+                }, 0, null)).join('');
+            }
             container.innerHTML = ownHtml + families.map(f => renderUshZhurtFolderHtml(f, 0)).join('') + standaloneHtml;
         }
 
-        function renderUshZhurtFolderHtml(fam, depth) {
+        function renderUshZhurtFolderHtml(fam, depth, sectionLabel) {
             const nm = (x) => x ? (x.full_name || ((x.first_name || '') + ' ' + (x.last_name || '')).trim()) : '';
             const h = fam.husband ? Object.assign({}, fam.husband, { full_name: nm(fam.husband) }) : null;
             const w = fam.wife ? Object.assign({}, fam.wife, { full_name: nm(fam.wife) }) : null;
@@ -6636,7 +6653,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 <details open class="uz-fam" style="margin-left:${indent}px;">
                     <summary>
                         <svg class="ic"><use href="#t-folder"/></svg>
-                        <span class="uz-title">${coupleTitle}</span>
+                        <span class="uz-title">${sectionLabel ? `<strong>${uzEsc(sectionLabel)}:</strong> ` : ''}${coupleTitle}</span>
                         <span class="uz-count">${children.length} ${currentLang === 'ru' ? 'детей' : 'бала'}</span>
                     </summary>
                     <div class="uz-body">

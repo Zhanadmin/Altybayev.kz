@@ -26,7 +26,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             <form id="globalPersonEditForm" onsubmit="handleGlobalPersonSave(event)">
                 <input type="hidden" id="editModalPersonId" name="id" value="">
                 <div class="modal-body">
-                    <?php require __DIR__ . '/person_media_fields.php'; // TASK-022/033: обложка-фон и аватарка — вверху окна ?>
+                    <?php /* TASK-037: аватарка и обложка убраны из окна — меняются на самой карточке (person_media_card.php) */ ?>
                     <div class="form-row">
                         <div class="field">
                             <label for="editModalFirstName"><?= $__t('Аты', 'Имя') ?> *</label>

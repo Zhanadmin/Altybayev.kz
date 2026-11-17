@@ -303,6 +303,43 @@ require __DIR__ . '/../layout/master_start.php';
                     <dd><?= htmlspecialchars($birthDisp) ?></dd>
                     <dt><?= htmlspecialchars(I18n::t('field_birth_place')) ?></dt>
                     <dd><?= htmlspecialchars((string)($person['birth_place'] ?: ($lang === 'ru' ? 'не указано' : 'көрсетілмеген'))) ?></dd>
+                    <?php
+                    // TASK-036: тұрғылықты жері (история переездов), дін, ұлт, білім — пустые не показываем
+                    $pcResSvc = new \App\Services\PersonResidenceService(\App\Core\Database::getConnection());
+                    $pcRes = $pcResSvc->list((int)$person['id']);
+                    $pcResCur = \App\Services\PersonResidenceService::current($pcRes);
+                    if ($pcResCur): ?>
+                        <dt><?= $lang === 'ru' ? 'Город проживания' : 'Тұрғылықты жері' ?></dt>
+                        <dd>
+                            <?php if (count($pcRes) > 1): ?>
+                                <details class="pc-res">
+                                    <summary style="cursor:pointer;"><?= htmlspecialchars((string)$pcResCur['place']) ?></summary>
+                                    <ol style="margin:6px 0 0; padding-left:18px;">
+                                        <?php foreach ($pcRes as $r):
+                                            $yrs = !empty($r['is_current'])
+                                                ? trim((string)$r['year_from'] . ' — қазір')
+                                                : trim((string)$r['year_from'] . (($r['year_from'] && $r['year_to']) ? ' — ' : '') . (string)$r['year_to']);
+                                        ?>
+                                            <li><?= htmlspecialchars((string)$r['place']) ?><?= $yrs !== '' ? ' <span class="muted small">(' . htmlspecialchars($yrs) . ')</span>' : '' ?></li>
+                                        <?php endforeach; ?>
+                                    </ol>
+                                </details>
+                            <?php else: ?>
+                                <?= htmlspecialchars((string)$pcResCur['place']) ?>
+                                <?php if (!empty($pcRes[0]['year_from'])): ?><span class="muted small">(<?= htmlspecialchars((string)$pcRes[0]['year_from']) ?><?= !empty($pcRes[0]['is_current']) ? ' — қазір' : '' ?>)</span><?php endif; ?>
+                            <?php endif; ?>
+                        </dd>
+                    <?php endif;
+                    foreach ([
+                        'religion'    => ['Діні', 'Религия'],
+                        'nationality' => ['Ұлты', 'Национальность'],
+                        'education'   => ['Білімі', 'Образование'],
+                    ] as $pcKey => $pcLbl):
+                        if (!empty($person[$pcKey])): ?>
+                            <dt><?= $lang === 'ru' ? $pcLbl[1] : $pcLbl[0] ?></dt>
+                            <dd><?= htmlspecialchars((string)$person[$pcKey]) ?></dd>
+                        <?php endif;
+                    endforeach; ?>
                     <?php if ($isDeceased): ?>
                         <dt><?= htmlspecialchars(I18n::t('field_death_date')) ?></dt>
                         <dd class="pc-accent"><?= htmlspecialchars($deathDisp) ?></dd>

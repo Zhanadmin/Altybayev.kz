@@ -476,6 +476,10 @@ class TreeController
                 'audit_logs' => $auditLogs,
                 'can_edit' => \App\Services\PersonAccessService::make()->canEditPerson((int)$person['id']),
                 'contacts' => $contactsOut,
+                // TASK-036: история проживания (пусто, пока миграция не применена)
+                'residences' => (new \App\Services\PersonResidenceService($db))->list((int)$person['id']),
+                'residences_ready' => (new \App\Services\PersonResidenceService($db))->hasTable(),
+                'profile_ready' => (new \App\Services\PersonResidenceService($db))->hasProfileColumns(),
             ]);
         } catch (\Throwable $e) {
             Response::json(['error' => $e->getMessage()], 500);
@@ -763,6 +767,21 @@ class TreeController
                 $biography,
                 $id
             ]);
+
+            // TASK-036: религия, национальность, образование и история проживания (если миграция применена)
+            $resSvc = new \App\Services\PersonResidenceService($db);
+            if ($request->get('profile_present', '') !== '') {
+                $resSvc->saveProfile($id, [
+                    'religion'    => $request->get('religion', ''),
+                    'nationality' => $request->get('nationality', ''),
+                    'education'   => $request->get('education', ''),
+                ]);
+            }
+            $resJson = (string)$request->get('residences', '');
+            if ($resJson !== '' && !$resSvc->replace($id, $resJson)) {
+                Response::json(['error' => 'Тұрғылықты жер тізімі қате / Некорректный список проживания'], 422);
+                return;
+            }
 
             // Каскадное обновление рода у потомков по мужской линии, если изменился род у отца-родоначальника
             if ($clanChanged) {

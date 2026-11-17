@@ -6576,7 +6576,15 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     return `${uzEsc((sp.first_name || '') + ' ' + (sp.last_name || ''))}${term ? ' — ' + uzEsc(term) : ''}`;
                 }).join(', ')}</div>`
                 : '';
-            container.innerHTML = families.map(f => renderUshZhurtFolderHtml(f, 0)).join('') + standaloneHtml;
+            // TASK-034: супруг(а) и дети — отдельным блоком «Отбасы», не внутри жұртов
+            const ownF = (currentUshZhurtData && currentUshZhurtData.ush_zhurt && currentUshZhurtData.ush_zhurt.own_family) || {};
+            const ownNm = (x) => uzEsc(x.full_name || ((x.first_name || '') + ' ' + (x.last_name || '')).trim());
+            const ownSp = (ownF.spouses || []).map(ownNm).join(', ');
+            const ownCh = (ownF.children || []).map(ownNm).join(', ');
+            const ownHtml = (ownSp || ownCh)
+                ? `<div class="uz-msg"><strong>${currentLang === 'ru' ? 'Семья' : 'Отбасы'}</strong>${ownSp ? ` — ${currentLang === 'ru' ? 'супруг(а)' : 'жұбайы'}: ${ownSp}` : ''}${ownCh ? `; ${currentLang === 'ru' ? 'дети' : 'балалары'}: ${ownCh}` : ''}</div>`
+                : '';
+            container.innerHTML = ownHtml + families.map(f => renderUshZhurtFolderHtml(f, 0)).join('') + standaloneHtml;
         }
 
         function renderUshZhurtFolderHtml(fam, depth) {

@@ -25,7 +25,7 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
     <div style="margin-bottom:8px;">
         <label style="display:block; margin-bottom:4px;"><?= $pcfE('socials_title') ?></label>
         <div id="pcfSocialRows"></div>
-        <button type="button" class="<?= htmlspecialchars($pcfBtnCls) ?>" id="pcfAddSocial" onclick="pcfAddSocial('', '')"><?= $pcfE('socials_add') ?></button>
+        <button type="button" class="<?= htmlspecialchars($pcfBtnCls) ?>" id="pcfAddSocial"><?= $pcfE('socials_add') ?></button>
     </div>
     <div style="font-size:12px; opacity:.7; margin-bottom:8px;"><?= $pcfE('contacts_hint') ?></div>
     <div id="pcfInvite" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -124,7 +124,27 @@ $pcfE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
         btn.addEventListener('click', function () { row.remove(); });
         row.appendChild(sel); row.appendChild(inp); row.appendChild(btn);
         rows.appendChild(row);
+        return inp;
     };
+
+    // TASK-035 (доработка): обработчик через делегирование на document — работает и после
+    // повторного открытия окна, и при дублях разметки; без inline onclick.
+    if (!window.__pcfSocialBound) {
+        window.__pcfSocialBound = true;
+        document.addEventListener('click', function (ev) {
+            var t = ev.target;
+            var b = t && t.closest ? t.closest('#pcfAddSocial') : null;
+            if (!b) return;
+            ev.preventDefault();
+            try {
+                var inp = window.pcfAddSocial('instagram', '');
+                if (inp && inp.focus) inp.focus();
+            } catch (e) {
+                if (window.console) console.error('pcfAddSocial', e);
+                toast(String(e && e.message || e), 'error');
+            }
+        });
+    }
 
     function renderInvite() {
         var box = document.getElementById('pcfInvite');

@@ -1784,6 +1784,8 @@ class KinshipService
             }
         }
 
+        $spouseSet = array_fill_keys(array_map('intval', $ownSpouses), true);
+
         // TASK-034: клиент (окно «Үш жұрт») читает full_name — у «сырой» строки персоны его нет
         $withName = function (?array $p): ?array {
             if ($p === null) {
@@ -1794,7 +1796,7 @@ class KinshipService
         };
 
         // Построитель семейных папок
-        $buildFamilies = function(array $personIdSet, string $sideKey = '') use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId, $withName) {
+        $buildFamilies = function(array $personIdSet, string $sideKey = '') use ($marriages, $personsById, $allKinships, $childrenByCouple, $baseId, $withName, $spouseSet) {
             $families = [];
             $handledChildren = [];
             $handledSpouses = [];
@@ -1814,6 +1816,12 @@ class KinshipService
                     foreach ($cIds as $cId) {
                         $cPerson = $personsById[$cId] ?? null;
                         if ($cPerson) {
+                            // TASK-034: супруг(а) самого человека — не в жұрте (его своя семья);
+                            // сам человек — не в Нағашы/Қайын
+                            if (isset($spouseSet[(int)$cId])
+                                || ((int)$cId === $baseId && in_array($sideKey, ['nagashy', 'kaiyn'], true))) {
+                                continue;
+                            }
                             // TASK-017: ребёнок, чья сторона другая, в этой папке не показывается
                             // (мать — в Өз жұрты/Төркіні рядом с отцом, а не среди детей своих родителей в Нағашы).
                             $cSide = (string)($allKinships[$cId]['zhurt_key'] ?? '');
@@ -1906,8 +1914,8 @@ class KinshipService
 
         return $result + [
             'own_family' => [
-                'spouses' => array_values(array_filter(array_map(fn($id) => $personsById[$id] ?? null, $ownSpouses))),
-                'children' => array_values(array_filter(array_map(fn($id) => $personsById[$id] ?? null, $ownChildren))),
+                'spouses' => array_values(array_filter(array_map(fn($id) => $withName($personsById[$id] ?? null), $ownSpouses))),
+                'children' => array_values(array_filter(array_map(fn($id) => $withName($personsById[$id] ?? null), $ownChildren))),
             ]
         ];
     }

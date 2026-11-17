@@ -160,7 +160,7 @@ require __DIR__ . '/../layout/master_start.php';
                                                 <svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg>
                                                 <?= htmlspecialchars($c['first_name']) ?>
                                                 <?php $ul = I18n::lifeLabel($c); if ($ul['short'] !== ''): ?>
-                                                    <span title="<?= htmlspecialchars($ul['title']) ?>">· <?= htmlspecialchars($ul['short']) ?></span>
+                                                    <span title="<?= htmlspecialchars($ul['title']) ?>"><?= htmlspecialchars($ul['short']) ?></span>
                                                 <?php endif; ?>
                                                 <span class="fm-uz-note">⚭ <?= $lang === 'ru' ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
                                             </a>

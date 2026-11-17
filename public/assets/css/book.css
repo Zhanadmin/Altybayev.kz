@@ -441,7 +441,8 @@ h1, h2, h3, .book { font-family: var(--font-book); letter-spacing: 0; }
 .fm .pc-tag .gmark { width: 13px; height: 13px; }
 /* TASK-013: след ұзатылған — дочь, выданная замуж; её место в семье мужа */
 /* TASK-029: обычный вид, как у остальных детей; пометка о замужестве — мелко */
-.fm .pc-tag.fm-uzatylgan .fm-uz-note { font-size: 12px; font-weight: 400; color: var(--c-muted, inherit); }
+.fm .pc-tag.fm-uzatylgan .fm-uz-note { font-size: 12px; font-weight: 400; font-style: normal; color: var(--c-text); }
+.fm .pc-tag.fm-uzatylgan { border-style: solid; border-color: var(--c-border-strong); opacity: 1; font-style: normal; color: var(--c-text); }
 .fm-card:target { border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent); }
 .fm-foot { border-top: 1px dashed var(--c-border-strong); }
 @media (max-width: 480px) {

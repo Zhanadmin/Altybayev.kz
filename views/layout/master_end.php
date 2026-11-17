@@ -75,6 +75,27 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         <label for="editModalBirthPlace"><?= $__t('Туған жері', 'Место рождения') ?></label>
                         <input type="text" id="editModalBirthPlace" class="input">
                     </div>
+                    <!-- TASK-036: тұрғылықты жері — история переездов -->
+                    <div class="field" id="editModalResBlock">
+                        <label><?= $__t('Тұрғылықты жері', 'Город проживания') ?></label>
+                        <div id="editModalResidences"></div>
+                        <button type="button" class="btn btn-sm" id="editModalResAdd" onclick="resAddRow()">+ <?= $__t('Жер қосу', 'Добавить место') ?></button>
+                        <div class="hint"><?= $__t('Көшу ретімен: ескіден жаңаға. Қазіргі жерін «қазір» деп белгілеңіз', 'В порядке переездов: от раннего к позднему. Текущее место отметьте «қазір»') ?></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="editModalReligion"><?= $__t('Діні', 'Религия') ?></label>
+                            <input type="text" id="editModalReligion" class="input" maxlength="150">
+                        </div>
+                        <div class="field">
+                            <label for="editModalNationality"><?= $__t('Ұлты', 'Национальность') ?></label>
+                            <input type="text" id="editModalNationality" class="input" maxlength="150">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="editModalEducation"><?= $__t('Білімі', 'Образование') ?></label>
+                        <input type="text" id="editModalEducation" class="input" maxlength="255">
+                    </div>
                     <!-- TASK-033: отметка о кончине спрятана в свёрнутый блок «Дополнительно» -->
                     <details class="island-sub" id="editModalExtra">
                         <summary style="cursor:pointer;"><?= $__t('Қосымша', 'Дополнительно') ?></summary>
@@ -164,6 +185,60 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             setTimeout(function () { toast.remove(); }, kind === 'error' ? 7000 : 3500);
         }
 
+        // TASK-036: редактор истории проживания
+        function resAddRow(r) {
+            r = r || {};
+            const box = document.getElementById('editModalResidences');
+            if (!box) return;
+            const row = document.createElement('div');
+            row.className = 'form-row res-row';
+            row.style.cssText = 'align-items:center; gap:6px; margin-bottom:6px;';
+            const mk = (cls, ph, val, w) => {
+                const i = document.createElement('input');
+                i.type = 'text'; i.className = 'input ' + cls; i.placeholder = ph; i.value = val || '';
+                i.style.cssText = 'flex:' + w + ';min-width:0;';
+                return i;
+            };
+            row.appendChild(mk('res-place', 'Қала / Город', r.place, '3'));
+            row.appendChild(mk('res-from', 'с', r.year_from, '1'));
+            const to = mk('res-to', 'по', r.year_to, '1');
+            row.appendChild(to);
+            const lab = document.createElement('label');
+            lab.className = 'check';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.className = 'res-cur'; cb.checked = !!(r.is_current == 1);
+            cb.onchange = function () {
+                if (cb.checked) {
+                    document.querySelectorAll('#editModalResidences .res-cur').forEach(function (o) { if (o !== cb) o.checked = false; });
+                }
+                to.disabled = cb.checked; if (cb.checked) to.value = '';
+            };
+            to.disabled = cb.checked;
+            const sp = document.createElement('span'); sp.textContent = 'қазір';
+            lab.appendChild(cb); lab.appendChild(sp);
+            row.appendChild(lab);
+            const del = document.createElement('button');
+            del.type = 'button'; del.className = 'btn btn-sm'; del.textContent = '×'; del.title = 'Жою / Удалить';
+            del.onclick = function () { row.remove(); };
+            row.appendChild(del);
+            box.appendChild(row);
+        }
+
+        function resCollect() {
+            const out = [];
+            document.querySelectorAll('#editModalResidences .res-row').forEach(function (row) {
+                const place = row.querySelector('.res-place').value.trim();
+                if (!place) return;
+                out.push({
+                    place: place,
+                    year_from: row.querySelector('.res-from').value.trim(),
+                    year_to: row.querySelector('.res-to').value.trim(),
+                    is_current: row.querySelector('.res-cur').checked ? 1 : 0
+                });
+            });
+            return out;
+        }
+
         function toggleEditModalDeceasedFields(isDeceased) {
             const fields = document.getElementById('editModalDeceasedFields');
             if (fields) {
@@ -200,6 +275,15 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.getElementById('editModalBirthDate').value = p.birth_date || '';
                         document.getElementById('editModalBirthYear').value = p.birth_year || '';
                         document.getElementById('editModalBirthPlace').value = p.birth_place || '';
+                        // TASK-036
+                        document.getElementById('editModalReligion').value = p.religion || '';
+                        document.getElementById('editModalNationality').value = p.nationality || '';
+                        document.getElementById('editModalEducation').value = p.education || '';
+                        window.__pcProfileReady = !!data.profile_ready;
+                        window.__pcResReady = !!data.residences_ready;
+                        const resBox = document.getElementById('editModalResidences');
+                        resBox.innerHTML = '';
+                        (data.residences || []).forEach(function (r) { resAddRow(r); });
                         const isDec = (p.is_deceased == 1);
                         document.getElementById('editModalIsDeceased').checked = isDec;
                         toggleEditModalDeceasedFields(isDec);
@@ -213,6 +297,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.querySelectorAll('#globalPersonEditForm [id^="editModal"]').forEach(function (el) {
                             if (el.id !== 'editModalPersonId' && el.id !== 'editModalClanHint') { el.disabled = !data.can_edit; }
                         });
+                        document.querySelectorAll('#editModalResBlock input, #editModalResBlock button').forEach(function (el) { el.disabled = !data.can_edit; });
                     }
                 })
                 .catch(e => showAppToast('Қате / Ошибка: ' + e.message, 'error'));
@@ -239,6 +324,13 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             formData.append('birth_date', document.getElementById('editModalBirthDate').value);
             formData.append('birth_year', document.getElementById('editModalBirthYear').value.trim());
             formData.append('birth_place', document.getElementById('editModalBirthPlace').value.trim());
+            if (window.__pcProfileReady) {
+                formData.append('profile_present', '1');
+                formData.append('religion', document.getElementById('editModalReligion').value.trim());
+                formData.append('nationality', document.getElementById('editModalNationality').value.trim());
+                formData.append('education', document.getElementById('editModalEducation').value.trim());
+            }
+            if (window.__pcResReady) { formData.append('residences', JSON.stringify(resCollect())); }
             formData.append('is_deceased', isDec);
             formData.append('death_date', isDec ? document.getElementById('editModalDeathDate').value : '');
             formData.append('death_year', isDec ? document.getElementById('editModalDeathYear').value.trim() : '');

@@ -4283,6 +4283,23 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             'Барлығы': 'All',
         };
 
+        // ALT-007 (замечание 21:29): транслитерация имён в латиницу (схема как в I18n::latinize).
+        const LATIN_MAP = {
+            'А':'A','Ә':'A','Б':'B','В':'V','Г':'G','Ғ':'G','Д':'D','Е':'E','Ё':'Yo',
+            'Ж':'Zh','З':'Z','И':'I','Й':'Y','К':'K','Қ':'K','Л':'L','М':'M','Н':'N',
+            'Ң':'N','О':'O','Ө':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ұ':'U',
+            'Ү':'U','Ф':'F','Х':'Kh','Һ':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'',
+            'Ы':'Y','І':'I','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
+            'а':'a','ә':'a','б':'b','в':'v','г':'g','ғ':'g','д':'d','е':'e','ё':'yo',
+            'ж':'zh','з':'z','и':'i','й':'y','к':'k','қ':'k','л':'l','м':'m','н':'n',
+            'ң':'n','о':'o','ө':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ұ':'u',
+            'ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'',
+            'ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
+        };
+        function latinize(text) {
+            return String(text == null ? '' : text).split('').map(ch => (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
+        }
+
         function enTreeText(value) {
             let s = String(value || '');
             const core = s.trim();
@@ -4305,17 +4322,22 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             if ((m = core.match(/^(\d+)-е поколение$/))) return lead + 'Generation ' + m[1] + trail;
             if ((m = core.match(/^Дата рождения:\s*(.+)$/))) return lead + 'Date of birth: ' + enTreeText(m[1]) + trail;
             if ((m = core.match(/^Дата ухода:\s*(.+)$/))) return lead + 'Date of death: ' + enTreeText(m[1]) + trail;
-            if ((m = core.match(/^Вы — (.+)$/))) return lead + 'You are ' + m[1] + trail;
+            if ((m = core.match(/^Вы — (.+)$/))) return lead + 'You are ' + latinize(m[1]) + trail;
             if ((m = core.match(/^(.+?)\s*·\s*прожил(а)?\s+(≈?)(\d+)\s*(год|года|лет)$/))) {
                 return lead + enTreeText(m[1]) + ' · lived ' + m[3] + m[4] + ' ' + (Number(m[4]) === 1 ? 'year' : 'years') + trail;
             }
             if ((m = core.match(/^(\d+)\s*лет со дня ухода$/))) return lead + m[1] + ' years since passing' + trail;
             if ((m = core.match(/^(\d+)\s*жас$/))) return lead + m[1] + ' years' + trail;
             if ((m = core.match(/^(\d+)\s*жыл$/))) return lead + m[1] + ' years' + trail;
+            if ((m = core.match(/^(.+?)\s*\(урожд\.\s*(.+)\)$/))) return lead + latinize(m[1]) + ' (née ' + latinize(m[2]) + ')' + trail;
+            if ((m = core.match(/^\(урожд\.\s*(.+)\)$/))) return lead + '(née ' + latinize(m[1]) + ')' + trail;
 
-            const looksLikeName = /^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+)?$/.test(core);
+            const looksLikeName = /^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*){0,3}$/.test(core);
             let out = core;
-            if (!looksLikeName && /[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/.test(core)) {
+            if (looksLikeName) {
+                return lead + latinize(core) + trail;
+            }
+            if (/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/.test(core)) {
                 Object.keys(EN_TREE).sort((a, b) => b.length - a.length).forEach(k => {
                     if (k.length >= 6 && out.includes(k)) out = out.split(k).join(EN_TREE[k]);
                 });
@@ -5206,8 +5228,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             setupRodoslovEvents();
 
             const isRu = (currentLang === 'ru' || currentLang === 'en');
+            const isEn = (currentLang === 'en');
             if (typeof RodoslovGenerator === 'undefined') {
-                canvas.textContent = isRu ? 'Модуль родословной не загрузился. Обновите страницу.' : 'Шежіре модулі жүктелмеді. Бетті жаңартыңыз.';
+                canvas.textContent = isEn ? 'The family tree module did not load. Refresh the page.' : (isRu ? 'Модуль родословной не загрузился. Обновите страницу.' : 'Шежіре модулі жүктелмеді. Бетті жаңартыңыз.');
                 return;
             }
             if (!treeData || !Array.isArray(treeData.persons)) return;
@@ -5221,8 +5244,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             const opts = {
                 focalId: focalId,
-                title: isRu ? 'РОДОСЛОВНОЕ ДРЕВО' : 'ШЕЖІРЕ-АҒАШ',
-                emptyText: isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз',
+                title: isEn ? 'FAMILY TREE' : (isRu ? 'РОДОСЛОВНОЕ ДРЕВО' : 'ШЕЖІРЕ-АҒАШ'),
+                emptyText: isEn ? 'No data — import GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз'),
+                latinizeNames: isEn,
                 onPersonClick: function(id) {
                     rodoslovHighlight(id);
                     // id из БД может прийти строкой — отдаём selectPerson исходное значение
@@ -5230,7 +5254,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     selectPerson(p ? p.id : id);
                 }
             };
-            if (isRu) {
+            if (isEn) {
+                opts.maidenPrefix = 'née';
+                opts.marriagePrefix = 'marriage ·';
+                opts.tamgaPlaceholder = 'tamga';
+                opts.unknownClan = 'clan not specified';
+                opts.labels = { father: 'PATERNAL', mother: 'MATERNAL', inlaw: "WIFE'S CLAN", other: 'IN-LAWS' };
+                opts.legendText = {
+                    son: 'son',
+                    daughter: 'daughter / daughter-in-law',
+                    deceased: 'departed (golden ribbon, golden leaves)',
+                    marriage: 'marriage',
+                    dates: '*  date of birth     –  date of death'
+                };
+            } else if (isRu) {
                 opts.maidenPrefix = 'урожд.';
                 opts.marriagePrefix = 'брак ·';
                 opts.tamgaPlaceholder = 'тамга';
@@ -5241,7 +5278,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     daughter: 'дочь / сноха',
                     deceased: 'ушедшие (золотая лента, золотые листья)',
                     marriage: 'брак',
-                    dates: '*  дата рождения     †  дата смерти'
+                    dates: '*  дата рождения     –  дата смерти'
                 };
             }
 
@@ -5265,9 +5302,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             if (statsEl) {
                 const st = rodoslovResult.stats || {};
-                statsEl.textContent = isRu
-                    ? `Человек: ${st.placed || 0} · поколений: ${st.levels || 0}`
-                    : `Адам: ${st.placed || 0} · буын: ${st.levels || 0}`;
+                statsEl.textContent = isEn
+                    ? `People: ${st.placed || 0} · generations: ${st.levels || 0}`
+                    : (isRu
+                        ? `Человек: ${st.placed || 0} · поколений: ${st.levels || 0}`
+                        : `Адам: ${st.placed || 0} · буын: ${st.levels || 0}`);
             }
 
             // та же цель, что у кнопки «К себе» и flyToCrown — без скачка между двумя центрированиями
@@ -5612,7 +5651,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             // Жылдары: живые — только год/дата рождения! Ушедшие — годы жизни
             const birthDisp = p.birth_date ? p.birth_date : (p.birth_year || '—');
-            const deathDisp = p.death_date ? p.death_date : (p.death_year || '†');
+            const deathDisp = p.death_date ? p.death_date : (p.death_year || '—');
             if (p.is_deceased) {
                 document.getElementById('panelYears').innerText = `${birthDisp} — ${deathDisp} (${(currentLang === 'ru' || currentLang === 'en') ? 'ушёл из жизни' : 'дүниеден өткен'})`;
             } else {

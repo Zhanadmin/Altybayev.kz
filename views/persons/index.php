@@ -129,7 +129,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
         $initials = mb_substr((string)($p['first_name'] ?? ''), 0, 1) . mb_substr((string)($p['last_name'] ?? ''), 0, 1);
 
         $birthDisp = !empty($p['birth_date']) ? I18n::formatDate($p['birth_date']) : ($p['birth_year'] ? I18n::formatDate($p['birth_year']) : '—');
-        $deathDisp = !empty($p['death_date']) ? I18n::formatDate($p['death_date']) : ($p['death_year'] ? I18n::formatDate($p['death_year']) : '†');
+        $deathDisp = !empty($p['death_date']) ? I18n::formatDate($p['death_date']) : ($p['death_year'] ? I18n::formatDate($p['death_year']) : '—');
         $yearsFull = $isDeceased ? "{$birthDisp} — {$deathDisp}" : $birthDisp;
         // TASK-013 (шаг 10): в таблице у живых — возраст, у ушедших — годы жизни и сколько прожил; полная дата — в подсказке
         $lifeL = I18n::lifeLabel($p);

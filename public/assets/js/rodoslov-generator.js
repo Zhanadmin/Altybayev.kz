@@ -75,6 +75,23 @@
         return String(s == null ? '' : s).replace(/[,;]+\s*$/, '').replace(/\s+/g, ' ').trim();
     }
 
+    // ALT-007 (замечание 21:29): транслитерация имён в латиницу (схема как в I18n::latinize).
+    var LATIN_MAP = {
+        'А':'A','Ә':'A','Б':'B','В':'V','Г':'G','Ғ':'G','Д':'D','Е':'E','Ё':'Yo',
+        'Ж':'Zh','З':'Z','И':'I','Й':'Y','К':'K','Қ':'K','Л':'L','М':'M','Н':'N',
+        'Ң':'N','О':'O','Ө':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ұ':'U',
+        'Ү':'U','Ф':'F','Х':'Kh','Һ':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'',
+        'Ы':'Y','І':'I','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
+        'а':'a','ә':'a','б':'b','в':'v','г':'g','ғ':'g','д':'d','е':'e','ё':'yo',
+        'ж':'zh','з':'z','и':'i','й':'y','к':'k','қ':'k','л':'l','м':'m','н':'n',
+        'ң':'n','о':'o','ө':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ұ':'u',
+        'ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'',
+        'ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
+    };
+    function latinize(text) {
+        return String(text == null ? '' : text).split('').map(function (ch) { return ch in LATIN_MAP ? LATIN_MAP[ch] : ch; }).join('');
+    }
+
     var FEM_END = /(ова|ева|ёва|ина|ына|ая)$/i;
     var MASC_END = /(ов|ев|ёв|ин|ын)$/i;
 
@@ -837,13 +854,13 @@
         var d = fmtDate(p.deathDate, p.deathYear);
         var parts = [];
         if (b) parts.push('* ' + b);
-        if (p.deceased) parts.push(d ? '† ' + d : '†');
+        if (p.deceased) parts.push(d ? '– ' + d : '–');
         return parts.join(' · ');
     }
 
     function personRibbon(p, x, y, isFocal, opts) {
         var gold = p.deceased;
-        var name = (p.first + ' ' + p.last).trim() || '—';
+        var name = (opts.latinizeNames ? latinize(p.first + ' ' + p.last) : (p.first + ' ' + p.last)).trim() || '—';
         var fs = nameFontSize(name);
         var ico = p.gender === 'F' ? (gold ? 'rs-icoFg' : 'rs-icoF') : (gold ? 'rs-icoMg' : 'rs-icoM');
         var out = '<g class="rs-p" data-person-id="' + p.id + '"' +
@@ -858,7 +875,7 @@
         var dl = datesLine(p);
         if (dl) out += '<text class="rs-dt" y="44">' + escapeXml(dl) + '</text>';
         if (p.gender === 'F' && p.maiden) {
-            out += '<text class="rs-mn" y="' + (dl ? 62 : 44) + '">' + escapeXml(opts.maidenPrefix + ' ' + p.maiden) + '</text>';
+            out += '<text class="rs-mn" y="' + (dl ? 62 : 44) + '">' + escapeXml(opts.maidenPrefix + ' ' + (opts.latinizeNames ? latinize(p.maiden) : p.maiden)) + '</text>';
         }
         out += '</g>';
         return out;
@@ -893,7 +910,8 @@
             shadows: null,
             paper: null,
             legend: true,
-            footnote: ''
+            footnote: '',
+            latinizeNames: false
         }, userOpts || {});
         // вложенные подписи — сливаем отдельно, чтобы частичная замена не давала «undefined»
         var DEF_LABELS = { father: 'ӘКЕ ЖАҒЫ', mother: 'АНА ЖАҒЫ', inlaw: 'ҚАЙЫН ЖҰРТ', other: 'ЖЕКЖАТ' };
@@ -902,7 +920,7 @@
             daughter: 'қыз / келін',
             deceased: 'марқұм (алтын таспа, алтын жапырақ)',
             marriage: 'неке',
-            dates: '*  туған күні     †  қайтыс болған күні'
+            dates: '*  туған күні     –  қайтыс болған күні'
         };
         opts.labels = Object.assign({}, DEF_LABELS, (userOpts && userOpts.labels) || {});
         opts.legendText = Object.assign({}, DEF_LEGEND, (userOpts && userOpts.legendText) || {});
@@ -1148,12 +1166,15 @@
             // подпись ствола
             var rootP = model.persons.get(t.rootId);
             var surname = t.surname;
-            var label = (opts.labels[t.kind] || opts.labels.other) + (surname ? ' · ' + clanPlural(surname).toUpperCase() : '');
+            var clanLabel = surname ? ' · ' + clanPlural(surname).toUpperCase() : '';
+            if (opts.latinizeNames) clanLabel = latinize(clanLabel);
+            var label = (opts.labels[t.kind] || opts.labels.other) + clanLabel;
             marks.push('<text class="rs-lb" x="' + r1(p0[0]) + '" y="' + r1(grounded ? groundY + 82 : baseY + 52) + '">' + escapeXml(label) + '</text>');
             if (!grounded) return;
 
             // тамга рода на стволе (если ствол достаточно высок)
             var clan = t.kind === 'father' && opts.mainClan ? opts.mainClan : (rootP.clan && rootP.clan !== 'белгісіз' ? rootP.clan : opts.unknownClan);
+            if (opts.latinizeNames) clan = latinize(clan);
             if (baseY - topY > 260) {
                 marks.push(medallion((p1[0] + p0[0]) / 2, baseY - Math.min(170, (baseY - topY) * 0.45), clan, opts));
             } else {

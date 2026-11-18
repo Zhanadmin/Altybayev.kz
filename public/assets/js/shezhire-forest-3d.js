@@ -235,15 +235,36 @@
         return s;
     }
 
+    // ALT-007 (замечание 21:29): транслитерация имён в латиницу (схема как в I18n::latinize).
+    const LATIN_MAP = {
+        'А':'A','Ә':'A','Б':'B','В':'V','Г':'G','Ғ':'G','Д':'D','Е':'E','Ё':'Yo',
+        'Ж':'Zh','З':'Z','И':'I','Й':'Y','К':'K','Қ':'K','Л':'L','М':'M','Н':'N',
+        'Ң':'N','О':'O','Ө':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ұ':'U',
+        'Ү':'U','Ф':'F','Х':'Kh','Һ':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'',
+        'Ы':'Y','І':'I','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
+        'а':'a','ә':'a','б':'b','в':'v','г':'g','ғ':'g','д':'d','е':'e','ё':'yo',
+        'ж':'zh','з':'z','и':'i','й':'y','к':'k','қ':'k','л':'l','м':'m','н':'n',
+        'ң':'n','о':'o','ө':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ұ':'u',
+        'ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'',
+        'ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
+    };
+    function latinize(text) {
+        return String(text == null ? '' : text).split('').map(ch => (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
+    }
+    // Текущий язык леса: имена людей в en выводятся латиницей.
+    let forestActiveLang = 'kk';
+
     function personName(p) {
         if (!p) return '';
-        return [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
+        const name = [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
+        return forestActiveLang === 'en' ? latinize(name) : name;
     }
 
     // Имя дочери рода для подписи линии: девичья фамилия, если есть
     function birthName(p) {
         if (!p) return '';
-        return [p.first_name, p.maiden_name || p.last_name].filter(Boolean).join(' ').trim();
+        const name = [p.first_name, p.maiden_name || p.last_name].filter(Boolean).join(' ').trim();
+        return forestActiveLang === 'en' ? latinize(name) : name;
     }
 
     function yearsText(p) {
@@ -280,6 +301,7 @@
     function buildForestModel(data, opts) {
         opts = opts || {};
         const lang = opts.lang === 'en' ? 'en' : (opts.lang === 'ru' ? 'ru' : 'kk');
+        forestActiveLang = lang;
         const t = TXT[lang];
         const persons = (data && Array.isArray(data.persons)) ? data.persons : [];
         const marriages = (data && Array.isArray(data.marriages)) ? data.marriages : [];
@@ -1036,8 +1058,8 @@
     // Инициалы человека (для медальона на ветке, если нет фото)
     function personInitials(p) {
         if (!p) return '?';
-        const f = String(p.first_name || '').trim();
-        const l = String(p.last_name || p.maiden_name || '').trim();
+        const f = forestActiveLang === 'en' ? latinize(p.first_name || '') : String(p.first_name || '').trim();
+        const l = forestActiveLang === 'en' ? latinize(p.last_name || p.maiden_name || '') : String(p.last_name || p.maiden_name || '').trim();
         const i1 = f ? f[0].toUpperCase() : '';
         const i2 = l ? l[0].toUpperCase() : '';
         return i1 + i2 || i1 || '?';
@@ -1946,6 +1968,7 @@
             this.container = options.container;
             this.treeData = options.treeData || null;
             this.lang = options.lang === 'en' ? 'en' : (options.lang === 'ru' ? 'ru' : 'kk');
+            forestActiveLang = this.lang;
             this.userPersonId = Number(options.userPersonId || (this.treeData && this.treeData.user_person_id) || 0);
             this.onPersonSelect = options.onPersonSelect || null;
             this.onOpenUshZhurt = options.onOpenUshZhurt || null;
@@ -3198,7 +3221,7 @@
                 items.slice(0, 6).forEach(it => {
                     const b = el('button', 'sf3-rel');
                     b.type = 'button';
-                    b.appendChild(el('span', null, [it.first_name, it.last_name].filter(Boolean).join(' ') || it.full_name || '?'));
+                    b.appendChild(el('span', null, personName({ first_name: it.first_name, last_name: it.last_name }) || latinize(it.full_name || '') || '?'));
                     const term = (this.lang === 'ru' || this.lang === 'en') ? (it.term_ru || it.term_kk) : (it.term_kk || it.term_ru);
                     if (term) b.appendChild(el('span', 'sf3-term', term));
                     b.addEventListener('click', () => this.selectPersonById(it.id));

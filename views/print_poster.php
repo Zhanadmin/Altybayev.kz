@@ -10,6 +10,7 @@ declare(strict_types=1);
  */
 
 $isKk = ($lang === 'kk');
+$isEn = ($lang === 'en');
 $root = $posterData['root'] ?? [];
 $levels = $posterData['levels'] ?? [];
 $totalPersons = $posterData['total_persons'] ?? 0;
@@ -489,11 +490,14 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
 
     <script src="/assets/js/rodoslov-generator.js"></script>
     <script>
-        const POSTER_LANG = '<?= $isKk ? 'kk' : 'ru' ?>';
+        const POSTER_LANG = '<?= $isKk ? 'kk' : ($isEn ? 'en' : 'ru') ?>';
+        const POSTER_LATINIZE = <?= $isEn ? 'true' : 'false' ?>;
         const POSTER_DATA = <?= json_encode($rodoslovData ?? ['persons' => [], 'marriages' => []], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '{"persons":[],"marriages":[]}' ?>;
         const POSTER_OPTS = <?= json_encode([
-            'title'    => $isKk ? 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ' : 'ШЕЖИРЕ РОДА АЛТЫБАЕВТАР',
-            'subtitle' => ($isKk ? "«{$rootName}» ұрпақтары · Руы: " : "Потомки «{$rootName}» · Род: ") . $clan,
+            'title'    => $isEn ? 'SHEZHIRE OF THE ALTYBAYEV FAMILY' : ($isKk ? 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ' : 'ШЕЖИРЕ РОДА АЛТЫБАЕВТАР'),
+            'subtitle' => $isEn
+                ? 'Descendants of «' . \App\Core\I18n::latinize((string)$rootName) . '» · Clan: ' . \App\Core\I18n::latinize((string)$clan)
+                : ($isKk ? "«{$rootName}» ұрпақтары · Руы: " : "Потомки «{$rootName}» · Род: ") . $clan,
             'mainClan' => mb_strtoupper((string)$clan, 'UTF-8'),
             'footnote' => 'altybayev.kz · ' . date('d.m.Y'),
         ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '{}' ?>;
@@ -511,17 +515,32 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
         function renderRodoslovPoster() {
             const sheet = document.getElementById('rodoslovSheet');
             const isRu = POSTER_LANG === 'ru';
+            const isEn = POSTER_LANG === 'en';
             if (!window.RodoslovGenerator) {
                 showPosterView('list');
                 return;
             }
             const opts = Object.assign({}, POSTER_OPTS, {
                 focalId: POSTER_DATA.focal_id || 0,
-                emptyText: isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз',
-                labels: isRu ? { father: 'РОД', mother: 'ПО МАТЕРИ', inlaw: 'РОД ЖЕНЫ', other: 'СВАТЫ' }
-                             : { father: 'АТА ЖҰРТ' }
+                latinizeNames: POSTER_LATINIZE,
+                emptyText: isEn ? 'No data — import GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз'),
+                labels: isEn ? { father: 'PATERNAL', mother: 'MATERNAL', inlaw: "WIFE'S CLAN", other: 'IN-LAWS' }
+                             : (isRu ? { father: 'РОД', mother: 'ПО МАТЕРИ', inlaw: 'РОД ЖЕНЫ', other: 'СВАТЫ' }
+                             : { father: 'АТА ЖҰРТ' })
             });
-            if (isRu) {
+            if (isEn) {
+                opts.maidenPrefix = 'née';
+                opts.marriagePrefix = 'marriage ·';
+                opts.tamgaPlaceholder = 'tamga';
+                opts.unknownClan = 'clan not specified';
+                opts.legendText = {
+                    son: 'son',
+                    daughter: 'daughter / daughter-in-law',
+                    deceased: 'departed (golden ribbon, golden leaves)',
+                    marriage: 'marriage',
+                    dates: '*  date of birth     –  date of death'
+                };
+            } else if (isRu) {
                 opts.maidenPrefix = 'урожд.';
                 opts.marriagePrefix = 'брак ·';
                 opts.tamgaPlaceholder = 'тамга';
@@ -531,7 +550,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
                     daughter: 'дочь / сноха',
                     deceased: 'ушедшие (золотая лента, золотые листья)',
                     marriage: 'брак',
-                    dates: '*  дата рождения     †  дата смерти'
+                    dates: '*  дата рождения     –  дата смерти'
                 };
             }
             try {
@@ -547,7 +566,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
                 sheet.innerHTML = '';
                 const msg = document.createElement('div');
                 msg.className = 'rodoslov-msg';
-                msg.textContent = isRu ? 'Не удалось построить древо. Нажмите «Список» вверху.' : 'Шежіре-ағашты салу мүмкін болмады. Жоғарыдағы «Тізім» батырмасын басыңыз.';
+                msg.textContent = isEn ? 'Failed to build the tree. Click "List" at the top.' : (isRu ? 'Не удалось построить древо. Нажмите «Список» вверху.' : 'Шежіре-ағашты салу мүмкін болмады. Жоғарыдағы «Тізім» батырмасын басыңыз.');
                 sheet.appendChild(msg);
             }
         }

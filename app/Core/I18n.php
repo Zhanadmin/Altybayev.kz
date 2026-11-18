@@ -544,9 +544,41 @@ class I18n
     }
 
     /**
-     * ALT-007: перевод одной подписи/фразы (без пользовательских имён).
+     * ALT-007 (замечание 21:29): транслитерация имён из кириллицы в латиницу.
+     * Схема повторяет принятые на сайте написания: Ж→Zh, Ш→Sh, Қ→K, Ғ→G,
+     * Ң→N, Ә→A, Ө→O, Ұ→U, Ү→U, І→I, Ы→Y, Й→Y, Х→Kh и т.д.
      */
-    public static function translateText(string $text): string
+    private const LATIN_MAP = [
+        'А' => 'A', 'Ә' => 'A', 'Б' => 'B', 'В' => 'V', 'Г' => 'G', 'Ғ' => 'G',
+        'Д' => 'D', 'Е' => 'E', 'Ё' => 'Yo', 'Ж' => 'Zh', 'З' => 'Z', 'И' => 'I',
+        'Й' => 'Y', 'К' => 'K', 'Қ' => 'K', 'Л' => 'L', 'М' => 'M', 'Н' => 'N',
+        'Ң' => 'N', 'О' => 'O', 'Ө' => 'O', 'П' => 'P', 'Р' => 'R', 'С' => 'S',
+        'Т' => 'T', 'У' => 'U', 'Ұ' => 'U', 'Ү' => 'U', 'Ф' => 'F', 'Х' => 'Kh',
+        'Һ' => 'H', 'Ц' => 'Ts', 'Ч' => 'Ch', 'Ш' => 'Sh', 'Щ' => 'Shch', 'Ъ' => '',
+        'Ы' => 'Y', 'І' => 'I', 'Ь' => '', 'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya',
+        'а' => 'a', 'ә' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'ғ' => 'g',
+        'д' => 'd', 'е' => 'e', 'ё' => 'yo', 'ж' => 'zh', 'з' => 'z', 'и' => 'i',
+        'й' => 'y', 'к' => 'k', 'қ' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n',
+        'ң' => 'n', 'о' => 'o', 'ө' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's',
+        'т' => 't', 'у' => 'u', 'ұ' => 'u', 'ү' => 'u', 'ф' => 'f', 'х' => 'kh',
+        'һ' => 'h', 'ц' => 'ts', 'ч' => 'ch', 'ш' => 'sh', 'щ' => 'shch', 'ъ' => '',
+        'ы' => 'y', 'і' => 'i', 'ь' => '', 'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
+    ];
+
+    public static function latinize(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+        return strtr($text, self::LATIN_MAP);
+    }
+
+    /**
+     * ALT-007: перевод одной подписи/фразы (без пользовательских имён).
+     * $latinizeNames — для en транслитерировать имена людей в латиницу
+     * (замечание владельца 21:29). Выключено для значений форм (value).
+     */
+    public static function translateText(string $text, bool $latinizeNames = true): string
     {
         if ($text === '') {
             return '';
@@ -602,11 +634,11 @@ class I18n
             '/^прожил(а)?\s+(≈?)(\d+)\s*(год|года|лет)$/u' => fn(array $m): string => 'lived ' . $m[2] . $m[3] . ' ' . self::enYears((int)$m[3]),
             '/^(\d+)\s*лет со дня ухода$/u' => fn(array $m): string => $m[1] . ' years since passing',
             '/^(\d+)\s*лет исполняется$/u' => fn(array $m): string => $m[1] . ' years',
-            '/^Вы — (.+)$/u' => fn(array $m): string => 'You are ' . $m[1],
-            '/^Добро пожаловать!,\s*(.+)$/u' => fn(array $m): string => 'Welcome, ' . $m[1],
+            '/^Вы — (.+)$/u' => fn(array $m): string => 'You are ' . self::translateText($m[1]),
+            '/^Добро пожаловать!,\s*(.+)$/u' => fn(array $m): string => 'Welcome, ' . self::translateText($m[1]),
             '/^⚭\s*замужем — (.+)$/u' => fn(array $m): string => '⚭ married — ' . self::translateText($m[1]),
             '/^замужем — (.+)$/u' => fn(array $m): string => 'married — ' . self::translateText($m[1]),
-            '/^\(урожд\.\s*(.+)\)$/u' => fn(array $m): string => '(née ' . $m[1] . ')',
+            '/^\(урожд\.\s*(.+)\)$/u' => fn(array $m): string => '(née ' . self::translateText($m[1]) . ')',
             '/^На ближайшие\s+(\d+)\s+дней событий не найдено$/u' => fn(array $m): string => 'No events found for the next ' . $m[1] . ' days',
             '/^Ближайшие дни рождения, поминальные годовщины и юбилеи свадеб на\s+(\d+)\s+дней вперед$/u' => fn(array $m): string => 'Upcoming birthdays, memorial anniversaries and wedding anniversaries for the next ' . $m[1] . ' days',
             '/^(\d+)\s*год(?:а)?$/u' => fn(array $m): string => $m[1] . ' ' . self::enYears((int)$m[1]),
@@ -624,9 +656,9 @@ class I18n
             '/^(.+)\s+по матери$/u' => fn(array $m): string => 'Maternal ' . lcfirst(self::translateText($m[1])),
             '/^(\d+)-я годовщина \(День памяти\)$/u' => fn(array $m): string => $m[1] . 'th anniversary (Memorial day)',
             '/^(\d+)-я годовщина$/u' => fn(array $m): string => $m[1] . 'th anniversary',
-            '/^Шежіре-плакат:\s*«(.+)»\s*ұрпақтары$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . $m[1] . '»',
-            '/^Плакат шежире:\s*потомки\s*«(.+)»$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . $m[1] . '»',
-            '/^Плакат шежире:\s*потомки\s*«(.+)»\s*—\s*Altybayev\.kz$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . $m[1] . '» — Altybayev.kz',
+            '/^Шежіре-плакат:\s*«(.+)»\s*ұрпақтары$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . self::translateText($m[1]) . '»',
+            '/^Плакат шежире:\s*потомки\s*«(.+)»$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . self::translateText($m[1]) . '»',
+            '/^Плакат шежире:\s*потомки\s*«(.+)»\s*—\s*Altybayev\.kz$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . self::translateText($m[1]) . '» — Altybayev.kz',
             '/^(\d+)-буын$/u' => fn(array $m): string => 'Generation ' . $m[1],
             '/^(\d+)-е колено$/u' => fn(array $m): string => 'Generation ' . $m[1],
         ];
@@ -636,9 +668,21 @@ class I18n
             }
         }
 
-        // Заменяем только длинные устойчивые подписи и не трогаем имена людей.
-        $looksLikeName = (bool)preg_match('/^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+)?$/u', $out);
-        if (!$looksLikeName && preg_match('/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/u', $out)) {
+        // Имена собственные (люди, места, роды): для en транслитерируем в латиницу.
+        // Шаблон: 1–4 слова, каждое с заглавной кириллической буквы, только буквы и дефисы.
+        $looksLikeName = (bool)preg_match(
+            '/^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*){0,3}$/u',
+            $out
+        );
+        if ($looksLikeName) {
+            if ($latinizeNames) {
+                return $lead . self::latinize($out) . $trail;
+            }
+            return $lead . $out . $trail;
+        }
+
+        // Заменяем длинные устойчивые подписи.
+        if (preg_match('/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/u', $out)) {
             $replace = [];
             foreach ($map as $k => $v) {
                 if (mb_strlen($k, 'UTF-8') >= 5) {
@@ -680,7 +724,8 @@ class I18n
                 '/\b(title|placeholder|aria-label|data-tip|alt|value)="([^"]*)"/u',
                 static function (array $m): string {
                     $decoded = html_entity_decode($m[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                    $translated = self::translateText($decoded);
+                    // Значения полей формы (value) — это данные, а не подписи: имена там не транслитерируем.
+                    $translated = self::translateText($decoded, $m[1] !== 'value');
                     return $m[1] . '="' . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '"';
                 },
                 $part

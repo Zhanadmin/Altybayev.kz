@@ -311,7 +311,7 @@ class TreeController
 
             // Годы и полные даты: живые — дата/год рождения (никаких «жив»!), ушедшие — годы жизни с золотой иконкой ✨
             $birthDisp = !empty($p['birth_date']) ? date('d.m.Y', strtotime($p['birth_date'])) : ($p['birth_year'] ?: '—');
-            $deathDisp = !empty($p['death_date']) ? date('d.m.Y', strtotime($p['death_date'])) : ($p['death_year'] ?: '†');
+            $deathDisp = !empty($p['death_date']) ? date('d.m.Y', strtotime($p['death_date'])) : ($p['death_year'] ?: '—');
 
             $yearsDisplay = '';
             if ($isDeceased) {
@@ -1330,7 +1330,7 @@ class TreeController
             if (mb_stripos($fullName, $q) !== false || mb_stripos($p['clan_ru'] ?? '', $q) !== false) {
                 // Живые — только год рождения! Ушедшие — годы жизни
                 $years = $p['is_deceased'] 
-                    ? (($p['birth_year'] ?: '—') . ' — ' . ($p['death_year'] ?: '†'))
+                    ? (($p['birth_year'] ?: '—') . ' — ' . ($p['death_year'] ?: '—'))
                     : ($p['birth_year'] ?: '—');
 
                 $results[] = [

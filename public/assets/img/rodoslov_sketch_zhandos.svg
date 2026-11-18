@@ -376,12 +376,12 @@
   <g class="p" data-gedcom="@I7@" transform="translate(410,1330)">
     <use href="#rbG" filter="url(#sh)"/><use href="#icoMg" x="-92"/>
     <text class="nm" x="8" y="6">Гани Алтыбаев</text>
-    <text class="dt" y="44">* 1.05.1929 · † 20.07.1991</text>
+    <text class="dt" y="44">* 1.05.1929 · – 20.07.1991</text>
   </g>
   <g class="p" data-gedcom="@I8@" transform="translate(700,1330)">
     <use href="#rbG" filter="url(#sh)"/><use href="#icoFg" x="-92"/>
     <text class="nm" x="8" y="6">Алия Алтыбаева</text>
-    <text class="dt" y="44">* 9.12.1929 · † 26.01.2001</text>
+    <text class="dt" y="44">* 9.12.1929 · – 26.01.2001</text>
     <text class="mn" y="62">қыз кезінде — Егизбаева</text>
   </g>
   <use href="#rings" x="555" y="1330"/>
@@ -389,7 +389,7 @@
   <g class="p" data-gedcom="@I9@" transform="translate(1100,1330)">
     <use href="#rbG" filter="url(#sh)"/><use href="#icoMg" x="-92"/>
     <text class="nm" x="8" y="6">Сатыбалды Айткалиев</text>
-    <text class="dt" y="44">* 20.06.1934 · † 24.10.1997</text>
+    <text class="dt" y="44">* 20.06.1934 · – 24.10.1997</text>
   </g>
   <g class="p" data-gedcom="@I10@" transform="translate(1390,1330)">
     <use href="#rb" filter="url(#sh)"/><use href="#icoF" x="-92"/>
@@ -469,7 +469,7 @@
     <use href="#icoF" x="-480" y="0"/><text class="lg" x="-466" y="5">қыз / келін</text>
     <g transform="translate(-300,0) scale(.32)"><use href="#rbG"/></g><text class="lg" x="-250" y="5">марқұм (алтын таспа, алтын жапырақ)</text>
     <use href="#rings" transform="translate(45,0) scale(.8)"/><text class="lg" x="72" y="5">неке</text>
-    <text class="lg" x="150" y="5">*  туған күні     †  қайтыс болған күні</text>
+    <text class="lg" x="150" y="5">*  туған күні     –  қайтыс болған күні</text>
   </g>
   <text class="sm" x="900" y="1870" fill="#8a6c48">Дерек көзі: MyHeritage GEDCOM (12.11.2026) · тек осы бұтақ · эскиз</text>
 

@@ -8,7 +8,7 @@ use App\Core\Session;
 /** @var bool $registryReady */
 
 $lang = I18n::lang();
-$ru = ($lang === 'ru');
+$ru = (($lang === 'ru' || $lang === 'en'));
 $title = $ru ? 'Ру таңбалары' : 'Ру таңбалары';
 $activeNav = 'clans';
 $dsThemeReady = true;

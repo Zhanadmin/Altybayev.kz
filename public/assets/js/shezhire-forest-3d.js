@@ -135,6 +135,57 @@
             deceased: 'ушёл(ушла) из жизни',
             more: (n) => `ещё ${n}`,
             treeKind: 'Дерево рода'
+        },
+        en: {
+            introTitle: 'Shezhire Forest: how to explore',
+            introTree: 'One tree — one clan (paternal line): a mighty centuries-old oak. At its roots is the clan plaque and tamga.',
+            introBranch: 'At the roots are the ancient first ancestors (carved tree rings); above are generations of descendants on the spreading oak branches.',
+            introLeaf: 'People are acorns and medallions on the branches: those with a photo show a portrait, others show initials. Men are muted blue-grey, women are soft coral, the departed are antique bronze/gold.',
+            introLine: 'A line between trees means marriage only: a daughter given in marriage goes from her father\'s tree to her husband\'s tree. Hover over a line to see whose kelin she became.',
+            introMouse: 'Mouse: drag — rotate, wheel — zoom, right button — pan',
+            introKeys: 'Keyboard: W A S D / arrows — move, Q / E — turn, + / − — zoom',
+            introTouch: 'Touch: one finger — rotate, two fingers — zoom and pan',
+            introClick: 'Click a person to open their card and Üsh zhurt.',
+            btnMine: 'Show my clan',
+            btnAll: 'Whole forest',
+            btnGotIt: 'Got it',
+            btnHelp: 'Help',
+            pickTree: 'Go to clan…',
+            legendLeaf: 'man (acorn / medallion)',
+            legendTulip: 'woman (acorn / medallion)',
+            legendGold: 'departed',
+            legendLine: 'marriage: daughter → husband\'s clan',
+            legendKelin: 'kelin (on husband\'s tree)',
+            you: 'You',
+            gen: (n) => `${n}${n === 1 ? 'st' : (n === 2 ? 'nd' : (n === 3 ? 'rd' : 'th'))} generation`,
+            people: (n) => `${n} ${n === 1 ? 'person' : 'people'}`,
+            gens: (n) => `${n} ${n === 1 ? 'generation' : 'generations'}`,
+            clan: 'Clan',
+            tamga: 'Tamga',
+            tamgaUnknown: 'tamga not specified',
+            kelinOf: (tree) => `kelin — ${tree}`,
+            kelinNoTree: 'kelin (her father is not in the tree)',
+            daughterOf: (tree) => `daughter of ${tree}`,
+            marriedTo: (treeGen) => `married into → ${treeGen}`,
+            linkTitle: (wife, treeGen) => `${wife} → kelin of ${treeGen}`,
+            linkSub: (birthTreeGen, husband) => `daughter of ${birthTreeGen} · husband — ${husband}`,
+            linkKind: 'Marriage',
+            ushZhurt: 'Üsh zhurt',
+            ushFull: 'Full Üsh zhurt',
+            profile: 'Profile',
+            showOnTree: 'Show on the tree',
+            goTree: 'Go to the tree',
+            showWife: 'Show kelin',
+            showHusband: 'Show husband',
+            loading: 'Loading…',
+            noData: 'No data',
+            close: 'Close',
+            noWebgl: '3D is unavailable in this browser (WebGL is disabled). Use Shezhire Tree mode.',
+            empty: 'There are no people in the tree yet.',
+            alive: 'living',
+            deceased: 'passed away',
+            more: (n) => `${n} more`,
+            treeKind: 'Clan tree'
         }
     };
 
@@ -228,7 +279,7 @@
 
     function buildForestModel(data, opts) {
         opts = opts || {};
-        const lang = opts.lang === 'ru' ? 'ru' : 'kk';
+        const lang = opts.lang === 'en' ? 'en' : (opts.lang === 'ru' ? 'ru' : 'kk');
         const t = TXT[lang];
         const persons = (data && Array.isArray(data.persons)) ? data.persons : [];
         const marriages = (data && Array.isArray(data.marriages)) ? data.marriages : [];
@@ -380,7 +431,7 @@
                 let b = 0;
                 clanRuCount.forEach((c, k) => { if (c > b) { clanName = k; b = c; } });
             }
-            tr.name = lang === 'ru' ? nameRu : nameKk;
+            tr.name = (lang === 'ru' || lang === 'en') ? nameRu : nameKk;
             tr.nameKk = nameKk; tr.nameKkDat = nameKkDat;
             tr.nameRu = nameRu; tr.nameRuGen = nameRuGen;
             tr.clanName = clanName || '';
@@ -549,8 +600,8 @@
             if (wi.treeKey === hi.treeKey) return;      // брак внутри одного рода — без линии
             const wifeTree = treeByKey.get(wi.treeKey), husTree = treeByKey.get(hi.treeKey);
             const wife = byId.get(m.w), hus = byId.get(m.h);
-            const toName = lang === 'ru' ? husTree.nameRuGen : husTree.nameKkDat;
-            const fromName = lang === 'ru' ? wifeTree.nameRuGen : wifeTree.nameKk;
+            const toName = (lang === 'ru' || lang === 'en') ? husTree.nameRuGen : husTree.nameKkDat;
+            const fromName = (lang === 'ru' || lang === 'en') ? wifeTree.nameRuGen : wifeTree.nameKk;
             links.push({
                 key: m.w + '-' + m.h,
                 wifeId: m.w, husbandId: m.h,
@@ -623,7 +674,7 @@
         personInfo.forEach((info, id) => {
             const tr = treeByKey.get(info.treeKey);
             if (info.role === 'kelin') {
-                roleText.set(id, lang === 'ru' ? 'келін' : 'келін');
+                roleText.set(id, (lang === 'ru' || lang === 'en') ? 'келін' : 'келін');
             } else {
                 const p = byId.get(id);
                 if (p.gender === 'F') {
@@ -631,7 +682,7 @@
                     const out = hs.find(h => h.treeKey !== info.treeKey);
                     if (out) {
                         const ht = treeByKey.get(out.treeKey);
-                        roleText.set(id, '→ ' + (lang === 'ru' ? ht.nameRu : ht.nameKk));
+                        roleText.set(id, '→ ' + ((lang === 'ru' || lang === 'en') ? ht.nameRu : ht.nameKk));
                     }
                 }
             }
@@ -1894,7 +1945,7 @@
         constructor(options) {
             this.container = options.container;
             this.treeData = options.treeData || null;
-            this.lang = options.lang === 'ru' ? 'ru' : 'kk';
+            this.lang = options.lang === 'en' ? 'en' : (options.lang === 'ru' ? 'ru' : 'kk');
             this.userPersonId = Number(options.userPersonId || (this.treeData && this.treeData.user_person_id) || 0);
             this.onPersonSelect = options.onPersonSelect || null;
             this.onOpenUshZhurt = options.onOpenUshZhurt || null;
@@ -1988,7 +2039,7 @@
         }
 
         setLang(lang) {
-            const l = lang === 'ru' ? 'ru' : 'kk';
+            const l = lang === 'en' ? 'en' : (lang === 'ru' ? 'ru' : 'kk');
             if (l === this.lang) return;
             this.lang = l;
             if (!this.renderer) return;
@@ -3090,7 +3141,7 @@
             if (info.role === 'kelin') {
                 const hus = M.byId.get(info.husband);
                 subs.push(t.kelinOf(tr.name) + (hus ? ' · ' + personName(hus) : ''));
-                if (p.maiden_name) subs.push((this.lang === 'ru' ? 'урожд. ' : 'қыз кезінде — ') + p.maiden_name);
+                if (p.maiden_name) subs.push(((this.lang === 'ru' || this.lang === 'en') ? 'урожд. ' : 'қыз кезінде — ') + p.maiden_name);
             } else {
                 subs.push(tr.name + ' · ' + t.gen(pos.gen + 1));
                 const out = M.links.filter(l => l.wifeId === id);
@@ -3139,16 +3190,16 @@
             if (!tables.length) { box.appendChild(el('div', 'sf3-sub', t.noData)); return; }
             tables.forEach(tb => {
                 const items = Array.isArray(tb.items) ? tb.items : [];
-                const title = (this.lang === 'ru' ? (tb.title_ru || tb.title_kk) : (tb.title_kk || tb.title_ru)) || tb.key || '';
+                const title = ((this.lang === 'ru' || this.lang === 'en') ? (tb.title_ru || tb.title_kk) : (tb.title_kk || tb.title_ru)) || tb.key || '';
                 const cnt = tb.total_count || items.length || 0;
                 box.appendChild(el('h4', null, `${title} · ${cnt}`));
-                const desc = this.lang === 'ru' ? (tb.desc_ru || '') : (tb.desc_kk || '');
+                const desc = (this.lang === 'ru' || this.lang === 'en') ? (tb.desc_ru || '') : (tb.desc_kk || '');
                 if (desc) box.appendChild(el('div', 'sf3-uz-desc', desc));
                 items.slice(0, 6).forEach(it => {
                     const b = el('button', 'sf3-rel');
                     b.type = 'button';
                     b.appendChild(el('span', null, [it.first_name, it.last_name].filter(Boolean).join(' ') || it.full_name || '?'));
-                    const term = this.lang === 'ru' ? (it.term_ru || it.term_kk) : (it.term_kk || it.term_ru);
+                    const term = (this.lang === 'ru' || this.lang === 'en') ? (it.term_ru || it.term_kk) : (it.term_kk || it.term_ru);
                     if (term) b.appendChild(el('span', 'sf3-term', term));
                     b.addEventListener('click', () => this.selectPersonById(it.id));
                     box.appendChild(b);
@@ -3196,7 +3247,7 @@
             card.appendChild(el('div', 'sf3-sub', tr.tamga ? `${t.tamga}: ${tr.tamga}` : t.tamgaUnknown));
             card.appendChild(el('div', 'sf3-sub', `${t.people(tr.members.length)} · ${t.gens(tr.generations)}`));
             const rootP = M.byId.get(tr.rootId);
-            if (rootP) card.appendChild(el('div', 'sf3-sub', (this.lang === 'ru' ? 'Родоначальник: ' : 'Түп атасы: ') + personName(rootP)));
+            if (rootP) card.appendChild(el('div', 'sf3-sub', ((this.lang === 'ru' || this.lang === 'en') ? 'Родоначальник: ' : 'Түп атасы: ') + personName(rootP)));
             const linked = M.links.filter(l => l.fromTree === key || l.toTree === key);
             if (linked.length) {
                 card.appendChild(el('div', 'sf3-orn'));

@@ -11,7 +11,7 @@ use App\Core\I18n;
  * @var string $page privacy|terms
  */
 $lang = I18n::lang();
-$ru = ($lang === 'ru');
+$ru = (($lang === 'ru' || $lang === 'en'));
 $siteTitle = I18n::siteTitle();
 $isPrivacy = (($page ?? 'privacy') === 'privacy');
 $path = $isPrivacy ? '/privacy' : '/terms';
@@ -19,8 +19,8 @@ $contactEmail = 'zhandos.alt06@gmail.com';
 $updated = '15.11.2026';
 
 $heading = $isPrivacy
-    ? ($ru ? 'Политика конфиденциальности' : 'Құпиялылық саясаты')
-    : ($ru ? 'Условия использования' : 'Пайдалану шарттары');
+    ? ($lang === 'en' ? 'Privacy Policy' : ($ru ? 'Политика конфиденциальности' : 'Құпиялылық саясаты'))
+    : ($lang === 'en' ? 'Terms of Use' : ($ru ? 'Условия использования' : 'Пайдалану шарттары'));
 $pageTitle = "{$siteTitle} — {$heading}";
 $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 ?>
@@ -66,7 +66,8 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
     <div class="au-top">
         <div class="seg" role="group" aria-label="<?= $ru ? 'Язык' : 'Тіл' ?>">
             <a href="/lang/kk?ref=<?= $e($path) ?>" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
-            <a href="/lang/ru?ref=<?= $e($path) ?>" class="<?= $ru ? 'active' : '' ?>">РУС</a>
+            <a href="/lang/ru?ref=<?= $e($path) ?>" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
+            <a href="/lang/en?ref=<?= $e($path) ?>" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
                 aria-label="<?= $ru ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
@@ -81,7 +82,30 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         <p class="au-sub"><?= $e($siteTitle) ?> · altybayev.kz · <?= $ru ? 'обновлено' : 'жаңартылған' ?> <?= $e($updated) ?></p>
 
         <?php if ($isPrivacy): ?>
-            <?php if ($ru): ?>
+            <?php if ($lang === 'en'): ?>
+                <h2>What this site is</h2>
+                <p>altybayev.kz is a private family website with the genealogy (shezhire) of the Altybayev family. Only relatives invited by the administrator can sign in.</p>
+
+                <h2>What data we receive when you sign in with Google</h2>
+                <ul>
+                    <li>your name;</li>
+                    <li>your e-mail address;</li>
+                    <li>your Google profile picture.</li>
+                </ul>
+                <p>Nothing else: we do not get access to your mail, contacts, files or Google password.</p>
+
+                <h2>Why we need it</h2>
+                <p>Only to recognise you when you sign in and grant the required rights (viewing or editing the family tree). Your name and photo are shown in the site header; the administrator sees your e-mail in the user list.</p>
+
+                <h2>Who can see relatives' data</h2>
+                <p>Information about family members (names, dates, photos, stories) is visible only to invited relatives after signing in. Search engines and outsiders cannot see it.</p>
+
+                <h2>Data sharing</h2>
+                <p>We do not share or sell your data and do not use it for advertising. The data is stored on the site's server.</p>
+
+                <h2>How to delete your data</h2>
+                <p>Write to <a href="mailto:<?= $e($contactEmail) ?>"><?= $e($contactEmail) ?></a> — we will delete your account and sign-in data. If you want your information removed from the family tree, please say so in the letter.</p>
+            <?php elseif ($ru): ?>
                 <h2>Что это за сайт</h2>
                 <p>altybayev.kz — закрытый семейный сайт с родословной (шежіре) семьи Алтыбаевых. Войти могут только родственники, которых пригласил администратор.</p>
 
@@ -129,6 +153,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 <p><a href="mailto:<?= $e($contactEmail) ?>"><?= $e($contactEmail) ?></a> мекенжайына хат жазыңыз — аккаунтыңыз бен кіру деректеріңізді жоямыз. Шежіреден өзіңіз туралы мәліметті алып тастағыңыз келсе, оны хатта көрсетіңіз.</p>
             <?php endif; ?>
 
+            <?php if ($lang !== 'en'): ?>
             <div class="lg-en" lang="en">
                 <strong>In English (summary).</strong>
                 altybayev.kz is a private family genealogy website, available only to invited relatives.
@@ -137,8 +162,20 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 invited, signed-in relatives. We do not share, sell or use your data for advertising.
                 To delete your data, write to <a href="mailto:<?= $e($contactEmail) ?>"><?= $e($contactEmail) ?></a>.
             </div>
+            <?php endif; ?>
         <?php else: ?>
-            <?php if ($ru): ?>
+            <?php if ($lang === 'en'): ?>
+                <h2>In short</h2>
+                <ul>
+                    <li>altybayev.kz is a private family website. It can be used only by relatives invited by the administrator.</li>
+                    <li>Sign-in is via your Google account. Do not give access to outsiders.</li>
+                    <li>Information about relatives (names, dates, photos, stories) is the family's memory. Do not publish or forward it outside the family without those people's consent.</li>
+                    <li>Editors add and correct only reliable information. All changes are saved in history and can be rolled back.</li>
+                    <li>The administrator may change a role or revoke access.</li>
+                    <li>The site is non-commercial, provided "as is", free of charge.</li>
+                    <li>How your data is processed is described in the <a href="/privacy">Privacy Policy</a>. Questions: <a href="mailto:<?= $e($contactEmail) ?>"><?= $e($contactEmail) ?></a>.</li>
+                </ul>
+            <?php elseif ($ru): ?>
                 <h2>Коротко</h2>
                 <ul>
                     <li>altybayev.kz — закрытый семейный сайт. Пользоваться им могут только родственники, приглашённые администратором.</li>
@@ -162,6 +199,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 </ul>
             <?php endif; ?>
 
+            <?php if ($lang !== 'en'): ?>
             <div class="lg-en" lang="en">
                 <strong>In English (summary).</strong>
                 altybayev.kz is a private, non-commercial family website for invited relatives only, provided free of charge and "as is".
@@ -169,6 +207,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 The administrator may change roles or revoke access. See the <a href="/privacy">Privacy Policy</a>;
                 contact: <a href="mailto:<?= $e($contactEmail) ?>"><?= $e($contactEmail) ?></a>.
             </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <nav class="lg-links" aria-label="<?= $ru ? 'Ссылки' : 'Сілтемелер' ?>">

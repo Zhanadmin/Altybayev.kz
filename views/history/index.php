@@ -4,13 +4,13 @@ declare(strict_types=1);
 use App\Core\I18n;
 
 $lang = I18n::lang();
-$title = $lang === 'ru' ? 'Журнал изменений' : 'Өзгерістер журналы';
+$title = ($lang === 'ru' || $lang === 'en') ? 'Журнал изменений' : 'Өзгерістер журналы';
 $activeNav = 'history';
 $dsThemeReady = true; // TASK-008: страница на цветах дизайн-системы — доступна тёмная тема
 
 require __DIR__ . '/../layout/master_start.php';
 
-$ru = ($lang === 'ru');
+$ru = (($lang === 'ru' || $lang === 'en'));
 $f = $filters;
 $hasFilter = ($f['user'] > 0 || $f['date_from'] !== '' || $f['date_to'] !== '' || $f['person'] > 0 || $f['action'] !== '' || $f['table'] !== '' || $f['q'] !== '');
 $pages = max(1, (int)ceil($totalCount / max(1, $perPage)));

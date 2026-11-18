@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\I18n;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\PrintPosterService;
@@ -34,12 +35,13 @@ class PrintPosterController
 
         $rootId = (int)$request->get('root', $defaultRoot);
         $gens = max(1, min(15, (int)$request->get('gens', 7)));
-        $lang = (string)$request->get('lang', 'kk');
-        if (!in_array($lang, ['kk', 'ru'], true)) {
+        $lang = (string)$request->get('lang', I18n::lang());
+        if (!in_array($lang, ['kk', 'ru', 'en'], true)) {
             $lang = 'kk';
         }
+        $dataLang = $lang === 'en' ? 'ru' : $lang;
 
-        $posterData = $this->service->getPosterData($rootId, $gens, $lang);
+        $posterData = $this->service->getPosterData($rootId, $gens, $dataLang);
         // при неверном root сервис подставляет другой корень — показываем фактический
         $rootId = (int)($posterData['root']['id'] ?? $rootId);
 
@@ -62,9 +64,11 @@ class PrintPosterController
     {
         $rootId = (int)$request->get('root', 65);
         $gens = (int)$request->get('gens', 7);
-        $lang = (string)$request->get('lang', 'kk');
+        $lang = (string)$request->get('lang', I18n::lang());
+        $lang = in_array($lang, ['kk', 'ru', 'en'], true) ? $lang : 'kk';
+        $dataLang = $lang === 'en' ? 'ru' : $lang;
 
-        $data = $this->service->getPosterData($rootId, $gens, $lang);
+        $data = $this->service->getPosterData($rootId, $gens, $dataLang);
         Response::json($data);
     }
 
@@ -76,9 +80,11 @@ class PrintPosterController
     {
         $rootId = (int)$request->get('root', 65);
         $gens = (int)$request->get('gens', 7);
-        $lang = (string)$request->get('lang', 'kk');
+        $lang = (string)$request->get('lang', I18n::lang());
+        $lang = in_array($lang, ['kk', 'ru', 'en'], true) ? $lang : 'kk';
+        $dataLang = $lang === 'en' ? 'ru' : $lang;
 
-        $svg = $this->service->generateSvgPoster($rootId, $gens, 'gold_scroll', $lang);
+        $svg = $this->service->generateSvgPoster($rootId, $gens, 'gold_scroll', $dataLang);
 
         header('Content-Type: image/svg+xml; charset=utf-8');
         header('Content-Disposition: attachment; filename="shezhire_altybayev_poster_' . date('Ymd') . '.svg"');

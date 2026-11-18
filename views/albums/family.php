@@ -5,7 +5,7 @@ use App\Core\I18n;
 
 /** @var array $family @var array $albums @var bool $canContribute */
 $lang = I18n::lang();
-$ru = ($lang === 'ru');
+$ru = (($lang === 'ru' || $lang === 'en'));
 $L = fn(string $kk, string $r) => $ru ? $r : $kk;
 
 $title = $L('Фотоальбом', 'Фотоальбом') . ': ' . $family['title'];

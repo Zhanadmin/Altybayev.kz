@@ -5,7 +5,7 @@ use App\Core\I18n;
 
 /** @var array $events @var array $people @var array $families @var bool $canCreate @var ?array $prefill */
 $lang = I18n::lang();
-$ru = ($lang === 'ru');
+$ru = (($lang === 'ru' || $lang === 'en'));
 $L = fn(string $kk, string $r) => $ru ? $r : $kk;
 
 $title = $L('Іс-шаралар', 'Мероприятия');

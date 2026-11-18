@@ -33,21 +33,21 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
         <p class="sub"><?= htmlspecialchars(I18n::t('persons_subtitle')) ?></p>
     </div>
     <div class="actions">
-        <nav class="seg" aria-label="<?= $lang === 'ru' ? 'Вид' : 'Көрініс' ?>">
-            <a href="/persons" class="active" aria-current="page"><?= $lang === 'ru' ? 'Список' : 'Тізім' ?></a>
-            <a href="/tree"><?= $lang === 'ru' ? 'Шежире-Орман' : 'Шежіре-Орман' ?></a>
+        <nav class="seg" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Вид' : 'Көрініс' ?>">
+            <a href="/persons" class="active" aria-current="page"><?= ($lang === 'ru' || $lang === 'en') ? 'Список' : 'Тізім' ?></a>
+            <a href="/tree"><?= ($lang === 'ru' || $lang === 'en') ? 'Шежире-Орман' : 'Шежіре-Орман' ?></a>
         </nav>
         <?php if ($canEdit): ?>
             <button type="button" class="btn btn-primary" onclick="openGlobalPersonEditModal(0)">
                 <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
-                <span><?= $lang === 'ru' ? 'Добавить персону' : 'Тұлға қосу' ?></span>
+                <span><?= ($lang === 'ru' || $lang === 'en') ? 'Добавить персону' : 'Тұлға қосу' ?></span>
             </button>
         <?php endif; ?>
     </div>
 </div>
 
 <div class="pp-stats">
-    <span class="badge"><?= $lang === 'ru' ? 'Всего:' : 'Барлығы:' ?> <b><?= (int)$totalAll ?></b></span>
+    <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? 'Всего:' : 'Барлығы:' ?> <b><?= (int)$totalAll ?></b></span>
 </div>
 
 <!-- Панель поиска и фильтров -->
@@ -81,35 +81,35 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
         <option value="birth_desc" <?= ($currentSort === 'birth_desc') ? 'selected' : '' ?>><?= htmlspecialchars(I18n::t('sort_birth_desc')) ?></option>
     </select>
 
-    <button type="submit" class="btn"><?= $lang === 'ru' ? 'Найти' : 'Іздеу' ?></button>
+    <button type="submit" class="btn"><?= ($lang === 'ru' || $lang === 'en') ? 'Найти' : 'Іздеу' ?></button>
     <?php if ($hasFilters): ?>
-        <a href="/persons" class="btn btn-ghost"><?= $lang === 'ru' ? 'Сброс' : 'Тазарту' ?></a>
+        <a href="/persons" class="btn btn-ghost"><?= ($lang === 'ru' || $lang === 'en') ? 'Сброс' : 'Тазарту' ?></a>
     <?php endif; ?>
 </form>
 
 <div class="pp-bar">
     <div class="small muted">
-        <?= $lang === 'ru'
+        <?= ($lang === 'ru' || $lang === 'en')
             ? 'Отображено персон: <b id="ppTotalDisplayed">' . (int)$totalCount . '</b> из ' . (int)$totalAll
             : 'Көрсетілген тұлғалар: <b id="ppTotalDisplayed">' . (int)$totalCount . '</b> (' . (int)$totalAll . ' ішінен)' ?>
     </div>
     <?php if ($isGenerationView && !empty($persons)): ?>
         <div class="pp-bar-actions">
-            <div class="pp-toggle-btns" role="group" aria-label="<?= $lang === 'ru' ? 'Сворачивание поколений' : 'Ұрпақтарды жию немесе ашу' ?>">
-                <button type="button" class="btn btn-ghost btn-sm" id="btnCollapseAll" onclick="collapseAllGenerations()" title="<?= $lang === 'ru' ? 'Свернуть все поколения' : 'Барлық ұрпақтарды жию' ?>">
+            <div class="pp-toggle-btns" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Сворачивание поколений' : 'Ұрпақтарды жию немесе ашу' ?>">
+                <button type="button" class="btn btn-ghost btn-sm" id="btnCollapseAll" onclick="collapseAllGenerations()" title="<?= ($lang === 'ru' || $lang === 'en') ? 'Свернуть все поколения' : 'Барлық ұрпақтарды жию' ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-chevron-up"/></svg>
-                    <span><?= $lang === 'ru' ? 'Свернуть все' : 'Барлығын жию' ?></span>
+                    <span><?= ($lang === 'ru' || $lang === 'en') ? 'Свернуть все' : 'Барлығын жию' ?></span>
                 </button>
-                <button type="button" class="btn btn-ghost btn-sm" id="btnExpandAll" onclick="expandAllGenerations()" title="<?= $lang === 'ru' ? 'Развернуть все поколения' : 'Барлық ұрпақтарды ашу' ?>">
+                <button type="button" class="btn btn-ghost btn-sm" id="btnExpandAll" onclick="expandAllGenerations()" title="<?= ($lang === 'ru' || $lang === 'en') ? 'Развернуть все поколения' : 'Барлық ұрпақтарды ашу' ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-                    <span><?= $lang === 'ru' ? 'Развернуть все' : 'Барлығын ашу' ?></span>
+                    <span><?= ($lang === 'ru' || $lang === 'en') ? 'Развернуть все' : 'Барлығын ашу' ?></span>
                 </button>
             </div>
-            <nav class="seg" aria-label="<?= $lang === 'ru' ? 'Поколения' : 'Ұрпақтар' ?>">
-                <a href="#pp-top" class="active"><?= $lang === 'ru' ? 'Все' : 'Барлығы' ?></a>
+            <nav class="seg" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Поколения' : 'Ұрпақтар' ?>">
+                <a href="#pp-top" class="active"><?= ($lang === 'ru' || $lang === 'en') ? 'Все' : 'Барлығы' ?></a>
                 <?php foreach ($generationGroups as $gKey => $group): ?>
                     <?php if (count($group['persons']) === 0) continue; ?>
-                    <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>" onclick="ensureGenerationExpanded('<?= htmlspecialchars((string)$gKey) ?>')"><?= htmlspecialchars($lang === 'ru' ? $group['title_ru'] : $group['title_kk']) ?></a>
+                    <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>" onclick="ensureGenerationExpanded('<?= htmlspecialchars((string)$gKey) ?>')"><?= htmlspecialchars(($lang === 'ru' || $lang === 'en') ? $group['title_ru'] : $group['title_kk']) ?></a>
                 <?php endforeach; ?>
             </nav>
         </div>
@@ -138,12 +138,12 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
 
         $kin = $p['kinship'] ?? null;
         $genderText = I18n::t($isMale ? 'filter_gender_m' : 'filter_gender_f');
-        $clanText = $p['clan_ru'] ?: ($lang === 'ru' ? 'не указан' : 'белгісіз');
+        $clanText = $p['clan_ru'] ?: (($lang === 'ru' || $lang === 'en') ? 'не указан' : 'белгісіз');
 
         // Строка-подпись под именем: на узких экранах сюда попадают скрытые колонки
         $metaParts = [];
         if (!empty($p['maiden_name'])) {
-            $metaParts[] = ($lang === 'ru' ? 'урожд. ' : 'қыз кезіндегі: ') . $p['maiden_name'];
+            $metaParts[] = (($lang === 'ru' || $lang === 'en') ? 'урожд. ' : 'қыз кезіндегі: ') . $p['maiden_name'];
         }
         if (!empty($p['birth_place'])) {
             $metaParts[] = $p['birth_place'];
@@ -155,7 +155,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             <!-- Тұлға -->
             <td>
                 <div class="person">
-                    <span class="avatar <?= $isMale ? 'is-m' : 'is-f' ?><?= $isDeceased ? ' deceased' : '' ?>"<?= $isDeceased ? ' title="' . ($lang === 'ru' ? 'Светлая память' : 'Жарқын бейне') . '"' : '' ?>>
+                    <span class="avatar <?= $isMale ? 'is-m' : 'is-f' ?><?= $isDeceased ? ' deceased' : '' ?>"<?= $isDeceased ? ' title="' . (($lang === 'ru' || $lang === 'en') ? 'Светлая память' : 'Жарқын бейне') . '"' : '' ?>>
                         <?php if (!empty($p['avatar_path'])): ?>
                             <img src="<?= htmlspecialchars((string)$p['avatar_path']) ?>" alt="">
                         <?php else: ?>
@@ -186,13 +186,13 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
             <td class="col-opt-lg pp-rel">
                 <?php if ($p['father']): ?>
                     <div class="clip">
-                        <span class="pp-lbl"><?= $lang === 'ru' ? 'Отец' : 'Әкесі' ?></span>
+                        <span class="pp-lbl"><?= ($lang === 'ru' || $lang === 'en') ? 'Отец' : 'Әкесі' ?></span>
                         <a href="/person/<?= (int)$p['father']['id'] ?>"><?= htmlspecialchars(trim(($p['father']['last_name'] ?? '') . ' ' . $p['father']['first_name'])) ?></a>
                     </div>
                 <?php endif; ?>
                 <?php if ($p['mother']): ?>
                     <div class="clip">
-                        <span class="pp-lbl"><?= $lang === 'ru' ? 'Мать' : 'Анасы' ?></span>
+                        <span class="pp-lbl"><?= ($lang === 'ru' || $lang === 'en') ? 'Мать' : 'Анасы' ?></span>
                         <a href="/person/<?= (int)$p['mother']['id'] ?>"><?= htmlspecialchars(trim(($p['mother']['last_name'] ?? '') . ' ' . $p['mother']['first_name'])) ?></a>
                     </div>
                 <?php endif; ?>
@@ -207,7 +207,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
                     <?php foreach ($p['spouses'] as $sp):
                         $isDiv = ($sp['status'] === 'divorced');
                     ?>
-                        <div class="clip<?= $isDiv ? ' pp-div' : '' ?>"<?= $isDiv ? ' title="' . ($lang === 'ru' ? 'В разводе' : 'Ажырасқан') . '"' : '' ?>>
+                        <div class="clip<?= $isDiv ? ' pp-div' : '' ?>"<?= $isDiv ? ' title="' . (($lang === 'ru' || $lang === 'en') ? 'В разводе' : 'Ажырасқан') . '"' : '' ?>>
                             <a href="/person/<?= (int)$sp['spouse_id'] ?>"><?= htmlspecialchars($sp['name']) ?></a>
                             <?php if (!empty($sp['years'])): ?>
                                 <span class="pp-lbl">(<?= htmlspecialchars($sp['years']) ?>)</span>
@@ -240,14 +240,14 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
 
             <!-- Әрекеттер -->
             <td class="actions">
-                <a href="/person/<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= $lang === 'ru' ? 'Карточка' : 'Парақшасы' ?>" data-tip="<?= $lang === 'ru' ? 'Карточка' : 'Парақша' ?>">
+                <a href="/person/<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Карточка' : 'Парақшасы' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'Карточка' : 'Парақша' ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>
                 </a>
-                <a href="/tree?focus=<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= $lang === 'ru' ? 'Показать в древе' : 'Шежіреде көрсету' ?>" data-tip="<?= $lang === 'ru' ? 'В древе' : 'Шежіреде' ?>">
+                <a href="/tree?focus=<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Показать в древе' : 'Шежіреде көрсету' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'В древе' : 'Шежіреде' ?>">
                     <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>
                 </a>
                 <?php if ($canEdit): ?>
-                    <button type="button" class="btn btn-ghost btn-icon" onclick="openGlobalPersonEditModal(<?= (int)$p['id'] ?>)" aria-label="<?= $lang === 'ru' ? 'Редактировать' : 'Өңдеу' ?>" data-tip="<?= $lang === 'ru' ? 'Редактировать' : 'Өңдеу' ?>">
+                    <button type="button" class="btn btn-ghost btn-icon" onclick="openGlobalPersonEditModal(<?= (int)$p['id'] ?>)" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Редактировать' : 'Өңдеу' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'Редактировать' : 'Өңдеу' ?>">
                         <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     </button>
                 <?php endif; ?>
@@ -284,8 +284,8 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
 <?php if (empty($persons)): ?>
     <div class="island pp-empty">
         <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
-        <b><?= $lang === 'ru' ? 'Персоны не найдены' : 'Сұранысқа сай тұлғалар табылмады' ?></b>
-        <span class="muted small"><?= $lang === 'ru' ? 'Попробуйте изменить поисковый запрос или сбросить фильтры' : 'Іздеу сөзін өзгертіп көріңіз немесе сүзгілерді тазартыңыз' ?></span>
+        <b><?= ($lang === 'ru' || $lang === 'en') ? 'Персоны не найдены' : 'Сұранысқа сай тұлғалар табылмады' ?></b>
+        <span class="muted small"><?= ($lang === 'ru' || $lang === 'en') ? 'Попробуйте изменить поисковый запрос или сбросить фильтры' : 'Іздеу сөзін өзгертіп көріңіз немесе сүзгілерді тазартыңыз' ?></span>
     </div>
 <?php elseif ($isGenerationView): ?>
     <!-- ГРУППИРОВКА ПО ПОКОЛЕНИЯМ (По умолчанию, TASK-007, TASK-010) -->
@@ -295,25 +295,25 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
         foreach ($generationGroups as $gKey => $group):
             $countInGroup = count($group['persons']);
             if ($countInGroup === 0) continue;
-            $gTitle = $lang === 'ru' ? $group['title_ru'] : $group['title_kk'];
+            $gTitle = ($lang === 'ru' || $lang === 'en') ? $group['title_ru'] : $group['title_kk'];
         ?>
             <section class="pp-group" id="gen-<?= htmlspecialchars((string)$gKey) ?>" data-gen-key="<?= htmlspecialchars((string)$gKey) ?>">
                 <div class="pp-group-head" role="button" tabindex="0"
                      aria-expanded="true" aria-controls="gen-body-<?= htmlspecialchars((string)$gKey) ?>"
                      onclick="toggleGeneration('<?= htmlspecialchars((string)$gKey) ?>')"
                      onkeydown="handleGroupHeadKeydown(event, '<?= htmlspecialchars((string)$gKey) ?>')"
-                     title="<?= $lang === 'ru' ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
+                     title="<?= ($lang === 'ru' || $lang === 'en') ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
                     <div class="pp-group-head-main">
                         <svg class="ic pp-group-chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
                         <span class="ribbon-wrap"><h3 class="ribbon ribbon-sm"><?= htmlspecialchars($gTitle) ?></h3></span>
                         <span class="badge pp-group-count" data-initial-count="<?= $countInGroup ?>">
-                            <?= $countInGroup ?> <?= $lang === 'ru' ? 'персон' : 'тұлға' ?>
+                            <?= $countInGroup ?> <?= ($lang === 'ru' || $lang === 'en') ? 'персон' : 'тұлға' ?>
                         </span>
                         <span class="pp-gen-line" aria-hidden="true"></span>
                     </div>
                     <span class="pp-group-hint desktop-only muted small">
-                        <span class="pp-hint-collapse"><?= $lang === 'ru' ? 'жию / свернуть' : 'жию' ?></span>
-                        <span class="pp-hint-expand"><?= $lang === 'ru' ? 'ашу / развернуть' : 'ашу' ?></span>
+                        <span class="pp-hint-collapse"><?= ($lang === 'ru' || $lang === 'en') ? 'жию / свернуть' : 'жию' ?></span>
+                        <span class="pp-hint-expand"><?= ($lang === 'ru' || $lang === 'en') ? 'ашу / развернуть' : 'ашу' ?></span>
                     </span>
                 </div>
                 <div class="table-wrap pp-group-body" id="gen-body-<?= htmlspecialchars((string)$gKey) ?>">

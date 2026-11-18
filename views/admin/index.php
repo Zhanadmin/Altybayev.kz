@@ -26,7 +26,7 @@ $adRoleLabels = [
         <div class="actions">
             <a href="/admin/import" class="btn btn-primary">
                 <svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>
-                <span><?= $lang === 'ru' ? 'Импорт GEDCOM из MyHeritage' : 'GEDCOM импорты (MyHeritage)' ?></span>
+                <span><?= ($lang === 'ru' || $lang === 'en') ? 'Импорт GEDCOM из MyHeritage' : 'GEDCOM импорты (MyHeritage)' ?></span>
             </a>
         </div>
     </div>
@@ -42,11 +42,11 @@ $adRoleLabels = [
             <div class="value"><?= (int)$marriagesCount ?></div>
         </div>
         <div class="island stat">
-            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-history"/></svg><?= $lang === 'ru' ? 'Записей аудита:' : 'Аудит жазбалары:' ?></div>
+            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-history"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Записей аудита:' : 'Аудит жазбалары:' ?></div>
             <div class="value"><?= (int)$auditCount ?></div>
         </div>
         <div class="island stat">
-            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-media"/></svg><?= $lang === 'ru' ? 'Медиа и аудио:' : 'Медиа файлдар:' ?></div>
+            <div class="label"><svg class="ic" aria-hidden="true"><use href="#i-media"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Медиа и аудио:' : 'Медиа файлдар:' ?></div>
             <div class="value"><?= (int)$mediaCount ?></div>
         </div>
     </div>
@@ -54,9 +54,9 @@ $adRoleLabels = [
     <!-- TASK-031: единый раздел «Доступ» — пользователи и приглашения -->
     <?php
     $acStatusLabels = [
-        'invited'  => $lang === 'ru' ? 'Приглашён' : 'Шақырылды',
-        'joined'   => $lang === 'ru' ? 'Вошёл' : 'Кірді',
-        'disabled' => $lang === 'ru' ? 'Отключён' : 'Өшірулі',
+        'invited'  => ($lang === 'ru' || $lang === 'en') ? 'Приглашён' : 'Шақырылды',
+        'joined'   => ($lang === 'ru' || $lang === 'en') ? 'Вошёл' : 'Кірді',
+        'disabled' => ($lang === 'ru' || $lang === 'en') ? 'Отключён' : 'Өшірулі',
     ];
     $superEmail = strtolower(trim((string)\App\Core\Config::get('SUPER_ADMIN_EMAIL', 'zhandos.alt06@gmail.com')));
     $meEmail = strtolower((string)($user['email'] ?? ''));
@@ -64,11 +64,11 @@ $adRoleLabels = [
     <div class="island ad-island" id="access">
         <div class="island-head ad-head">
             <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>
-            <h3><?= $lang === 'ru' ? 'Доступ' : 'Қолжетімділік' ?></h3>
+            <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Доступ' : 'Қолжетімділік' ?></h3>
             <div class="ad-head-actions">
                 <button type="button" class="btn btn-primary" id="inviteToggle" onclick="toggleInviteForm(true)">
                     <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
-                    <span><?= $lang === 'ru' ? 'Пригласить' : 'Шақыру' ?></span>
+                    <span><?= ($lang === 'ru' || $lang === 'en') ? 'Пригласить' : 'Шақыру' ?></span>
                 </button>
             </div>
         </div>
@@ -82,7 +82,7 @@ $adRoleLabels = [
                            autocomplete="off" placeholder="name@gmail.com">
                 </div>
                 <div class="field">
-                    <label for="inviteRole"><?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?></label>
+                    <label for="inviteRole"><?= ($lang === 'ru' || $lang === 'en') ? 'Роль' : 'Рөлі' ?></label>
                     <select id="inviteRole" name="role" class="select">
                         <?php foreach ($adRoleLabels as $roleKey => $roleLabel): ?>
                             <option value="<?= $roleKey ?>" <?= $roleKey === 'viewer' ? 'selected' : '' ?>><?= htmlspecialchars($roleLabel) ?></option>
@@ -90,18 +90,18 @@ $adRoleLabels = [
                     </select>
                 </div>
                 <div class="field">
-                    <label for="invitePerson"><?= $lang === 'ru' ? 'Карточка в шежіре (№)' : 'Шежіредегі карточка (№)' ?></label>
+                    <label for="invitePerson"><?= ($lang === 'ru' || $lang === 'en') ? 'Карточка в шежіре (№)' : 'Шежіредегі карточка (№)' ?></label>
                     <input type="number" id="invitePerson" name="person_id" class="input" min="1" step="1" inputmode="numeric"
-                           placeholder="<?= $lang === 'ru' ? 'необязательно' : 'міндетті емес' ?>">
+                           placeholder="<?= ($lang === 'ru' || $lang === 'en') ? 'необязательно' : 'міндетті емес' ?>">
                 </div>
             </div>
             <div class="field">
-                <label for="inviteNotes"><?= $lang === 'ru' ? 'Заметка — кто это' : 'Ескертпе — бұл кім' ?></label>
+                <label for="inviteNotes"><?= ($lang === 'ru' || $lang === 'en') ? 'Заметка — кто это' : 'Ескертпе — бұл кім' ?></label>
                 <input type="text" id="inviteNotes" name="notes" class="input" maxlength="255"
-                       placeholder="<?= $lang === 'ru' ? 'например: Әкем — Ғабит' : 'мысалы: Әкем — Ғабит' ?>">
+                       placeholder="<?= ($lang === 'ru' || $lang === 'en') ? 'например: Әкем — Ғабит' : 'мысалы: Әкем — Ғабит' ?>">
             </div>
             <div class="ad-invite-actions">
-                <button type="button" class="btn" onclick="toggleInviteForm(false)"><?= $lang === 'ru' ? 'Отмена' : 'Бас тарту' ?></button>
+                <button type="button" class="btn" onclick="toggleInviteForm(false)"><?= ($lang === 'ru' || $lang === 'en') ? 'Отмена' : 'Бас тарту' ?></button>
                 <button type="submit" class="btn btn-primary" id="inviteSubmit">
                     <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
                     <span>Шақыру / Пригласить</span>
@@ -110,18 +110,18 @@ $adRoleLabels = [
         </form>
 
         <?php if (empty($accessRows)): ?>
-            <div class="hm-empty ad-empty"><?= $lang === 'ru' ? 'Пользователей и приглашений пока нет' : 'Пайдаланушылар мен шақырулар жоқ' ?></div>
+            <div class="hm-empty ad-empty"><?= ($lang === 'ru' || $lang === 'en') ? 'Пользователей и приглашений пока нет' : 'Пайдаланушылар мен шақырулар жоқ' ?></div>
         <?php else: ?>
         <div class="table-wrap">
             <table class="table ad-table">
                 <thead>
                     <tr>
-                        <th><?= $lang === 'ru' ? 'Имя / Email' : 'Аты / Email' ?></th>
-                        <th><?= $lang === 'ru' ? 'Статус' : 'Күйі' ?></th>
-                        <th class="ad-w-role"><?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?></th>
-                        <th class="ad-w-person col-opt-lg"><?= $lang === 'ru' ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?></th>
-                        <th class="ad-w-login col-opt-md"><?= $lang === 'ru' ? 'Последний вход' : 'Соңғы кіруі' ?></th>
-                        <th class="actions"><span class="ad-sr"><?= $lang === 'ru' ? 'Действия' : 'Әрекеттер' ?></span></th>
+                        <th><?= ($lang === 'ru' || $lang === 'en') ? 'Имя / Email' : 'Аты / Email' ?></th>
+                        <th><?= ($lang === 'ru' || $lang === 'en') ? 'Статус' : 'Күйі' ?></th>
+                        <th class="ad-w-role"><?= ($lang === 'ru' || $lang === 'en') ? 'Роль' : 'Рөлі' ?></th>
+                        <th class="ad-w-person col-opt-lg"><?= ($lang === 'ru' || $lang === 'en') ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?></th>
+                        <th class="ad-w-login col-opt-md"><?= ($lang === 'ru' || $lang === 'en') ? 'Последний вход' : 'Соңғы кіруі' ?></th>
+                        <th class="actions"><span class="ad-sr"><?= ($lang === 'ru' || $lang === 'en') ? 'Действия' : 'Әрекеттер' ?></span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -156,7 +156,7 @@ $adRoleLabels = [
                                 <?php if ($isProtected): ?>
                                     <span class="badge"><?= htmlspecialchars($adRoleLabels[$r['role']] ?? (string)$r['role']) ?></span>
                                 <?php else: ?>
-                                    <select id="roleSelect_<?= $rid ?>" class="select" aria-label="<?= $lang === 'ru' ? 'Роль' : 'Рөлі' ?>">
+                                    <select id="roleSelect_<?= $rid ?>" class="select" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Роль' : 'Рөлі' ?>">
                                         <?php foreach ($adRoleLabels as $roleKey => $roleLabel): ?>
                                             <option value="<?= $roleKey ?>" <?= $r['role'] === $roleKey ? 'selected' : '' ?>><?= htmlspecialchars($roleLabel) ?></option>
                                         <?php endforeach; ?>
@@ -168,9 +168,9 @@ $adRoleLabels = [
                                     $pName = trim((string)$r['person_name']);
                                 ?>
                                     <a href="/person/<?= (int)$r['person_id'] ?>" class="pp-name"
-                                       title="<?= $lang === 'ru' ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?> #<?= (int)$r['person_id'] ?>"><?= htmlspecialchars($pName !== '' ? $pName : ('#' . (int)$r['person_id'])) ?></a>
+                                       title="<?= ($lang === 'ru' || $lang === 'en') ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?> #<?= (int)$r['person_id'] ?>"><?= htmlspecialchars($pName !== '' ? $pName : ('#' . (int)$r['person_id'])) ?></a>
                                     <?php if ((int)$r['person_shared'] > 1): ?>
-                                        <div class="small ad-warn" role="note"><?= $lang === 'ru' ? '⚠ Эта карточка привязана к нескольким пользователям' : '⚠ Бұл карточка бірнеше пайдаланушыға байланған' ?></div>
+                                        <div class="small ad-warn" role="note"><?= ($lang === 'ru' || $lang === 'en') ? '⚠ Эта карточка привязана к нескольким пользователям' : '⚠ Бұл карточка бірнеше пайдаланушыға байланған' ?></div>
                                     <?php endif; ?>
                                 <?php else: ?>
                                     <span class="muted">—</span>
@@ -183,22 +183,22 @@ $adRoleLabels = [
                                 <div class="ad-actions">
                                 <?php if (!$isProtected): ?>
                                     <button type="button" class="btn btn-sm" onclick="saveAccessRole('<?= $rid ?>')">
-                                        <?= $lang === 'ru' ? 'Сменить роль' : 'Рөлді өзгерту' ?>
+                                        <?= ($lang === 'ru' || $lang === 'en') ? 'Сменить роль' : 'Рөлді өзгерту' ?>
                                     </button>
                                     <?php if ($isUser && (int)$r['person_id'] > 0): ?>
                                         <button type="button" class="btn btn-sm" onclick="unlinkUser(<?= (int)$r['user_id'] ?>)">
-                                            <?= $lang === 'ru' ? 'Отвязать' : 'Ажырату' ?>
+                                            <?= ($lang === 'ru' || $lang === 'en') ? 'Отвязать' : 'Ажырату' ?>
                                         </button>
                                     <?php endif; ?>
                                     <?php if ($rStatus !== 'disabled' && (int)$r['invitation_id'] > 0): ?>
                                         <button type="button" class="btn btn-sm" onclick="revokeInvitation(<?= (int)$r['invitation_id'] ?>)">
-                                            <?= $lang === 'ru' ? 'Отключить' : 'Бұғаттау' ?>
+                                            <?= ($lang === 'ru' || $lang === 'en') ? 'Отключить' : 'Бұғаттау' ?>
                                         </button>
                                     <?php endif; ?>
                                     <?php if ($rStatus === 'invited'): ?>
                                         <button type="button" class="btn btn-sm" onclick="copyInviteText(this)"
                                                 data-email="<?= htmlspecialchars($rEmail) ?>">
-                                            <?= $lang === 'ru' ? 'Повторно отправить' : 'Қайта жіберу' ?>
+                                            <?= ($lang === 'ru' || $lang === 'en') ? 'Повторно отправить' : 'Қайта жіберу' ?>
                                         </button>
                                     <?php elseif ($rStatus === 'disabled'): ?>
                                         <button type="button" class="btn btn-sm"
@@ -207,12 +207,12 @@ $adRoleLabels = [
                                                 data-notes="<?= htmlspecialchars((string)$r['notes']) ?>"
                                                 data-person="<?= (int)$r['person_id'] ?>"
                                                 onclick="prefillInvite(this)">
-                                            <?= $lang === 'ru' ? 'Пригласить снова' : 'Қайта шақыру' ?>
+                                            <?= ($lang === 'ru' || $lang === 'en') ? 'Пригласить снова' : 'Қайта шақыру' ?>
                                         </button>
                                     <?php endif; ?>
                                     <?php if ($isUser): ?>
                                         <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser(<?= (int)$r['user_id'] ?>)">
-                                            <?= $lang === 'ru' ? 'Удалить' : 'Жою' ?>
+                                            <?= ($lang === 'ru' || $lang === 'en') ? 'Удалить' : 'Жою' ?>
                                         </button>
                                     <?php endif; ?>
                                 <?php endif; ?>
@@ -229,17 +229,17 @@ $adRoleLabels = [
     <!-- TASK-032: добавления и правки обычных родственников -->
     <div class="island ad-island" id="additions">
         <div class="island-head ad-head">
-            <h3><?= $lang === 'ru' ? 'Новое от родственников' : 'Туыстардан жаңалар' ?></h3>
+            <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Новое от родственников' : 'Туыстардан жаңалар' ?></h3>
         </div>
         <?php if (empty($recentAdditions)): ?>
-            <p class="muted" style="margin:0 0 12px;"><?= $lang === 'ru' ? 'Пока ничего не добавляли.' : 'Әзірге ештеңе қосылған жоқ.' ?></p>
+            <p class="muted" style="margin:0 0 12px;"><?= ($lang === 'ru' || $lang === 'en') ? 'Пока ничего не добавляли.' : 'Әзірге ештеңе қосылған жоқ.' ?></p>
         <?php else: ?>
             <div class="table-wrap">
                 <table class="table">
                     <thead><tr>
-                        <th><?= $lang === 'ru' ? 'Когда' : 'Уақыты' ?></th>
-                        <th><?= $lang === 'ru' ? 'Кто' : 'Кім' ?></th>
-                        <th><?= $lang === 'ru' ? 'Что' : 'Не' ?></th>
+                        <th><?= ($lang === 'ru' || $lang === 'en') ? 'Когда' : 'Уақыты' ?></th>
+                        <th><?= ($lang === 'ru' || $lang === 'en') ? 'Кто' : 'Кім' ?></th>
+                        <th><?= ($lang === 'ru' || $lang === 'en') ? 'Что' : 'Не' ?></th>
                         <th></th>
                     </tr></thead>
                     <tbody>
@@ -248,7 +248,7 @@ $adRoleLabels = [
                             <td><?= htmlspecialchars((string)$ra['created_at']) ?></td>
                             <td><?= htmlspecialchars((string)$ra['who']) ?></td>
                             <td><?= htmlspecialchars((string)$ra['action']) ?> · <?= htmlspecialchars((string)$ra['summary']) ?></td>
-                            <td><a href="/history?table=<?= urlencode((string)$ra['entity_table']) ?>"><?= $lang === 'ru' ? 'История / откат' : 'Тарих / қайтару' ?></a></td>
+                            <td><a href="/history?table=<?= urlencode((string)$ra['entity_table']) ?>"><?= ($lang === 'ru' || $lang === 'en') ? 'История / откат' : 'Тарих / қайтару' ?></a></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -261,27 +261,27 @@ $adRoleLabels = [
     <div class="island ad-island">
         <div class="island-head ad-head">
             <svg class="ic" aria-hidden="true"><use href="#i-face"/></svg>
-            <h3><?= $lang === 'ru' ? 'Распознавание лиц в фотоальбомах' : 'Фотоальбомдардағы бет тану жүйесі' ?></h3>
+            <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Распознавание лиц в фотоальбомах' : 'Фотоальбомдардағы бет тану жүйесі' ?></h3>
         </div>
         <div style="padding: 4px 0 12px; display: flex; flex-direction: column; gap: 12px;">
             <p class="muted" style="margin: 0; font-size: 14px;">
-                <?= $lang === 'ru'
+                <?= ($lang === 'ru' || $lang === 'en')
                     ? 'Распознавание работает исключительно в браузере (без внешних облаков). Сервер хранит только анонимные координаты рамок и векторные отпечатки. Эталон лица каждого человека — его аватарка.'
                     : 'Бет тану тек браузерде жұмыс істейді (сыртқы бұлтсыз). Сервер тек жақтау координаталары мен векторлық бейнелерді сақтайды. Әр адамның бет эталоны — оның аватары.' ?>
             </p>
             <?php if (!$faceRecognitionReady): ?>
                 <div style="padding: 8px 12px; background: #fef3c7; color: #92400e; border-radius: 8px; font-size: 13px;">
-                    <?= $lang === 'ru' ? 'Таблицы распознавания лиц ещё не созданы (нужно применить миграцию database/migrate.php).' : 'Бет тану кестелері әлі жасалмаған (database/migrate.php миграциясын орындау қажет).' ?>
+                    <?= ($lang === 'ru' || $lang === 'en') ? 'Таблицы распознавания лиц ещё не созданы (нужно применить миграцию database/migrate.php).' : 'Бет тану кестелері әлі жасалмаған (database/migrate.php миграциясын орындау қажет).' ?>
                 </div>
             <?php else: ?>
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--c-island-2, #f9fafb); border-radius: 8px; border: 1px solid var(--c-border, #e5e7eb);">
                     <div>
-                        <strong><?= $lang === 'ru' ? 'Статус распознавания лиц для всего сайта' : 'Бүкіл сайт үшін бет тану күйі' ?></strong>
-                        <div class="small muted"><?= $lang === 'ru' ? ($faceRecognitionEnabled ? 'Включено: фото в альбомах проверяются, лица сопоставляются с аватарками' : 'Выключено: фото не сканируются') : ($faceRecognitionEnabled ? 'Қосулы: альбомдардағы фотолар тексеріледі' : 'Өшірулі: фотолар тексерілмейді') ?></div>
+                        <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Статус распознавания лиц для всего сайта' : 'Бүкіл сайт үшін бет тану күйі' ?></strong>
+                        <div class="small muted"><?= ($lang === 'ru' || $lang === 'en') ? ($faceRecognitionEnabled ? 'Включено: фото в альбомах проверяются, лица сопоставляются с аватарками' : 'Выключено: фото не сканируются') : ($faceRecognitionEnabled ? 'Қосулы: альбомдардағы фотолар тексеріледі' : 'Өшірулі: фотолар тексерілмейді') ?></div>
                     </div>
                     <div>
                         <button type="button" class="btn <?= $faceRecognitionEnabled ? 'btn-danger' : 'btn-primary' ?>" onclick="toggleFaceRecognition(<?= $faceRecognitionEnabled ? 'false' : 'true' ?>)">
-                            <?= $faceRecognitionEnabled ? ($lang === 'ru' ? 'Выключить' : 'Өшіру') : ($lang === 'ru' ? 'Включить' : 'Қосу') ?>
+                            <?= $faceRecognitionEnabled ? (($lang === 'ru' || $lang === 'en') ? 'Выключить' : 'Өшіру') : (($lang === 'ru' || $lang === 'en') ? 'Включить' : 'Қосу') ?>
                         </button>
                     </div>
                 </div>
@@ -307,7 +307,7 @@ $adRoleLabels = [
 
 <script>
     const AD_CSRF = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
-    const AD_RU = <?= $lang === 'ru' ? 'true' : 'false' ?>;
+    const AD_RU = <?= ($lang === 'ru' || $lang === 'en') ? 'true' : 'false' ?>;
 
     // общий POST для действий админки (CSRF в теле запроса)
     async function adPost(url, fields) {

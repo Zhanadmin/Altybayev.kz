@@ -8,8 +8,11 @@ class I18n
 {
     private static ?string $currentLang = null;
 
+    /** ALT-007: поддерживаемые языки интерфейса. */
+    public const LANGS = ['kk', 'ru', 'en'];
+
     /**
-     * Получить текущий язык ('kk' или 'ru')
+     * Получить текущий язык ('kk', 'ru' или 'en')
      */
     public static function lang(): string
     {
@@ -18,20 +21,20 @@ class I18n
         }
 
         // 1. Проверяем параметр GET ?lang=
-        if (!empty($_GET['lang']) && in_array($_GET['lang'], ['kk', 'ru'], true)) {
+        if (!empty($_GET['lang']) && in_array($_GET['lang'], self::LANGS, true)) {
             self::$currentLang = (string)$_GET['lang'];
             self::setCookieLang(self::$currentLang);
             return self::$currentLang;
         }
 
         // 2. Проверяем Cookie
-        if (!empty($_COOKIE['shezhire_lang']) && in_array($_COOKIE['shezhire_lang'], ['kk', 'ru'], true)) {
+        if (!empty($_COOKIE['shezhire_lang']) && in_array($_COOKIE['shezhire_lang'], self::LANGS, true)) {
             self::$currentLang = (string)$_COOKIE['shezhire_lang'];
             return self::$currentLang;
         }
 
         // 3. Проверяем сессию
-        if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['shezhire_lang']) && in_array($_SESSION['shezhire_lang'], ['kk', 'ru'], true)) {
+        if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['shezhire_lang']) && in_array($_SESSION['shezhire_lang'], self::LANGS, true)) {
             self::$currentLang = (string)$_SESSION['shezhire_lang'];
             return self::$currentLang;
         }
@@ -46,7 +49,7 @@ class I18n
      */
     public static function setLang(string $lang): void
     {
-        $lang = in_array($lang, ['kk', 'ru'], true) ? $lang : 'kk';
+        $lang = in_array($lang, self::LANGS, true) ? $lang : 'kk';
         self::$currentLang = $lang;
         self::setCookieLang($lang);
     }
@@ -73,7 +76,22 @@ class I18n
      */
     public static function siteTitle(): string
     {
-        return self::lang() === 'ru' ? 'Родословная' : 'Шежіре';
+        return match (self::lang()) {
+            'ru' => 'Родословная',
+            'en' => 'Family Tree',
+            default => 'Шежіре',
+        };
+    }
+
+    /** ALT-007: удобные проверки языка в шаблонах и сервисах. */
+    public static function isEn(): bool
+    {
+        return self::lang() === 'en';
+    }
+
+    public static function isRu(): bool
+    {
+        return self::lang() === 'ru';
     }
 
     /**
@@ -84,7 +102,11 @@ class I18n
         $lang = self::lang();
         $dict = self::getDictionary();
 
-        $text = $dict[$key][$lang] ?? $dict[$key]['kk'] ?? $key;
+        if ($lang === 'en') {
+            $text = $dict[$key]['en'] ?? self::translateText((string)($dict[$key]['ru'] ?? $dict[$key]['kk'] ?? $key));
+        } else {
+            $text = $dict[$key][$lang] ?? $dict[$key]['kk'] ?? $key;
+        }
 
         if (!empty($params)) {
             foreach ($params as $k => $v) {
@@ -182,6 +204,13 @@ class I18n
             return $termKk;
         }
 
+        // ALT-007: английский — переводим русскую подпись, казахский термин оставляем в скобках,
+        // если он был частью term_ru (например, «Әке (Отец)» → «Әке (Father)»).
+        if (self::lang() === 'en') {
+            $base = $termRu !== '' ? $termRu : $termKk;
+            return self::translateText($base);
+        }
+
         // TASK-020: term_ru уже может начинаться с казахского термина — без дубля «Іні (Іні (…))»
         if ($termRu !== '' && mb_stripos($termRu, $termKk) === 0 && $termKk !== '') {
             return $termRu;
@@ -203,7 +232,11 @@ class I18n
     public static function formatDate(mixed $dateVal, ?string $lang = null): string
     {
         if (empty($dateVal)) {
-            return self::lang() === 'ru' ? 'не указана' : 'көрсетілмеген';
+            return match (self::lang()) {
+                'ru' => 'не указана',
+                'en' => 'not specified',
+                default => 'көрсетілмеген',
+            };
         }
 
         $lang = $lang ?? self::lang();
@@ -211,7 +244,11 @@ class I18n
 
         // Если передан только год (например "1985")
         if (preg_match('/^[0-9]{4}$/', $raw)) {
-            return $lang === 'ru' ? "{$raw} г." : "{$raw} жыл";
+            return match ($lang) {
+                'ru' => "{$raw} г.",
+                'en' => (string)$raw,
+                default => "{$raw} жыл",
+            };
         }
 
         $monthsRu = [
@@ -224,6 +261,12 @@ class I18n
             1 => 'қаңтар', 2 => 'ақпан', 3 => 'наурыз', 4 => 'сәуір',
             5 => 'мамыр', 6 => 'маусым', 7 => 'шілде', 8 => 'тамыз',
             9 => 'қыркүйек', 10 => 'қазан', 11 => 'қараша', 12 => 'желтоқсан'
+        ];
+
+        $monthsEn = [
+            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
         ];
 
         $year = null;
@@ -251,15 +294,26 @@ class I18n
             if ($lang === 'ru') {
                 return "{$day} {$monthsRu[$month]} {$year}";
             }
+            if ($lang === 'en') {
+                return "{$day} {$monthsEn[$month]} {$year}";
+            }
             return "{$year} жылғы {$day} {$monthsKk[$month]}";
         }
 
         if ($year && $month && isset($monthsRu[$month])) {
-            return $lang === 'ru' ? "{$monthsRu[$month]} {$year} г." : "{$year} жылғы {$monthsKk[$month]}";
+            return match ($lang) {
+                'ru' => "{$monthsRu[$month]} {$year} г.",
+                'en' => "{$monthsEn[$month]} {$year}",
+                default => "{$year} жылғы {$monthsKk[$month]}",
+            };
         }
 
         if ($year) {
-            return $lang === 'ru' ? "{$year} г." : "{$year} жыл";
+            return match ($lang) {
+                'ru' => "{$year} г.",
+                'en' => (string)$year,
+                default => "{$year} жыл",
+            };
         }
 
         return $raw;
@@ -377,6 +431,7 @@ class I18n
     {
         $lang = $lang ?? self::lang();
         $ru = ($lang === 'ru');
+        $en = ($lang === 'en');
         $birth = self::lifeParts($p['birth_date'] ?? null, $p['birth_year'] ?? null);
         $death = self::lifeParts($p['death_date'] ?? null, $p['death_year'] ?? null);
         $deceased = !empty($p['is_deceased']) || $death !== null;
@@ -387,10 +442,10 @@ class I18n
             : (string)$pt[0];
         $titleParts = [];
         if ($birth) {
-            $titleParts[] = ($ru ? 'Дата рождения: ' : 'Туған күні: ') . self::formatDate($partsDate($birth), $lang);
+            $titleParts[] = ($en ? 'Date of birth: ' : ($ru ? 'Дата рождения: ' : 'Туған күні: ')) . self::formatDate($partsDate($birth), $lang);
         }
         if ($deceased && $death) {
-            $titleParts[] = ($ru ? 'Дата ухода: ' : 'Қайтыс болған күні: ') . self::formatDate($partsDate($death), $lang);
+            $titleParts[] = ($en ? 'Date of death: ' : ($ru ? 'Дата ухода: ' : 'Қайтыс болған күні: ')) . self::formatDate($partsDate($death), $lang);
         }
         $title = implode(' · ', $titleParts);
 
@@ -402,7 +457,9 @@ class I18n
                 if ($n >= 0 && $n <= 130) {
                     // TASK-023: если у одной из дат нет месяца/дня — возраст приблизительный («≈»)
                     $apx = ($birth[1] === null || $death[1] === null) ? '≈' : '';
-                    if ($ru) {
+                    if ($en) {
+                        $span .= " · lived {$apx}{$n} " . ($n === 1 ? 'year' : 'years');
+                    } elseif ($ru) {
                         $g = $p['gender'] ?? '';
                         $verb = $g === 'F' ? 'прожила' : ($g === 'M' ? 'прожил' : 'прожил(а)');
                         $span .= " · {$verb} {$apx}" . self::ruYears($n);
@@ -421,7 +478,7 @@ class I18n
             return ['short' => (string)$birth[0], 'title' => $title, 'deceased' => false];
         }
         $approx = $birth[1] === null ? '≈' : '';
-        $short = $approx . ($ru ? self::ruYears($n) : "{$n} жас");
+        $short = $approx . ($en ? "{$n} years" : ($ru ? self::ruYears($n) : "{$n} жас"));
         return ['short' => $short, 'title' => $title, 'deceased' => false];
     }
 
@@ -441,6 +498,9 @@ class I18n
         if ($lang === 'ru') {
             return $apx . self::ruYears($n);
         }
+        if ($lang === 'en') {
+            return $apx . $n . ' ' . ($n === 1 ? 'year' : 'years') . ' together';
+        }
         return $apx . $n . ' жыл';
     }
 
@@ -454,7 +514,190 @@ class I18n
         if ($lang === 'ru') {
             return preg_replace('/ г\.$/u', ' года', preg_replace('/^(\d{1,2} \S+ \d{4})$/u', '$1 года', $s));
         }
+        if ($lang === 'en') {
+            return $s;
+        }
         return str_replace(' жылғы ', ' ж. ', $s);
+    }
+
+    /**
+     * ALT-007: словарь русских подписей интерфейса → английский.
+     */
+    private static ?array $enPhrases = null;
+
+    private static function enPhrases(): array
+    {
+        if (self::$enPhrases === null) {
+            self::$enPhrases = require __DIR__ . '/../Config/EnglishPhrases.php';
+        }
+        return self::$enPhrases;
+    }
+
+    private static function enYears(int $n): string
+    {
+        return $n === 1 ? 'year' : 'years';
+    }
+
+    private static function enDays(int $n): string
+    {
+        return $n === 1 ? 'day' : 'days';
+    }
+
+    /**
+     * ALT-007: перевод одной подписи/фразы (без пользовательских имён).
+     */
+    public static function translateText(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        preg_match('/^\s*/u', $text, $leadMatch);
+        preg_match('/\s*$/u', $text, $trailMatch);
+        $lead = $leadMatch[0] ?? '';
+        $trail = $trailMatch[0] ?? '';
+        $core = trim($text);
+        if ($core === '') {
+            return $text;
+        }
+
+        $map = self::enPhrases();
+        if (isset($map[$core])) {
+            return $lead . $map[$core] . $trail;
+        }
+
+        // Месяцы внутри дат: «18 ноября 2026» → «18 November 2026».
+        $months = [
+            'января' => 'January', 'февраля' => 'February', 'марта' => 'March', 'апреля' => 'April',
+            'мая' => 'May', 'июня' => 'June', 'июля' => 'July', 'августа' => 'August',
+            'сентября' => 'September', 'октября' => 'October', 'ноября' => 'November', 'декабря' => 'December',
+            'янв' => 'Jan', 'фев' => 'Feb', 'мар' => 'Mar', 'апр' => 'Apr', 'июн' => 'Jun',
+            'июл' => 'Jul', 'авг' => 'Aug', 'сен' => 'Sep', 'окт' => 'Oct', 'ноя' => 'Nov', 'дек' => 'Dec',
+        ];
+        $out = strtr($core, $months);
+
+        // Динамические подписи: числа, возрасты, даты, счётчики.
+        $dynamic = [
+            '/^(\d{4})\s*г\.?$/u' => fn(array $m): string => $m[1],
+            '/^(\d{4})\s*года?$/u' => fn(array $m): string => $m[1],
+            '/^≈?\s*(\d+)\s*(год|года|лет)$/u' => fn(array $m): string => (str_starts_with($m[0], '≈') ? '≈' : '') . $m[1] . ' ' . self::enYears((int)$m[1]),
+            '/^(\d+)\s*(дн\.?|день|дня|дней)$/u' => fn(array $m): string => $m[1] . ' ' . self::enDays((int)$m[1]),
+            '/^Через\s+(\d+)\s*дн\.?$/u' => fn(array $m): string => 'In ' . $m[1] . ' ' . self::enDays((int)$m[1]),
+            '/^(\d+)\s*(человек|чел\.|персон[аы]?|союзов|детей|ребёнка|ребенка)$/u' => function (array $m): string {
+                $n = (int)$m[1];
+                $word = preg_match('/союзов/u', $m[2]) ? ($n === 1 ? 'union' : 'unions')
+                    : (preg_match('/детей|ребёнка|ребенка/u', $m[2]) ? ($n === 1 ? 'child' : 'children') : ($n === 1 ? 'person' : 'people'));
+                return $m[1] . ' ' . $word;
+            },
+            '/^Дети \((\d+)\)$/u' => fn(array $m): string => 'Children (' . $m[1] . ')',
+            '/^Семьи детей \((\d+)\)$/u' => fn(array $m): string => "Children's families (" . $m[1] . ')',
+            '/^(\d+)-е поколение$/u' => fn(array $m): string => 'Generation ' . $m[1],
+            '/^Отображено персон:\s*(\d+)$/u' => fn(array $m): string => 'People shown: ' . $m[1],
+            '/^из\s+(\d+)$/u' => fn(array $m): string => 'of ' . $m[1],
+            '/^Дата рождения:\s*(.+)$/u' => fn(array $m): string => 'Date of birth: ' . self::translateText($m[1]),
+            '/^Дата ухода:\s*(.+)$/u' => fn(array $m): string => 'Date of death: ' . self::translateText($m[1]),
+            '/^Дата брака:\s*(.+)$/u' => fn(array $m): string => 'Marriage date: ' . self::translateText($m[1]),
+            '/^(.+?)\s*·\s*прожил(а)?\s+(≈?)(\d+)\s*(год|года|лет)$/u' => fn(array $m): string => self::translateText($m[1]) . ' · lived ' . $m[3] . $m[4] . ' ' . self::enYears((int)$m[4]),
+            '/^(.*·\s*)(\d+)\s*(год|года|лет)$/u' => fn(array $m): string => self::translateText($m[1]) . $m[2] . ' ' . self::enYears((int)$m[2]),
+            '/^прожил(а)?\s+(≈?)(\d+)\s*(год|года|лет)$/u' => fn(array $m): string => 'lived ' . $m[2] . $m[3] . ' ' . self::enYears((int)$m[3]),
+            '/^(\d+)\s*лет со дня ухода$/u' => fn(array $m): string => $m[1] . ' years since passing',
+            '/^(\d+)\s*лет исполняется$/u' => fn(array $m): string => $m[1] . ' years',
+            '/^Вы — (.+)$/u' => fn(array $m): string => 'You are ' . $m[1],
+            '/^Добро пожаловать!,\s*(.+)$/u' => fn(array $m): string => 'Welcome, ' . $m[1],
+            '/^⚭\s*замужем — (.+)$/u' => fn(array $m): string => '⚭ married — ' . self::translateText($m[1]),
+            '/^замужем — (.+)$/u' => fn(array $m): string => 'married — ' . self::translateText($m[1]),
+            '/^\(урожд\.\s*(.+)\)$/u' => fn(array $m): string => '(née ' . $m[1] . ')',
+            '/^На ближайшие\s+(\d+)\s+дней событий не найдено$/u' => fn(array $m): string => 'No events found for the next ' . $m[1] . ' days',
+            '/^Ближайшие дни рождения, поминальные годовщины и юбилеи свадеб на\s+(\d+)\s+дней вперед$/u' => fn(array $m): string => 'Upcoming birthdays, memorial anniversaries and wedding anniversaries for the next ' . $m[1] . ' days',
+            '/^(\d+)\s*год(?:а)?$/u' => fn(array $m): string => $m[1] . ' ' . self::enYears((int)$m[1]),
+            '/^(\d+)\s*жас$/u' => fn(array $m): string => $m[1] . ' years',
+            '/^(\d+)\s*жыл$/u' => fn(array $m): string => $m[1] . ' years',
+            '/^(Сын|Дочь|Брат|Сестра)\s*·\s*(.+)$/u' => function (array $m): string {
+                $word = ['Сын' => 'Son', 'Дочь' => 'Daughter', 'Брат' => 'Brother', 'Сестра' => 'Sister'][$m[1]] ?? $m[1];
+                return $word . ' · ' . self::translateText($m[2]);
+            },
+            '/^Фото и видео, где отмечен\(а\)\s*·\s*(\d+)$/u' => fn(array $m): string => 'Photos and videos tagged · ' . $m[1],
+            '/^(.+),\s*(\d+)-е колено по отцу$/u' => fn(array $m): string => self::translateText($m[1]) . ', paternal generation ' . $m[2],
+            '/^(.+),\s*(\d+)-е колено по матери$/u' => fn(array $m): string => self::translateText($m[1]) . ', maternal generation ' . $m[2],
+            '/^(.+)\s+по роду Керей$/u' => fn(array $m): string => self::translateText($m[1]) . ' in the Kerey clan',
+            '/^(.+)\s+по отцу$/u' => fn(array $m): string => 'Paternal ' . lcfirst(self::translateText($m[1])),
+            '/^(.+)\s+по матери$/u' => fn(array $m): string => 'Maternal ' . lcfirst(self::translateText($m[1])),
+            '/^(\d+)-я годовщина \(День памяти\)$/u' => fn(array $m): string => $m[1] . 'th anniversary (Memorial day)',
+            '/^(\d+)-я годовщина$/u' => fn(array $m): string => $m[1] . 'th anniversary',
+            '/^Шежіре-плакат:\s*«(.+)»\s*ұрпақтары$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . $m[1] . '»',
+            '/^Плакат шежире:\s*потомки\s*«(.+)»$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . $m[1] . '»',
+            '/^Плакат шежире:\s*потомки\s*«(.+)»\s*—\s*Altybayev\.kz$/u' => fn(array $m): string => 'Shezhire poster: descendants of «' . $m[1] . '» — Altybayev.kz',
+            '/^(\d+)-буын$/u' => fn(array $m): string => 'Generation ' . $m[1],
+            '/^(\d+)-е колено$/u' => fn(array $m): string => 'Generation ' . $m[1],
+        ];
+        foreach ($dynamic as $pattern => $fn) {
+            if (preg_match($pattern, $out, $m)) {
+                return $lead . $fn($m) . $trail;
+            }
+        }
+
+        // Заменяем только длинные устойчивые подписи и не трогаем имена людей.
+        $looksLikeName = (bool)preg_match('/^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]+)?$/u', $out);
+        if (!$looksLikeName && preg_match('/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/u', $out)) {
+            $replace = [];
+            foreach ($map as $k => $v) {
+                if (mb_strlen($k, 'UTF-8') >= 5) {
+                    $replace[$k] = $v;
+                }
+            }
+            $out = strtr($out, $replace);
+        }
+
+        return $lead . $out . $trail;
+    }
+
+    /**
+     * ALT-007: перевод готового HTML всех страниц для английского языка.
+     * Переводим текстовые узлы и подписи атрибутов; скрипты и данные не трогаем.
+     */
+    public static function translateHtml(string $html): string
+    {
+        if (!self::isEn() || $html === '') {
+            return $html;
+        }
+
+        // Скрипты и стили не трогаем: там лежат словари и код переключения языка.
+        $parts = preg_split(
+            '/(<script\b[^>]*>.*?<\/script>|<style\b[^>]*>.*?<\/style>)/is',
+            $html,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
+        );
+        if ($parts === false) {
+            return $html;
+        }
+
+        foreach ($parts as $i => $part) {
+            if (preg_match('/^<(script|style)\b/i', $part)) {
+                continue;
+            }
+            $part = preg_replace_callback(
+                '/\b(title|placeholder|aria-label|data-tip|alt|value)="([^"]*)"/u',
+                static function (array $m): string {
+                    $decoded = html_entity_decode($m[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $translated = self::translateText($decoded);
+                    return $m[1] . '="' . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '"';
+                },
+                $part
+            ) ?? $part;
+
+            $part = preg_replace_callback(
+                '/>([^<>]+)</u',
+                static function (array $m): string {
+                    return '>' . self::translateText($m[1]) . '<';
+                },
+                $part
+            ) ?? $part;
+
+            $parts[$i] = $part;
+        }
+
+        return implode('', $parts);
     }
 
     /**
@@ -462,7 +705,12 @@ class I18n
      */
     public static function getDictionary(): array
     {
-        return [
+        static $dict = null;
+        if ($dict !== null) {
+            return $dict;
+        }
+
+        $dict = [
             // Общие элементы шапки и навигации
             'site_title' => [
                 'kk' => 'Шежіре',
@@ -755,5 +1003,14 @@ class I18n
             'login_required' => ['kk' => 'Жүйеге кіру қажет', 'ru' => 'Необходима авторизация'],
             'login_google' => ['kk' => 'Google арқылы кіру', 'ru' => 'Войти через Google'],
         ];
+
+        // ALT-007: гарантируем наличие английского варианта у каждого ключа.
+        foreach ($dict as $key => $row) {
+            if (!isset($row['en'])) {
+                $dict[$key]['en'] = self::translateText((string)($row['ru'] ?? $row['kk'] ?? ''));
+            }
+        }
+
+        return $dict;
     }
 }

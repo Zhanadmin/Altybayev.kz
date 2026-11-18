@@ -399,10 +399,10 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
                 <?= $isKk ? 'Тізім' : 'Список' ?>
             </button>
 
-            <!-- Тіл ауыстырғыш -->
-            <button type="button" class="btn-tb btn-tb-secondary" onclick="togglePosterLanguage()">
-                <?= $isKk ? 'РУС' : 'ҚАЗ' ?>
-            </button>
+            <!-- ALT-007: переключатель языка ҚАЗ / РУС / ENG -->
+            <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=kk" style="text-decoration:none;">ҚАЗ</a>
+            <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=ru" style="text-decoration:none;">РУС</a>
+            <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=en" style="text-decoration:none;">ENG</a>
 
             <!-- Кнопка скачивания SVG: в виде «древо» — рисунок со страницы, в виде «список» — старый серверный SVG -->
             <a id="btnPosterSvg" href="/tree/print/svg?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=<?= $lang ?>" class="btn-tb btn-tb-secondary" onclick="return downloadPosterSvg(event)" title="<?= $isKk ? 'Векторлық SVG форматында жүктеп алу (кез келген өлшемге созылады)' : 'Скачать в векторном формате SVG (масштабируется без потерь)' ?>">

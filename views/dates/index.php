@@ -25,23 +25,23 @@ require __DIR__ . '/../layout/master_start.php';
         <div>
             <h1><?= htmlspecialchars(I18n::t('nav_dates')) ?></h1>
             <p class="sub">
-                <?= $lang === 'ru'
+                <?= ($lang === 'ru' || $lang === 'en')
                     ? "Ближайшие дни рождения, поминальные годовщины и юбилеи свадеб на {$daysAhead} дней вперед"
                     : "Алдағы {$daysAhead} күндегі туған күндер, ата-бабаларды еске алу және неке мерейтойлары" ?>
             </p>
         </div>
         <div class="actions">
             <!-- Выбор диапазона дней -->
-            <nav class="seg" aria-label="<?= $lang === 'ru' ? 'Период' : 'Кезең' ?>">
-                <a href="/dates?days=30" class="<?= $daysAhead === 30 ? 'active' : '' ?>">30 <?= $lang === 'ru' ? 'дн' : 'күн' ?></a>
-                <a href="/dates?days=90" class="<?= $daysAhead === 90 ? 'active' : '' ?>">90 <?= $lang === 'ru' ? 'дн' : 'күн' ?></a>
-                <a href="/dates?days=180" class="<?= $daysAhead === 180 ? 'active' : '' ?>">180 <?= $lang === 'ru' ? 'дн' : 'күн' ?></a>
-                <a href="/dates?days=365" class="<?= $daysAhead === 365 ? 'active' : '' ?>">1 <?= $lang === 'ru' ? 'год' : 'жыл' ?></a>
+            <nav class="seg" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Период' : 'Кезең' ?>">
+                <a href="/dates?days=30" class="<?= $daysAhead === 30 ? 'active' : '' ?>">30 <?= ($lang === 'ru' || $lang === 'en') ? 'дн' : 'күн' ?></a>
+                <a href="/dates?days=90" class="<?= $daysAhead === 90 ? 'active' : '' ?>">90 <?= ($lang === 'ru' || $lang === 'en') ? 'дн' : 'күн' ?></a>
+                <a href="/dates?days=180" class="<?= $daysAhead === 180 ? 'active' : '' ?>">180 <?= ($lang === 'ru' || $lang === 'en') ? 'дн' : 'күн' ?></a>
+                <a href="/dates?days=365" class="<?= $daysAhead === 365 ? 'active' : '' ?>">1 <?= ($lang === 'ru' || $lang === 'en') ? 'год' : 'жыл' ?></a>
             </nav>
             <!-- Быстрая кнопка проверки Жеті ата -->
             <button type="button" class="btn btn-primary" onclick="openZhetiAtaPageModal()">
                 <svg class="ic" aria-hidden="true"><use href="#i-tamga"/></svg>
-                <?= $lang === 'ru' ? 'Калькулятор «Жеті ата»' : '«Жеті ата» тексеру' ?>
+                <?= ($lang === 'ru' || $lang === 'en') ? 'Калькулятор «Жеті ата»' : '«Жеті ата» тексеру' ?>
             </button>
         </div>
     </div>
@@ -49,25 +49,25 @@ require __DIR__ . '/../layout/master_start.php';
     <!-- Вкладки фильтрации дат -->
     <div class="seg dt-tabs">
         <button type="button" class="date-tab-btn active" onclick="switchDateFilter('all', this)">
-            <?= $lang === 'ru' ? 'Все события' : 'Барлық күндер' ?> <span class="muted"><?= count($allEvents) ?></span>
+            <?= ($lang === 'ru' || $lang === 'en') ? 'Все события' : 'Барлық күндер' ?> <span class="muted"><?= count($allEvents) ?></span>
         </button>
         <button type="button" class="date-tab-btn" onclick="switchDateFilter('birthday', this)">
-            <?= $lang === 'ru' ? 'Дни рождения' : 'Туған күндер' ?> <span class="muted"><?= count($birthdays) ?></span>
+            <?= ($lang === 'ru' || $lang === 'en') ? 'Дни рождения' : 'Туған күндер' ?> <span class="muted"><?= count($birthdays) ?></span>
         </button>
         <button type="button" class="date-tab-btn" onclick="switchDateFilter('death_anniversary', this)">
-            <?= $lang === 'ru' ? 'Дни памяти' : 'Еске алу күндері' ?> <span class="muted"><?= count($anniversaries) ?></span>
+            <?= ($lang === 'ru' || $lang === 'en') ? 'Дни памяти' : 'Еске алу күндері' ?> <span class="muted"><?= count($anniversaries) ?></span>
         </button>
         <button type="button" class="date-tab-btn" onclick="switchDateFilter('wedding', this)">
-            <?= $lang === 'ru' ? 'Годовщины свадеб' : 'Үйленген күндер' ?> <span class="muted"><?= count($weddings) ?></span>
+            <?= ($lang === 'ru' || $lang === 'en') ? 'Годовщины свадеб' : 'Үйленген күндер' ?> <span class="muted"><?= count($weddings) ?></span>
         </button>
     </div>
 
     <?php if (empty($allEvents)): ?>
         <div class="island pp-empty">
             <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
-            <b><?= $lang === 'ru' ? "На ближайшие {$daysAhead} дней событий не найдено" : "Алдағы {$daysAhead} күнге белгіленген даталар жоқ" ?></b>
+            <b><?= ($lang === 'ru' || $lang === 'en') ? "На ближайшие {$daysAhead} дней событий не найдено" : "Алдағы {$daysAhead} күнге белгіленген даталар жоқ" ?></b>
             <a href="/dates?days=365" class="btn btn-sm">
-                <?= $lang === 'ru' ? 'Посмотреть события на целый год' : 'Бүкіл 1 жылдың оқиғаларын көру' ?>
+                <?= ($lang === 'ru' || $lang === 'en') ? 'Посмотреть события на целый год' : 'Бүкіл 1 жылдың оқиғаларын көру' ?>
             </a>
         </div>
     <?php else: ?>
@@ -91,14 +91,14 @@ require __DIR__ . '/../layout/master_start.php';
                     <div class="dt-card-head">
                         <span class="badge<?= $type === 'death_anniversary' ? ' badge-accent' : '' ?>">
                             <svg class="ic dt-ic" aria-hidden="true"><use href="#i-<?= $icon ?>"/></svg>
-                            <?= htmlspecialchars($lang === 'ru' ? ($ev['event_name_ru'] ?? '') : ($ev['event_name_kk'] ?? '')) ?>
+                            <?= htmlspecialchars(($lang === 'ru' || $lang === 'en') ? ($ev['event_name_ru'] ?? '') : ($ev['event_name_kk'] ?? '')) ?>
                         </span>
                         <?php if ($isToday): ?>
-                            <span class="badge badge-accent"><b><?= $lang === 'ru' ? 'Сегодня' : 'Бүгін' ?></b></span>
+                            <span class="badge badge-accent"><b><?= ($lang === 'ru' || $lang === 'en') ? 'Сегодня' : 'Бүгін' ?></b></span>
                         <?php elseif ($isTomorrow): ?>
-                            <span class="badge badge-accent"><?= $lang === 'ru' ? 'Завтра' : 'Ертең' ?></span>
+                            <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en') ? 'Завтра' : 'Ертең' ?></span>
                         <?php else: ?>
-                            <span class="badge"><?= $lang === 'ru' ? "Через {$daysUntil} дн." : "{$daysUntil} күннен соң" ?></span>
+                            <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? "Через {$daysUntil} дн." : "{$daysUntil} күннен соң" ?></span>
                         <?php endif; ?>
                     </div>
 
@@ -128,13 +128,13 @@ require __DIR__ . '/../layout/master_start.php';
                                 </div>
                             <?php else: ?>
                                 <a href="/person/<?= (int)($ev['person_id'] ?? 0) ?>" class="name dt-link" title="<?= htmlspecialchars($ev['full_name'] ?? '') ?>"
-                                   <?php if ($type === 'death_anniversary'): ?>data-tip="<?= $lang === 'ru' ? 'Аруағы разы болсын' : 'Жатқан жері жайлы болсын' ?>"<?php endif; ?>>
+                                   <?php if ($type === 'death_anniversary'): ?>data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'Аруағы разы болсын' : 'Жатқан жері жайлы болсын' ?>"<?php endif; ?>>
                                     <?= htmlspecialchars($ev['full_name'] ?? '') ?>
                                 </a>
                             <?php endif; ?>
 
                             <?php
-                                $affText = ($lang === 'ru') ? ($ev['affiliation_ru'] ?? '') : ($ev['affiliation_kk'] ?? '');
+                                $affText = (($lang === 'ru' || $lang === 'en')) ? ($ev['affiliation_ru'] ?? '') : ($ev['affiliation_kk'] ?? '');
                                 if ($affText !== '' && $type !== 'wedding'):
                             ?>
                                 <div class="meta" title="<?= htmlspecialchars($affText) ?>"><?= htmlspecialchars($affText) ?></div>
@@ -142,11 +142,11 @@ require __DIR__ . '/../layout/master_start.php';
 
                             <div class="dt-what">
                                 <?php if ($type === 'birthday'): ?>
-                                    <?= (int)($ev['age_turning'] ?? 0) ?> <?= $lang === 'ru' ? 'лет исполняется' : 'жасқа толады' ?>
+                                    <?= (int)($ev['age_turning'] ?? 0) ?> <?= ($lang === 'ru' || $lang === 'en') ? 'лет исполняется' : 'жасқа толады' ?>
                                 <?php elseif ($type === 'death_anniversary'): ?>
-                                    <span class="pc-accent"><?= htmlspecialchars($lang === 'ru' ? ($ev['memorial_label_ru'] ?? '') : ($ev['memorial_label_kk'] ?? '')) ?></span>
+                                    <span class="pc-accent"><?= htmlspecialchars(($lang === 'ru' || $lang === 'en') ? ($ev['memorial_label_ru'] ?? '') : ($ev['memorial_label_kk'] ?? '')) ?></span>
                                 <?php elseif ($type === 'wedding'): ?>
-                                    <?= htmlspecialchars($lang === 'ru' ? ($ev['jubilee_ru'] ?? '') : ($ev['jubilee_kk'] ?? '')) ?>
+                                    <?= htmlspecialchars(($lang === 'ru' || $lang === 'en') ? ($ev['jubilee_ru'] ?? '') : ($ev['jubilee_kk'] ?? '')) ?>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -156,10 +156,10 @@ require __DIR__ . '/../layout/master_start.php';
                     <div class="dt-foot">
                         <span class="dt-date">
                             <svg class="ic dt-ic" aria-hidden="true"><use href="#i-calendar"/></svg>
-                            <?= htmlspecialchars((string)($lang === 'ru' ? ($ev['formatted_date_ru'] ?? $ev['event_date']) : ($ev['formatted_date_kk'] ?? $ev['event_date']))) ?>
+                            <?= htmlspecialchars((string)(($lang === 'ru' || $lang === 'en') ? ($ev['formatted_date_ru'] ?? $ev['event_date']) : ($ev['formatted_date_kk'] ?? $ev['event_date']))) ?>
                         </span>
                         <?php
-                            $kinshipText = ($lang === 'ru') ? ($ev['kinship_ru'] ?? '') : ($ev['kinship_kk'] ?? '');
+                            $kinshipText = (($lang === 'ru' || $lang === 'en')) ? ($ev['kinship_ru'] ?? '') : ($ev['kinship_kk'] ?? '');
                             if ($kinshipText !== ''):
                         ?>
                             <span class="badge" title="<?= htmlspecialchars($kinshipText) ?>"><?= htmlspecialchars($kinshipText) ?></span>
@@ -175,8 +175,8 @@ require __DIR__ . '/../layout/master_start.php';
                             }
                         ?>
                         <a class="btn btn-sm btn-ghost" href="/events?<?= htmlspecialchars(http_build_query($evQuery)) ?>"
-                           data-tip="<?= $lang === 'ru' ? 'Создать мероприятие с фотоальбомом' : 'Фотоальбомы бар іс-шара құру' ?>">
-                            <svg class="ic dt-ic" aria-hidden="true"><use href="#i-camera"/></svg><?= $lang === 'ru' ? 'Мероприятие' : 'Іс-шара' ?>
+                           data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'Создать мероприятие с фотоальбомом' : 'Фотоальбомы бар іс-шара құру' ?>">
+                            <svg class="ic dt-ic" aria-hidden="true"><use href="#i-camera"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Мероприятие' : 'Іс-шара' ?>
                         </a>
                     </div>
                 </article>
@@ -189,7 +189,7 @@ require __DIR__ . '/../layout/master_start.php';
 <div id="zhetiAtaModal" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="zhetiAtaTitle" style="max-width: 640px;">
         <div class="modal-head">
-            <h3 id="zhetiAtaTitle"><?= $lang === 'ru' ? 'Проверка традиции «Жеті ата»' : '«Жеті ата» тексеру дәстүрі' ?></h3>
+            <h3 id="zhetiAtaTitle"><?= ($lang === 'ru' || $lang === 'en') ? 'Проверка традиции «Жеті ата»' : '«Жеті ата» тексеру дәстүрі' ?></h3>
             <button type="button" class="btn btn-ghost btn-icon" onclick="closeZhetiAtaPageModal()" aria-label="Жабу / Закрыть">
                 <svg class="ic"><use href="#i-x"/></svg>
             </button>
@@ -197,7 +197,7 @@ require __DIR__ . '/../layout/master_start.php';
         <form onsubmit="handleZhetiAtaCalc(event)">
             <div class="modal-body">
                 <p class="muted small">
-                    <?= $lang === 'ru' ? 'Выберите двух людей из шежіре, чтобы проверить наличие общего предка по мужской линии до 7 колен.' : 'Шежіредегі екі адамды таңдап, олардың 7 буын аралығында ортақ атасының бар-жоғын тексеріңіз.' ?>
+                    <?= ($lang === 'ru' || $lang === 'en') ? 'Выберите двух людей из шежіре, чтобы проверить наличие общего предка по мужской линии до 7 колен.' : 'Шежіредегі екі адамды таңдап, олардың 7 буын аралығында ортақ атасының бар-жоғын тексеріңіз.' ?>
                 </p>
                 <div class="form-row">
                     <div class="field">
@@ -213,7 +213,7 @@ require __DIR__ . '/../layout/master_start.php';
             </div>
             <div class="modal-foot">
                 <button type="button" class="btn" onclick="closeZhetiAtaPageModal()">Жабу / Закрыть</button>
-                <button type="submit" class="btn btn-primary"><?= $lang === 'ru' ? 'Проверить 7 колен' : '7 буынды тексеру' ?></button>
+                <button type="submit" class="btn btn-primary"><?= ($lang === 'ru' || $lang === 'en') ? 'Проверить 7 колен' : '7 буынды тексеру' ?></button>
             </div>
         </form>
     </div>

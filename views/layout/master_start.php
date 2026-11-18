@@ -32,18 +32,18 @@ if (!empty($userPersonId)) {
 
 $youAreText = '';
 if ($connectedPersonName) {
-    $youAreText = ($lang === 'ru')
+    $youAreText = (($lang === 'ru' || $lang === 'en'))
         ? "Вы — {$connectedPersonName}"
         : I18n::kazakhYouAre($connectedPersonName);
 } else {
     $userName = $user['name'] ?? 'Қонақ';
-    $youAreText = ($lang === 'ru') ? "Вы — {$userName}" : I18n::kazakhYouAre($userName);
+    $youAreText = (($lang === 'ru' || $lang === 'en')) ? "Вы — {$userName}" : I18n::kazakhYouAre($userName);
 }
 
 $roleBadgeText = match ($userRole) {
-    'admin'  => ($lang === 'ru' ? 'Администратор' : 'Әкімші'),
-    'editor' => ($lang === 'ru' ? 'Редактор' : 'Редактор'),
-    default  => ($lang === 'ru' ? 'Читатель' : 'Оқырман'),
+    'admin'  => (($lang === 'ru' || $lang === 'en') ? 'Администратор' : 'Әкімші'),
+    'editor' => (($lang === 'ru' || $lang === 'en') ? 'Редактор' : 'Редактор'),
+    default  => (($lang === 'ru' || $lang === 'en') ? 'Читатель' : 'Оқырман'),
 };
 
 // TASK-008: пункты меню (линейные SVG-иконки вместо эмодзи) и хлебные крошки
@@ -53,11 +53,11 @@ $navItems = [
     'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => '71',  'group' => 1],
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
-    'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => ($lang === 'ru' ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
+    'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => (($lang === 'ru' || $lang === 'en') ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
 ];
 if ($isAdmin) {
     // ALT-004: журнал изменений виден только администратору
-    $navItems['history'] = ['href' => '/history', 'icon' => 'i-history', 'label' => ($lang === 'ru' ? 'Журнал изменений' : 'Өзгерістер журналы'), 'count' => null, 'group' => 3];
+    $navItems['history'] = ['href' => '/history', 'icon' => 'i-history', 'label' => (($lang === 'ru' || $lang === 'en') ? 'Журнал изменений' : 'Өзгерістер журналы'), 'count' => null, 'group' => 3];
 }
 if ($canEdit) {
     $navItems['clans'] = ['href' => '/admin/clans', 'icon' => 'i-tree', 'label' => 'Ру таңбалары', 'count' => null, 'group' => 3]; // TASK-030
@@ -66,9 +66,9 @@ if ($isAdmin) {
     $navItems['admin'] = ['href' => '/admin', 'icon' => 'i-settings', 'label' => I18n::t('nav_admin'), 'count' => null, 'group' => 3];
 }
 $navGroupLabels = [
-    1 => ($lang === 'ru' ? 'Шежире' : 'Шежіре'),
-    2 => ($lang === 'ru' ? 'Записи' : 'Жазбалар'),
-    3 => ($lang === 'ru' ? 'Управление' : 'Басқару'),
+    1 => (($lang === 'ru' || $lang === 'en') ? 'Шежире' : 'Шежіре'),
+    2 => (($lang === 'ru' || $lang === 'en') ? 'Записи' : 'Жазбалар'),
+    3 => (($lang === 'ru' || $lang === 'en') ? 'Управление' : 'Басқару'),
 ];
 
 $crumbs = [];
@@ -248,11 +248,11 @@ $dsThemeReady = !empty($dsThemeReady);
                 <span class="ds-tamga"><svg class="ic"><use href="#i-tamga"/></svg></span>
                 <span>
                     <b class="ds-brand-title"><?= htmlspecialchars($siteTitle) ?></b>
-                    <span><?= $lang === 'ru' ? 'Керей · Жагалбайлы' : 'Керей · Жағалбайлы' ?></span>
+                    <span><?= ($lang === 'ru' || $lang === 'en') ? 'Керей · Жагалбайлы' : 'Керей · Жағалбайлы' ?></span>
                 </span>
             </a>
 
-            <nav class="ds-nav" aria-label="<?= $lang === 'ru' ? 'Главное меню' : 'Негізгі мәзір' ?>">
+            <nav class="ds-nav" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Главное меню' : 'Негізгі мәзір' ?>">
                 <?php $prevGroup = 0; foreach ($navItems as $key => $item): ?>
                     <?php if ($item['group'] !== $prevGroup): ?>
                         <?php if ($prevGroup !== 0): ?><div class="ds-divider"></div><?php endif; ?>
@@ -276,23 +276,24 @@ $dsThemeReady = !empty($dsThemeReady);
         <!-- Рабочая область (белый остров) -->
         <div class="ds-main">
             <header class="ds-topbar">
-                <button type="button" class="btn btn-ghost btn-icon mobile-only" onclick="toggleMobileSidebar()" aria-label="<?= $lang === 'ru' ? 'Меню' : 'Мәзір' ?>">
+                <button type="button" class="btn btn-ghost btn-icon mobile-only" onclick="toggleMobileSidebar()" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Меню' : 'Мәзір' ?>">
                     <svg class="ic"><use href="#i-menu"/></svg>
                 </button>
                 <div class="ds-you-are desktop-only"><?= htmlspecialchars($youAreText) ?></div>
                 <div class="spacer"></div>
 
-                <!-- Переключатель языка ҚАЗ / РУС -->
-                <div class="seg" role="group" aria-label="<?= $lang === 'ru' ? 'Язык' : 'Тіл' ?>">
+                <!-- ALT-007: переключатель языка ҚАЗ / РУС / ENG -->
+                <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Язык' : 'Тіл' ?>">
                     <button type="button" class="<?= $lang === 'kk' ? 'active' : '' ?>" onclick="switchAppLanguage('kk')">ҚАЗ</button>
                     <button type="button" class="<?= $lang === 'ru' ? 'active' : '' ?>" onclick="switchAppLanguage('ru')">РУС</button>
+                    <button type="button" class="<?= $lang === 'en' ? 'active' : '' ?>" onclick="switchAppLanguage('en')">ENG</button>
                 </div>
 
                 <!-- Переключатель темы (появляется на страницах, переведённых на дизайн-систему) -->
                 <?php if ($dsThemeReady): ?>
                 <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAppTheme()"
-                        aria-label="<?= $lang === 'ru' ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>"
-                        data-tip="<?= $lang === 'ru' ? 'Светлая / тёмная' : 'Жарық / қараңғы' ?>">
+                        aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>"
+                        data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'Светлая / тёмная' : 'Жарық / қараңғы' ?>">
                     <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
                 </button>
                 <?php endif; ?>
@@ -318,7 +319,7 @@ $dsThemeReady = !empty($dsThemeReady);
 
             <!-- Рабочая область контента -->
             <main class="ds-content">
-                <nav class="ds-crumbs" aria-label="<?= $lang === 'ru' ? 'Навигация' : 'Навигация' ?>">
+                <nav class="ds-crumbs" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Навигация' : 'Навигация' ?>">
                     <?php foreach ($crumbs as $i => $c): ?>
                         <?php if ($i > 0): ?><svg class="ic" style="width:14px;height:14px" aria-hidden="true"><use href="#i-chevron-r"/></svg><?php endif; ?>
                         <?php if ($i === count($crumbs) - 1 || $c['href'] === null): ?>

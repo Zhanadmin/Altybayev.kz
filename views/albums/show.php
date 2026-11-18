@@ -6,7 +6,7 @@ use App\Core\I18n;
 
 /** @var array $album @var ?array $family @var ?array $event @var array $items @var array $people */
 $lang = I18n::lang();
-$ru = ($lang === 'ru');
+$ru = (($lang === 'ru' || $lang === 'en'));
 $L = fn(string $kk, string $r) => $ru ? $r : $kk;
 
 $isEvent = !empty($event);

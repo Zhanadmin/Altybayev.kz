@@ -76,7 +76,12 @@ class Response
         if (!headers_sent()) {
             header('Content-Type: text/html; charset=utf-8');
         }
+        // ALT-007: английский интерфейс собирается из русской ветки шаблонов,
+        // затем подписи переводятся единым слоем I18n::translateHtml().
+        ob_start();
         require $file;
+        $html = (string)ob_get_clean();
+        echo I18n::translateHtml($html);
         exit;
     }
 }

@@ -207,7 +207,7 @@ class AuthController
      */
     public function switchLanguage(Request $request, string $code): void
     {
-        if (in_array($code, ['kk', 'ru', 'en'], true)) {
+        if (in_array($code, ['kk', 'ru', 'en', 'es'], true)) {
             \App\Core\I18n::setLang($code);
         }
 

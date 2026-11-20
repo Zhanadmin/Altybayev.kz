@@ -10,7 +10,7 @@ use App\Core\I18n;
 $lang = I18n::lang();
 $langRef = !empty($isHome) ? '/' : '/login';
 $siteTitle = I18n::siteTitle();
-$pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход в систему" : "{$siteTitle} — Жүйеге кіру";
+$pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTitle} — Вход в систему" : "{$siteTitle} — Жүйеге кіру";
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($lang) ?>">
@@ -81,13 +81,14 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
 
     <!-- Язык и тема -->
     <div class="au-top">
-        <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Язык' : 'Тіл' ?>">
+        <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Язык' : 'Тіл' ?>">
             <a href="/lang/kk?ref=<?= $langRef ?>" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
             <a href="/lang/ru?ref=<?= $langRef ?>" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
             <a href="/lang/en?ref=<?= $langRef ?>" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
+            <a href="/lang/es?ref=<?= $langRef ?>" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
-                aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
+                aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
             <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
         </button>
     </div>
@@ -101,12 +102,12 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
         <h1><?= htmlspecialchars($siteTitle) ?></h1>
         <hr class="oyu-rule">
         <p class="wl-lead">
-            <?= ($lang === 'ru' || $lang === 'en')
+            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es')
                 ? 'Здесь живёт шежіре семьи Алтыбаевых: кто от кого пошёл, где чьи корни, как выросли наши семьи. Это тёплый семейный дом в интернете — чтобы дети знали своих предков, а родные всегда были рядом.'
                 : 'Мұнда Алтыбаевтар әулетінің шежіресі сақталады: кім кімнен тарады, тамыр қайда, отбасылар қалай өсті. Бұл — интернеттегі жылы отбасылық үй: балалар ата-бабасын білсін, жақындар үнемі қасымызда болсын.' ?>
         </p>
         <div class="wl-chips" aria-hidden="true">
-            <?php foreach (($lang === 'ru' || $lang === 'en')
+            <?php foreach (($lang === 'ru' || $lang === 'en' || $lang === 'es')
                 ? ['Древо рода', 'Жеті ата', 'Үш жұрт', 'Семьи и дети', 'Дни рождения', 'Фотоальбомы', '3D-дубрава', 'Контакты родных']
                 : ['Ру ағашы', 'Жеті ата', 'Үш жұрт', 'Отбасылар мен балалар', 'Туған күндер', 'Фотоальбомдар', '3D емен орманы', 'Туыстар байланысы'] as $chip): ?>
                 <span class="wl-chip"><?= htmlspecialchars($chip) ?></span>
@@ -118,19 +119,19 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                 <svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>
                 <div>
                     <?php if ($error === 'auth_failed'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Ошибка входа:' : 'Кіру сәтсіз аяқталды:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en') ? 'При авторизации через Google произошла ошибка. Попробуйте снова.' : 'Google арқылы кіру кезінде қате орын алды. Қайталап көріңіз.' ?>
+                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Ошибка входа:' : 'Кіру сәтсіз аяқталды:' ?></strong><br>
+                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'При авторизации через Google произошла ошибка. Попробуйте снова.' : 'Google арқылы кіру кезінде қате орын алды. Қайталап көріңіз.' ?>
                     <?php elseif ($error === 'invalid_state'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Ошибка сессии:' : 'Қауіпсіздік қатесі:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en') ? 'Сессия устарела. Обновите страницу и попробуйте снова.' : 'Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз.' ?>
+                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Ошибка сессии:' : 'Қауіпсіздік қатесі:' ?></strong><br>
+                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сессия устарела. Обновите страницу и попробуйте снова.' : 'Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз.' ?>
                     <?php elseif ($error === 'forbidden'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Доступ запрещен:' : 'Рұқсат жоқ:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en') ? 'Недостаточно прав для доступа к этому разделу.' : 'Бұл бөлімге кіруге құқығыңыз жеткіліксіз.' ?>
+                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Доступ запрещен:' : 'Рұқсат жоқ:' ?></strong><br>
+                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Недостаточно прав для доступа к этому разделу.' : 'Бұл бөлімге кіруге құқығыңыз жеткіліксіз.' ?>
                     <?php elseif ($error === 'admin_only'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Только для администратора:' : 'Тек әкімшіге:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en') ? 'Этот раздел доступен только администратору.' : 'Бұл бет тек әкімшіге арналған.' ?>
+                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Только для администратора:' : 'Тек әкімшіге:' ?></strong><br>
+                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Этот раздел доступен только администратору.' : 'Бұл бет тек әкімшіге арналған.' ?>
                     <?php else: ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Ошибка:' : 'Қате:' ?></strong> <?= htmlspecialchars($error) ?>
+                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Ошибка:' : 'Қате:' ?></strong> <?= htmlspecialchars($error) ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -138,12 +139,12 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
     </header>
 
     <section aria-labelledby="wl-what">
-        <h2 id="wl-what"><?= ($lang === 'ru' || $lang === 'en') ? 'Что здесь можно делать' : 'Мұнда не істеуге болады' ?></h2>
-        <p class="wl-h2-sub"><?= ($lang === 'ru' || $lang === 'en') ? 'Несколько картинок-образцов — на них вымышленные имена, не настоящие люди.' : 'Бірнеше үлгі сурет — мұнда ойдан шығарылған есімдер, нақты адамдар емес.' ?></p>
+        <h2 id="wl-what"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Что здесь можно делать' : 'Мұнда не істеуге болады' ?></h2>
+        <p class="wl-h2-sub"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Несколько картинок-образцов — на них вымышленные имена, не настоящие люди.' : 'Бірнеше үлгі сурет — мұнда ойдан шығарылған есімдер, нақты адамдар емес.' ?></p>
         <div class="wl-grid">
 
             <article class="island wl-card">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Схема родового древа' : 'Ру ағашының сызбасы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Схема родового древа' : 'Ру ағашының сызбасы' ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <path class="wl-s-line" d="M150 36v16M150 52H70v14M150 52h80v14M70 94v14M70 108H40v10M70 108h30v10M230 94v14M230 108v10"/>
                         <rect class="wl-s-m" x="110" y="10" width="80" height="26" rx="8"/>
@@ -158,13 +159,13 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Древо рода' : 'Ру ағашы' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en') ? 'Весь род на одном экране: от предков до внуков. Листайте, приближайте, смотрите жеті ата и Үш жұрт.' : 'Бүкіл ру бір экранда: ата-бабадан немерелерге дейін. Жылжытыңыз, үлкейтіңіз, жеті ата мен Үш жұртты қараңыз.' ?></p>
+                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Древо рода' : 'Ру ағашы' ?></h3>
+                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Весь род на одном экране: от предков до внуков. Листайте, приближайте, смотрите жеті ата и Үш жұрт.' : 'Бүкіл ру бір экранда: ата-бабадан немерелерге дейін. Жылжытыңыз, үлкейтіңіз, жеті ата мен Үш жұртты қараңыз.' ?></p>
                 </div>
             </article>
 
             <article class="island wl-card">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Семья с раскрывающимся списком детей' : 'Балалар тізімі ашылатын отбасы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семья с раскрывающимся списком детей' : 'Балалар тізімі ашылатын отбасы' ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="20" y="10" width="260" height="54" rx="12"/>
                         <circle class="wl-s-m" cx="52" cy="37" r="14"/>
@@ -181,13 +182,13 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Семьи и дети' : 'Отбасылар мен балалар' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en') ? 'Каждая семья — отдельная карточка. Нажмите — и раскроются дети, а за ними и их семьи.' : 'Әр отбасы — бөлек карточка. Басыңыз — балалары ашылады, олардың артынан өз отбасылары.' ?></p>
+                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семьи и дети' : 'Отбасылар мен балалар' ?></h3>
+                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Каждая семья — отдельная карточка. Нажмите — и раскроются дети, а за ними и их семьи.' : 'Әр отбасы — бөлек карточка. Басыңыз — балалары ашылады, олардың артынан өз отбасылары.' ?></p>
                 </div>
             </article>
 
             <article class="island wl-card">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Карточка человека' : 'Адам карточкасы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка человека' : 'Адам карточкасы' ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="50" y="8" width="200" height="134" rx="14"/>
                         <circle class="wl-s-acc" cx="150" cy="44" r="24"/>
@@ -200,13 +201,13 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Карточка человека' : 'Адам карточкасы' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en') ? 'Фото, даты, родители, супруги и дети, история жизни и, если человек разрешил, — контакты.' : 'Фото, күндер, ата-ана, жұбай мен балалар, өмір баяны және адам рұқсат етсе — байланыс деректері.' ?></p>
+                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка человека' : 'Адам карточкасы' ?></h3>
+                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фото, даты, родители, супруги и дети, история жизни и, если человек разрешил, — контакты.' : 'Фото, күндер, ата-ана, жұбай мен балалар, өмір баяны және адам рұқсат етсе — байланыс деректері.' ?></p>
                 </div>
             </article>
 
             <article class="island wl-card">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Календарь дней рождения' : 'Туған күндер күнтізбесі' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Календарь дней рождения' : 'Туған күндер күнтізбесі' ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="60" y="12" width="180" height="126" rx="14"/>
                         <rect class="wl-s-acc" x="60" y="12" width="180" height="30" rx="14"/>
@@ -221,13 +222,13 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Дни рождения и памятные даты' : 'Туған күндер мен ескерту күндері' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en') ? 'Сайт напомнит, у кого скоро день рождения, и сохранит памятные даты семьи.' : 'Кімнің туған күні жақындағанын еске салып, отбасының ескерткіш күндерін сақтайды.' ?></p>
+                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дни рождения и памятные даты' : 'Туған күндер мен ескерту күндері' ?></h3>
+                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сайт напомнит, у кого скоро день рождения, и сохранит памятные даты семьи.' : 'Кімнің туған күні жақындағанын еске салып, отбасының ескерткіш күндерін сақтайды.' ?></p>
                 </div>
             </article>
 
             <article class="island wl-card">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Фотоальбом' : 'Фотоальбом' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фотоальбом' : 'Фотоальбом' ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="20" y="22" width="120" height="86" rx="10" transform="rotate(-5 80 65)"/>
                         <rect class="wl-s-acc" x="30" y="32" width="100" height="56" rx="6" transform="rotate(-5 80 65)"/>
@@ -239,13 +240,13 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en') ? 'Фотоальбомы' : 'Фотоальбомдар' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en') ? 'Альбомы семей и семейных событий: тои, юбилеи, встречи. Старые снимки больше не потеряются.' : 'Отбасылар мен отбасылық шаралар альбомдары: той, мерейтой, кездесу. Ескі суреттер енді жоғалмайды.' ?></p>
+                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фотоальбомы' : 'Фотоальбомдар' ?></h3>
+                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Альбомы семей и семейных событий: тои, юбилеи, встречи. Старые снимки больше не потеряются.' : 'Отбасылар мен отбасылық шаралар альбомдары: той, мерейтой, кездесу. Ескі суреттер енді жоғалмайды.' ?></p>
                 </div>
             </article>
 
             <article class="island wl-card">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? '3D-дубрава' : '3D емен орманы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? '3D-дубрава' : '3D емен орманы' ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect x="0" y="112" width="300" height="38" fill="var(--c-success-soft)"/>
                         <g>
@@ -260,17 +261,17 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en') ? '3D-дубрава' : '3D емен орманы' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en') ? 'Род как роща: каждое дерево — семья. Можно пройтись между ними и увидеть, как всё выросло.' : 'Ру — орман іспетті: әр ағаш — бір отбасы. Арасында серуендеп, бәрінің қалай өскенін көруге болады.' ?></p>
+                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? '3D-дубрава' : '3D емен орманы' ?></h3>
+                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Род как роща: каждое дерево — семья. Можно пройтись между ними и увидеть, как всё выросло.' : 'Ру — орман іспетті: әр ағаш — бір отбасы. Арасында серуендеп, бәрінің қалай өскенін көруге болады.' ?></p>
                 </div>
             </article>
 
         </div>
     </section>
 
-    <section class="island au-card wl-enter" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Вход' : 'Кіру' ?>">
-        <h2 style="margin-top:0"><?= ($lang === 'ru' || $lang === 'en') ? 'Войти в шежіре' : 'Шежіреге кіру' ?></h2>
-        <p class="au-sub" style="margin-bottom:var(--sp-5)"><?= ($lang === 'ru' || $lang === 'en') ? 'Вход — через ваш аккаунт Google.' : 'Кіру — Google аккаунтыңыз арқылы.' ?></p>
+    <section class="island au-card wl-enter" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вход' : 'Кіру' ?>">
+        <h2 style="margin-top:0"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Войти в шежіре' : 'Шежіреге кіру' ?></h2>
+        <p class="au-sub" style="margin-bottom:var(--sp-5)"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вход — через ваш аккаунт Google.' : 'Кіру — Google аккаунтыңыз арқылы.' ?></p>
 
         <div class="au-actions">
             <a href="/auth/google" class="btn btn-google">
@@ -280,23 +281,23 @@ $pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Вход �
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <span><?= ($lang === 'ru' || $lang === 'en') ? 'Войти через Google' : 'Google арқылы кіру' ?></span>
+                <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Войти через Google' : 'Google арқылы кіру' ?></span>
             </a>
         </div>
 
         <div class="alert au-note">
             <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
             <div>
-                <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Доступ только по приглашению.' : 'Қолжетімділік тек шақыру бойынша.' ?></strong><br>
-                <?= ($lang === 'ru' || $lang === 'en') ? 'Шежіре закрыто для посторонних: войти могут только приглашённые члены семьи.' : 'Шежіре бөтен адамдарға жабық: тек шақырылған отбасы мүшелері кіре алады.' ?>
+                <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Доступ только по приглашению.' : 'Қолжетімділік тек шақыру бойынша.' ?></strong><br>
+                <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Шежіре закрыто для посторонних: войти могут только приглашённые члены семьи.' : 'Шежіре бөтен адамдарға жабық: тек шақырылған отбасы мүшелері кіре алады.' ?>
             </div>
         </div>
 
         <!-- TASK-014: ссылки для проверки Google OAuth -->
         <div class="au-legal">
-            <a href="/privacy"><?= ($lang === 'ru' || $lang === 'en') ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
+            <a href="/privacy"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
             <span aria-hidden="true">·</span>
-            <a href="/terms"><?= ($lang === 'ru' || $lang === 'en') ? 'Условия' : 'Шарттар' ?></a>
+            <a href="/terms"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Условия' : 'Шарттар' ?></a>
         </div>
 
         <div class="au-foot">altybayev.kz &bull; 2026</div>

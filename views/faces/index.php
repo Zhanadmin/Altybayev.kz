@@ -5,7 +5,7 @@ use App\Core\I18n;
 
 /** @var array $user @var bool $ready @var array $summary @var array $people @var bool $enabled @var bool $isAdmin @var string $csrf */
 $lang = I18n::lang();
-$ru = (($lang === 'ru' || $lang === 'en'));
+$ru = (($lang === 'ru' || $lang === 'en' || $lang === 'es'));
 $L = fn(string $kk, string $r) => $ru ? $r : $kk;
 
 $title = $L('Тұлғалар', 'Лица');

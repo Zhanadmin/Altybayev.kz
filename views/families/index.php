@@ -18,9 +18,9 @@ require __DIR__ . '/../layout/master_start.php';
             <p class="sub"><?= htmlspecialchars(I18n::t('families_subtitle')) ?></p>
         </div>
         <div class="actions pp-stats">
-            <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? 'Всего союзов:' : 'Барлық шаңырақ:' ?> <b><?= (int)$totalAll ?></b></span>
-            <span class="badge badge-success"><?= ($lang === 'ru' || $lang === 'en') ? 'В браке:' : 'Некеде:' ?> <b><?= (int)$totalMarried ?></b></span>
-            <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? 'В разводе:' : 'Ажырасқан:' ?> <b><?= (int)$totalDivorced ?></b></span>
+            <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Всего союзов:' : 'Барлық шаңырақ:' ?> <b><?= (int)$totalAll ?></b></span>
+            <span class="badge badge-success"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В браке:' : 'Некеде:' ?> <b><?= (int)$totalMarried ?></b></span>
+            <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В разводе:' : 'Ажырасқан:' ?> <b><?= (int)$totalDivorced ?></b></span>
         </div>
     </div>
 
@@ -29,16 +29,16 @@ require __DIR__ . '/../layout/master_start.php';
         <div class="search">
             <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
             <input type="text" name="q" class="input" value="<?= htmlspecialchars((string)($filters['q'] ?? '')) ?>"
-                   placeholder="<?= ($lang === 'ru' || $lang === 'en') ? 'Поиск по фамилии супругов, роду, месту...' : 'Ерлі-зайыптылардың аты-жөні, руы бойынша іздеу...' ?>">
+                   placeholder="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Поиск по фамилии супругов, роду, месту...' : 'Ерлі-зайыптылардың аты-жөні, руы бойынша іздеу...' ?>">
         </div>
         <select name="status" class="select" onchange="document.getElementById('familiesFilterForm').submit()">
-            <option value=""><?= ($lang === 'ru' || $lang === 'en') ? 'Статус: Все' : 'Күйі: Барлығы' ?></option>
-            <option value="married" <?= ($filters['status'] ?? '') === 'married' ? 'selected' : '' ?>><?= ($lang === 'ru' || $lang === 'en') ? 'В браке' : 'Некеде' ?></option>
-            <option value="divorced" <?= ($filters['status'] ?? '') === 'divorced' ? 'selected' : '' ?>><?= ($lang === 'ru' || $lang === 'en') ? 'В разводе' : 'Ажырасқан' ?></option>
+            <option value=""><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Статус: Все' : 'Күйі: Барлығы' ?></option>
+            <option value="married" <?= ($filters['status'] ?? '') === 'married' ? 'selected' : '' ?>><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В браке' : 'Некеде' ?></option>
+            <option value="divorced" <?= ($filters['status'] ?? '') === 'divorced' ? 'selected' : '' ?>><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В разводе' : 'Ажырасқан' ?></option>
         </select>
-        <button type="submit" class="btn btn-primary"><?= ($lang === 'ru' || $lang === 'en') ? 'Найти' : 'Іздеу' ?></button>
+        <button type="submit" class="btn btn-primary"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Найти' : 'Іздеу' ?></button>
         <?php if (!empty($filters['q']) || !empty($filters['status'])): ?>
-            <a href="/families" class="btn btn-ghost"><?= ($lang === 'ru' || $lang === 'en') ? 'Сброс' : 'Тазарту' ?></a>
+            <a href="/families" class="btn btn-ghost"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сброс' : 'Тазарту' ?></a>
         <?php endif; ?>
     </form>
 
@@ -46,26 +46,26 @@ require __DIR__ . '/../layout/master_start.php';
     <?php if (empty($families)): ?>
         <div class="island pp-empty">
             <svg class="pp-sprout" viewBox="0 0 140 90" aria-hidden="true" focusable="false"><use href="#o-sprout"/></svg>
-            <b><?= ($lang === 'ru' || $lang === 'en') ? 'Семьи не найдены' : 'Шаңырақтар табылмады' ?></b>
-            <span class="muted small"><?= ($lang === 'ru' || $lang === 'en') ? 'Попробуйте изменить параметры поиска' : 'Іздеу параметрлерін өзгертіп көріңіз' ?></span>
+            <b><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семьи не найдены' : 'Шаңырақтар табылмады' ?></b>
+            <span class="muted small"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Попробуйте изменить параметры поиска' : 'Іздеу параметрлерін өзгертіп көріңіз' ?></span>
         </div>
     <?php else: ?>
         <div class="pp-bar">
             <div class="pp-bar-actions">
-                <div class="pp-toggle-btns" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Сворачивание поколений' : 'Ұрпақтарды жию немесе ашу' ?>">
+                <div class="pp-toggle-btns" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сворачивание поколений' : 'Ұрпақтарды жию немесе ашу' ?>">
                     <button type="button" class="btn btn-ghost btn-sm" id="btnCollapseAll" onclick="fmCollapseAll()">
                         <svg class="ic" aria-hidden="true"><use href="#i-chevron-up"/></svg>
-                        <span><?= ($lang === 'ru' || $lang === 'en') ? 'Свернуть все' : 'Барлығын жию' ?></span>
+                        <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Свернуть все' : 'Барлығын жию' ?></span>
                     </button>
                     <button type="button" class="btn btn-ghost btn-sm" id="btnExpandAll" onclick="fmExpandAll()">
                         <svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-                        <span><?= ($lang === 'ru' || $lang === 'en') ? 'Развернуть все' : 'Барлығын ашу' ?></span>
+                        <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Развернуть все' : 'Барлығын ашу' ?></span>
                     </button>
                 </div>
-                <nav class="seg" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Поколения' : 'Ұрпақтар' ?>">
-                    <a href="#fm-top" class="active"><?= ($lang === 'ru' || $lang === 'en') ? 'Все' : 'Барлығы' ?></a>
+                <nav class="seg" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Поколения' : 'Ұрпақтар' ?>">
+                    <a href="#fm-top" class="active"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Все' : 'Барлығы' ?></a>
                     <?php foreach ($generationGroups as $gKey => $group): if (empty($group['families'])) continue; ?>
-                        <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>" onclick="fmEnsureOpen('<?= htmlspecialchars((string)$gKey) ?>')"><?= htmlspecialchars(($lang === 'ru' || $lang === 'en') ? $group['title_ru'] : $group['title_kk']) ?></a>
+                        <a href="#gen-<?= htmlspecialchars((string)$gKey) ?>" onclick="fmEnsureOpen('<?= htmlspecialchars((string)$gKey) ?>')"><?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? $group['title_ru'] : $group['title_kk']) ?></a>
                     <?php endforeach; ?>
                 </nav>
             </div>
@@ -74,7 +74,7 @@ require __DIR__ . '/../layout/master_start.php';
         <div class="pp-groups">
         <?php foreach ($generationGroups as $gKey => $group):
             if (empty($group['families'])) continue;
-            $gTitle = (($lang === 'ru' || $lang === 'en')) ? $group['title_ru'] : $group['title_kk'];
+            $gTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? $group['title_ru'] : $group['title_kk'];
             $isAncestors = ($gKey === 'ancestors');
             $gk = htmlspecialchars((string)$gKey);
         ?>
@@ -82,11 +82,11 @@ require __DIR__ . '/../layout/master_start.php';
                 <div class="pp-group-head" role="button" tabindex="0" aria-expanded="true" aria-controls="gen-body-<?= $gk ?>"
                      onclick="fmToggle('<?= $gk ?>')"
                      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();fmToggle('<?= $gk ?>');}"
-                     title="<?= ($lang === 'ru' || $lang === 'en') ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
+                     title="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Нажмите, чтобы свернуть или развернуть поколение' : 'Ұрпақты жию немесе ашу үшін басыңыз' ?>">
                     <div class="pp-group-head-main">
                         <svg class="ic pp-group-chevron" aria-hidden="true"><use href="#i-chevron-down"/></svg>
                         <span class="ribbon-wrap"><h3 class="ribbon ribbon-sm<?= $isAncestors ? ' gold' : '' ?>"><?= htmlspecialchars($gTitle) ?></h3></span>
-                        <span class="badge pp-group-count"><?= count($group['families']) ?> <?= ($lang === 'ru' || $lang === 'en') ? 'союзов' : 'отбасы' ?></span>
+                        <span class="badge pp-group-count"><?= count($group['families']) ?> <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'союзов' : 'отбасы' ?></span>
                         <span class="pp-gen-line" aria-hidden="true"></span>
                     </div>
                 </div>
@@ -111,10 +111,10 @@ require __DIR__ . '/../layout/master_start.php';
                                     $together = (!$isMarried && $mEnd === '') ? '' : I18n::togetherLabel($mStart, $endForCount, $lang);
                                 ?>
                                                                 <span class="badge<?= $isMarried ? ' badge-success' : '' ?>">
-                                    <?= $isMarried ? (($lang === 'ru' || $lang === 'en') ? 'В браке' : 'Некеде') : (($lang === 'ru' || $lang === 'en') ? 'В разводе' : 'Ажырасқан') ?>
+                                    <?= $isMarried ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В браке' : 'Некеде') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В разводе' : 'Ажырасқан') ?>
                                 </span>
                                 <?php if ($canEdit): ?>
-                                    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-tip="<?= ($lang === 'ru' || $lang === 'en') ? 'Изменить' : 'Өңдеу' ?>" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Изменить' : 'Өңдеу' ?>"
+                                    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Изменить' : 'Өңдеу' ?>" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Изменить' : 'Өңдеу' ?>"
                                             onclick="openMarriageEditModal(<?= (int)$m['id'] ?>, '<?= htmlspecialchars($m['status'] ?? 'married') ?>', '<?= htmlspecialchars((string)($m['start_date'] ?: $m['marriage_date'])) ?>', '<?= htmlspecialchars((string)($m['end_date'] ?: $m['divorce_date'])) ?>', '<?= htmlspecialchars((string)($m['notes'] ?? '')) ?>')">
                                         <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                                     </button>
@@ -124,7 +124,7 @@ require __DIR__ . '/../layout/master_start.php';
                             <!-- Супруги (Пара) -->
                             <div class="fm-pair">
                                 <div class="island-sub fm-spouse is-m">
-                                    <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-m"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Муж' : 'Отағасы' ?></div>
+                                    <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-m"/></svg><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Муж' : 'Отағасы' ?></div>
                                     <?php if ($h): ?>
                                         <a href="/person/<?= (int)$h['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['h_name']) ?>"><?= htmlspecialchars($f['h_name']) ?></a>
                                         <div class="small muted">
@@ -132,26 +132,26 @@ require __DIR__ . '/../layout/master_start.php';
                                             <?php $hl = I18n::lifeLabel($h); if ($hl['short'] !== ''): ?> · <span title="<?= htmlspecialchars($hl['title']) ?>"><?= htmlspecialchars($hl['short']) ?></span><?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Неизвестно' : 'Белгісіз' ?></span>
+                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз' ?></span>
                                     <?php endif; ?>
                                 </div>
 
                                 <div class="fm-rings-col" style="display:flex;flex-direction:column;align-items:center;gap:2px">
                                     <svg class="couple-rings fm-rings<?= $isMarried ? '' : ' is-apart' ?>" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
-                                    <?php if ($together !== ''): ?><span class="fm-together small muted"<?= $mStart !== '' ? ' title="' . htmlspecialchars((($lang === 'ru' || $lang === 'en') ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><?= htmlspecialchars($together) ?></span><?php endif; ?>
+                                    <?php if ($together !== ''): ?><span class="fm-together small muted"<?= $mStart !== '' ? ' title="' . htmlspecialchars((($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата брака: ' : 'Неке күні: ') . I18n::marriageDateLabel($mStart, $lang)) . '"' : '' ?>><?= htmlspecialchars($together) ?></span><?php endif; ?>
                                 </div>
 
                                 <div class="island-sub fm-spouse is-f">
-                                    <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Жена' : 'Отанасы' ?></div>
+                                    <div class="pc-label"><svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Жена' : 'Отанасы' ?></div>
                                     <?php if ($w): ?>
                                         <a href="/person/<?= (int)$w['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['w_name']) ?>"><?= htmlspecialchars($f['w_name']) ?></a>
                                         <?php if (!empty($w['maiden_name'])): ?>
-                                            <div class="small muted">(<?= ($lang === 'ru' || $lang === 'en') ? 'урожд.' : 'қыз кезінде:' ?> <?= htmlspecialchars($w['maiden_name']) ?>)</div>
+                                            <div class="small muted">(<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезінде:' ?> <?= htmlspecialchars($w['maiden_name']) ?>)</div>
                                         <?php endif; ?>
                                         <?php $wl = I18n::lifeLabel($w); ?>
                                         <div class="small muted"><?php if ($wl['short'] !== ''): ?><span title="<?= htmlspecialchars($wl['title']) ?>"><?= htmlspecialchars($wl['short']) ?></span><?php endif; ?></div>
                                     <?php else: ?>
-                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Неизвестно' : 'Белгісіз' ?></span>
+                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз' ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -162,7 +162,7 @@ require __DIR__ . '/../layout/master_start.php';
                                 <div class="fm-dates small muted">
                                     <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
                                     <span>
-                                        <?= ($lang === 'ru' || $lang === 'en') ? 'Брак:' : 'Неке:' ?>
+                                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Брак:' : 'Неке:' ?>
                                         <?= htmlspecialchars(I18n::marriageDateLabel($m['start_date'] ?: $m['marriage_date'], $lang)) ?>
                                         <?php if (!empty($m['end_date']) || !empty($m['divorce_date'])): ?>
                                             — <?= htmlspecialchars(I18n::marriageDateLabel($m['end_date'] ?: $m['divorce_date'], $lang)) ?>
@@ -173,28 +173,28 @@ require __DIR__ . '/../layout/master_start.php';
 
                             <!-- Балалары (Дети, отсортированные по старшинству) -->
                             <div>
-                                <div class="pc-sub-title"><?= ($lang === 'ru' || $lang === 'en') ? 'Дети (' . count($children) . ')' : 'Балалары (' . count($children) . ')' ?></div>
+                                <div class="pc-sub-title"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дети (' . count($children) . ')' : 'Балалары (' . count($children) . ')' ?></div>
                                 <?php if (empty($children)): ?>
-                                    <div class="small muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Общие дети не зарегистрированы' : 'Ортақ балалар тіркелмеген' ?></div>
+                                    <div class="small muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Общие дети не зарегистрированы' : 'Ортақ балалар тіркелмеген' ?></div>
                                 <?php else: ?>
                                     <div class="pc-tags">
                                         <?php foreach ($children as $c):
                                             if (!empty($c['uzatylgan'])):
                                                 $uz = $c['uzatylgan'];
                                                 $uzFam = (string)($uz['family'] ?? '');
-                                                if (($lang === 'ru' || $lang === 'en') && mb_strtolower($uzFam) === 'белгісіз') { $uzFam = 'не указан'; }
+                                                if (($lang === 'ru' || $lang === 'en' || $lang === 'es') && mb_strtolower($uzFam) === 'белгісіз') { $uzFam = 'не указан'; }
                                         ?>
                                             <a href="/families#fam-<?= (int)$uz['marriage_id'] ?>" class="badge pc-tag fm-uzatylgan"
-                                               title="<?= htmlspecialchars(($lang === 'ru' || $lang === 'en') ? 'Выдана замуж — её место в семье мужа' : 'Ұзатылған — орны күйеуінің шаңырағында') ?>">
+                                               title="<?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Выдана замуж — её место в семье мужа' : 'Ұзатылған — орны күйеуінің шаңырағында') ?>">
                                                 <svg class="gmark" aria-hidden="true" focusable="false"><use href="#g-f"/></svg>
                                                 <?= htmlspecialchars($c['first_name']) ?>
                                                 <?php $ul = I18n::lifeLabel($c); if ($ul['short'] !== ''): ?>
                                                     <span title="<?= htmlspecialchars($ul['title']) ?>"><?= htmlspecialchars($ul['short']) ?></span>
                                                 <?php endif; ?>
-                                                <span class="fm-uz-note">⚭ <?= ($lang === 'ru' || $lang === 'en') ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
+                                                <span class="fm-uz-note">⚭ <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'замужем' : 'ұзатылған' ?><?= $uzFam !== '' ? ' — ' . htmlspecialchars($uzFam) : '' ?></span>
                                             </a>
                                         <?php continue; endif; ?>
-                                            <a href="/person/<?= (int)$c['id'] ?>" class="badge pc-tag" title="<?= ($c['gender'] === 'M') ? (($lang === 'ru' || $lang === 'en') ? 'Сын' : 'Ұлы') : (($lang === 'ru' || $lang === 'en') ? 'Дочь' : 'Қызы') ?>">
+                                            <a href="/person/<?= (int)$c['id'] ?>" class="badge pc-tag" title="<?= ($c['gender'] === 'M') ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сын' : 'Ұлы') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дочь' : 'Қызы') ?>">
                                                 <svg class="gmark" aria-hidden="true" focusable="false"><use href="#<?= ($c['gender'] === 'M') ? 'g-m' : 'g-f' ?>"/></svg>
                                                 <?= htmlspecialchars($c['first_name']) ?>
                                                 <?php $cl = I18n::lifeLabel($c); if ($cl['short'] !== ''): ?>
@@ -210,9 +210,9 @@ require __DIR__ . '/../layout/master_start.php';
                                 <div class="fm-foot">
                                     <button type="button" class="btn btn-sm btn-ghost fm-kids-btn" aria-expanded="false"
                                             data-fams="<?= htmlspecialchars(implode(',', $f['child_fams'])) ?>"
-                                            data-open="<?= ($lang === 'ru' || $lang === 'en') ? 'Скрыть семьи детей' : 'Балаларының отбасыларын жасыру' ?>"
-                                            data-closed="<?= ($lang === 'ru' || $lang === 'en') ? 'Семьи детей' : 'Балаларының отбасылары' ?>">
-                                        <?= ($lang === 'ru' || $lang === 'en') ? 'Семьи детей' : 'Балаларының отбасылары' ?> (<?= count($f['child_fams']) ?>)
+                                            data-open="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Скрыть семьи детей' : 'Балаларының отбасыларын жасыру' ?>"
+                                            data-closed="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семьи детей' : 'Балаларының отбасылары' ?>">
+                                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семьи детей' : 'Балаларының отбасылары' ?> (<?= count($f['child_fams']) ?>)
                                     </button>
                                 </div>
                             <?php endif; ?>
@@ -223,11 +223,11 @@ require __DIR__ . '/../layout/master_start.php';
                             ?>
                                 <div class="fm-foot">
                                     <a href="/tree?focus=<?= $focalId ?>" class="btn btn-sm btn-ghost">
-                                        <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Показать семью в древе' : 'Отбасын шежіреде көрсету' ?>
+                                        <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Показать семью в древе' : 'Отбасын шежіреде көрсету' ?>
                                     </a>
                                     <?php /* TASK-018: фотоальбом семьи */ $famMedia = (int)(($albumCounts ?? [])[(int)$m['id']] ?? 0); ?>
                                     <a href="/family/<?= (int)$m['id'] ?>/albums" class="btn btn-sm btn-ghost">
-                                        <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Фотоальбом' : 'Фотоальбом' ?><?= $famMedia > 0 ? ' · ' . $famMedia : '' ?>
+                                        <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фотоальбом' : 'Фотоальбом' ?><?= $famMedia > 0 ? ' · ' . $famMedia : '' ?>
                                     </a>
                                 </div>
                             <?php endif; ?>
@@ -337,8 +337,8 @@ document.addEventListener('click', function (e) {
 <div id="marriageEditModal" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="marriageEditTitle" style="max-width: 440px;">
         <div class="modal-head">
-            <h3 id="marriageEditTitle"><?= ($lang === 'ru' || $lang === 'en') ? 'Редактирование брака' : 'Некені өңдеу' ?></h3>
-            <button type="button" class="btn btn-ghost btn-icon" onclick="closeMarriageEditModal()" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Закрыть' : 'Жабу' ?>">
+            <h3 id="marriageEditTitle"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Редактирование брака' : 'Некені өңдеу' ?></h3>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="closeMarriageEditModal()" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Закрыть' : 'Жабу' ?>">
                 <svg class="ic"><use href="#i-x"/></svg>
             </button>
         </div>
@@ -348,27 +348,27 @@ document.addEventListener('click', function (e) {
                 <div class="field">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
                         <input type="checkbox" id="editMarriageDivorced" onchange="toggleMarriageDivorce()">
-                        <span><?= ($lang === 'ru' || $lang === 'en') ? 'Развелись' : 'Ажырасты' ?></span>
+                        <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Развелись' : 'Ажырасты' ?></span>
                     </label>
                 </div>
                 <div class="form-row">
                     <div class="field">
-                        <label for="editMarriageStartDate"><?= ($lang === 'ru' || $lang === 'en') ? 'Дата брака' : 'Неке күні' ?></label>
+                        <label for="editMarriageStartDate"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата брака' : 'Неке күні' ?></label>
                         <input type="text" id="editMarriageStartDate" class="input" placeholder="1995">
                     </div>
                     <div class="field" id="editMarriageEndField" style="display:none">
-                        <label for="editMarriageEndDate"><?= ($lang === 'ru' || $lang === 'en') ? 'Дата развода' : 'Ажырасқан күні' ?></label>
+                        <label for="editMarriageEndDate"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата развода' : 'Ажырасқан күні' ?></label>
                         <input type="text" id="editMarriageEndDate" class="input" placeholder="2010">
                     </div>
                 </div>
                 <div class="field">
-                    <label for="editMarriageNotes"><?= ($lang === 'ru' || $lang === 'en') ? 'Примечание' : 'Жазба' ?></label>
+                    <label for="editMarriageNotes"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Примечание' : 'Жазба' ?></label>
                     <input type="text" id="editMarriageNotes" class="input">
                 </div>
             </div>
             <div class="modal-foot">
-                <button type="button" class="btn" onclick="closeMarriageEditModal()"><?= ($lang === 'ru' || $lang === 'en') ? 'Отмена' : 'Бас тарту' ?></button>
-                <button type="submit" class="btn btn-primary"><?= ($lang === 'ru' || $lang === 'en') ? 'Сохранить' : 'Сақтау' ?></button>
+                <button type="button" class="btn" onclick="closeMarriageEditModal()"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Отмена' : 'Бас тарту' ?></button>
+                <button type="submit" class="btn btn-primary"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сохранить' : 'Сақтау' ?></button>
             </div>
         </form>
     </div>

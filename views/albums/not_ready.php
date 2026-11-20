@@ -5,7 +5,7 @@ use App\Core\Auth;
 use App\Core\I18n;
 
 $lang = I18n::lang();
-$ru = (($lang === 'ru' || $lang === 'en'));
+$ru = (($lang === 'ru' || $lang === 'en' || $lang === 'es'));
 $notFound = !empty($notFound);
 $title = $notFound ? ($ru ? 'Не найдено' : 'Табылмады') : ($ru ? 'Фотоальбомы' : 'Фотоальбомдар');
 $activeNav = 'events';

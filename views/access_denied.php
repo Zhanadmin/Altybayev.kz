@@ -9,7 +9,7 @@ use App\Core\I18n;
  */
 $lang = I18n::lang();
 $siteTitle = I18n::siteTitle();
-$pageTitle = (($lang === 'ru' || $lang === 'en')) ? "{$siteTitle} — Доступ ограничен" : "{$siteTitle} — Қолжетімділік шектелген";
+$pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTitle} — Доступ ограничен" : "{$siteTitle} — Қолжетімділік шектелген";
 $isBlocked = (($reason ?? '') === 'account_blocked');
 ?>
 <!DOCTYPE html>
@@ -48,13 +48,14 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
 
     <!-- Язык и тема -->
     <div class="au-top">
-        <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Язык' : 'Тіл' ?>">
+        <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Язык' : 'Тіл' ?>">
             <a href="/lang/kk?ref=/access-denied" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
             <a href="/lang/ru?ref=/access-denied" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
             <a href="/lang/en?ref=/access-denied" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
+            <a href="/lang/es?ref=/access-denied" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
-                aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
+                aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
             <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
         </button>
     </div>
@@ -65,9 +66,9 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
         </div>
 
         <?php if ($isBlocked): ?>
-            <h1><?= ($lang === 'ru' || $lang === 'en') ? 'Аккаунт заблокирован' : 'Аккаунт бұғатталған' ?></h1>
+            <h1><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Аккаунт заблокирован' : 'Аккаунт бұғатталған' ?></h1>
         <?php else: ?>
-            <h1><?= ($lang === 'ru' || $lang === 'en') ? 'Доступ только по приглашению' : 'Тек шақыру бойынша қолжетімді' ?></h1>
+            <h1><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Доступ только по приглашению' : 'Тек шақыру бойынша қолжетімді' ?></h1>
         <?php endif; ?>
         <hr class="oyu-rule">
 
@@ -78,20 +79,20 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
         <div class="alert au-message">
             <?php if ($isBlocked): ?>
                 <p>
-                    <?= ($lang === 'ru' || $lang === 'en')
+                    <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es')
                         ? 'Ваша учетная запись временно приостановлена. Для восстановления доступа обратитесь к администратору портала.'
                         : 'Сіздің аккаунтыңыз жүйеде уақытша тоқтатылған. Шежірені көру немесе өңдеу құқығын қалпына келтіру үшін сайт әкімшісіне хабарласыңыз.' ?>
                 </p>
             <?php else: ?>
                 <p>
-                    <?= htmlspecialchars(($lang === 'ru' || $lang === 'en')
+                    <?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es')
                         ? "Для данного email еще нет активного приглашения. Портал «{$siteTitle}» является закрытым семейным ресурсом. Если вы являетесь членом семьи, свяжитесь с администратором для получения приглашения."
                         : "Бұл электрондық поштаға шақыру жіберілмеген. «{$siteTitle}» порталы жабық отбасылық дерекқор болып табылады. Егер сіз осы әулеттің мүшесі болсаңыз, әкімшіге хабарласып, шақыру алыңыз.") ?>
                 </p>
                 <!-- TASK-014: вежливая подсказка, к кому обратиться -->
                 <p>
-                    <strong><?= ($lang === 'ru' || $lang === 'en') ? 'Попросите приглашение у Жандоса' : 'Жандостан шақыру сұраңыз' ?></strong>
-                    — <?= ($lang === 'ru' || $lang === 'en') ? 'напишите ему, с какого Gmail вы входите' : 'қай Gmail арқылы кіретініңізді жазыңыз' ?>:
+                    <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Попросите приглашение у Жандоса' : 'Жандостан шақыру сұраңыз' ?></strong>
+                    — <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'напишите ему, с какого Gmail вы входите' : 'қай Gmail арқылы кіретініңізді жазыңыз' ?>:
                     <a href="mailto:zhandos.alt06@gmail.com">zhandos.alt06@gmail.com</a>
                 </p>
             <?php endif; ?>
@@ -99,17 +100,17 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
 
         <div class="au-actions">
             <a href="/auth/google" class="btn btn-primary">
-                <?= ($lang === 'ru' || $lang === 'en') ? 'Сменить аккаунт Google' : 'Басқа Google аккаунтымен кіру' ?>
+                <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сменить аккаунт Google' : 'Басқа Google аккаунтымен кіру' ?>
             </a>
             <a href="/logout" class="btn">
-                <?= ($lang === 'ru' || $lang === 'en') ? 'На главную входа' : 'Басты кіру бетіне оралу' ?>
+                <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'На главную входа' : 'Басты кіру бетіне оралу' ?>
             </a>
         </div>
 
         <div class="au-legal">
-            <a href="/privacy"><?= ($lang === 'ru' || $lang === 'en') ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
+            <a href="/privacy"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
             <span aria-hidden="true">·</span>
-            <a href="/terms"><?= ($lang === 'ru' || $lang === 'en') ? 'Условия' : 'Шарттар' ?></a>
+            <a href="/terms"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Условия' : 'Шарттар' ?></a>
         </div>
 
         <div class="au-foot">altybayev.kz &bull; 2026</div>

@@ -15,7 +15,7 @@ $birthdays = $birthdays ?? [];
 $anniversaries = $anniversaries ?? [];
 
 // TASK-008: «плашка даты» (число + месяц) из даты вида ГГГГ-ММ-ДД; если дата в другом виде — плашку не показываем
-$hmMonths = ($lang === 'ru' || $lang === 'en')
+$hmMonths = ($lang === 'ru' || $lang === 'en' || $lang === 'es')
     ? ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
     : ['қаң', 'ақп', 'нау', 'сәу', 'мам', 'мау', 'шіл', 'там', 'қыр', 'қаз', 'қар', 'жел'];
 $hmDateChip = static function ($date) use ($hmMonths): ?array {
@@ -58,7 +58,7 @@ require __DIR__ . '/layout/master_start.php';
         <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg"><?= htmlspecialchars($siteTitle) ?></h1></div>
         <p class="lead"><?= htmlspecialchars(I18n::t('welcome_heading')) ?>, <?= htmlspecialchars($userName) ?>!</p>
         <p class="hm-intro">
-            <?= ($lang === 'ru' || $lang === 'en')
+            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es')
                 ? 'Добро пожаловать в закрытую систему родословной. Здесь бережно сохраняется преемственность поколений, история семьи, памятные даты и воспоминания.'
                 : 'Әулет шежіресінің жабық отбасылық порталына қош келдіңіз. Мұнда ата-бабалар тарихы, ұрпақтар сабақтастығы, естеліктер мен маңызды күндер сақталады.' ?>
         </p>
@@ -71,7 +71,7 @@ require __DIR__ . '/layout/master_start.php';
                 <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><?= htmlspecialchars(I18n::t('nav_persons')) ?>
             </a>
             <a href="/tree" class="btn btn-primary">
-                <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= ($lang === 'ru' || $lang === 'en') ? 'Открыть шежире' : 'Шежірені ашу' ?>
+                <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Открыть шежире' : 'Шежірені ашу' ?>
             </a>
         </div>
     </section>
@@ -82,25 +82,25 @@ require __DIR__ . '/layout/master_start.php';
             <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>
             <div class="value">270</div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_persons')) ?></div>
-            <div class="note"><?= ($lang === 'ru' || $lang === 'en') ? 'человек, поиск, карточки' : 'тұлға, іздеу, парақшалар' ?></div>
+            <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'человек, поиск, карточки' : 'тұлға, іздеу, парақшалар' ?></div>
         </a>
         <a href="/families" class="stat-leaf hm-link">
             <svg class="ic" aria-hidden="true"><use href="#i-family"/></svg>
             <div class="value">71</div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_families')) ?></div>
-            <div class="note"><?= ($lang === 'ru' || $lang === 'en') ? 'семья, союзы и дети' : 'шаңырақ, некелер және балалар' ?></div>
+            <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'семья, союзы и дети' : 'шаңырақ, некелер және балалар' ?></div>
         </a>
         <a href="/tree" class="stat-leaf hm-link">
             <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>
             <div class="value hm-value-text">Өңдеу · Орман</div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_tree')) ?></div>
-            <div class="note"><?= ($lang === 'ru' || $lang === 'en') ? 'Виды: Өңдеу, Шежіре-Орман' : 'Өңдеу және Шежіре-Орман түрлері' ?></div>
+            <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Виды: Өңдеу, Шежіре-Орман' : 'Өңдеу және Шежіре-Орман түрлері' ?></div>
         </a>
         <a href="/dates" class="stat-leaf hm-link">
             <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
             <div class="value hm-value-text">Жеті ата</div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_dates')) ?></div>
-            <div class="note"><?= ($lang === 'ru' || $lang === 'en') ? 'Дни рождения, годовщины, Жеті ата' : 'Туған күндер, ас беру, Жеті ата' ?></div>
+            <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дни рождения, годовщины, Жеті ата' : 'Туған күндер, ас беру, Жеті ата' ?></div>
         </a>
     </div>
 
@@ -112,7 +112,7 @@ require __DIR__ . '/layout/master_start.php';
             <div class="sec-title">
                 <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
                 <h3><?= htmlspecialchars(I18n::t('upcoming_birthdays')) ?></h3>
-                <a href="/dates" class="more"><?= ($lang === 'ru' || $lang === 'en') ? 'Все даты' : 'Барлығы' ?></a>
+                <a href="/dates" class="more"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Все даты' : 'Барлығы' ?></a>
             </div>
 
             <?php if (empty($birthdays)): ?>
@@ -136,18 +136,18 @@ require __DIR__ . '/layout/master_start.php';
                                 <div>
                                     <div class="name" title="<?= htmlspecialchars($pName) ?>"><?= htmlspecialchars($pName) ?></div>
                                     <div class="meta">
-                                        <?= htmlspecialchars((string)((($lang === 'ru' || $lang === 'en') ? ($b['formatted_date_ru'] ?? null) : null) ?? $b['formatted_date_kk'] ?? $b['birth_date'])) ?>
+                                        <?= htmlspecialchars((string)((($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($b['formatted_date_ru'] ?? null) : null) ?? $b['formatted_date_kk'] ?? $b['birth_date'])) ?>
                                         <?php if (!empty($b['age_turning'])): ?>
-                                            · <?= (int)$b['age_turning'] ?> <?= ($lang === 'ru' || $lang === 'en') ? 'лет' : 'жас' ?>
+                                            · <?= (int)$b['age_turning'] ?> <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'лет' : 'жас' ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                             </a>
                             <div class="right">
                                 <?php if ($isToday): ?>
-                                    <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en') ? 'Сегодня' : 'Бүгін' ?></span>
+                                    <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сегодня' : 'Бүгін' ?></span>
                                 <?php else: ?>
-                                    <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? 'Через ' . (int)$b['days_until'] . ' дн.' : (int)$b['days_until'] . ' күннен соң' ?></span>
+                                    <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Через ' . (int)$b['days_until'] . ' дн.' : (int)$b['days_until'] . ' күннен соң' ?></span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -161,7 +161,7 @@ require __DIR__ . '/layout/master_start.php';
             <div class="sec-title">
                 <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
                 <h3><?= htmlspecialchars(I18n::t('memorial_anniversaries')) ?></h3>
-                <a href="/dates" class="more"><?= ($lang === 'ru' || $lang === 'en') ? 'Все даты' : 'Барлығы' ?></a>
+                <a href="/dates" class="more"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Все даты' : 'Барлығы' ?></a>
             </div>
 
             <?php if (empty($anniversaries)): ?>
@@ -185,18 +185,18 @@ require __DIR__ . '/layout/master_start.php';
                                 <div>
                                     <div class="name" title="<?= htmlspecialchars($pName) ?>"><?= htmlspecialchars($pName) ?></div>
                                     <div class="meta">
-                                        <?= htmlspecialchars((string)((($lang === 'ru' || $lang === 'en') ? ($a['formatted_date_ru'] ?? null) : null) ?? $a['formatted_date_kk'] ?? $a['death_date'])) ?>
+                                        <?= htmlspecialchars((string)((($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($a['formatted_date_ru'] ?? null) : null) ?? $a['formatted_date_kk'] ?? $a['death_date'])) ?>
                                         <?php if (!empty($a['years_since'])): ?>
-                                            · <?= (int)$a['years_since'] ?> <?= ($lang === 'ru' || $lang === 'en') ? 'лет со дня ухода' : 'жыл өтті' ?>
+                                            · <?= (int)$a['years_since'] ?> <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'лет со дня ухода' : 'жыл өтті' ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                             </a>
                             <div class="right">
                                 <?php if ($isToday): ?>
-                                    <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en') ? 'Сегодня' : 'Бүгін' ?></span>
+                                    <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сегодня' : 'Бүгін' ?></span>
                                 <?php else: ?>
-                                    <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en') ? 'Через ' . (int)$a['days_until'] . ' дн.' : (int)$a['days_until'] . ' күннен соң' ?></span>
+                                    <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Через ' . (int)$a['days_until'] . ' дн.' : (int)$a['days_until'] . ' күннен соң' ?></span>
                                 <?php endif; ?>
                             </div>
                         </div>

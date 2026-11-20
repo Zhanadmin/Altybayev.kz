@@ -36,10 +36,10 @@ class PrintPosterController
         $rootId = (int)$request->get('root', $defaultRoot);
         $gens = max(1, min(15, (int)$request->get('gens', 7)));
         $lang = (string)$request->get('lang', I18n::lang());
-        if (!in_array($lang, ['kk', 'ru', 'en'], true)) {
+        if (!in_array($lang, ['kk', 'ru', 'en', 'es'], true)) {
             $lang = 'kk';
         }
-        $dataLang = $lang === 'en' ? 'ru' : $lang;
+        $dataLang = ($lang === 'en' || $lang === 'es') ? 'ru' : $lang;
 
         $posterData = $this->service->getPosterData($rootId, $gens, $dataLang);
         // при неверном root сервис подставляет другой корень — показываем фактический
@@ -65,8 +65,8 @@ class PrintPosterController
         $rootId = (int)$request->get('root', 65);
         $gens = (int)$request->get('gens', 7);
         $lang = (string)$request->get('lang', I18n::lang());
-        $lang = in_array($lang, ['kk', 'ru', 'en'], true) ? $lang : 'kk';
-        $dataLang = $lang === 'en' ? 'ru' : $lang;
+        $lang = in_array($lang, ['kk', 'ru', 'en', 'es'], true) ? $lang : 'kk';
+        $dataLang = ($lang === 'en' || $lang === 'es') ? 'ru' : $lang;
 
         $data = $this->service->getPosterData($rootId, $gens, $dataLang);
         Response::json($data);
@@ -81,8 +81,8 @@ class PrintPosterController
         $rootId = (int)$request->get('root', 65);
         $gens = (int)$request->get('gens', 7);
         $lang = (string)$request->get('lang', I18n::lang());
-        $lang = in_array($lang, ['kk', 'ru', 'en'], true) ? $lang : 'kk';
-        $dataLang = $lang === 'en' ? 'ru' : $lang;
+        $lang = in_array($lang, ['kk', 'ru', 'en', 'es'], true) ? $lang : 'kk';
+        $dataLang = ($lang === 'en' || $lang === 'es') ? 'ru' : $lang;
 
         $svg = $this->service->generateSvgPoster($rootId, $gens, 'gold_scroll', $dataLang);
 

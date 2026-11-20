@@ -11,7 +11,7 @@ use App\Core\I18n;
  * @var string $page privacy|terms
  */
 $lang = I18n::lang();
-$ru = (($lang === 'ru' || $lang === 'en'));
+$ru = (($lang === 'ru' || $lang === 'en' || $lang === 'es'));
 $siteTitle = I18n::siteTitle();
 $isPrivacy = (($page ?? 'privacy') === 'privacy');
 $path = $isPrivacy ? '/privacy' : '/terms';
@@ -68,6 +68,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             <a href="/lang/kk?ref=<?= $e($path) ?>" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
             <a href="/lang/ru?ref=<?= $e($path) ?>" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
             <a href="/lang/en?ref=<?= $e($path) ?>" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
+            <a href="/lang/es?ref=<?= $e($path) ?>" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
                 aria-label="<?= $ru ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
@@ -153,7 +154,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 <p><a href="mailto:<?= $e($contactEmail) ?>"><?= $e($contactEmail) ?></a> мекенжайына хат жазыңыз — аккаунтыңыз бен кіру деректеріңізді жоямыз. Шежіреден өзіңіз туралы мәліметті алып тастағыңыз келсе, оны хатта көрсетіңіз.</p>
             <?php endif; ?>
 
-            <?php if ($lang !== 'en'): ?>
+            <?php if ($lang !== 'en' && $lang !== 'es'): ?>
             <div class="lg-en" lang="en">
                 <strong>In English (summary).</strong>
                 altybayev.kz is a private family genealogy website, available only to invited relatives.
@@ -199,7 +200,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 </ul>
             <?php endif; ?>
 
-            <?php if ($lang !== 'en'): ?>
+            <?php if ($lang !== 'en' && $lang !== 'es'): ?>
             <div class="lg-en" lang="en">
                 <strong>In English (summary).</strong>
                 altybayev.kz is a private, non-commercial family website for invited relatives only, provided free of charge and "as is".

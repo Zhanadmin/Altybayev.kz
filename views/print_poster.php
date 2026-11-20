@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 $isKk = ($lang === 'kk');
 $isEn = ($lang === 'en');
+$isEs = ($lang === 'es');
 $root = $posterData['root'] ?? [];
 $levels = $posterData['levels'] ?? [];
 $totalPersons = $posterData['total_persons'] ?? 0;
@@ -404,6 +405,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
             <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=kk" style="text-decoration:none;">ҚАЗ</a>
             <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=ru" style="text-decoration:none;">РУС</a>
             <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=en" style="text-decoration:none;">ENG</a>
+            <a class="btn-tb btn-tb-secondary" href="?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=es" style="text-decoration:none;">ESP</a>
 
             <!-- Кнопка скачивания SVG: в виде «древо» — рисунок со страницы, в виде «список» — старый серверный SVG -->
             <a id="btnPosterSvg" href="/tree/print/svg?root=<?= $rootId ?>&amp;gens=<?= $gens ?>&amp;lang=<?= $lang ?>" class="btn-tb btn-tb-secondary" onclick="return downloadPosterSvg(event)" title="<?= $isKk ? 'Векторлық SVG форматында жүктеп алу (кез келген өлшемге созылады)' : 'Скачать в векторном формате SVG (масштабируется без потерь)' ?>">
@@ -490,14 +492,16 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
 
     <script src="/assets/js/rodoslov-generator.js"></script>
     <script>
-        const POSTER_LANG = '<?= $isKk ? 'kk' : ($isEn ? 'en' : 'ru') ?>';
-        const POSTER_LATINIZE = <?= $isEn ? 'true' : 'false' ?>;
+        const POSTER_LANG = '<?= $isKk ? 'kk' : ($isEn ? 'en' : ($isEs ? 'es' : 'ru')) ?>';
+        const POSTER_LATINIZE = <?= ($isEn || $isEs) ? 'true' : 'false' ?>;
         const POSTER_DATA = <?= json_encode($rodoslovData ?? ['persons' => [], 'marriages' => []], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '{"persons":[],"marriages":[]}' ?>;
         const POSTER_OPTS = <?= json_encode([
-            'title'    => $isEn ? 'SHEZHIRE OF THE ALTYBAYEV FAMILY' : ($isKk ? 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ' : 'ШЕЖИРЕ РОДА АЛТЫБАЕВТАР'),
+            'title'    => $isEn ? 'SHEZHIRE OF THE ALTYBAYEV FAMILY' : ($isEs ? 'SHEZHIRE DE LA FAMILIA ALTYBAYEV' : ($isKk ? 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ' : 'ШЕЖИРЕ РОДА АЛТЫБАЕВТАР')),
             'subtitle' => $isEn
                 ? 'Descendants of «' . \App\Core\I18n::latinize((string)$rootName) . '» · Clan: ' . \App\Core\I18n::latinize((string)$clan)
-                : ($isKk ? "«{$rootName}» ұрпақтары · Руы: " : "Потомки «{$rootName}» · Род: ") . $clan,
+                : ($isEs
+                    ? 'Descendientes de «' . \App\Core\I18n::latinize((string)$rootName) . '» · Clan: ' . \App\Core\I18n::latinize((string)$clan)
+                    : ($isKk ? "«{$rootName}» ұрпақтары · Руы: " : "Потомки «{$rootName}» · Род: ") . $clan),
             'mainClan' => mb_strtoupper((string)$clan, 'UTF-8'),
             'footnote' => 'altybayev.kz · ' . date('d.m.Y'),
         ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '{}' ?>;
@@ -516,6 +520,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
             const sheet = document.getElementById('rodoslovSheet');
             const isRu = POSTER_LANG === 'ru';
             const isEn = POSTER_LANG === 'en';
+            const isEs = POSTER_LANG === 'es';
             if (!window.RodoslovGenerator) {
                 showPosterView('list');
                 return;
@@ -523,10 +528,11 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
             const opts = Object.assign({}, POSTER_OPTS, {
                 focalId: POSTER_DATA.focal_id || 0,
                 latinizeNames: POSTER_LATINIZE,
-                emptyText: isEn ? 'No data — import GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз'),
+                emptyText: isEn ? 'No data — import GEDCOM' : (isEs ? 'Sin datos — importe GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз')),
                 labels: isEn ? { father: 'PATERNAL', mother: 'MATERNAL', inlaw: "WIFE'S CLAN", other: 'IN-LAWS' }
+                             : (isEs ? { father: 'PATERNO', mother: 'MATERNO', inlaw: 'CLAN DE LA ESPOSA', other: 'PARIENTES POLÍTICOS' }
                              : (isRu ? { father: 'РОД', mother: 'ПО МАТЕРИ', inlaw: 'РОД ЖЕНЫ', other: 'СВАТЫ' }
-                             : { father: 'АТА ЖҰРТ' })
+                             : { father: 'АТА ЖҰРТ' }))
             });
             if (isEn) {
                 opts.maidenPrefix = 'née';
@@ -539,6 +545,18 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
                     deceased: 'departed (golden ribbon, golden leaves)',
                     marriage: 'marriage',
                     dates: '*  date of birth     –  date of death'
+                };
+            } else if (isEs) {
+                opts.maidenPrefix = 'de soltera';
+                opts.marriagePrefix = 'matrimonio ·';
+                opts.tamgaPlaceholder = 'tamga';
+                opts.unknownClan = 'clan no especificado';
+                opts.legendText = {
+                    son: 'hijo',
+                    daughter: 'hija / nuera',
+                    deceased: 'fallecidos (cinta dorada, hojas doradas)',
+                    marriage: 'matrimonio',
+                    dates: '*  fecha de nacimiento     –  fecha de fallecimiento'
                 };
             } else if (isRu) {
                 opts.maidenPrefix = 'урожд.';
@@ -566,7 +584,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
                 sheet.innerHTML = '';
                 const msg = document.createElement('div');
                 msg.className = 'rodoslov-msg';
-                msg.textContent = isEn ? 'Failed to build the tree. Click "List" at the top.' : (isRu ? 'Не удалось построить древо. Нажмите «Список» вверху.' : 'Шежіре-ағашты салу мүмкін болмады. Жоғарыдағы «Тізім» батырмасын басыңыз.');
+                msg.textContent = isEn ? 'Failed to build the tree. Click "List" at the top.' : (isEs ? 'No se pudo construir el árbol. Haga clic en «Lista» arriba.' : (isRu ? 'Не удалось построить древо. Нажмите «Список» вверху.' : 'Шежіре-ағашты салу мүмкін болмады. Жоғарыдағы «Тізім» батырмасын басыңыз.'));
                 sheet.appendChild(msg);
             }
         }

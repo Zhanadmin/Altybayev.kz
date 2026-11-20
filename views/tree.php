@@ -3206,6 +3206,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 <button class="lang-btn active" id="langBtnKk" onclick="setLanguage('kk')">ҚАЗ</button>
                 <button class="lang-btn" id="langBtnRu" onclick="setLanguage('ru')">РУС</button>
                 <button class="lang-btn" id="langBtnEn" onclick="setLanguage('en')">ENG</button>
+                <button class="lang-btn" id="langBtnEs" onclick="setLanguage('es')">ESP</button>
             </div>
 
             <!-- Іздеу жолы -->
@@ -4143,6 +4144,72 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 rodoslov_maiden_prefix: "née",
                 lbl_focus_here: "Focus on selected",
                 lbl_set_me: "This is me (link account)",
+            },
+            es: {
+                back_to_portal: "Inicio",
+                brand_title_main: "Árbol Genealógico",
+                brand_title_sub: "",
+                mode_editing: "Editar",
+                mode_forest: "Bosque Shezhire 3D",
+                mode_list: "Lista",
+                lbl_view_in_tree: "Mostrar en el árbol (modo Editar)",
+                lbl_edit_person: "Editar",
+                form_is_deceased_checkbox: "Fallecido / ha partido",
+                search_placeholder: "Buscar un pariente...",
+                lbl_you_are_here: "Usted está aquí",
+                lbl_kinship_dict: "Diccionario de parentesco",
+                legend_male: "Hombre (rama / tarjeta)",
+                legend_female: "Mujer / hija (flor)",
+                legend_deceased: "Antepasados fallecidos (tono dorado de recuerdo)",
+                legend_living: "Generaciones vivas (hoja verde / brote)",
+                profile_gender: "Género:",
+                profile_years: "Años de vida:",
+                profile_place: "Lugar de nacimiento:",
+                profile_status: "Estado:",
+                profile_biography_title: "BIOGRAFÍA E HISTORIA:",
+                lbl_add_child: "Añadir hijo",
+                lbl_cancel: "Cancelar",
+                lbl_save: "Guardar",
+                lbl_close: "Cerrar",
+                form_first_name: "Nombre *",
+                form_last_name: "Apellido",
+                form_middle_name: "Patronímico",
+                form_maiden_name: "Apellido de soltera",
+                form_gender: "Género *",
+                gender_male: "Masculino",
+                gender_female: "Femenino",
+                form_is_deceased: "Estado",
+                status_living: "Vivo",
+                status_deceased: "Fallecido",
+                form_birth_year: "Año de nacimiento",
+                form_death_year: "Año de fallecimiento",
+                form_birth_place: "Lugar de nacimiento",
+                form_biography: "Biografía y memorias",
+                dict_modal_title: "📖 Diccionario de términos de parentesco kazajo",
+                dict_modal_sub: "Clan propio, parientes maternos y familia política",
+                clan_main_tree: "🌳 Kerey — árbol de la familia Altybayev",
+                clan_zhagalbayly_tree: "🌳 Árbol Zhagalbayly (clan de nuestras madres)",
+                clan_konyrat_tree: "🌳 Árbol Konyrat (clan de los casamenteros)",
+                crown_title: "🍃 Copa — generaciones vivas y niños",
+                trunk_title: "🏛️ Tronco directo (línea única de antepasados)",
+                root_title: "🌱 Raíz sagrada",
+                married_away_arrow: "Casada con el clan Konyrat ➔",
+                married_in_tag: "Hija de Zhagalbayly ↗",
+                you_are_here_badge: "★ Usted está aquí",
+                selected_badge: "Yo",
+                empty_tree_title: "Sin datos — importe GEDCOM",
+                empty_tree_desc: "Aún no hay personas en la base de datos. Importe un archivo GEDCOM de MyHeritage.",
+                lbl_import_gedcom: "Importar GEDCOM",
+                lbl_return_real: "🌳 Volver a la base de datos principal",
+                scope_focal: "Alrededores",
+                scope_full: "Árbol completo (270)",
+                forest_submode_rodoslov: "Árbol Shezhire (Rodoslov)",
+                forest_submode_3d: "Bosque Shezhire 3D",
+                rodoslov_paternal_trunk: "Tronco paterno: clan Kerey",
+                rodoslov_maternal_trunk: "Tronco materno: Zhagalbayly, Konyrat",
+                rodoslov_maiden_prefix: "de soltera",
+                lbl_focus_here: "Enfocar en el seleccionado",
+                lbl_set_me: "Este soy yo (vincular cuenta)",
             }
         };
 
@@ -4283,6 +4350,143 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             'Барлығы': 'All',
         };
 
+        // ALT-007: испанские подписи для динамических элементов древа.
+        const ES_TREE = {
+            'Ошибка базы данных': 'Error de base de datos',
+            '+ Отец': '+ Padre',
+            '+ Мать': '+ Madre',
+            '+ Супруг(а)': '+ Cónyuge',
+            '+ Брат/Сестра': '+ Hermano/Hermana',
+            '+ Сын': '+ Hijo',
+            '+ Дочь': '+ Hija',
+            'предков': 'antepasados',
+            'потомков': 'descendientes',
+            'урожд.': 'de soltera',
+            'не указан': 'no especificado',
+            'неизвестен': 'desconocido',
+            'неизвестно': 'desconocido',
+            'Супружеский союз': 'Unión matrimonial',
+            'Цветок рода (дочь)': 'Flor de la familia (hija)',
+            'Листик рода (сын)': 'Hoja de la familia (hijo)',
+            'Жена': 'Esposa',
+            'Сестра': 'Hermana',
+            'Брат': 'Hermano',
+            'Родители': 'Padres',
+            'Священный корень рода в земле (Таңба: Ашамай, Уран: Ошыбай!)': 'Raíz sagrada de la familia (Tamga: Ashamay, Grito: Oshybay!)',
+            'Родственные связи и сваты': 'Parentesco y casamenteros',
+            'Мужской': 'Masculino',
+            'Женский': 'Femenino',
+            'ушёл из жизни': 'ha fallecido',
+            'место кончины:': 'lugar de fallecimiento:',
+            'Биография не заполнена.': 'La biografía está vacía.',
+            'Родственник успешно добавлен в базу!': '¡Pariente añadido correctamente!',
+            'Чужую карточку можно только смотреть': 'La tarjeta de otra persona solo se puede ver',
+            'Данные успешно обновлены и сохранены в истории!': '¡Datos actualizados y guardados en el historial!',
+            'Вы уверены, что хотите удалить эту персону?': '¿Seguro que desea eliminar a esta persona?',
+            'Персона помечена как удаленная': 'Persona marcada como eliminada',
+            'Данные брака успешно сохранены!': '¡Datos del matrimonio guardados!',
+            'Клик — показать Үш жұрт': 'Clic para mostrar Üsh zhurt',
+            'Фокус в древе': 'Enfocar en el árbol',
+            'Редактировать': 'Editar',
+            'Супруг(а)': 'Cónyuge',
+            'Загрузка трех таблиц Үш жұрт...': 'Cargando las tres tablas de Üsh zhurt...',
+            'Ошибка загрузки данных': 'Error al cargar los datos',
+            'Мужчина': 'Hombre',
+            'Женщина': 'Mujer',
+            'Годы жизни:': 'Años de vida:',
+            'Возраст:': 'Edad:',
+            'Клик по родственнику в любой таблице — переход к нему в списке': 'Clic en un pariente de cualquier tabla para abrirlo en la lista',
+            'Переключить вид: рядом (3 колонки) или под ним (одна колонка)': 'Cambiar vista: lado a lado (3 columnas) o apilada (una columna)',
+            'Под ним (1)': 'Apilada (1)',
+            'Рядом (3)': 'Lado a lado (3)',
+            'Закрыть': 'Cerrar',
+            'Вторая связь': 'Segunda relación',
+            'также': 'también',
+            'Фильтр...': 'Filtrar...',
+            'Персона': 'Persona',
+            'Годы': 'Años',
+            'Кем приходится': 'Parentesco',
+            'Три журта': 'Tres zhurts',
+            'Загрузка...': 'Cargando...',
+            'Данные не найдены': 'No se encontraron datos',
+            'мужчина': 'hombre',
+            'женщина': 'mujer',
+            'Нет данных': 'Sin datos',
+            'Добавить': 'Añadir',
+            'Другие родственники': 'Otros parientes',
+            'Семья': 'Familia',
+            'Дети не указаны': 'Hijos no especificados',
+            'детей': 'hijos',
+            'Годы жизни': 'Años de vida',
+            'Дата рождения': 'Fecha de nacimiento',
+            'Дата ухода': 'Fecha de fallecimiento',
+            'Место рождения': 'Lugar de nacimiento',
+            'Место упокоения': 'Lugar de sepultura',
+            'Отец': 'Padre',
+            'Мать': 'Madre',
+            'Сын': 'Hijo',
+            'Дочь': 'Hija',
+            'Муж': 'Esposo',
+            'Дети': 'Hijos',
+            'Все': 'Todos',
+            'Фото': 'Foto',
+            'Фотоальбом': 'Álbum de fotos',
+            'Событие': 'Evento',
+            'Мероприятие': 'Evento',
+            'Род': 'Clan',
+            'Ру': 'Clan',
+            'Руы': 'Clan',
+            'Таңба': 'Tamga',
+            'Үш жұрт': 'Üsh zhurt',
+            'Өз жұрты': 'Clan propio (paterno)',
+            'Төркіні': 'Familia materna',
+            'Нағашы жұрты': 'Parientes maternos',
+            'Қайын жұрты': 'Familia política',
+            'Күйеуінің жағы': 'Familia del esposo',
+            'Жеті ата': 'Zheti ata',
+            'Басты бет': 'Inicio',
+            'Тізім': 'Lista',
+            'Окрестность': 'Alrededores',
+            'Все древо': 'Árbol completo',
+            'Сіз осындасыз': 'Usted está aquí',
+            'Сөздік': 'Diccionario',
+            'Плакат': 'Póster',
+            'Барлық рулар / All clans': 'Todos los clanes',
+            'Жынысы: All / Gender: All': 'Género: Todos',
+            'Ер / Male': 'Masculino',
+            'Әйел / Female': 'Femenino',
+            'Күйі: All / Status: All': 'Estado: Todos',
+            'Тірі ұрпақтар / Живые': 'Generaciones vivas',
+            'Ұшқан бабалар / Ушедшие': 'Antepasados fallecidos',
+            'Сұрыптау: А-Я / Сортировка: А-Я': 'Ordenar: A-Z',
+            'Сұрыптау: Я-А / Сортировка: Я-А': 'Ordenar: Z-A',
+            'Туған жылы бойынша (өсу) / By birth year (asc.)': 'Por año de nacimiento (asc.)',
+            'Туған жылы бойынша (кему) / By birth year (desc.)': 'Por año de nacimiento (desc.)',
+            'ID бойынша / По ID': 'Por ID',
+            'Тұлға / Person': 'Persona',
+            'Жынысы': 'Género',
+            'Жылдары': 'Años',
+            'Ата-анасы': 'Padres',
+            'Әрекет': 'Acción',
+            'Жынысы:': 'Género:',
+            'Өмір сүрген жылдары:': 'Años de vida:',
+            'Туған жері:': 'Lugar de nacimiento:',
+            'Күйі:': 'Estado:',
+            'ӨМІРБАЯНЫ МЕН ТАРИХЫ:': 'BIOGRAFÍA E HISTORIA:',
+            'Шежіре-Ағаш (Rodoslov)': 'Árbol Shezhire (Rodoslov)',
+            'Барлық рулар': 'Todos los clanes',
+            'Аты *': 'Nombre *',
+            'Тегі': 'Apellido',
+            'Әкесінің аты': 'Patronímico',
+            'Қыз кезіндегі тегі': 'Apellido de soltera',
+            'Туған жылы': 'Año de nacimiento',
+            'Қайтыс болған жылы': 'Año de fallecimiento',
+            'Қайтыс болған': 'Fallecido',
+            'Адам қосу': 'Añadir persona',
+            'Бала қосу': 'Añadir hijo',
+            'Барлығы': 'Todos',
+        };
+
         // ALT-007 (замечание 21:29): транслитерация имён в латиницу (схема как в I18n::latinize).
         const LATIN_MAP = {
             'А':'A','Ә':'A','Б':'B','В':'V','Г':'G','Ғ':'G','Д':'D','Е':'E','Ё':'Yo',
@@ -4345,6 +4549,51 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             return lead + out + trail;
         }
 
+        function esTreeText(value) {
+            let s = String(value || '');
+            const core = s.trim();
+            if (!core) return s;
+            const lead = s.slice(0, s.indexOf(core));
+            const trail = s.slice(s.indexOf(core) + core.length);
+            if (ES_TREE[core]) return lead + ES_TREE[core] + trail;
+            let m;
+            if ((m = core.match(/^\+(\d+)\s+предков$/))) return lead + '+' + m[1] + ' antepasados' + trail;
+            if ((m = core.match(/^\+(\d+)\s+потомков$/))) return lead + '+' + m[1] + ' descendientes' + trail;
+            if ((m = core.match(/^(\d+)\s*(год|года|лет)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'año' : 'años') + trail;
+            if ((m = core.match(/^(\d+)\s*(дн\.?|день|дня|дней)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'día' : 'días') + trail;
+            if ((m = core.match(/^Через\s+(\d+)\s*дн\.?$/))) return lead + 'En ' + m[1] + ' días' + trail;
+            if ((m = core.match(/^(\d+)\s*(детей|ребёнка|ребенка)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'hijo' : 'hijos') + trail;
+            if ((m = core.match(/^(\d+)\s*(человек|чел\.|персон[аы]?|союзов)$/))) {
+                const n = Number(m[1]);
+                const w = /союзов/.test(m[2]) ? (n === 1 ? 'unión' : 'uniones') : (/персон/.test(m[2]) ? 'personas' : (n === 1 ? 'persona' : 'personas'));
+                return lead + m[1] + ' ' + w + trail;
+            }
+            if ((m = core.match(/^(\d+)-е поколение$/))) return lead + 'Generación ' + m[1] + trail;
+            if ((m = core.match(/^Дата рождения:\s*(.+)$/))) return lead + 'Fecha de nacimiento: ' + esTreeText(m[1]) + trail;
+            if ((m = core.match(/^Дата ухода:\s*(.+)$/))) return lead + 'Fecha de fallecimiento: ' + esTreeText(m[1]) + trail;
+            if ((m = core.match(/^Вы — (.+)$/))) return lead + 'Usted es ' + latinize(m[1]) + trail;
+            if ((m = core.match(/^(.+?)\s*·\s*прожил(а)?\s+(≈?)(\d+)\s*(год|года|лет)$/))) {
+                return lead + esTreeText(m[1]) + ' · vivió ' + m[3] + m[4] + ' ' + (Number(m[4]) === 1 ? 'año' : 'años') + trail;
+            }
+            if ((m = core.match(/^(\d+)\s*лет со дня ухода$/))) return lead + m[1] + ' años desde su fallecimiento' + trail;
+            if ((m = core.match(/^(\d+)\s*жас$/))) return lead + m[1] + ' años' + trail;
+            if ((m = core.match(/^(\d+)\s*жыл$/))) return lead + m[1] + ' años' + trail;
+            if ((m = core.match(/^(.+?)\s*\(урожд\.\s*(.+)\)$/))) return lead + latinize(m[1]) + ' (de soltera ' + latinize(m[2]) + ')' + trail;
+            if ((m = core.match(/^\(урожд\.\s*(.+)\)$/))) return lead + '(de soltera ' + latinize(m[1]) + ')' + trail;
+
+            const looksLikeName = /^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*){0,3}$/.test(core);
+            let out = core;
+            if (looksLikeName) {
+                return lead + latinize(core) + trail;
+            }
+            if (/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/.test(core)) {
+                Object.keys(ES_TREE).sort((a, b) => b.length - a.length).forEach(k => {
+                    if (k.length >= 6 && out.includes(k)) out = out.split(k).join(ES_TREE[k]);
+                });
+            }
+            return lead + out + trail;
+        }
+
         function translateEnDom(root) {
             if (currentLang !== 'en' || !root) return;
             const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -4374,6 +4623,35 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             __enTreeTimer = setTimeout(() => translateEnDom(root || document.body), 40);
         }
 
+        function translateEsDom(root) {
+            if (currentLang !== 'es' || !root) return;
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    const tag = node.parentElement ? node.parentElement.tagName : '';
+                    if (tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
+                    return /[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                }
+            });
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                node.nodeValue = esTreeText(node.nodeValue);
+            }
+            if (root.querySelectorAll) {
+                root.querySelectorAll('[title],[placeholder],[aria-label],[data-tip]').forEach(el => {
+                    ['title', 'placeholder', 'aria-label', 'data-tip'].forEach(attr => {
+                        if (el.hasAttribute(attr)) el.setAttribute(attr, esTreeText(el.getAttribute(attr)));
+                    });
+                });
+            }
+        }
+
+        let __esTreeTimer = null;
+        function scheduleEsTreeTranslate(root) {
+            if (currentLang !== 'es') return;
+            clearTimeout(__esTreeTimer);
+            __esTreeTimer = setTimeout(() => translateEsDom(root || document.body), 40);
+        }
+
         // ТІЛДІ ОРНАТУ ЖӘНЕ БАРЛЫҚ ЖАЗБАЛАРДЫ БІР СӘТТЕ АУЫСТЫРУ
         function setLanguage(lang) {
             if (!i18n[lang]) lang = 'kk';
@@ -4385,6 +4663,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             document.getElementById('langBtnRu').classList.toggle('active', lang === 'ru');
             const btnEn = document.getElementById('langBtnEn');
             if (btnEn) btnEn.classList.toggle('active', lang === 'en');
+            const btnEs = document.getElementById('langBtnEs');
+            if (btnEs) btnEs.classList.toggle('active', lang === 'es');
 
             // Аудармаларды элементтерге енгізу
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -4397,6 +4677,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             // Input placeholder
             document.getElementById('treeSearchInput').placeholder = i18n[lang].search_placeholder;
             translateEnDom(document.body);
+            translateEsDom(document.body);
 
             // Егер мәліметтер жүктелген болса — қайта бейнелеу
             if (treeData) {
@@ -4471,7 +4752,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     userPersonId = selectedPersonId;
                     updateAllKinshipBadges(selectedPersonId);
                     renderEditingView();
-                    alert((currentLang === 'ru' || currentLang === 'en')
+                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es')
                         ? 'Метка «Вы здесь» успешно привязана к выбранной персоне!'
                         : '«Сіз осындасыз» белгісі осы тұлғаға сәтті орнатылды!');
                 } else if (data && data.error) {
@@ -4492,6 +4773,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             try {
                 const __enObserver = new MutationObserver(() => scheduleEnTreeTranslate(document.body));
                 __enObserver.observe(document.body, { childList: true, subtree: true });
+                const __esObserver = new MutationObserver(() => scheduleEsTreeTranslate(document.body));
+                __esObserver.observe(document.body, { childList: true, subtree: true });
             } catch (e) {}
             initEvents();
 
@@ -4602,7 +4885,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 emptyCard.className = 'tree-empty-state';
                 const isErr = treeData && treeData.status === 'error';
                 const title = isErr
-                    ? ((currentLang === 'ru' || currentLang === 'en') ? 'Ошибка базы данных' : 'Мәліметтер қоры қатесі')
+                    ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Ошибка базы данных' : 'Мәліметтер қоры қатесі')
                     : i18n[currentLang].empty_tree_title;
                 const desc = isErr
                     ? (treeData.message || '')
@@ -4687,26 +4970,26 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 // Туыстық атауын алу
                 const kin = activeKinships[node.id] || { term_kk: 'Туысқан', term_ru: 'Родственник' };
-                const kinLabel = (currentLang === 'ru' || currentLang === 'en') ? (kin.term_ru || kin.term_kk) : kin.term_kk;
+                const kinLabel = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk;
 
                 // Батырмалар жазбалары
-                const tFather = (currentLang === 'ru' || currentLang === 'en') ? '+ Отец' : '+ Әке';
-                const tMother = (currentLang === 'ru' || currentLang === 'en') ? '+ Мать' : '+ Ана';
-                const tSpouse = (currentLang === 'ru' || currentLang === 'en') ? '+ Супруг(а)' : '+ Жұбай';
-                const tSibling = (currentLang === 'ru' || currentLang === 'en') ? '+ Брат/Сестра' : '+ Бауыр';
-                const tSon = (currentLang === 'ru' || currentLang === 'en') ? '+ Сын' : '+ Ұл';
-                const tDaughter = (currentLang === 'ru' || currentLang === 'en') ? '+ Дочь' : '+ Қыз';
+                const tFather = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Отец' : '+ Әке';
+                const tMother = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Мать' : '+ Ана';
+                const tSpouse = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Супруг(а)' : '+ Жұбай';
+                const tSibling = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Брат/Сестра' : '+ Бауыр';
+                const tSon = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Сын' : '+ Ұл';
+                const tDaughter = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Дочь' : '+ Қыз';
 
                 // Скрытые предки / потомки батырмалары
                 let expandTopHtml = '';
                 if (node.has_hidden_parents) {
-                    const lbl = '<svg class="ic"><use href="#t-up"/></svg>' + ((currentLang === 'ru' || currentLang === 'en') ? `+${node.hidden_parents_count} предков` : `+${node.hidden_parents_count} аталар`);
+                    const lbl = '<svg class="ic"><use href="#t-up"/></svg>' + ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? `+${node.hidden_parents_count} предков` : `+${node.hidden_parents_count} аталар`);
                     expandTopHtml = `<button class="btn-branch-expand btn-branch-top" onclick="event.stopPropagation(); expandBranch(${node.id}, 'parents')">${lbl}</button>`;
                 }
 
                 let expandBottomHtml = '';
                 if (node.has_hidden_children) {
-                    const lbl = '<svg class="ic"><use href="#t-down"/></svg>' + ((currentLang === 'ru' || currentLang === 'en') ? `+${node.hidden_children_count} потомков` : `+${node.hidden_children_count} балалар`);
+                    const lbl = '<svg class="ic"><use href="#t-down"/></svg>' + ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? `+${node.hidden_children_count} потомков` : `+${node.hidden_children_count} балалар`);
                     expandBottomHtml = `<button class="btn-branch-expand btn-branch-bottom" onclick="event.stopPropagation(); expandBranch(${node.id}, 'children')">${lbl}</button>`;
                 }
 
@@ -4721,12 +5004,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div class="card-avatar">${initials}</div>
                         <div class="card-info">
                             <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
-                            ${node.maiden_name ? `<div class="card-maiden">(${(currentLang === 'ru' || currentLang === 'en') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
+                            ${node.maiden_name ? `<div class="card-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
                             <div class="card-years">${lifeHtml(node, '—')}</div>
                         </div>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:2px;">
-                        <span class="card-clan-tag">${window.clanTamga(node.clan_ru)}${node.clan_ru || ((currentLang === 'ru' || currentLang === 'en') ? 'не указан' : 'белгісіз')}</span>
+                        <span class="card-clan-tag">${window.clanTamga(node.clan_ru)}${node.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'не указан' : 'белгісіз')}</span>
                         ${(() => {
                             const kin = activeKinships[node.id];
                             if (!kin || !kin.zhurt) return '';
@@ -4792,7 +5075,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     badge.style.left = `${m.mid_x}px`;
                     badge.style.top = `${m.mid_y}px`;
                     badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
-                    badge.title = (currentLang === 'ru' || currentLang === 'en') ? 'Супружеский союз' : 'Некелік одақ';
+                    badge.title = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Супружеский союз' : 'Некелік одақ';
                     container.appendChild(badge);
                 });
 
@@ -4884,7 +5167,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // TASK-023: «N жыл бірге / N лет вместе» — полные годы от даты брака (до развода, если есть)
         function togetherText(m) {
             if (!m) return '';
-            const ru = (currentLang === 'ru' || currentLang === 'en');
+            const ru = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es');
             const from = lifeParts(m.start_date || m.marriage_date, null);
             if (!from) return '';
             const endRaw = m.end_date || m.divorce_date;
@@ -4910,7 +5193,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             return ru ? `${pt[0]} г.` : `${pt[0]} жыл`;
         }
         function lifeLabel(p) {
-            const ru = (currentLang === 'ru' || currentLang === 'en');
+            const ru = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es');
             const birth = lifeParts(p.birth_date, p.birth_year);
             const death = lifeParts(p.death_date, p.death_year);
             const deceased = (p.is_deceased == 1) || !!death;
@@ -5227,10 +5510,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             if (!canvas || !worldEl) return;
             setupRodoslovEvents();
 
-            const isRu = (currentLang === 'ru' || currentLang === 'en');
+            const isRu = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es');
             const isEn = (currentLang === 'en');
+            const isEs = (currentLang === 'es');
             if (typeof RodoslovGenerator === 'undefined') {
-                canvas.textContent = isEn ? 'The family tree module did not load. Refresh the page.' : (isRu ? 'Модуль родословной не загрузился. Обновите страницу.' : 'Шежіре модулі жүктелмеді. Бетті жаңартыңыз.');
+                canvas.textContent = isEn ? 'The family tree module did not load. Refresh the page.' : (isEs ? 'El módulo del árbol genealógico no cargó. Actualice la página.' : (isRu ? 'Модуль родословной не загрузился. Обновите страницу.' : 'Шежіре модулі жүктелмеді. Бетті жаңартыңыз.'));
                 return;
             }
             if (!treeData || !Array.isArray(treeData.persons)) return;
@@ -5244,9 +5528,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             const opts = {
                 focalId: focalId,
-                title: isEn ? 'FAMILY TREE' : (isRu ? 'РОДОСЛОВНОЕ ДРЕВО' : 'ШЕЖІРЕ-АҒАШ'),
-                emptyText: isEn ? 'No data — import GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз'),
-                latinizeNames: isEn,
+                title: isEn ? 'FAMILY TREE' : (isEs ? 'ÁRBOL GENEALÓGICO' : (isRu ? 'РОДОСЛОВНОЕ ДРЕВО' : 'ШЕЖІРЕ-АҒАШ')),
+                emptyText: isEn ? 'No data — import GEDCOM' : (isEs ? 'Sin datos — importe GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз')),
+                latinizeNames: (isEn || isEs),
                 onPersonClick: function(id) {
                     rodoslovHighlight(id);
                     // id из БД может прийти строкой — отдаём selectPerson исходное значение
@@ -5266,6 +5550,19 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     deceased: 'departed (golden ribbon, golden leaves)',
                     marriage: 'marriage',
                     dates: '*  date of birth     –  date of death'
+                };
+            } else if (isEs) {
+                opts.maidenPrefix = 'de soltera';
+                opts.marriagePrefix = 'matrimonio ·';
+                opts.tamgaPlaceholder = 'tamga';
+                opts.unknownClan = 'clan no especificado';
+                opts.labels = { father: 'PATERNO', mother: 'MATERNO', inlaw: 'CLAN DE LA ESPOSA', other: 'PARIENTES POLÍTICOS' };
+                opts.legendText = {
+                    son: 'hijo',
+                    daughter: 'hija / nuera',
+                    deceased: 'fallecidos (cinta dorada, hojas doradas)',
+                    marriage: 'matrimonio',
+                    dates: '*  fecha de nacimiento     –  fecha de fallecimiento'
                 };
             } else if (isRu) {
                 opts.maidenPrefix = 'урожд.';
@@ -5287,7 +5584,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             } catch (err) {
                 console.error('RodoslovGenerator:', err);
                 rodoslovResult = null;
-                canvas.textContent = isRu ? 'Не удалось построить древо.' : 'Шежіре-ағашты құру мүмкін болмады.';
+                canvas.textContent = isEs ? 'No se pudo construir el árbol.' : (isRu ? 'Не удалось построить древо.' : 'Шежіре-ағашты құру мүмкін болмады.');
                 return;
             }
             rodoslovRenderedData = treeData;
@@ -5304,9 +5601,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const st = rodoslovResult.stats || {};
                 statsEl.textContent = isEn
                     ? `People: ${st.placed || 0} · generations: ${st.levels || 0}`
-                    : (isRu
-                        ? `Человек: ${st.placed || 0} · поколений: ${st.levels || 0}`
-                        : `Адам: ${st.placed || 0} · буын: ${st.levels || 0}`);
+                    : (isEs
+                        ? `Personas: ${st.placed || 0} · generaciones: ${st.levels || 0}`
+                        : (isRu
+                            ? `Человек: ${st.placed || 0} · поколений: ${st.levels || 0}`
+                            : `Адам: ${st.placed || 0} · буын: ${st.levels || 0}`));
             }
 
             // та же цель, что у кнопки «К себе» и flyToCrown — без скачка между двумя центрированиями
@@ -5452,11 +5751,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 crownHtml += `<div class="branch-children-row">`;
                 children.forEach(c => {
                     const isGirl = (c.gender === 'F');
-                    const badgeText = isGirl ? ((currentLang === 'ru' || currentLang === 'en') ? 'Дочь' : 'Қыз') : ((currentLang === 'ru' || currentLang === 'en') ? 'Сын' : 'Ұл');
+                    const badgeText = isGirl ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Дочь' : 'Қыз') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Сын' : 'Ұл');
                     const cls = isGirl ? 'flower-daughter-node' : 'leaf-son-node';
                     const note = isGirl
-                        ? ((currentLang === 'ru' || currentLang === 'en') ? 'Цветок рода (дочь)' : 'Нәзік гүл (қызы)')
-                        : ((currentLang === 'ru' || currentLang === 'en') ? 'Листик рода (сын)' : 'Жас жапырақ (ұлы)');
+                        ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Цветок рода (дочь)' : 'Нәзік гүл (қызы)')
+                        : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Листик рода (сын)' : 'Жас жапырақ (ұлы)');
                     crownHtml += `
                         <div class="${cls}" onclick="selectPerson(${c.id})" title="${note}">
                             <span class="foliage-type-badge">${badgeText}</span>
@@ -5484,7 +5783,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 crownHtml += `
                     <div style="color:#d4af37; font-weight:700;">&</div>
                     <div class="in-married-flower-node" onclick="event.stopPropagation(); selectPerson(${spouse.id});" title="${spouse.last_name || ''} ${spouse.first_name}">
-                        <span style="font-size:11px; color:#fbcfe8; font-weight:700;">${(currentLang === 'ru' || currentLang === 'en') ? 'Жена' : 'Жұбайы'}</span>
+                        <span style="font-size:11px; color:#fbcfe8; font-weight:700;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Жена' : 'Жұбайы'}</span>
                         <div>
                             <strong>${spouse.first_name} ${spouse.last_name || ''}</strong> (${spouse.birth_year || '—'})
                             <div style="font-size:10px; color:#9d174d;">${i18n[currentLang].married_in_tag}</div>
@@ -5500,7 +5799,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 crownHtml += `<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;">`;
                 siblings.forEach(s => {
                     const isSister = (s.gender === 'F');
-                    const sibLabel = isSister ? ((currentLang === 'ru' || currentLang === 'en') ? 'Сестра' : 'Қарындас') : ((currentLang === 'ru' || currentLang === 'en') ? 'Брат' : 'Бауыр');
+                    const sibLabel = isSister ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Сестра' : 'Қарындас') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Брат' : 'Бауыр');
                     crownHtml += `
                         <div class="branch-couple-node" style="padding:4px 10px; font-size:12px;" onclick="selectPerson(${s.id})">
                             <span style="color:#94a3b8; font-size:11px; margin-right:4px;">${sibLabel}:</span>
@@ -5520,7 +5819,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <span style="color:#86efac; font-size:11px; font-weight:700; margin-right:6px;">[Әулет]</span>
                             <div>
                                 <strong>${father ? (father.first_name + ' ' + (father.last_name || '')) : (mother.first_name + ' ' + (mother.last_name || ''))}</strong> (${(father && father.birth_year) || (mother && mother.birth_year) || '—'})
-                                <div style="font-size:11px; color:#86efac;">${(currentLang === 'ru' || currentLang === 'en') ? 'Родители' : 'Әке-шеше шаңырағы'}</div>
+                                <div style="font-size:11px; color:#86efac;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Родители' : 'Әке-шеше шаңырағы'}</div>
                             </div>
                         </div>
                     </div>
@@ -5564,7 +5863,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div>
                         <div>${(rootPerson.first_name + ' ' + (rootPerson.last_name || '')).toUpperCase()} (${rootPerson.birth_year ? 'ок. ' + rootPerson.birth_year : ''})</div>
                         <div style="font-size:11px; color:#d4af37; font-weight:600;">
-                            ${(currentLang === 'ru' || currentLang === 'en') ? 'Священный корень рода в земле (Таңба: Ашамай, Уран: Ошыбай!)' : 'Шежіренің ең түпкі қасиетті тамыры (Таңба: Ашамай, Ұран: Ошыбай!)'}
+                            ${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Священный корень рода в земле (Таңба: Ашамай, Уран: Ошыбай!)' : 'Шежіренің ең түпкі қасиетті тамыры (Таңба: Ашамай, Ұран: Ошыбай!)'}
                         </div>
                     </div>
                 </div>
@@ -5594,7 +5893,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 let clanPersonsHtml = '';
                 clanPersons.slice(0, 4).forEach(cp => {
                     const isF = (cp.gender === 'F');
-                    const sibLabel = isF ? ((currentLang === 'ru' || currentLang === 'en') ? 'Дочь' : 'Қыз') : ((currentLang === 'ru' || currentLang === 'en') ? 'Сын' : 'Ұл');
+                    const sibLabel = isF ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Дочь' : 'Қыз') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Сын' : 'Ұл');
                     clanPersonsHtml += `
                         <div class="${isF ? 'flower-daughter-node' : 'leaf-son-node'}" onclick="selectPerson(${cp.id})" style="margin:4px;">
                             <span style="font-size:11px; color:${isF ? '#fbcfe8' : '#86efac'}; margin-right:4px;">${sibLabel}:</span>
@@ -5609,7 +5908,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <span>${clanName} ағашы</span>
                     </div>
                     <div style="font-size:12px; color:#cbd5e1; max-width:320px; text-align:center; margin:8px 0;">
-                        ${(currentLang === 'ru' || currentLang === 'en') ? 'Родственные связи и сваты' : 'Құрметті құдалар мен нағашылар руы'}
+                        ${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Родственные связи и сваты' : 'Құрметті құдалар мен нағашылар руы'}
                     </div>
                     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px;">
                         ${clanPersonsHtml}
@@ -5642,27 +5941,27 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
             let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${p.middle_name || ''}`.trim();
             if (p.maiden_name) {
-                fullNameDisplay += ` (${(currentLang === 'ru' || currentLang === 'en') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
+                fullNameDisplay += ` (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
             }
             document.getElementById('panelPersonName').innerText = fullNameDisplay;
-            const clanDisplay = p.clan_ru || ((currentLang === 'ru' || currentLang === 'en') ? 'не указан' : 'белгісіз');
+            const clanDisplay = p.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'не указан' : 'белгісіз');
             document.getElementById('panelPersonClan').innerHTML = window.clanTamga(p.clan_ru) + uzEsc(clanDisplay);
-            document.getElementById('panelGender').innerText = p.gender === 'M' ? ((currentLang === 'ru' || currentLang === 'en') ? 'Мужской' : 'Ер азамат') : ((currentLang === 'ru' || currentLang === 'en') ? 'Женский' : 'Әйел адам');
+            document.getElementById('panelGender').innerText = p.gender === 'M' ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Мужской' : 'Ер азамат') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Женский' : 'Әйел адам');
 
             // Жылдары: живые — только год/дата рождения! Ушедшие — годы жизни
             const birthDisp = p.birth_date ? p.birth_date : (p.birth_year || '—');
             const deathDisp = p.death_date ? p.death_date : (p.death_year || '—');
             if (p.is_deceased) {
-                document.getElementById('panelYears').innerText = `${birthDisp} — ${deathDisp} (${(currentLang === 'ru' || currentLang === 'en') ? 'ушёл из жизни' : 'дүниеден өткен'})`;
+                document.getElementById('panelYears').innerText = `${birthDisp} — ${deathDisp} (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'ушёл из жизни' : 'дүниеден өткен'})`;
             } else {
                 document.getElementById('panelYears').innerText = `${birthDisp}`;
             }
             let placeDisp = p.birth_place || '—';
             if (p.is_deceased && p.death_place) {
-                placeDisp += ` (${(currentLang === 'ru' || currentLang === 'en') ? 'место кончины:' : 'қайтыс болған жері:'} ${p.death_place})`;
+                placeDisp += ` (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'место кончины:' : 'қайтыс болған жері:'} ${p.death_place})`;
             }
             document.getElementById('panelPlace').innerText = placeDisp;
-            document.getElementById('panelBiography').innerText = p.biography || ((currentLang === 'ru' || currentLang === 'en') ? 'Биография не заполнена.' : 'Өмірбаяны жазылмаған.');
+            document.getElementById('panelBiography').innerText = p.biography || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Биография не заполнена.' : 'Өмірбаяны жазылмаған.');
 
             // Үш жұрт бейджі
             const kin = activeKinships[id];
@@ -5728,12 +6027,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 } else if (isSelf) {
                     badge.classList.add('self-rel');
                     const kin = activeKinships[p.id];
-                    const label = kin ? ((currentLang === 'ru' || currentLang === 'en') ? (kin.term_ru || kin.term_kk) : kin.term_kk) : '';
+                    const label = kin ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk) : '';
                     badge.innerHTML = `<span>${i18n[currentLang].you_are_here_badge} ${label ? `(${label})` : ''}</span> <span class="kin-mark ${p.is_deceased ? 'is-deceased' : ''}"></span>`;
                 } else {
                     const kin = activeKinships[p.id];
                     if (kin) {
-                        const label = (currentLang === 'ru' || currentLang === 'en') ? (kin.term_ru || kin.term_kk) : kin.term_kk;
+                        const label = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk;
                         badge.innerHTML = `<span>${label}</span> <span class="kin-mark ${p.is_deceased ? 'is-deceased' : ''}"></span>`;
                     }
                 }
@@ -6024,7 +6323,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = await res.json();
                 if (data.status === 'success') {
                     closeAddModal();
-                    alert((currentLang === 'ru' || currentLang === 'en') ? 'Родственник успешно добавлен в базу!' : 'Туыс сәтті қосылды!');
+                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Родственник успешно добавлен в базу!' : 'Туыс сәтті қосылды!');
                     await initTree();
                     if (data.new_person_id) {
                         flyToPerson(data.new_person_id);
@@ -6042,7 +6341,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // ========================================================
         async function openEditPersonModal(id) {
             if (!canEditPersonUi(id)) {
-                alert((currentLang === 'ru' || currentLang === 'en') ? 'Чужую карточку можно только смотреть' : 'Бөтен тұлғаның картасын тек қарауға болады');
+                alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Чужую карточку можно только смотреть' : 'Бөтен тұлғаның картасын тек қарауға болады');
                 return;
             }
             try {
@@ -6070,7 +6369,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 clanInput.style.cursor = 'text';
                 if (clanHint) {
                     clanHint.textContent = p.father_id
-                        ? ((currentLang === 'ru' || currentLang === 'en') ? 'Ру наследуется от отца и не сохраняется отдельно у ребёнка. Если укажете ру здесь, сайт предложит применить его по мужской линии (отец, деды, братья, потомки) — покажет, сколько людей получат ру, и спросит подтверждение. Жёны (келін) не меняются.' : 'Ру әкеден мұраланады және баланың өзінде бөлек сақталмайды. Мұнда ру жазсаңыз, сайт оны ер жағы бойынша (әке, ата, бауырлар, ұрпақ) қолдануды ұсынады: неше адам алатынын көрсетіп, растауды сұрайды. Келіндер өзгермейді.')
+                        ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Ру наследуется от отца и не сохраняется отдельно у ребёнка. Если укажете ру здесь, сайт предложит применить его по мужской линии (отец, деды, братья, потомки) — покажет, сколько людей получат ру, и спросит подтверждение. Жёны (келін) не меняются.' : 'Ру әкеден мұраланады және баланың өзінде бөлек сақталмайды. Мұнда ру жазсаңыз, сайт оны ер жағы бойынша (әке, ата, бауырлар, ұрпақ) қолдануды ұсынады: неше адам алатынын көрсетіп, растауды сұрайды. Келіндер өзгермейді.')
                         : '';
                 }
 
@@ -6124,7 +6423,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         async function proposeClanPropagation(id, ru) {
-            const ruLang = (currentLang === 'ru' || currentLang === 'en');
+            const ruLang = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es');
             try {
                 const pr = await fetch(`/api/person/clan-propagate-preview?id=${encodeURIComponent(id)}&clan_ru=${encodeURIComponent(ru)}`);
                 const prev = await pr.json();
@@ -6204,7 +6503,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     if (newRu && newRu.toLowerCase() !== 'белгісіз' && newRu !== origRu) {
                         await proposeClanPropagation(id, newRu);
                     }
-                    alert((currentLang === 'ru' || currentLang === 'en') ? 'Данные успешно обновлены и сохранены в истории!' : 'Өзгерістер сәтті сақталды!');
+                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Данные успешно обновлены и сохранены в истории!' : 'Өзгерістер сәтті сақталды!');
                     await initTree();
                     selectPerson(parseInt(id));
                     if (currentMode === 'list') {
@@ -6220,7 +6519,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         async function handleDeleteCurrentPerson() {
             const id = document.getElementById('editPersonId').value;
-            if (!confirm((currentLang === 'ru' || currentLang === 'en') ? 'Вы уверены, что хотите удалить эту персону?' : 'Бұл тұлғаны өшіруге сенімдісіз бе?')) {
+            if (!confirm((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Вы уверены, что хотите удалить эту персону?' : 'Бұл тұлғаны өшіруге сенімдісіз бе?')) {
                 return;
             }
             try {
@@ -6234,7 +6533,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = await res.json();
                 if (data.status === 'success') {
                     closeEditPersonModal();
-                    alert((currentLang === 'ru' || currentLang === 'en') ? 'Персона помечена как удаленная' : 'Тұлға өшірілді');
+                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Персона помечена как удаленная' : 'Тұлға өшірілді');
                     await initTree();
                     if (currentMode === 'list') {
                         loadListViewData();
@@ -6292,7 +6591,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = await res.json();
                 if (data.status === 'success') {
                     closeMarriageModal();
-                    alert((currentLang === 'ru' || currentLang === 'en') ? 'Данные брака успешно сохранены!' : 'Неке мәліметтері сақталды!');
+                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Данные брака успешно сохранены!' : 'Неке мәліметтері сақталды!');
                     await initTree();
                 } else {
                     alert('Қате: ' + (data.error || 'Белгісіз қате'));
@@ -6342,7 +6641,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 if (data && data.results) {
                     listData = data.results;
                     renderListTable(data.results);
-                    document.getElementById('listStatsCount').innerText = (currentLang === 'ru' || currentLang === 'en')
+                    document.getElementById('listStatsCount').innerText = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es')
                         ? `Найдено: ${data.total} персон`
                         : `Табылды: ${data.total} тұлға`;
 
@@ -6386,7 +6685,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const isSelected = (currentOpenUshZhurtPersonId === p.id);
                 tr.className = 'list-person-row' + (isSelected ? ' is-selected' : '');
                 tr.setAttribute('data-person-id', p.id);
-                tr.setAttribute('title', (currentLang === 'ru' || currentLang === 'en') ? 'Клик — показать Үш жұрт' : 'Басу — Үш жұртты көрсету');
+                tr.setAttribute('title', (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Клик — показать Үш жұрт' : 'Басу — Үш жұртты көрсету');
 
                 tr.addEventListener('click', (e) => {
                     if (e.target.closest('.lt-actions') || e.target.closest('button') || e.target.closest('a')) {
@@ -6409,7 +6708,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     else if (kin.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
                     else if (kin.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
                     else if (kin.zhurt.includes('Құда')) zCls = 'zhurt-quda';
-                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div class="lt-sub" style="margin-top:2px;">${(currentLang === 'ru' || currentLang === 'en') ? (kin.term_ru || kin.term_kk) : kin.term_kk}</div>`;
+                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div class="lt-sub" style="margin-top:2px;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk}</div>`;
                 }
 
                 // Супруги (разведённые — зачёркнуты, без эмодзи)
@@ -6431,8 +6730,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const spouseSub = (p.spouses || []).filter(s => s.status !== 'divorced').map(s => s.name).join(', ');
                 const genderLbl = isM ? 'Ер' : 'Әйел';
                 const clanLbl = p.clan_ru || 'белгісіз';
-                const tFocus = (currentLang === 'ru' || currentLang === 'en') ? 'Фокус в древе' : 'Шежіреде фокус';
-                const tEdit = (currentLang === 'ru' || currentLang === 'en') ? 'Редактировать' : 'Өңдеу';
+                const tFocus = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Фокус в древе' : 'Шежіреде фокус';
+                const tEdit = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Редактировать' : 'Өңдеу';
 
                 tr.innerHTML = `
                     <td class="lt-col-md" style="color:var(--c-text-3); font-size:11.5px;">${idx + 1}</td>
@@ -6441,12 +6740,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
                             <div>
                                 <div class="lt-name" title="${p.full_name}">${p.full_name}</div>
-                                ${p.maiden_name ? `<div class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
+                                ${p.maiden_name ? `<div class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
                                 <div class="lt-sub lt-sub-opt xl">${clanLbl}</div>
                                 <div class="lt-sub lt-sub-opt lg">${genderLbl}</div>
                                 <div class="lt-sub lt-sub-opt md">${lifeHtml(p, p.years_display || '—')}</div>
                                 ${(p.father_name || p.mother_name) ? `<div class="lt-sub lt-sub-opt lg">${[p.father_name, p.mother_name].filter(Boolean).join(' / ')}</div>` : ''}
-                                ${spouseSub ? `<div class="lt-sub lt-sub-opt xl">${(currentLang === 'ru' || currentLang === 'en') ? 'Супруг(а)' : 'Жұбайы'}: ${spouseSub}</div>` : ''}
+                                ${spouseSub ? `<div class="lt-sub lt-sub-opt xl">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Супруг(а)' : 'Жұбайы'}: ${spouseSub}</div>` : ''}
                                 ${(kin && kin.zhurt) ? `<div class="lt-sub lt-sub-opt md">${kin.zhurt}</div>` : ''}
                             </div>
                         </div>
@@ -6498,7 +6797,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="lt-ush-drawer-island" id="ushDrawerIsland_${personId}">
                         <div class="lt-ush-loading">
                             <span class="uz-spin"></span>
-                            <span>${(currentLang === 'ru' || currentLang === 'en') ? 'Загрузка трех таблиц Үш жұрт...' : 'Үш жұрт кестелері жүктелуде...'}</span>
+                            <span>${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Загрузка трех таблиц Үш жұрт...' : 'Үш жұрт кестелері жүктелуде...'}</span>
                         </div>
                     </div>
                 </td>
@@ -6539,7 +6838,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 if (!data || data.status !== 'success' || (!data.groups && !data.tables && !data.ush_zhurt)) {
                     const island = document.getElementById('ushDrawerIsland_' + personId);
                     if (island) {
-                        island.innerHTML = `<div class="list-msg is-error">${(currentLang === 'ru' || currentLang === 'en') ? 'Ошибка загрузки данных' : 'Деректерді жүктеу қатесі'}</div>`;
+                        island.innerHTML = `<div class="list-msg is-error">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Ошибка загрузки данных' : 'Деректерді жүктеу қатесі'}</div>`;
                     }
                     return;
                 }
@@ -6588,14 +6887,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div>
                             <div class="lt-ush-title-name">
                                 <strong>${uzEsc(p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')))}</strong>
-                                ${p.maiden_name ? `<span class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en') ? 'урожд.' : 'қыз кезіндегі —'} ${uzEsc(p.maiden_name)})</span>` : ''}
-                                <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? ((currentLang === 'ru' || currentLang === 'en') ? 'Мужчина' : 'Ер') : ((currentLang === 'ru' || currentLang === 'en') ? 'Женщина' : 'Әйел')}</span>
+                                ${p.maiden_name ? `<span class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${uzEsc(p.maiden_name)})</span>` : ''}
+                                <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Мужчина' : 'Ер') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Женщина' : 'Әйел')}</span>
                                 <span class="clan-pill">${window.clanTamga(p.clan_ru)}${uzEsc(p.clan_ru || 'белгісіз')}</span>
                             </div>
                             <div class="lt-sub">
-                                ${(isDeceased || lifeLabel(p).deceased) ? ((currentLang === 'ru' || currentLang === 'en') ? 'Годы жизни:' : 'Өмір сүрген жылдары:') : ((currentLang === 'ru' || currentLang === 'en') ? 'Возраст:' : 'Жасы:')} <strong>${lifeHtml(p, uzEsc(p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')))}</strong>
+                                ${(isDeceased || lifeLabel(p).deceased) ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Годы жизни:' : 'Өмір сүрген жылдары:') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Возраст:' : 'Жасы:')} <strong>${lifeHtml(p, uzEsc(p.years_display || (p.birth_year ? p.birth_year + '–' + (p.death_year || '...') : '—')))}</strong>
                                 <span style="margin: 0 6px; color: var(--c-border-strong);">•</span>
-                                ${(currentLang === 'ru' || currentLang === 'en') ? 'Клик по родственнику в любой таблице — переход к нему в списке' : 'Кез келген кестедегі туысқанға басу — оның Үш жұртына көшу'}
+                                ${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Клик по родственнику в любой таблице — переход к нему в списке' : 'Кез келген кестедегі туысқанға басу — оның Үш жұртына көшу'}
                             </div>
                         </div>
                     </div>
@@ -6605,11 +6904,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     </div>
 
                     <div class="lt-ush-header-actions">
-                        <button type="button" class="btn-toggle-layout" onclick="toggleUshLayout(${personId})" title="${(currentLang === 'ru' || currentLang === 'en') ? 'Переключить вид: рядом (3 колонки) или под ним (одна колонка)' : 'Көріністі ауыстыру: қатар (3 баған) немесе бірінің астында бірі'}">
+                        <button type="button" class="btn-toggle-layout" onclick="toggleUshLayout(${personId})" title="${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Переключить вид: рядом (3 колонки) или под ним (одна колонка)' : 'Көріністі ауыстыру: қатар (3 баған) немесе бірінің астында бірі'}">
                             <svg class="ic"><use href="#t-list"/></svg>
-                            <span id="ushLayoutLabel_${personId}">${layout === 'stacked' ? ((currentLang === 'ru' || currentLang === 'en') ? 'Под ним (1)' : 'Тігінен (1)') : ((currentLang === 'ru' || currentLang === 'en') ? 'Рядом (3)' : 'Қатар (3)')}</span>
+                            <span id="ushLayoutLabel_${personId}">${layout === 'stacked' ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Под ним (1)' : 'Тігінен (1)') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Рядом (3)' : 'Қатар (3)')}</span>
                         </button>
-                        <button type="button" class="btn-table-action" onclick="closePersonUshZhurt(${personId})" title="${(currentLang === 'ru' || currentLang === 'en') ? 'Закрыть' : 'Жабу'}" aria-label="Закрыть">
+                        <button type="button" class="btn-table-action" onclick="closePersonUshZhurt(${personId})" title="${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Закрыть' : 'Жабу'}" aria-label="Закрыть">
                             <svg class="ic"><use href="#t-close"/></svg>
                         </button>
                     </div>
@@ -6636,15 +6935,15 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         function renderSingleUshZhurtCard(tableData, basePersonId, zhurtKey, isFemale) {
             const items = tableData.items || [];
             const count = tableData.total_count || items.length || 0;
-            const title = (currentLang === 'ru' || currentLang === 'en') ? (tableData.title_ru || tableData.title_kk) : tableData.title_kk;
-            const desc = (currentLang === 'ru' || currentLang === 'en') ? (tableData.desc_ru || tableData.desc_kk || '') : (tableData.desc_kk || '');
+            const title = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (tableData.title_ru || tableData.title_kk) : tableData.title_kk;
+            const desc = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (tableData.desc_ru || tableData.desc_kk || '') : (tableData.desc_kk || '');
 
             let rowsHtml = '';
             if (items.length === 0) {
-                const emptyText = (currentLang === 'ru' || currentLang === 'en')
+                const emptyText = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es')
                     ? (tableData.empty_ru || 'Пока никого не добавили')
                     : (tableData.empty_kk || 'Әзірге ешкім қосылмаған');
-                const addLbl = (currentLang === 'ru' || currentLang === 'en') ? 'Добавить' : 'Қосу';
+                const addLbl = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Добавить' : 'Қосу';
                 const addBtn = true // TASK-032: добавлять новых людей может любой вошедший
                     ? ` <button type="button" class="btn-table-action lt-ush-add-btn" onclick="event.stopPropagation(); openAddModal('${ushZhurtAddRelation(zhurtKey, !!isFemale)}', ${parseInt(basePersonId, 10)})">${addLbl}</button>`
                     : '';
@@ -6654,11 +6953,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const isM = (p.gender === 'M');
                     const isDeceased = (p.is_deceased == 1);
                     const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
-                    const term = (currentLang === 'ru' || currentLang === 'en') ? (p.term_ru || p.term_kk) : p.term_kk;
+                    const term = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (p.term_ru || p.term_kk) : p.term_kk;
                     const years = p.years_display || (p.birth_year ? p.birth_year + (p.death_year ? '–' + p.death_year : '–...') : '—');
                     // Двойная связь: пометка второй стороны
                     const secondHtml = p.zhurt_second
-                        ? `<span class="lt-sub lt-ush-second" title="${(currentLang === 'ru' || currentLang === 'en') ? 'Вторая связь' : 'Екінші байланыс'}">${(currentLang === 'ru' || currentLang === 'en') ? 'также' : 'сондай-ақ'}: ${uzEsc(p.zhurt_second)}</span>`
+                        ? `<span class="lt-sub lt-ush-second" title="${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Вторая связь' : 'Екінші байланыс'}">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'также' : 'сондай-ақ'}: ${uzEsc(p.zhurt_second)}</span>`
                         : '';
                     // След ұзатылған: замужняя дочь рода — её место у мужа
                     const uz = p.uzatylgan;
@@ -6712,7 +7011,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         </div>
                         ${items.length > 5 ? `
                             <div class="lt-ush-card-search-wrap">
-                                <input type="text" class="lt-ush-card-search" placeholder="${(currentLang === 'ru' || currentLang === 'en') ? 'Фильтр...' : 'Сүзу...'}" oninput="filterUshCardRows(this, 'ushCard_${basePersonId}_${zhurtKey}')">
+                                <input type="text" class="lt-ush-card-search" placeholder="${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Фильтр...' : 'Сүзу...'}" oninput="filterUshCardRows(this, 'ushCard_${basePersonId}_${zhurtKey}')">
                             </div>
                         ` : ''}
                     </div>
@@ -6720,9 +7019,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <table class="lt-ush-subtable">
                             <thead>
                                 <tr>
-                                    <th style="width: 50%;">${(currentLang === 'ru' || currentLang === 'en') ? 'Персона' : 'Тұлға'}</th>
-                                    <th style="width: 24%;">${(currentLang === 'ru' || currentLang === 'en') ? 'Годы' : 'Жылдары'}</th>
-                                    <th style="width: 26%;">${(currentLang === 'ru' || currentLang === 'en') ? 'Кем приходится' : 'Туыстық'}</th>
+                                    <th style="width: 50%;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Персона' : 'Тұлға'}</th>
+                                    <th style="width: 24%;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Годы' : 'Жылдары'}</th>
+                                    <th style="width: 26%;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Кем приходится' : 'Туыстық'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -6756,8 +7055,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
             if (lbl) {
                 lbl.textContent = next === 'stacked'
-                    ? ((currentLang === 'ru' || currentLang === 'en') ? 'Под ним (1)' : 'Тігінен (1)')
-                    : ((currentLang === 'ru' || currentLang === 'en') ? 'Рядом (3)' : 'Қатар (3)');
+                    ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Под ним (1)' : 'Тігінен (1)')
+                    : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Рядом (3)' : 'Қатар (3)');
             }
         }
 
@@ -6811,15 +7110,15 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const modal = document.getElementById('ushZhurtModal');
             if (!modal) return;
             modal.style.display = 'flex';
-            document.getElementById('ushZhurtModalTitle').textContent = (currentLang === 'ru' || currentLang === 'en') ? 'Три журта' : 'Үш жұрт';
-            document.getElementById('ushZhurtModalSubtitle').textContent = (currentLang === 'ru' || currentLang === 'en') ? 'Загрузка...' : 'Жүктелуде...';
-            document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en') ? 'Загрузка...' : 'Жүктелуде...'}</div>`;
+            document.getElementById('ushZhurtModalTitle').textContent = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Три журта' : 'Үш жұрт';
+            document.getElementById('ushZhurtModalSubtitle').textContent = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Загрузка...' : 'Жүктелуде...';
+            document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Загрузка...' : 'Жүктелуде...'}</div>`;
 
             try {
                 const res = await fetch(`/api/person/ush-zhurt?id=${personId}`);
                 const data = await res.json();
                 if (!data || (!data.groups && !data.ush_zhurt)) {
-                    document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg is-error">${(currentLang === 'ru' || currentLang === 'en') ? 'Данные не найдены' : 'Деректер табылмады'}</div>`;
+                    document.getElementById('ushZhurtContentContainer').innerHTML = `<div class="uz-msg is-error">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Данные не найдены' : 'Деректер табылмады'}</div>`;
                     return;
                 }
                 currentUshZhurtData = data;
@@ -6834,7 +7133,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 currentUshZhurtData.familyOrder = order;
 
                 const p = data.person || (data.ush_zhurt && data.ush_zhurt.base_person);
-                const pGender = p && p.gender === 'M' ? ((currentLang === 'ru' || currentLang === 'en') ? 'мужчина' : 'ер') : ((currentLang === 'ru' || currentLang === 'en') ? 'женщина' : 'әйел');
+                const pGender = p && p.gender === 'M' ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'мужчина' : 'ер') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'женщина' : 'әйел');
                 const pTitle = p ? `${p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')).trim()} (${pGender})` : '';
                 document.getElementById('ushZhurtModalSubtitle').textContent = pTitle;
 
@@ -6842,7 +7141,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 if (tabsBox) {
                     tabsBox.innerHTML = order.map(k => {
                         const g = currentUshZhurtData.familyGroups[k];
-                        const t = (currentLang === 'ru' || currentLang === 'en') ? (g.title_ru || g.title_kk || k) : (g.title_kk || k);
+                        const t = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (g.title_ru || g.title_kk || k) : (g.title_kk || k);
                         return `<button type="button" id="tabBtnUz_${k}" onclick="switchUshZhurtTab('${k}')">${uzEsc(t)} (${parseInt(g.total_count || 0, 10)})</button>`;
                     }).join('');
                 }
@@ -6870,29 +7169,29 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const groupsSrc = (currentUshZhurtData && currentUshZhurtData.familyGroups) || {};
             const group = groupsSrc[tabKey];
             if (!group) {
-                container.innerHTML = `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en') ? 'Нет данных' : 'Мәлімет жоқ'}</div>`;
+                container.innerHTML = `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Нет данных' : 'Мәлімет жоқ'}</div>`;
                 return;
             }
 
             const families = group.families || [];
             const standalone = group.standalone || [];
             if (families.length === 0 && standalone.length === 0) {
-                const emptyText = (currentLang === 'ru' || currentLang === 'en')
+                const emptyText = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es')
                     ? (group.empty_ru || 'Пока никого не добавили')
                     : (group.empty_kk || 'Әзірге ешкім қосылмаған');
                 const baseId = currentUshZhurtData.base_id || selectedPersonId;
                 const addBtn = true // TASK-032
-                    ? ` <button type="button" class="btn btn-profile-action" onclick="closeUshZhurtModal(); openAddModal('${ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female)}', ${parseInt(baseId, 10)})">${(currentLang === 'ru' || currentLang === 'en') ? 'Добавить' : 'Қосу'}</button>`
+                    ? ` <button type="button" class="btn btn-profile-action" onclick="closeUshZhurtModal(); openAddModal('${ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female)}', ${parseInt(baseId, 10)})">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Добавить' : 'Қосу'}</button>`
                     : '';
                 container.innerHTML = `<div class="uz-msg" style="font-style:italic;">${uzEsc(emptyText)}${addBtn}</div>`;
                 return;
             }
 
             const standaloneHtml = standalone.length
-                ? `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en') ? 'Другие родственники' : 'Басқа туыстар'}: ${standalone.map(s => {
+                ? `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Другие родственники' : 'Басқа туыстар'}: ${standalone.map(s => {
                     const sp = s.person || {};
                     const k = s.kinship || {};
-                    const term = (currentLang === 'ru' || currentLang === 'en') ? (k.term_ru || k.term_kk || '') : (k.term_kk || '');
+                    const term = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (k.term_ru || k.term_kk || '') : (k.term_kk || '');
                     return `${uzEsc((sp.first_name || '') + ' ' + (sp.last_name || ''))}${term ? ' — ' + uzEsc(term) : ''}`;
                 }).join(', ')}</div>`
                 : '';
@@ -6912,7 +7211,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     marriage: null,
                     children: ownChildren
                 };
-                ownHtml = renderUshZhurtFolderHtml(ownFam, 0, ((currentLang === 'ru' || currentLang === 'en') ? 'Семья' : 'Отбасы'));
+                ownHtml = renderUshZhurtFolderHtml(ownFam, 0, ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Семья' : 'Отбасы'));
                 // дополнительные супруги (многобрачие) — отдельными папками без детей
                 ownHtml += ownSpouses.slice(1).map(sp => renderUshZhurtFolderHtml({
                     husband: baseIsFemale ? sp : ownBase,
@@ -6931,12 +7230,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const indent = depth * 16;
             let coupleTitle = '';
             if (h) {
-                coupleTitle += `<span class="uz-person"><strong>${uzEsc(h.full_name)}</strong> <span class="uz-meta">${lifeLabel(h).short ? `(${lifeHtml(h)})` : ''} [${h.clan_ru || ((currentLang === 'ru' || currentLang === 'en') ? 'неизвестен' : 'белгісіз')}]</span></span>`;
+                coupleTitle += `<span class="uz-person"><strong>${uzEsc(h.full_name)}</strong> <span class="uz-meta">${lifeLabel(h).short ? `(${lifeHtml(h)})` : ''} [${h.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
             if (w) {
-                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${uzEsc(w.full_name)}</strong> <span class="uz-meta">${lifeLabel(w).short ? `(${lifeHtml(w)})` : ''} [${w.clan_ru || ((currentLang === 'ru' || currentLang === 'en') ? 'неизвестен' : 'белгісіз')}]</span></span>`;
+                coupleTitle += (h ? ' <span class="uz-plus">+</span> ' : '') + `<span class="uz-person"><strong>${uzEsc(w.full_name)}</strong> <span class="uz-meta">${lifeLabel(w).short ? `(${lifeHtml(w)})` : ''} [${w.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'неизвестен' : 'белгісіз')}]</span></span>`;
             }
-            if (!coupleTitle) coupleTitle = ((currentLang === 'ru' || currentLang === 'en') ? 'Семья' : 'Отбасы');
+            if (!coupleTitle) coupleTitle = ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Семья' : 'Отбасы');
             const togetherStr = togetherText(fam.marriage);
             if (togetherStr) coupleTitle += ` <span class="uz-meta uz-together">— ${uzEsc(togetherStr)}</span>`;
 
@@ -6948,7 +7247,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const c = Object.assign({}, cRaw.person || cRaw);
                     if (!c.full_name) c.full_name = ((c.first_name || '') + ' ' + (c.last_name || '')).trim();
                     const cIcon = `<span class="uz-dot ${c.gender === 'F' ? 'f' : ''}"></span>`;
-                    const cClan = c.clan_ru || ((currentLang === 'ru' || currentLang === 'en') ? 'неизвестен' : 'белгісіз');
+                    const cClan = c.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'неизвестен' : 'белгісіз');
                     const cYears = lifeLabel(c).short ? `(${lifeHtml(c)})` : '';
                     let nested = '';
                     if (c.families && c.families.length > 0) {
@@ -6966,7 +7265,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     `;
                 }).join('');
             } else {
-                childrenHtml = `<div class="uz-none">${(currentLang === 'ru' || currentLang === 'en') ? 'Дети не указаны' : 'Балалары көрсетілмеген'}</div>`;
+                childrenHtml = `<div class="uz-none">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Дети не указаны' : 'Балалары көрсетілмеген'}</div>`;
             }
 
             return `
@@ -6974,7 +7273,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <summary>
                         <svg class="ic"><use href="#t-folder"/></svg>
                         <span class="uz-title">${sectionLabel ? `<strong>${uzEsc(sectionLabel)}:</strong> ` : ''}${coupleTitle}</span>
-                        <span class="uz-count">${children.length} ${(currentLang === 'ru' || currentLang === 'en') ? 'детей' : 'бала'}</span>
+                        <span class="uz-count">${children.length} ${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'детей' : 'бала'}</span>
                     </summary>
                     <div class="uz-body">
                         ${childrenHtml}

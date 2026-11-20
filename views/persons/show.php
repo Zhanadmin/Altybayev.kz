@@ -21,8 +21,8 @@ $pcG = static function ($row, bool $fallbackMale): string {
 $initials = mb_substr((string)($person['first_name'] ?? ''), 0, 1) . mb_substr((string)($person['last_name'] ?? ''), 0, 1);
 
 // Полные даты через единый форматтер
-$birthDisp = !empty($person['birth_date']) ? I18n::formatDate($person['birth_date']) : ($person['birth_year'] ? I18n::formatDate($person['birth_year']) : (($lang === 'ru' || $lang === 'en') ? 'не указан' : 'белгісіз'));
-$deathDisp = !empty($person['death_date']) ? I18n::formatDate($person['death_date']) : ($person['death_year'] ? I18n::formatDate($person['death_year']) : (($lang === 'ru' || $lang === 'en') ? 'не указан' : 'белгісіз'));
+$birthDisp = !empty($person['birth_date']) ? I18n::formatDate($person['birth_date']) : ($person['birth_year'] ? I18n::formatDate($person['birth_year']) : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'не указан' : 'белгісіз'));
+$deathDisp = !empty($person['death_date']) ? I18n::formatDate($person['death_date']) : ($person['death_year'] ? I18n::formatDate($person['death_year']) : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'не указан' : 'белгісіз'));
 
 // ALT-002: у умершего вместо даты рождения — годы жизни «1940–2015»
 $pcBirthY = !empty($person['birth_date']) ? substr((string)$person['birth_date'], 0, 4) : (string)($person['birth_year'] ?? '');
@@ -183,7 +183,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
         <?php endif; ?>
         <div class="chips">
             <?php if (!empty($person['maiden_name'])): ?>
-                <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
+                <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
             <?php endif; ?>
         </div>
 
@@ -230,7 +230,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <?php elseif ($kinship && !empty($kinship['term_kk'])): ?>
                     <div class="pc-kin-term"><?= htmlspecialchars(I18n::formatKinship($kinship['term_kk'], $kinship['term_ru'] ?? null)) ?></div>
                 <?php else: ?>
-                    <div class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Родственная связь уточняется' : 'Туыстық байланысы анықталуда' ?></div>
+                    <div class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Родственная связь уточняется' : 'Туыстық байланысы анықталуда' ?></div>
                 <?php endif; ?>
 
                 <!-- Безопасная загрузка фото -->
@@ -239,16 +239,16 @@ window.addEventListener('resize', (function () { var t; return function () { cle
 
             <!-- Краткая информация о роде -->
             <div class="island">
-                <div class="island-head pc-kin-head"><svg class="orn orn-horn pc-horn-sm" aria-hidden="true"><use href="#o-horn"/></svg><h3><?= ($lang === 'ru' || $lang === 'en') ? 'Родовая принадлежность (Ру)' : 'Рулық мәліметі' ?></h3></div>
+                <div class="island-head pc-kin-head"><svg class="orn orn-horn pc-horn-sm" aria-hidden="true"><use href="#o-horn"/></svg><h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Родовая принадлежность (Ру)' : 'Рулық мәліметі' ?></h3></div>
                 <dl class="props pc-props-tight">
-                    <dt><?= ($lang === 'ru' || $lang === 'en') ? 'Род (Ру)' : 'Руы' ?></dt>
-                    <dd><?= clan_tamga_html($person['clan_ru'] ?? '') ?><?= htmlspecialchars((string)($person['clan_ru'] ?:(($lang === 'ru' || $lang === 'en') ? 'не указан' : 'белгісіз'))) ?></dd>
+                    <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Род (Ру)' : 'Руы' ?></dt>
+                    <dd><?= clan_tamga_html($person['clan_ru'] ?? '') ?><?= htmlspecialchars((string)($person['clan_ru'] ?:(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'не указан' : 'белгісіз'))) ?></dd>
                     <?php if (!empty($person['clan_subru'])): ?>
-                        <dt><?= ($lang === 'ru' || $lang === 'en') ? 'Подрод' : 'Тармағы' ?></dt>
+                        <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Подрод' : 'Тармағы' ?></dt>
                         <dd><?= htmlspecialchars((string)$person['clan_subru']) ?></dd>
                     <?php endif; ?>
-                    <dt><?= ($lang === 'ru' || $lang === 'en') ? 'Пол' : 'Жынысы' ?></dt>
-                    <dd><?= $isMale ? (($lang === 'ru' || $lang === 'en') ? 'Мужской' : 'Ер') : (($lang === 'ru' || $lang === 'en') ? 'Женский' : 'Әйел') ?></dd>
+                    <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Пол' : 'Жынысы' ?></dt>
+                    <dd><?= $isMale ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Мужской' : 'Ер') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Женский' : 'Әйел') ?></dd>
                 </dl>
             </div>
 
@@ -342,7 +342,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                 <?php foreach (($ctPhones ?: ['']) as $ph): ?>
                                     <div class="ct-phone-row" style="display:flex; gap:6px; margin-bottom:6px;">
                                         <input type="tel" class="input ct-phone" inputmode="tel" placeholder="+7 (___) ___-__-__" maxlength="20" value="<?= htmlspecialchars($ph !== '' ? \App\Services\PersonContactService::formatPhone($ph) : '') ?>">
-                                        <button type="button" class="btn btn-ghost btn-icon" onclick="ctRemovePhone(this)" aria-label="<?= ($lang === 'ru' || $lang === 'en') ? 'Удалить номер' : 'Нөмірді өшіру' ?>">×</button>
+                                        <button type="button" class="btn btn-ghost btn-icon" onclick="ctRemovePhone(this)" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить номер' : 'Нөмірді өшіру' ?>">×</button>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -372,14 +372,14 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <dt><?= htmlspecialchars(I18n::t('field_birth_date')) ?></dt>
                     <dd><?= htmlspecialchars($birthDisp) ?></dd>
                     <dt><?= htmlspecialchars(I18n::t('field_birth_place')) ?></dt>
-                    <dd><?= htmlspecialchars((string)($person['birth_place'] ?: (($lang === 'ru' || $lang === 'en') ? 'не указано' : 'көрсетілмеген'))) ?></dd>
+                    <dd><?= htmlspecialchars((string)($person['birth_place'] ?: (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'не указано' : 'көрсетілмеген'))) ?></dd>
                     <?php
                     // TASK-036: тұрғылықты жері (история переездов), дін, ұлт, білім — пустые не показываем
                     $pcResSvc = new \App\Services\PersonResidenceService(\App\Core\Database::getConnection());
                     $pcRes = $pcResSvc->list((int)$person['id']);
                     $pcResCur = \App\Services\PersonResidenceService::current($pcRes);
                     if ($pcResCur): ?>
-                        <dt><?= ($lang === 'ru' || $lang === 'en') ? 'Город проживания' : 'Тұрғылықты жері' ?></dt>
+                        <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Город проживания' : 'Тұрғылықты жері' ?></dt>
                         <dd>
                             <?php if (count($pcRes) > 1): ?>
                                 <details class="pc-res">
@@ -406,13 +406,13 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         'education'   => ['Білімі', 'Образование'],
                     ] as $pcKey => $pcLbl):
                         if (!empty($person[$pcKey])): ?>
-                            <dt><?= ($lang === 'ru' || $lang === 'en') ? $pcLbl[1] : $pcLbl[0] ?></dt>
+                            <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? $pcLbl[1] : $pcLbl[0] ?></dt>
                             <dd><?= htmlspecialchars((string)$person[$pcKey]) ?></dd>
                         <?php endif;
                     endforeach; ?>
                     <?php if ($isDeceased): ?>
                         <dt><?= htmlspecialchars(I18n::t('field_death_place')) ?></dt>
-                        <dd><?= htmlspecialchars((string)($person['death_place'] ?: (($lang === 'ru' || $lang === 'en') ? 'не указано' : 'көрсетілмеген'))) ?></dd>
+                        <dd><?= htmlspecialchars((string)($person['death_place'] ?: (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'не указано' : 'көрсетілмеген'))) ?></dd>
                         <?php
                         // ALT-002: подробности места упокоения — только заполненное
                         foreach ([
@@ -422,7 +422,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                             'burial_plot'       => ['Қабірдің орны', 'Расположение могилы'],
                         ] as $bKey => $bLbl):
                             if (!empty($person[$bKey])): ?>
-                                <dt><?= ($lang === 'ru' || $lang === 'en') ? $bLbl[1] : $bLbl[0] ?></dt>
+                                <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? $bLbl[1] : $bLbl[0] ?></dt>
                                 <dd><?= htmlspecialchars((string)$person[$bKey]) ?></dd>
                             <?php endif;
                         endforeach; ?>
@@ -440,7 +440,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <div class="pc-burial-map">
                         <div id="burialViewMap" style="height:220px; border-radius:8px; overflow:hidden; border:1px solid var(--border, #d0d5dd);"></div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center;">
-                            <span class="muted small"><?= ($lang === 'ru' || $lang === 'en') ? 'Маршрут:' : 'Бағыт:' ?></span>
+                            <span class="muted small"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Маршрут:' : 'Бағыт:' ?></span>
                             <a class="btn btn-sm" target="_blank" rel="noopener" href="https://2gis.kz/?m=<?= $bLngS ?>,<?= $bLatS ?>/17">2GIS</a>
                             <a class="btn btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=<?= $bLatS ?>,<?= $bLngS ?>">Google</a>
                             <a class="btn btn-sm" target="_blank" rel="noopener" href="https://yandex.kz/maps/?rtext=~<?= $bLatS ?>,<?= $bLngS ?>&rtt=auto">Яндекс</a>
@@ -485,8 +485,8 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <div class="island">
                     <div class="island-head pc-kin-head"><svg class="gmark" aria-hidden="true"><use href="#g-m"/></svg><h3><?= htmlspecialchars(I18n::t('parents_title')) ?></h3></div>
                     <div class="list">
-                        <?php foreach ([['p' => $father, 'label' => I18n::t('father_label'), 'none' => (($lang === 'ru' || $lang === 'en') ? 'Не указан' : 'Көрсетілмеген')],
-                                        ['p' => $mother, 'label' => I18n::t('mother_label'), 'none' => (($lang === 'ru' || $lang === 'en') ? 'Не указана' : 'Көрсетілмеген')]] as $par): ?>
+                        <?php foreach ([['p' => $father, 'label' => I18n::t('father_label'), 'none' => (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Не указан' : 'Көрсетілмеген')],
+                                        ['p' => $mother, 'label' => I18n::t('mother_label'), 'none' => (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Не указана' : 'Көрсетілмеген')]] as $par): ?>
                             <div class="list-row">
                                 <?php if ($par['p']):
                                     $pp = $par['p'];
@@ -517,7 +517,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <div class="island">
                     <div class="island-head pc-kin-head"><svg class="couple-rings" aria-hidden="true"><use href="#o-rings"/></svg><h3><?= htmlspecialchars(I18n::t('spouses_title')) ?></h3><span class="more"><?= count($spouses) ?></span></div>
                     <?php if (empty($spouses)): ?>
-                        <div class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Сведения о браке отсутствуют' : 'Неке туралы мәлімет жоқ' ?></div>
+                        <div class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сведения о браке отсутствуют' : 'Неке туралы мәлімет жоқ' ?></div>
                     <?php else: ?>
                         <div class="list">
                             <?php foreach ($spouses as $sp):
@@ -531,12 +531,12 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                         <span>
                                             <span class="name"><?= htmlspecialchars($spName) ?></span>
                                             <?php if (!empty($sp['maiden_name'])): ?>
-                                                <span class="meta"><?= ($lang === 'ru' || $lang === 'en') ? 'урожд.' : 'қыз кезіндегі:' ?> <?= htmlspecialchars((string)$sp['maiden_name']) ?></span>
+                                                <span class="meta"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі:' ?> <?= htmlspecialchars((string)$sp['maiden_name']) ?></span>
                                             <?php endif; ?>
                                         </span>
                                     </a>
                                     <span class="right">
-                                        <span class="badge"><?= $isDiv ? (($lang === 'ru' || $lang === 'en') ? 'Развод' : 'Ажырасқан') : (($lang === 'ru' || $lang === 'en') ? 'Брак' : 'Некеде') ?></span>
+                                        <span class="badge"><?= $isDiv ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Развод' : 'Ажырасқан') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Брак' : 'Некеде') ?></span>
                                         <?php
                                             // TASK-023: «N жыл бірге» / «N лет вместе» — полные годы по дате свадьбы
                                             $spEnd = (string)(($sp['end_date'] ?? '') ?: ($sp['divorce_date'] ?? ''));
@@ -557,7 +557,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             <div class="island">
                 <div class="island-head pc-kin-head"><svg class="orn pc-sprout" aria-hidden="true"><use href="#o-sprout"/></svg><h3><?= htmlspecialchars(I18n::t('children_title')) ?></h3><span class="more"><?= count($children) ?></span></div>
                 <?php if (empty($children)): ?>
-                    <div class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Дети не зарегистрированы' : 'Балалары тіркелмеген' ?></div>
+                    <div class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дети не зарегистрированы' : 'Балалары тіркелмеген' ?></div>
                 <?php else: ?>
                     <div class="pc-people">
                         <?php foreach ($children as $ch):
@@ -568,7 +568,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                 <span class="avatar<?= $chIsMale ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($ch)) ?></span>
                                 <span>
                                     <span class="name" title="<?= htmlspecialchars($chName) ?>"><?= htmlspecialchars($chName) ?></span>
-                                    <span class="meta"><?= $chIsMale ? (($lang === 'ru' || $lang === 'en') ? 'Сын' : 'Ұлы') : (($lang === 'ru' || $lang === 'en') ? 'Дочь' : 'Қызы') ?><?= $pcLifeMeta($ch, ' · ') ?></span>
+                                    <span class="meta"><?= $chIsMale ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сын' : 'Ұлы') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дочь' : 'Қызы') ?><?= $pcLifeMeta($ch, ' · ') ?></span>
                                 </span>
                             </a>
                         <?php endforeach; ?>
@@ -589,7 +589,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                 <span class="avatar<?= $sibIsMale ? ' is-m' : ' is-f' ?><?= !empty($sib['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sib)) ?></span>
                                 <span>
                                     <span class="name" title="<?= htmlspecialchars($sibName) ?>"><?= htmlspecialchars($sibName) ?></span>
-                                    <span class="meta"><?= $sibIsMale ? (($lang === 'ru' || $lang === 'en') ? 'Брат' : 'Бауыры') : (($lang === 'ru' || $lang === 'en') ? 'Сестра' : 'Қарындасы/Әпкесі') ?><?= $pcLifeMeta($sib, ' · ') ?></span>
+                                    <span class="meta"><?= $sibIsMale ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Брат' : 'Бауыры') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сестра' : 'Қарындасы/Әпкесі') ?><?= $pcLifeMeta($sib, ' · ') ?></span>
                                 </span>
                             </a>
                         <?php endforeach; ?>
@@ -599,7 +599,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
 
             <!-- TASK-018 (note 16.11 15:49): мероприятия человека и фото, где он отмечен -->
             <?php if (!empty($albumsReady)):
-                $pcRu = (($lang === 'ru' || $lang === 'en'));
+                $pcRu = (($lang === 'ru' || $lang === 'en' || $lang === 'es'));
                 $pcEvents = $personEvents ?? [];
                 $pcPhotos = $personPhotos['items'] ?? [];
                 $pcPhotosTotal = (int)($personPhotos['total'] ?? 0);
@@ -702,7 +702,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <div class="pc-stack">
                         <?php foreach (($mediaList['audio'] ?? []) as $aud): ?>
                             <div class="island-sub">
-                                <div class="pc-sub-title"><?= htmlspecialchars((string)($aud['title'] ?: (($lang === 'ru' || $lang === 'en') ? 'Аудиозапись воспоминания' : 'Дыбыс жазбасы'))) ?></div>
+                                <div class="pc-sub-title"><?= htmlspecialchars((string)($aud['title'] ?: (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Аудиозапись воспоминания' : 'Дыбыс жазбасы'))) ?></div>
                                 <audio controls class="pc-audio">
                                     <source src="/media/stream?id=<?= (int)$aud['id'] ?>" type="audio/mpeg">
                                 </audio>
@@ -710,7 +710,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         <?php endforeach; ?>
                         <?php foreach (($mediaList['stories'] ?? []) as $st): ?>
                             <div class="island-sub">
-                                <div class="pc-sub-title"><?= htmlspecialchars((string)($st['title'] ?: (($lang === 'ru' || $lang === 'en') ? 'Воспоминание' : 'Естелік'))) ?></div>
+                                <div class="pc-sub-title"><?= htmlspecialchars((string)($st['title'] ?: (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Воспоминание' : 'Естелік'))) ?></div>
                                 <div class="pc-bio-text"><?= htmlspecialchars((string)$st['content']) ?></div>
                             </div>
                         <?php endforeach; ?>
@@ -737,7 +737,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         <div class="seg" role="group" aria-label="<?= htmlspecialchars(I18n::t('ush_zhurt_title')) ?>">
                             <?php foreach ($zhurtList as $zKey => $zData): ?>
                                 <button type="button" onclick="switchZhurtTab('<?= htmlspecialchars($zKey) ?>')" id="tabBtn_<?= htmlspecialchars($zKey) ?>" class="<?= $zKey === $firstZhurtKey ? 'active' : '' ?>">
-                                    <?= htmlspecialchars((string)(($lang === 'ru' || $lang === 'en') ? $zData['title_ru'] : $zData['title_kk'])) ?> <span class="muted">(<?= (int)$zData['total_count'] ?>)</span>
+                                    <?= htmlspecialchars((string)(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? $zData['title_ru'] : $zData['title_kk'])) ?> <span class="muted">(<?= (int)$zData['total_count'] ?>)</span>
                                 </button>
                             <?php endforeach; ?>
                         </div>
@@ -749,16 +749,16 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         <div id="zhurtPane_<?= htmlspecialchars($paneId) ?>" style="display: <?= $isActive ? 'block' : 'none' ?>;">
                             <?php if (empty($zhurtData['families']) && empty($zhurtData['standalone'])): ?>
                                 <div class="pp-empty muted">
-                                    <?= htmlspecialchars((string)(($lang === 'ru' || $lang === 'en') ? ($zhurtData['empty_ru'] ?? 'Пока никого не добавили') : ($zhurtData['empty_kk'] ?? 'Әзірге ешкім қосылмаған'))) ?>
-                                    <a class="btn" href="/tree?focus=<?= (int)($person['id'] ?? 0) ?>"><?= ($lang === 'ru' || $lang === 'en') ? 'Добавить' : 'Қосу' ?></a>
+                                    <?= htmlspecialchars((string)(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($zhurtData['empty_ru'] ?? 'Пока никого не добавили') : ($zhurtData['empty_kk'] ?? 'Әзірге ешкім қосылмаған'))) ?>
+                                    <a class="btn" href="/tree?focus=<?= (int)($person['id'] ?? 0) ?>"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Добавить' : 'Қосу' ?></a>
                                 </div>
                             <?php else: ?>
                                 <div class="pc-stack">
                                     <?php foreach ($zhurtData['families'] as $fam):
                                         $h = $fam['husband'];
                                         $w = $fam['wife'];
-                                        $hName = $h ? trim(($h['last_name'] ?? '') . ' ' . $h['first_name']) : (($lang === 'ru' || $lang === 'en') ? 'Неизвестно' : 'Белгісіз');
-                                        $wName = $w ? trim(($w['last_name'] ?? '') . ' ' . $w['first_name']) : (($lang === 'ru' || $lang === 'en') ? 'Неизвестно' : 'Белгісіз');
+                                        $hName = $h ? trim(($h['last_name'] ?? '') . ' ' . $h['first_name']) : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз');
+                                        $wName = $w ? trim(($w['last_name'] ?? '') . ' ' . $w['first_name']) : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз');
                                         $childCount = count($fam['children']);
                                     ?>
                                         <details open class="pc-family">
@@ -770,7 +770,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                             <span class="badge"><?= htmlspecialchars(I18n::formatKinship($fam['husband_kinship']['term_kk'], $fam['husband_kinship']['term_ru'] ?? null)) ?></span>
                                                         <?php endif; ?>
                                                     <?php else: ?>
-                                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Неизвестно' : 'Белгісіз' ?></span>
+                                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз' ?></span>
                                                     <?php endif; ?>
                                                     <svg class="couple-rings pc-plus" aria-hidden="true" focusable="false"><use href="#o-rings"/></svg>
                                                     <?php if ($w): ?>
@@ -782,17 +782,17 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                             $uzInfo = $fam['wife_kinship']['uzatylgan'];
                                                             $uzFam = $uzInfo['husband_last_name'] ?: ($uzInfo['husband_clan'] ?: $uzInfo['husband_name']);
                                                         ?>
-                                                            <span class="muted small" style="opacity:.7;"><?= ($lang === 'ru' || $lang === 'en') ? 'замужем' : 'ұзатылған' ?> — <?= htmlspecialchars((string)$uzFam) ?></span>
+                                                            <span class="muted small" style="opacity:.7;"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'замужем' : 'ұзатылған' ?> — <?= htmlspecialchars((string)$uzFam) ?></span>
                                                         <?php endif; ?>
                                                     <?php else: ?>
-                                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en') ? 'Неизвестно' : 'Белгісіз' ?></span>
+                                                        <span class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз' ?></span>
                                                     <?php endif; ?>
                                                 </span>
-                                                <span class="badge"><?= $childCount ?> <?= ($lang === 'ru' || $lang === 'en') ? 'детей' : 'бала' ?></span>
+                                                <span class="badge"><?= $childCount ?> <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'детей' : 'бала' ?></span>
                                             </summary>
                                             <div class="pc-family-body">
                                                 <?php if ($childCount === 0): ?>
-                                                    <div class="muted small"><?= ($lang === 'ru' || $lang === 'en') ? 'Дети не зарегистрированы' : 'Балалары тіркелмеген' ?></div>
+                                                    <div class="muted small"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дети не зарегистрированы' : 'Балалары тіркелмеген' ?></div>
                                                 <?php else: ?>
                                                     <div class="list">
                                                         <?php foreach ($fam['children'] as $chItem):
@@ -805,7 +805,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                                     <span class="avatar<?= (($ch['gender'] ?? '') === 'M') ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars(mb_substr((string)($ch['first_name'] ?? ''), 0, 1) . mb_substr((string)($ch['last_name'] ?? ''), 0, 1) ?: 'Ш') ?></span>
                                                                     <span>
                                                                         <span class="name"><?= htmlspecialchars($chName) ?></span>
-                                                                        <span class="meta"><?= ($ch['gender'] === 'M') ? (($lang === 'ru' || $lang === 'en') ? 'Сын' : 'Ұлы') : (($lang === 'ru' || $lang === 'en') ? 'Дочь' : 'Қызы') ?><?= is_array($ch) ? $pcLifeMeta($ch, ' · ') : '' ?></span>
+                                                                        <span class="meta"><?= ($ch['gender'] === 'M') ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сын' : 'Ұлы') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дочь' : 'Қызы') ?><?= is_array($ch) ? $pcLifeMeta($ch, ' · ') : '' ?></span>
                                                                     </span>
                                                                 </a>
                                                                 <?php if (!empty($chKin['term_kk'])): ?>
@@ -821,7 +821,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
 
                                     <?php if (!empty($zhurtData['standalone'])): ?>
                                         <div class="island-sub">
-                                            <div class="pc-label"><?= ($lang === 'ru' || $lang === 'en') ? 'Другие родственники этого круга' : 'Осы жұрттағы басқа туыстар' ?></div>
+                                            <div class="pc-label"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Другие родственники этого круга' : 'Осы жұрттағы басқа туыстар' ?></div>
                                             <div class="pc-tags">
                                                 <?php foreach ($zhurtData['standalone'] as $stItem):
                                                     $stP = $stItem['person'];
@@ -855,10 +855,10 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <details class="island-sub pc-tech" id="personHistory">
                     <summary>
                         <svg class="ic" aria-hidden="true"><use href="#i-history"/></svg>
-                        <span><?= ($lang === 'ru' || $lang === 'en') ? 'История изменений' : 'Өзгерістер тарихы' ?> (<?= count($auditLogs ?? []) ?>)</span>
+                        <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'История изменений' : 'Өзгерістер тарихы' ?> (<?= count($auditLogs ?? []) ?>)</span>
                     </summary>
                     <?php if (empty($auditLogs)): ?>
-                        <p class="muted small"><?= ($lang === 'ru' || $lang === 'en') ? 'Изменений пока нет' : 'Өзгерістер әлі жоқ' ?></p>
+                        <p class="muted small"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Изменений пока нет' : 'Өзгерістер әлі жоқ' ?></p>
                     <?php else: ?>
                         <ul class="pc-hist" style="list-style:none;margin:0;padding:0;display:grid;gap:10px">
                             <?php foreach ($auditLogs as $l): ?>
@@ -869,21 +869,21 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                         · <span class="badge"><?= htmlspecialchars($l['verb']) ?></span>
                                         <?php if ($l['entity_table'] !== 'persons'): ?><span class="muted">(<?= htmlspecialchars($l['object_label']) ?>)</span><?php endif; ?>
                                         <?php if (!empty($l['rolled_back'])): ?>
-                                            <span class="badge"><?= ($lang === 'ru' || $lang === 'en') ? 'откачено' : 'қайтарылды' ?></span>
+                                            <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'откачено' : 'қайтарылды' ?></span>
                                         <?php elseif (!empty($l['can_rollback'])): ?>
-                                            <button type="button" class="btn btn-sm" onclick="pcRollback(<?= (int)$l['id'] ?>)"><?= ($lang === 'ru' || $lang === 'en') ? 'Откатить' : 'Қайтару' ?></button>
+                                            <button type="button" class="btn btn-sm" onclick="pcRollback(<?= (int)$l['id'] ?>)"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Откатить' : 'Қайтару' ?></button>
                                         <?php endif; ?>
                                     </div>
                                     <?php include __DIR__ . '/../history/_changes.php'; ?>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
-                        <p class="small"><a href="/history?person=<?= (int)$person['id'] ?>"><?= ($lang === 'ru' || $lang === 'en') ? 'Открыть в журнале изменений →' : 'Өзгерістер журналында ашу →' ?></a></p>
+                        <p class="small"><a href="/history?person=<?= (int)$person['id'] ?>"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Открыть в журнале изменений →' : 'Өзгерістер журналында ашу →' ?></a></p>
                     <?php endif; ?>
                 </details>
                 <script>
                     async function pcRollback(logId) {
-                        if (!confirm('<?= ($lang === 'ru' || $lang === 'en') ? 'Вернуть прежние значения?' : 'Бұрынғы мәндерді қайтару керек пе?' ?>')) return;
+                        if (!confirm('<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вернуть прежние значения?' : 'Бұрынғы мәндерді қайтару керек пе?' ?>')) return;
                         try {
                             const res = await fetch('/api/history/rollback', {
                                 method: 'POST',
@@ -967,8 +967,8 @@ window.addEventListener('resize', (function () { var t; return function () { cle
     function openAddChildModal(gender) {
         document.getElementById('addChildGender').value = gender;
         document.getElementById('addChildModalTitle').innerText = (gender === 'M')
-            ? '<?= ($lang === 'ru' || $lang === 'en') ? 'Добавить сына' : 'Ұл қосу' ?>'
-            : '<?= ($lang === 'ru' || $lang === 'en') ? 'Добавить дочь' : 'Қыз қосу' ?>';
+            ? '<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Добавить сына' : 'Ұл қосу' ?>'
+            : '<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Добавить дочь' : 'Қыз қосу' ?>';
         document.getElementById('addChildModal').style.display = 'flex';
     }
 
@@ -1023,7 +1023,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
 
         msg.style.display = 'block';
         msg.style.color = 'var(--c-text-2)';
-        msg.innerText = '<?= ($lang === 'ru' || $lang === 'en') ? 'Проверка и пересохранение фото...' : 'Сурет тексеріліп, сақталуда...' ?>';
+        msg.innerText = '<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Проверка и пересохранение фото...' : 'Сурет тексеріліп, сақталуда...' ?>';
 
         const formData = new FormData(form);
 
@@ -1035,7 +1035,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             const data = await res.json();
             if (data && data.success) {
                 msg.style.color = 'var(--c-success)';
-                msg.innerText = '<?= ($lang === 'ru' || $lang === 'en') ? 'Фото успешно обновлено!' : 'Фото сәтті жаңартылды!' ?>';
+                msg.innerText = '<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фото успешно обновлено!' : 'Фото сәтті жаңартылды!' ?>';
                 setTimeout(() => window.location.reload(), 800);
             } else {
                 msg.style.color = 'var(--c-danger)';
@@ -1186,7 +1186,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             });
             const data = await res.json();
             if (res.ok && data && (data.success || data.status === 'success')) {
-                showAppToast(<?= json_encode(($lang === 'ru' || $lang === 'en') ? 'Настройки приватности обновлены' : 'Құпиялылық баптаулары сақталды', JSON_UNESCAPED_UNICODE) ?>, 'success');
+                showAppToast(<?= json_encode(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Настройки приватности обновлены' : 'Құпиялылық баптаулары сақталды', JSON_UNESCAPED_UNICODE) ?>, 'success');
             } else {
                 showAppToast('Қате / Ошибка: ' + ((data && data.error) || 'Ошибка'), 'error');
             }
@@ -1196,7 +1196,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
     }
 
     async function deletePersonFaceData(personId) {
-        const msg = <?= json_encode(($lang === 'ru' || $lang === 'en') ? 'Удалить все отпечатки лица этого человека? Ручные отметки на фото останутся.' : 'Бұл адамның барлық бет бейнелерін өшіру керек пе?', JSON_UNESCAPED_UNICODE) ?>;
+        const msg = <?= json_encode(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить все отпечатки лица этого человека? Ручные отметки на фото останутся.' : 'Бұл адамның барлық бет бейнелерін өшіру керек пе?', JSON_UNESCAPED_UNICODE) ?>;
         if (!window.confirm(msg)) return;
         try {
             const res = await fetch('/api/face/delete-person', {
@@ -1206,7 +1206,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             });
             const data = await res.json();
             if (res.ok && data && (data.success || data.status === 'success')) {
-                showAppToast(<?= json_encode(($lang === 'ru' || $lang === 'en') ? 'Отпечатки лица удалены' : 'Бет бейнелері өшірілді', JSON_UNESCAPED_UNICODE) ?>, 'success');
+                showAppToast(<?= json_encode(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Отпечатки лица удалены' : 'Бет бейнелері өшірілді', JSON_UNESCAPED_UNICODE) ?>, 'success');
                 setTimeout(() => window.location.reload(), 800);
             } else {
                 showAppToast('Қате / Ошибка: ' + ((data && data.error) || 'Ошибка'), 'error');

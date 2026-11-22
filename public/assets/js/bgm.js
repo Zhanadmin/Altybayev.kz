@@ -37,7 +37,7 @@
         b.id = 'bgmToggle';
         b.className = 'off';
         // значок: ноты + «звуковые полоски» (эквалайзер); когда выключено — полоски стоят, значок перечёркнут
-        b.innerHTML = '<span class="bgm-note">♫</span><span class="bgm-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
+        b.innerHTML = '<span class="bgm-note">♫</span><span class="bgm-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="bgm-lbl"></span>';
         var st = document.createElement('style');
         st.textContent = '#bgmToggle{position:fixed;right:10px;bottom:22vh;z-index:900;width:46px;height:58px;border-radius:23px;' +
             'border:1px solid var(--c-border-strong,#bbb);background:var(--c-island,#fff);color:inherit;' +
@@ -54,10 +54,24 @@
             '@keyframes bgmBar{0%,100%{height:3px}50%{height:14px}}' +
             '#bgmToggle.off{opacity:.8}' +
             '#bgmToggle.off::after{content:"";position:absolute;left:8px;right:8px;top:50%;border-top:2px solid currentColor;transform:rotate(-45deg)}' +
+            // ALT-014 (замечание): внутри сайта кнопка — в сайдбаре, внизу над строкой версии
+            '#bgmToggle.in-side{position:relative;right:auto;bottom:auto;z-index:auto;width:auto;height:42px;border-radius:21px;' +
+            'flex-direction:row;gap:8px;margin:auto 10px 10px;padding:4px 14px;font-size:13px;box-shadow:none;align-self:stretch}' +
+            '#bgmToggle.in-side .bgm-lbl{display:inline}' +
+            '#bgmToggle:not(.in-side) .bgm-lbl{display:none}' +
+            '#bgmToggle.in-side.off::after{display:none}' +
+            '#bgmToggle.in-side.off .bgm-note{text-decoration:line-through}' +
+            '.ds-sidebar #bgmToggle~.ds-sidebar-foot{margin-top:0}' +
             '@media (prefers-reduced-motion:reduce){#bgmToggle .bgm-bars i{animation:none!important}#bgmToggle[aria-pressed="true"] .bgm-bars i{height:9px}}' +
             '@media print{#bgmToggle{display:none}}';
         document.head.appendChild(st);
-        document.body.appendChild(b);
+        var foot = document.querySelector('#appSidebar .ds-sidebar-foot');
+        if (foot && foot.parentNode) {
+            b.classList.add('in-side');
+            foot.parentNode.insertBefore(b, foot);
+        } else {
+            document.body.appendChild(b);
+        }
 
         function ui(on) {
             b.classList.toggle('off', !on);
@@ -65,6 +79,8 @@
             var t = on ? L[1] : L[0];
             b.setAttribute('aria-label', t);
             b.title = t;
+            var lbl = b.querySelector('.bgm-lbl');
+            if (lbl) lbl.textContent = t;
         }
         ui(false);
 

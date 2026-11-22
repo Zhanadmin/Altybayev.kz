@@ -37,39 +37,33 @@
         b.id = 'bgmToggle';
         b.className = 'off';
         // значок: ноты + «звуковые полоски» (эквалайзер); когда выключено — полоски стоят, значок перечёркнут
-        b.innerHTML = '<span class="bgm-note">♫</span><span class="bgm-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="bgm-lbl"></span>';
+        b.innerHTML = '<span class="bgm-note">♫</span><span class="bgm-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
         var st = document.createElement('style');
-        st.textContent = '#bgmToggle{position:fixed;right:10px;bottom:22vh;z-index:900;width:46px;height:58px;border-radius:23px;' +
-            'border:1px solid var(--c-border-strong,#bbb);background:var(--c-island,#fff);color:inherit;' +
-            'cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:4px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}' +
-            '#bgmToggle:hover,#bgmToggle:focus-visible{box-shadow:0 4px 18px rgba(0,0,0,.4)}' +
-            '#bgmToggle .bgm-note{font-size:20px;line-height:1}' +
-            '#bgmToggle .bgm-bars{display:flex;align-items:flex-end;gap:2px;height:14px}' +
-            '#bgmToggle .bgm-bars i{display:block;width:3px;height:4px;border-radius:2px;background:currentColor}' +
-            '#bgmToggle[aria-pressed="true"]{background:var(--c-accent-soft,#e8f0ff);border-color:var(--c-accent,#4a7)}' +
+        // ALT-014: компактная круглая кнопка в верхней панели рядом с переключателем языка
+        st.textContent = '#bgmToggle{position:relative;flex:0 0 auto;box-sizing:border-box;width:36px;height:36px;min-width:36px;border-radius:50%;margin:0 8px 0 0;padding:0;' +
+            'border:1px solid var(--c-border-strong,#475569);background:var(--c-island,rgba(15,23,42,.85));color:var(--c-text,inherit);' +
+            'cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}' +
+            '#bgmToggle:hover,#bgmToggle:focus-visible{border-color:var(--c-accent,#d4af37)}' +
+            '#bgmToggle .bgm-note{font-size:14px;line-height:1}' +
+            '#bgmToggle .bgm-bars{display:flex;align-items:flex-end;gap:2px;height:9px}' +
+            '#bgmToggle .bgm-bars i{display:block;width:2px;height:2px;border-radius:1px;background:currentColor}' +
+            '#bgmToggle[aria-pressed="true"]{border-color:var(--c-accent,#d4af37);color:var(--c-accent,#d4af37)}' +
             '#bgmToggle[aria-pressed="true"] .bgm-bars i{animation:bgmBar .9s ease-in-out infinite}' +
             '#bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(2){animation-delay:.2s}' +
             '#bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(3){animation-delay:.45s}' +
             '#bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(4){animation-delay:.1s}' +
-            '@keyframes bgmBar{0%,100%{height:3px}50%{height:14px}}' +
-            '#bgmToggle.off{opacity:.8}' +
-            '#bgmToggle.off::after{content:"";position:absolute;left:8px;right:8px;top:50%;border-top:2px solid currentColor;transform:rotate(-45deg)}' +
-            // ALT-014 (замечание): внутри сайта кнопка — в сайдбаре, внизу над строкой версии
-            '#bgmToggle.in-side{position:relative;right:auto;bottom:auto;z-index:auto;width:auto;height:42px;border-radius:21px;' +
-            'flex-direction:row;gap:8px;margin:auto 10px 10px;padding:4px 14px;font-size:13px;box-shadow:none;align-self:stretch}' +
-            '#bgmToggle.in-side .bgm-lbl{display:inline}' +
-            '#bgmToggle:not(.in-side) .bgm-lbl{display:none}' +
-            '#bgmToggle.in-side.off::after{display:none}' +
-            '#bgmToggle.in-side.off .bgm-note{text-decoration:line-through}' +
-            '.ds-sidebar #bgmToggle~.ds-sidebar-foot{margin-top:0}' +
-            '@media (prefers-reduced-motion:reduce){#bgmToggle .bgm-bars i{animation:none!important}#bgmToggle[aria-pressed="true"] .bgm-bars i{height:9px}}' +
+            '@keyframes bgmBar{0%,100%{height:2px}50%{height:9px}}' +
+            '#bgmToggle.off{opacity:.85}' +
+            '#bgmToggle.off::after{content:"";position:absolute;left:7px;right:7px;top:50%;border-top:2px solid currentColor;transform:rotate(-45deg)}' +
+            '#bgmToggle.floating{position:fixed;right:10px;top:10px;z-index:900;margin:0}' +
+            '@media (prefers-reduced-motion:reduce){#bgmToggle .bgm-bars i{animation:none!important}#bgmToggle[aria-pressed="true"] .bgm-bars i{height:6px}}' +
             '@media print{#bgmToggle{display:none}}';
         document.head.appendChild(st);
-        var foot = document.querySelector('#appSidebar .ds-sidebar-foot');
-        if (foot && foot.parentNode) {
-            b.classList.add('in-side');
-            foot.parentNode.insertBefore(b, foot);
+        var sw = document.querySelector('.lang-switcher, .ds-topbar .seg, .au-top .seg');
+        if (sw && sw.parentNode) {
+            sw.parentNode.insertBefore(b, sw);
         } else {
+            b.classList.add('floating');
             document.body.appendChild(b);
         }
 
@@ -79,8 +73,6 @@
             var t = on ? L[1] : L[0];
             b.setAttribute('aria-label', t);
             b.title = t;
-            var lbl = b.querySelector('.bgm-lbl');
-            if (lbl) lbl.textContent = t;
         }
         ui(false);
 

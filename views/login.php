@@ -11,6 +11,18 @@ $lang = I18n::lang();
 $langRef = !empty($isHome) ? '/' : '/login';
 $siteTitle = I18n::siteTitle();
 $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTitle} — Вход в систему" : "{$siteTitle} — Жүйеге кіру";
+
+// TASK-027: контакты владельца из настроек админки; токен CSRF и метка времени показа формы (защита от ботов)
+$ru = ($lang === 'ru' || $lang === 'en' || $lang === 'es');
+$fbContacts = ['name' => '', 'email' => '', 'whatsapp' => ''];
+try {
+    $fbContacts = \App\Services\FeedbackService::publicContacts(\App\Core\Database::getConnection());
+} catch (\Throwable $e) {
+    // БД недоступна — страница работает без контактов
+}
+$fbCsrf = \App\Core\Session::csrfToken();
+\App\Core\Session::set('fb_form_ts', time());
+$fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : ($ru ? 'владельцем сайта' : 'сайт иесі');
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($lang) ?>">
@@ -67,7 +79,19 @@ $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTit
         .wl-s-txt { fill: var(--c-text-3); }
         .wl-s-dark { fill: var(--c-text-2); }
         .wl-s-green { fill: var(--c-success-soft); stroke: var(--c-success); stroke-width: 1.2; }
-        @media (max-width: 480px) { .wl-body { padding-top: 60px; } .wl-prev { height: 150px; } }
+        .wl-login-top { height: 32px; padding: 0 14px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+        .wl-cta { margin-top: var(--sp-5); }
+        .wl-cta .btn { height: 48px; padding: 0 28px; font-size: 17px; font-weight: 700; }
+        .wl-contact { max-width: 620px; margin: var(--sp-8) auto 0; padding: var(--sp-6) var(--sp-5); border-radius: var(--r-lg); }
+        .wl-contact h2 { margin-top: 0; }
+        .wl-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: var(--sp-4) 0; }
+        .wl-links .btn { min-height: 42px; }
+        .wl-form { display: grid; gap: var(--sp-3); margin-top: var(--sp-4); }
+        .wl-form .textarea { min-height: 110px; }
+        .wl-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+        .wl-fmsg { min-height: 1.4em; font-size: 14px; text-align: center; }
+        .wl-fmsg.ok { color: var(--c-success); } .wl-fmsg.err { color: var(--c-danger, #b42318); }
+        @media (max-width: 480px) { .wl-body { padding-top: 60px; } .wl-prev { height: 150px; } .wl-contact { padding: var(--sp-5) var(--sp-4); } }
     </style>
 </head>
 <body class="au-body wl-body">
@@ -87,6 +111,7 @@ $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTit
             <a href="/lang/en?ref=<?= $langRef ?>" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
             <a href="/lang/es?ref=<?= $langRef ?>" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
+        <a href="/auth/google" class="btn btn-primary wl-login-top"><?= $ru ? 'Войти' : 'Кіру' ?></a>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
                 aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
             <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
@@ -112,6 +137,10 @@ $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTit
                 : ['Ру ағашы', 'Жеті ата', 'Үш жұрт', 'Отбасылар мен балалар', 'Туған күндер', 'Фотоальбомдар', '3D емен орманы', 'Туыстар байланысы'] as $chip): ?>
                 <span class="wl-chip"><?= htmlspecialchars($chip) ?></span>
             <?php endforeach; ?>
+        </div>
+
+        <div class="wl-cta">
+            <a href="/auth/google" class="btn btn-primary"><?= $ru ? 'Кіру / Войти' : 'Кіру / Войти' ?></a>
         </div>
 
         <?php if (!empty($error)): ?>
@@ -269,6 +298,47 @@ $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTit
         </div>
     </section>
 
+    <!-- TASK-027: обратная связь с владельцем (контакты — из настроек админки) -->
+    <section class="island wl-contact" id="contact" aria-labelledby="wl-contact-h">
+        <h2 id="wl-contact-h"><?= $ru ? 'Хотите присоединиться или есть вопрос?' : 'Қосылғыңыз келе ме немесе сұрағыңыз бар ма?' ?></h2>
+        <p class="wl-h2-sub" style="margin-bottom:0">
+            <?= $ru ? 'Свяжитесь с ' : 'Байланысыңыз: ' ?><strong><?= htmlspecialchars($fbOwner) ?></strong><?= $ru ? ' — ответим и добавим в шежіре.' : ' — жауап береміз, шежіреге қосамыз.' ?>
+        </p>
+        <?php
+        $waDigits = preg_replace('/\D+/', '', $fbContacts['whatsapp']) ?? '';
+        if ($waDigits !== '' || $fbContacts['email'] !== ''): ?>
+        <div class="wl-links">
+            <?php if ($waDigits !== ''): ?>
+                <a class="btn" href="https://wa.me/<?= htmlspecialchars($waDigits) ?>" target="_blank" rel="noopener">WhatsApp</a>
+            <?php endif; ?>
+            <?php if ($fbContacts['email'] !== ''): ?>
+                <a class="btn" href="mailto:<?= htmlspecialchars($fbContacts['email']) ?>"><?= $ru ? 'Написать на почту' : 'Поштаға жазу' ?></a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <form class="wl-form" id="fbForm" novalidate>
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($fbCsrf) ?>">
+            <div class="wl-hp" aria-hidden="true">
+                <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+            </div>
+            <div class="field">
+                <label for="fb-name"><?= $ru ? 'Ваше имя' : 'Атыңыз' ?></label>
+                <input class="input" id="fb-name" name="name" maxlength="120" required autocomplete="name">
+            </div>
+            <div class="field">
+                <label for="fb-contact"><?= $ru ? 'Телефон или e-mail' : 'Телефон немесе e-mail' ?></label>
+                <input class="input" id="fb-contact" name="contact" maxlength="190" required autocomplete="email">
+            </div>
+            <div class="field">
+                <label for="fb-message"><?= $ru ? 'Сообщение' : 'Хабарлама' ?></label>
+                <textarea class="textarea" id="fb-message" name="message" maxlength="2000" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="fbSend"><?= $ru ? 'Отправить' : 'Жіберу' ?></button>
+            <div class="wl-fmsg" id="fbMsg" role="status" aria-live="polite"></div>
+        </form>
+    </section>
+
     <section class="island au-card wl-enter" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вход' : 'Кіру' ?>">
         <h2 style="margin-top:0"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Войти в шежіре' : 'Шежіреге кіру' ?></h2>
         <p class="au-sub" style="margin-bottom:var(--sp-5)"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вход — через ваш аккаунт Google.' : 'Кіру — Google аккаунтыңыз арқылы.' ?></p>
@@ -314,6 +384,47 @@ $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTit
             try { localStorage.setItem('shezhire_theme', next); } catch (e) {}
             document.cookie = `shezhire_theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
         }
+        // TASK-027: отправка формы обратной связи
+        (function () {
+            const form = document.getElementById('fbForm');
+            if (!form) return;
+            const msg = document.getElementById('fbMsg');
+            const btn = document.getElementById('fbSend');
+            const RU = <?= $ru ? 'true' : 'false' ?>;
+            form.addEventListener('submit', async function (ev) {
+                ev.preventDefault();
+                msg.className = 'wl-fmsg';
+                msg.textContent = '';
+                const fd = new FormData(form);
+                if (!String(fd.get('name')).trim() || !String(fd.get('contact')).trim() || !String(fd.get('message')).trim()) {
+                    msg.className = 'wl-fmsg err';
+                    msg.textContent = RU ? 'Заполните все поля.' : 'Барлық өрісті толтырыңыз.';
+                    return;
+                }
+                btn.disabled = true;
+                try {
+                    const res = await fetch('/api/feedback', {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        body: new URLSearchParams(fd)
+                    });
+                    let data = null;
+                    try { data = await res.json(); } catch (e) {}
+                    if (res.ok && data && data.success) {
+                        form.reset();
+                        msg.className = 'wl-fmsg ok';
+                        msg.textContent = RU ? 'Спасибо! Сообщение отправлено.' : 'Рақмет! Хабарлама жіберілді.';
+                    } else {
+                        msg.className = 'wl-fmsg err';
+                        msg.textContent = (data && data.error) || (RU ? 'Не удалось отправить.' : 'Жіберу мүмкін болмады.');
+                    }
+                } catch (e) {
+                    msg.className = 'wl-fmsg err';
+                    msg.textContent = RU ? 'Нет связи, попробуйте позже.' : 'Байланыс жоқ, кейінірек көріңіз.';
+                }
+                btn.disabled = false;
+            });
+        })();
         (function () {
             const root = document.documentElement;
             if (!root.getAttribute('data-theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

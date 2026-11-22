@@ -68,6 +68,20 @@ class PatronymicService
         return self::generate((string)$father['first_name'], (string)($person['gender'] ?? ''), $lang);
     }
 
+    /**
+     * Обе формы сразу (клиент сам переключает язык): ручное значение одинаково для обоих.
+     * @param array<string,mixed> $person
+     * @param array<string,mixed>|null $father
+     * @return array{kk:string,ru:string}
+     */
+    public static function both(array $person, ?array $father): array
+    {
+        return [
+            'kk' => self::resolve($person, $father, 'kk'),
+            'ru' => self::resolve($person, $father, 'ru'),
+        ];
+    }
+
     /** Русская форма или null, если по-русски неестественно (имя на гласную и т.п.). */
     private static function russian(string $name, bool $male): ?string
     {

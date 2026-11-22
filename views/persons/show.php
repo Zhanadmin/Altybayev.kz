@@ -4,7 +4,12 @@ declare(strict_types=1);
 use App\Core\I18n;
 
 $lang = I18n::lang();
-$fullName = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '') . ' ' . ($person['middle_name'] ?? ''));
+// TASK-028: отчество автоматически по отцу (ручное значение приоритетнее); ru — по-русски, остальные языки — казахская форма
+$patrLang = ($lang === 'ru') ? 'ru' : 'kk';
+$patrOf = static function (array $row, ?array $fatherRow) use ($patrLang): string {
+    return \App\Services\PatronymicService::resolve($row, $fatherRow, $patrLang);
+};
+$fullName = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '') . ' ' . $patrOf($person, $father ?? null));
 $title = $fullName;
 $activeNav = 'persons';
 $dsThemeReady = true; // TASK-008: страница переведена на дизайн-систему (светлая и тёмная темы)
@@ -562,7 +567,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <div class="pc-people">
                         <?php foreach ($children as $ch):
                             $chIsMale = ($ch['gender'] === 'M');
-                            $chName = trim(($ch['last_name'] ?? '') . ' ' . $ch['first_name'] . ' ' . ($ch['middle_name'] ?? ''));
+                            $chName = trim(($ch['last_name'] ?? '') . ' ' . $ch['first_name'] . ' ' . $patrOf($ch, $isMale ? $person : null));
                         ?>
                             <a href="/person/<?= (int)$ch['id'] ?>" class="person pc-chip">
                                 <span class="avatar<?= $chIsMale ? ' is-m' : ' is-f' ?><?= !empty($ch['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($ch)) ?></span>
@@ -583,7 +588,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <div class="pc-people">
                         <?php foreach ($siblings as $sib):
                             $sibIsMale = ($sib['gender'] === 'M');
-                            $sibName = trim(($sib['last_name'] ?? '') . ' ' . $sib['first_name'] . ' ' . ($sib['middle_name'] ?? ''));
+                            $sibName = trim(($sib['last_name'] ?? '') . ' ' . $sib['first_name'] . ' ' . $patrOf($sib, (!empty($sib['father_id']) && (int)$sib['father_id'] === (int)($person['father_id'] ?? 0)) ? ($father ?? null) : null));
                         ?>
                             <a href="/person/<?= (int)$sib['id'] ?>" class="person pc-chip">
                                 <span class="avatar<?= $sibIsMale ? ' is-m' : ' is-f' ?><?= !empty($sib['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sib)) ?></span>

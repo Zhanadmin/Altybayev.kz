@@ -189,6 +189,8 @@ class TreeLayoutService
                 'last_name' => $p['last_name'] ?? '',
                 'maiden_name' => $p['maiden_name'] ?? null,
                 'middle_name' => $p['middle_name'] ?? null,
+                'middle_name_kk' => PatronymicService::resolve($p, $fId ? ($personsById[$fId] ?? null) : null, 'kk'),
+                'middle_name_ru' => PatronymicService::resolve($p, $fId ? ($personsById[$fId] ?? null) : null, 'ru'),
                 'gender' => $p['gender'] ?? 'unknown',
                 'birth_date' => $p['birth_date'] ?? null,
                 'birth_year' => $p['birth_year'] ?? null,

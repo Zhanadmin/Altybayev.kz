@@ -132,7 +132,14 @@ class AdminController
         $faceReady = $faceSvc->isReady();
         $faceEnabled = $faceReady && $faceSvc->enabled();
 
+        // TASK-027: контакты владельца и обращения с приветственной страницы
+        $feedbackData = \App\Services\FeedbackService::listForAdmin($db);
+
         Response::view('admin/index', [
+            'contacts'               => \App\Services\FeedbackService::publicContacts($db),
+            'feedbackRows'           => $feedbackData['rows'],
+            'feedbackUnread'         => $feedbackData['unread'],
+            'smtpReady'              => \App\Services\FeedbackService::smtpConfigured(),
             'user'                   => $user,
             'userPersonId'           => $userPersonId,
             'users'                  => $users,

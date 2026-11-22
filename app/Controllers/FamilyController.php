@@ -27,7 +27,7 @@ class FamilyController
 
         // 1. Получаем все персоны в ассоциативный массив
         $personsById = [];
-        $pStmt = $db->query("SELECT id, first_name, last_name, maiden_name, middle_name, gender, birth_year, birth_date, death_year, death_date, is_deceased, clan_ru, avatar_path FROM persons WHERE is_deleted = 0");
+        $pStmt = $db->query("SELECT id, first_name, last_name, maiden_name, middle_name, gender, father_id, birth_year, birth_date, death_year, death_date, is_deceased, clan_ru, avatar_path FROM persons WHERE is_deleted = 0");
         foreach ($pStmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
             $personsById[$p['id']] = $p;
         }
@@ -89,8 +89,12 @@ class FamilyController
                 continue;
             }
 
-            $hName = $husband ? trim(($husband['last_name'] ?? '') . ' ' . $husband['first_name'] . ' ' . ($husband['middle_name'] ?? '')) : 'Белгісіз';
-            $wName = $wife ? trim(($wife['last_name'] ?? '') . ' ' . $wife['first_name'] . ' ' . ($wife['middle_name'] ?? '')) : 'Белгісіз';
+            // TASK-028: отчество автоматически по отцу (ручное приоритетнее)
+            $patrLang = \App\Core\I18n::lang() === 'ru' ? 'ru' : 'kk';
+            $hPatr = $husband ? \App\Services\PatronymicService::resolve($husband, !empty($husband['father_id']) ? ($personsById[$husband['father_id']] ?? null) : null, $patrLang) : '';
+            $wPatr = $wife ? \App\Services\PatronymicService::resolve($wife, !empty($wife['father_id']) ? ($personsById[$wife['father_id']] ?? null) : null, $patrLang) : '';
+            $hName = $husband ? trim(($husband['last_name'] ?? '') . ' ' . $husband['first_name'] . ' ' . $hPatr) : 'Белгісіз';
+            $wName = $wife ? trim(($wife['last_name'] ?? '') . ' ' . $wife['first_name'] . ' ' . $wPatr) : 'Белгісіз';
 
             if ($q !== '') {
                 $match = mb_stripos($hName, $q) !== false 

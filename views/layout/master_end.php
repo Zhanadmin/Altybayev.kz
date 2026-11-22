@@ -380,6 +380,8 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.getElementById('editModalFirstName').value = p.first_name || '';
                         document.getElementById('editModalLastName').value = p.last_name || '';
                         document.getElementById('editModalMiddleName').value = p.middle_name || '';
+                        // TASK-028: авто-отчество — только подсказка, ручное значение не затирается
+                        document.getElementById('editModalMiddleName').placeholder = (localStorage.getItem('shezhire_lang') === 'ru' ? p.middle_name_ru : p.middle_name_kk) || '';
                         document.getElementById('editModalMaidenName').value = p.maiden_name || '';
                         document.getElementById('editModalGender').value = p.gender || 'M';
 

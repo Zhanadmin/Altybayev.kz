@@ -153,7 +153,12 @@ class TreeController
 
         // Защита закрытых контактов
         $isAdmin = Auth::isAdmin();
+        $patrById = array_column($persons, null, 'id');
         foreach ($persons as &$p) {
+            // TASK-028: авто-отчество по отцу в обоих языках (ручное middle_name не трогаем)
+            $patrBoth = \App\Services\PatronymicService::both($p, !empty($p['father_id']) ? ($patrById[$p['father_id']] ?? null) : null);
+            $p['middle_name_kk'] = $patrBoth['kk'];
+            $p['middle_name_ru'] = $patrBoth['ru'];
             if (isset($p['private_contacts']) && is_string($p['private_contacts'])) {
                 $p['private_contacts'] = json_decode($p['private_contacts'], true);
             }
@@ -279,11 +284,14 @@ class TreeController
         $filtered = [];
         foreach ($persons as $p) {
             $pId = (int)$p['id'];
-            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? ''));
+            $fatherForPatr = !empty($p['father_id']) ? ($personsById[$p['father_id']] ?? null) : null;
+            $patr = \App\Services\PatronymicService::both($p, $fatherForPatr);
+            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . $patr['kk']);
 
             // Фильтр по поисковому запросу
             if ($q !== '') {
                 $match = mb_stripos($fullName, $q) !== false
+                    || mb_stripos($patr['ru'], $q) !== false
                     || mb_stripos($p['clan_ru'] ?? '', $q) !== false
                     || mb_stripos($p['birth_place'] ?? '', $q) !== false
                     || mb_stripos($p['maiden_name'] ?? '', $q) !== false;
@@ -326,6 +334,8 @@ class TreeController
                 'last_name' => $p['last_name'],
                 'maiden_name' => $p['maiden_name'] ?? null,
                 'middle_name' => $p['middle_name'] ?? null,
+                'middle_name_kk' => $patr['kk'],
+                'middle_name_ru' => $patr['ru'],
                 'full_name' => $fullName,
                 'gender' => $p['gender'],
                 'birth_date' => $p['birth_date'] ?? null,
@@ -433,6 +443,9 @@ class TreeController
             $auditLogs = $aStmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Флаг редактирования рода (только для родоначальников без отца в БД)
+            // TASK-028: подсказка для поля «Әкесінің аты» (автоматическое значение; в форму как значение не подставляется)
+            $person['middle_name_kk'] = \App\Services\PatronymicService::resolve(['gender' => $person['gender'] ?? ''], $father, 'kk');
+            $person['middle_name_ru'] = \App\Services\PatronymicService::resolve(['gender' => $person['gender'] ?? ''], $father, 'ru');
             $person['can_edit_clan'] = empty($person['father_id']);
             $person['clan_hint'] = !empty($person['father_id']) ? 'әкесінен / по отцу' : '';
 
@@ -1325,9 +1338,13 @@ class TreeController
         $allData = $dataset['persons'];
         $results = [];
 
+        $allById = array_column($allData, null, 'id');
+        $searchLang = \App\Core\I18n::lang();
         foreach ($allData as $p) {
-            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? ''));
-            if (mb_stripos($fullName, $q) !== false || mb_stripos($p['clan_ru'] ?? '', $q) !== false) {
+            $fatherForPatr = !empty($p['father_id']) ? ($allById[$p['father_id']] ?? null) : null;
+            $patrBoth = \App\Services\PatronymicService::both($p, $fatherForPatr);
+            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($searchLang === 'ru' ? $patrBoth['ru'] : $patrBoth['kk']));
+            if (mb_stripos($fullName, $q) !== false || mb_stripos($patrBoth['kk'], $q) !== false || mb_stripos($patrBoth['ru'], $q) !== false || mb_stripos($p['clan_ru'] ?? '', $q) !== false) {
                 // Живые — только год рождения! Ушедшие — годы жизни
                 $years = $p['is_deceased'] 
                     ? (($p['birth_year'] ?: '—') . ' — ' . ($p['death_year'] ?: '—'))

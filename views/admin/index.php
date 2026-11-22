@@ -226,6 +226,70 @@ $adRoleLabels = [
         <?php endif; ?>
     </div>
 
+    <!-- TASK-027: контакты владельца и обращения с приветственной страницы -->
+    <?php $adRu = ($lang === 'ru' || $lang === 'en' || $lang === 'es'); ?>
+    <div class="island ad-island" id="feedback">
+        <div class="island-head ad-head">
+            <h3><?= $adRu ? 'Обратная связь и контакты' : 'Кері байланыс және байланыс деректері' ?>
+                <?php if (!empty($feedbackUnread)): ?><span class="badge"><?= (int)$feedbackUnread ?></span><?php endif; ?></h3>
+        </div>
+        <p class="muted" style="margin:0 0 12px;font-size:14px;">
+            <?= $adRu
+                ? 'Эти контакты показываются на приветственной странице (кнопки WhatsApp и «Написать на почту»). Обращения из формы приходят в список ниже'
+                    . (!empty($smtpReady) ? ' и на указанную почту.' : '; письмо на почту будет отправляться, когда в окружении задан SMTP (сейчас не задан).')
+                : 'Бұл байланыстар сәлемдесу бетінде көрсетіледі. Өтініштер төмендегі тізімге түседі.' ?>
+        </p>
+        <form id="contactsForm" class="ad-invite" style="display:grid;gap:12px;max-width:520px;" onsubmit="return saveContacts(event)">
+            <label><?= $adRu ? 'Имя владельца' : 'Иесінің аты' ?>
+                <input class="input" name="name" maxlength="120" value="<?= htmlspecialchars((string)($contacts['name'] ?? '')) ?>">
+            </label>
+            <label>E-mail
+                <input class="input" type="email" name="email" maxlength="190" value="<?= htmlspecialchars((string)($contacts['email'] ?? '')) ?>">
+            </label>
+            <label>WhatsApp (<?= $adRu ? 'номер с кодом страны' : 'ел кодымен нөмір' ?>)
+                <input class="input" name="whatsapp" maxlength="25" placeholder="+7 777 000 00 00" value="<?= htmlspecialchars((string)($contacts['whatsapp'] ?? '')) ?>">
+            </label>
+            <div><button type="submit" class="btn btn-primary"><?= $adRu ? 'Сохранить контакты' : 'Сақтау' ?></button>
+                <span id="contactsMsg" class="small muted" role="status"></span></div>
+        </form>
+
+        <div class="ad-head" style="margin-top:16px;">
+            <strong><?= $adRu ? 'Обращения' : 'Өтініштер' ?></strong>
+            <?php if (!empty($feedbackUnread)): ?>
+                <button type="button" class="btn btn-ghost ad-head-actions" onclick="markFeedbackRead(0, 1)"><?= $adRu ? 'Отметить все прочитанными' : 'Барлығын оқылған деп белгілеу' ?></button>
+            <?php endif; ?>
+        </div>
+        <?php if (empty($feedbackRows)): ?>
+            <p class="muted" style="margin:8px 0 0;"><?= $adRu ? 'Пока обращений нет.' : 'Әзірге өтініш жоқ.' ?></p>
+        <?php else: ?>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr>
+                        <th><?= $adRu ? 'Дата' : 'Күні' ?></th><th><?= $adRu ? 'Имя' : 'Аты' ?></th>
+                        <th><?= $adRu ? 'Контакт' : 'Байланыс' ?></th><th><?= $adRu ? 'Сообщение' : 'Хабарлама' ?></th><th></th>
+                    </tr></thead>
+                    <tbody>
+                    <?php foreach ($feedbackRows as $fb): ?>
+                        <tr<?= (int)$fb['is_read'] === 0 ? ' style="font-weight:600"' : '' ?> data-fb="<?= (int)$fb['id'] ?>">
+                            <td><?= htmlspecialchars((string)$fb['created_at']) ?></td>
+                            <td><?= htmlspecialchars((string)$fb['name']) ?></td>
+                            <td><?= htmlspecialchars((string)$fb['contact']) ?></td>
+                            <td style="white-space:pre-wrap;max-width:360px;"><?= htmlspecialchars((string)$fb['message']) ?></td>
+                            <td class="actions">
+                                <?php if ((int)$fb['is_read'] === 0): ?>
+                                    <button type="button" class="btn btn-ghost" onclick="markFeedbackRead(<?= (int)$fb['id'] ?>, 1)"><?= $adRu ? 'Прочитано' : 'Оқылды' ?></button>
+                                <?php else: ?>
+                                    <span class="small muted"><?= $adRu ? 'прочитано' : 'оқылған' ?></span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <!-- TASK-032: добавления и правки обычных родственников -->
     <div class="island ad-island" id="additions">
         <div class="island-head ad-head">
@@ -325,6 +389,29 @@ $adRoleLabels = [
             throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
         }
         return data;
+    }
+
+    // TASK-027: контакты владельца и отметка «прочитано»
+    async function saveContacts(ev) {
+        ev.preventDefault();
+        const f = document.getElementById('contactsForm');
+        const msg = document.getElementById('contactsMsg');
+        try {
+            const fd = new FormData(f);
+            await adPost('/api/admin/contacts/save', {
+                name: fd.get('name'), email: fd.get('email'), whatsapp: fd.get('whatsapp')
+            });
+            msg.textContent = AD_RU ? ' Сохранено.' : ' Сақталды.';
+        } catch (e) {
+            msg.textContent = ' ' + e.message;
+        }
+        return false;
+    }
+    async function markFeedbackRead(id, read) {
+        try {
+            await adPost('/api/admin/feedback/read', { id: id, read: read });
+            location.reload();
+        } catch (e) { alert(e.message); }
     }
 
     function toggleInviteForm(show) {

@@ -729,6 +729,14 @@ class KinshipService
             }
         }
 
+        // 17б. ALT-008: любая известная связь — точный термин или составное название по цепочке (не «Туысқан»)
+        if (empty($targetPerson['is_trunk']) && empty($targetPerson['is_founder']) && !empty($allPersonsById) && $baseId && $targetId) {
+            $resolved = $this->resolveByPath($targetPerson, $basePerson, $allPersonsById, $marriages);
+            if ($resolved !== null) {
+                return $resolved;
+            }
+        }
+
         // 18. ПРЯМЫЕ ПРЕДКИ-ОСНОВАТЕЛИ (Керей баба, Алтыбай баба и др.)
         if (!empty($targetPerson['is_trunk']) || !empty($targetPerson['is_founder']) || ($targetYear !== null && $targetYear < 1910 && $targetGender === 'M')) {
             return [
@@ -764,6 +772,396 @@ class KinshipService
             'explanation' => 'Шежіредегі туысқандық желі',
             'badge_class' => 'badge-relative',
         ];
+    }
+
+    /** @var array{key:string, adj:array}|null */
+    protected ?array $graphCache = null;
+
+    /**
+     * ALT-008: граф родства (отец/мать/дети/супруги) для поиска пути.
+     * @return array<int, array<int, array{0:int,1:string}>>
+     */
+    protected function buildGraph(array $byId, array $marriages): array
+    {
+        $key = count($byId) . '/' . count($marriages) . '/' . (string)array_key_first($byId) . '/' . (string)array_key_last($byId);
+        if ($this->graphCache !== null && $this->graphCache['key'] === $key) {
+            return $this->graphCache['adj'];
+        }
+        $adj = [];
+        foreach ($byId as $id => $p) {
+            $id = (int)$id;
+            foreach (['father_id' => 'U', 'mother_id' => 'U'] as $col => $t) {
+                $pid = (int)($p[$col] ?? 0);
+                if ($pid && isset($byId[$pid])) {
+                    $adj[$id][] = [$pid, 'U'];
+                    $adj[$pid][] = [$id, 'C'];
+                }
+            }
+        }
+        foreach ($marriages as $m) {
+            $h = (int)($m['husband_id'] ?? 0);
+            $w = (int)($m['wife_id'] ?? 0);
+            if ($h && $w && isset($byId[$h], $byId[$w])) {
+                $adj[$h][] = [$w, 'P'];
+                $adj[$w][] = [$h, 'P'];
+            }
+        }
+        $this->graphCache = ['key' => $key, 'adj' => $adj];
+        return $adj;
+    }
+
+    /**
+     * Предки человека: id => [глубина, ребёнок на пути вниз к исходному человеку, первый шаг F|M]
+     * @return array<int, array{0:int,1:int,2:string}>
+     */
+    protected function ancestorsMap(int $id, array $byId): array
+    {
+        $res = [$id => [0, 0, '']];
+        $queue = [$id];
+        for ($h = 0; $h < count($queue); $h++) {
+            $cur = $queue[$h];
+            foreach (['father_id' => 'F', 'mother_id' => 'M'] as $col => $step) {
+                $pid = (int)($byId[$cur][$col] ?? 0);
+                if ($pid && isset($byId[$pid]) && !isset($res[$pid])) {
+                    $res[$pid] = [$res[$cur][0] + 1, $cur, $res[$cur][0] === 0 ? $step : $res[$cur][2]];
+                    $queue[] = $pid;
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * Кровная связь a → b через ближайшего общего предка.
+     * @return array{up:int, down:int, via:string, atop:int, btop:int}|null
+     */
+    protected function bloodRelation(int $a, int $b, array $byId): ?array
+    {
+        $A = $this->ancestorsMap($a, $byId);
+        $B = $this->ancestorsMap($b, $byId);
+        $best = null;
+        foreach ($A as $anc => $ai) {
+            if (!isset($B[$anc])) {
+                continue;
+            }
+            $sum = $ai[0] + $B[$anc][0];
+            if ($best === null || $sum < $best[0]) {
+                $best = [$sum, $anc];
+            }
+        }
+        if ($best === null) {
+            return null;
+        }
+        $anc = $best[1];
+        return [
+            'up' => $A[$anc][0],
+            'down' => $B[$anc][0],
+            'via' => $A[$anc][2],
+            'atop' => $A[$anc][1],
+            'btop' => $B[$anc][1],
+        ];
+    }
+
+    /** Кратность двоюродности по-русски: 2 → двоюродный, 3 → троюродный... */
+    protected function cousinWordRu(int $n): string
+    {
+        $w = [2 => 'двоюродный', 3 => 'троюродный', 4 => 'четвероюродный', 5 => 'пятиюродный', 6 => 'шестиюродный'];
+        return $w[$n] ?? ($n . '-юродный');
+    }
+
+    /** Термин-звено цепочки: [родительный kk, именительный kk, родительный ru, именительный ru] */
+    protected function chainWord(string $kind, array $p, array $prev): array
+    {
+        $f = (($p['gender'] ?? 'M') === 'F');
+        switch ($kind) {
+            case 'U':
+                return $f ? ['анасының', 'анасы', 'матери', 'мать'] : ['әкесінің', 'әкесі', 'отца', 'отец'];
+            case 'C':
+                return $f ? ['қызының', 'қызы', 'дочери', 'дочь'] : ['ұлының', 'ұлы', 'сына', 'сын'];
+            case 'P':
+                return $f ? ['әйелінің', 'әйелі', 'жены', 'жена'] : ['күйеуінің', 'күйеуі', 'мужа', 'муж'];
+            default: // 'S' — брат/сестра (относительно $prev)
+                $older = $this->isOlderThan($p, $prev);
+                if (!$f) {
+                    return $older ? ['ағасының', 'ағасы', 'старшего брата', 'старший брат'] : ['інісінің', 'інісі', 'младшего брата', 'младший брат'];
+                }
+                if ($older) {
+                    return ['әпкесінің', 'әпкесі', 'старшей сестры', 'старшая сестра'];
+                }
+                return (($prev['gender'] ?? 'M') === 'M')
+                    ? ['қарындасының', 'қарындасы', 'младшей сестры', 'младшая сестра']
+                    : ['сіңлісінің', 'сіңлісі', 'младшей сестры', 'младшая сестра'];
+        }
+    }
+
+    /**
+     * Составное название по цепочке: «әкесінің ағасының ұлы» / «сын старшего брата отца».
+     * @param int[] $nodes путь id от basePerson до target; $kinds — тип каждого шага (U вверх, C вниз, P супруг)
+     * @return array{kk:string, ru:string}
+     */
+    protected function composeChain(array $nodes, array $kinds, array $byId): array
+    {
+        $words = []; // [kind, node, prevNode]
+        $n = count($kinds);
+        for ($i = 0; $i < $n; $i++) {
+            $cur = $byId[$nodes[$i + 1]];
+            $prev = $byId[$nodes[$i]];
+            $kind = $kinds[$i];
+            if ($kind === 'C' && !empty($words) && end($words)[0] === 'U') {
+                // вверх к родителю и вниз к другому ребёнку — это брат/сестра
+                $grand = $byId[$nodes[$i - 1]];
+                array_pop($words);
+                $words[] = ['S', $cur, $grand];
+                continue;
+            }
+            $words[] = [$kind, $cur, $prev];
+        }
+        $kk = [];
+        $ru = [];
+        $last = count($words) - 1;
+        foreach ($words as $i => [$k, $cur, $prev]) {
+            $w = $this->chainWord($k, $cur, $prev);
+            $kk[] = $i === $last ? $w[1] : $w[0];
+            $ru[] = $w;
+        }
+        $kkStr = implode(' ', $kk);
+        $ruParts = [$ru[$last][3]];
+        for ($i = $last - 1; $i >= 0; $i--) {
+            $ruParts[] = $ru[$i][2];
+        }
+        $ruStr = implode(' ', $ruParts);
+        return [
+            'kk' => mb_strtoupper(mb_substr($kkStr, 0, 1)) . mb_substr($kkStr, 1),
+            'ru' => mb_strtoupper(mb_substr($ruStr, 0, 1)) . mb_substr($ruStr, 1),
+        ];
+    }
+
+    /** Результат для resolveByPath */
+    protected function pathResult(string $kk, string $ru, string $code, string $explanation, array $basePerson, bool $inLaw = false): array
+    {
+        return [
+            'term_kk' => $kk,
+            'term_ru' => $ru,
+            'code' => $code,
+            'zhurt' => $this->getZhurtForPerson($basePerson, $inLaw ? 'in_law' : 'paternal'),
+            'explanation' => $explanation,
+            'badge_class' => $inLaw ? 'badge-inlaw' : 'badge-relative',
+        ];
+    }
+
+    /**
+     * ALT-008: точный термин для любой связи, найденной по графу. null — связи нет (или прямая линия предков/потомков).
+     */
+    protected function resolveByPath(array $targetPerson, array $basePerson, array $byId, array $marriages): ?array
+    {
+        $baseId = (int)$basePerson['id'];
+        $tId = (int)$targetPerson['id'];
+        if (!isset($byId[$baseId], $byId[$tId])) {
+            return null;
+        }
+        $tGender = $targetPerson['gender'] ?? 'M';
+        $bGender = $basePerson['gender'] ?? 'M';
+        $tF = ($tGender === 'F');
+
+        // ---- 1. Кровное родство ----
+        $rel = $this->bloodRelation($baseId, $tId, $byId);
+        if ($rel !== null) {
+            $u = $rel['up'];
+            $d = $rel['down'];
+            if ($u === 0 || $d === 0) {
+                return null; // прямая линия — отдельная логика (ancestorTerms)
+            }
+            $viaM = ($rel['via'] === 'M');
+            $nag = $viaM ? 'Нағашы ' : '';
+            $nagRu = $viaM ? ' (по матери)' : '';
+            $older = $this->isOlderThan($targetPerson, $basePerson);
+            if ($u === $d) {
+                if ($u === 1) {
+                    return null; // родные братья/сёстры — основное правило
+                }
+                $topA = $byId[$rel['atop']] ?? [];
+                $topB = $byId[$rel['btop']] ?? [];
+                $cross = (($topA['gender'] ?? 'M') !== ($topB['gender'] ?? 'M'));
+                if ($tF) {
+                    $kkG = $older ? 'әпке' : ($bGender === 'M' ? 'қарындас' : 'сіңлі');
+                    $ruG = $older ? 'сестра' : 'сестра (сестрёнка)';
+                } else {
+                    $kkG = $older ? 'аға' : 'іні';
+                    $ruG = 'брат';
+                }
+                if ($u === 2) {
+                    $prefix = ($cross || $viaM) ? 'Бөле ' : '';
+                    $kk = $prefix . ($prefix === '' ? mb_strtoupper(mb_substr($kkG, 0, 1)) . mb_substr($kkG, 1) : $kkG);
+                    $ru = $this->cousinWordRu(2) . ' ' . $ruG . ($cross || $viaM ? ' (бөле)' : '');
+                } else {
+                    $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . $kkG;
+                    $ru = $this->cousinWordRu($u) . ' ' . $ruG . $nagRu;
+                }
+                return $this->pathResult($kk, mb_strtoupper(mb_substr($ru, 0, 1)) . mb_substr($ru, 1), 'blood_cousin_' . $u, "Ортақ ата-бабадан {$u}-ші буын", $basePerson);
+            }
+            if ($u > $d) {
+                $diff = $u - $d;
+                $deg = $d;
+                if ($diff === 1) {
+                    $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . ($tF ? 'апа' : 'аға');
+                    $ru = ($tF ? 'Тётя' : 'Дядя') . ($deg >= 2 ? ' (' . $this->cousinWordRu($deg) . ')' : '') . $nagRu;
+                } else {
+                    $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . ($tF ? 'әже' : 'ата');
+                    $ru = ($tF ? 'Двоюродная бабушка' : 'Двоюродный дедушка') . $nagRu;
+                }
+                return $this->pathResult($kk, $ru, 'blood_elder_' . $u . '_' . $d, 'Әкенің/ананың туыстары (' . $u . '-' . $d . ' буын)', $basePerson);
+            }
+            // $u < $d — младшее поколение
+            // Жиеншар: ребёнок жиена (внук сестры) — сын/дочь сына или дочери сестры
+            if ($u === 1 && $d === 3 && (($byId[$rel['btop']]['gender'] ?? 'M') === 'F')) {
+                return $this->pathResult('Жиеншар', 'Жиеншар (внук/внучка сестры, ребёнок жиена)', 'zhien_shar', 'Жиеннен туған ұрпақ', $basePerson);
+            }
+            if ($u >= 2) {
+                $diff = $d - $u;
+                if ($diff === 1) {
+                    $kk = 'Туыс ' . ($tF ? ($bGender === 'M' ? 'қарындас' : 'сіңлі') : 'іні');
+                    $ru = ($tF ? 'Племянница' : 'Племянник') . ' (' . $this->cousinWordRu($u) . ')';
+                } else {
+                    $kk = 'Туыс немере';
+                    $ru = ($tF ? 'Внучка' : 'Внук') . ' (дальний)';
+                }
+                return $this->pathResult($kk, $ru, 'blood_younger_' . $u . '_' . $d, 'Туыстың ұрпағы', $basePerson);
+            }
+            // u === 1 (потомки братьев/сестёр глубже племянников) — цепочка ниже
+        }
+
+        // ---- 1б. Бажа: муж любой женщины из родни жены (сёстры, тёти, двоюродные...) ----
+        if ($bGender === 'M' && !$tF) {
+            foreach ($this->getSpouseIds($baseId, $marriages) as $wifeId) {
+                if (!isset($byId[$wifeId])) {
+                    continue;
+                }
+                foreach ($this->getSpouseIds($tId, $marriages) as $yId) {
+                    $y = $byId[$yId] ?? null;
+                    if (!$y || $yId === $wifeId || (($y['gender'] ?? 'M') !== 'F')) {
+                        continue;
+                    }
+                    $yr = $this->bloodRelation($wifeId, $yId, $byId);
+                    if ($yr !== null && $yr['up'] > 0 && $yr['down'] > 0) {
+                        return $this->pathResult('Бажа', 'Бажа (свояк: муж женщины из родни жены)', 'bazha', 'Әйелінің туыс әйелінің күйеуі', $basePerson, true);
+                    }
+                }
+            }
+        }
+
+        // ---- 2. Путь через браки (BFS) ----
+        $adj = $this->buildGraph($byId, $marriages);
+        $prevOf = [$baseId => [0, '']];
+        $queue = [$baseId];
+        $found = false;
+        for ($h = 0; $h < count($queue) && !$found; $h++) {
+            $cur = $queue[$h];
+            foreach ($adj[$cur] ?? [] as [$to, $kind]) {
+                if (isset($prevOf[$to])) {
+                    continue;
+                }
+                $prevOf[$to] = [$cur, $kind];
+                if ($to === $tId) {
+                    $found = true;
+                    break;
+                }
+                $queue[] = $to;
+            }
+        }
+        if (!$found) {
+            return null;
+        }
+        $nodes = [$tId];
+        $kinds = [];
+        for ($c = $tId; $c !== $baseId; $c = $prevOf[$c][0]) {
+            array_unshift($kinds, $prevOf[$c][1]);
+            array_unshift($nodes, $prevOf[$c][0]);
+        }
+        $pIdx = array_keys($kinds, 'P', true);
+        if (count($pIdx) === 1) {
+            $k = $pIdx[0];
+            $spouse = $byId[$nodes[$k + 1]];
+            $y = $byId[$nodes[$k]];
+            $yId = (int)$y['id'];
+            $sId = (int)$spouse['id'];
+            $yF = (($y['gender'] ?? 'M') === 'F');
+            $suffixLen = count($kinds) - $k - 1;
+
+            if ($k === 0 && $suffixLen === 1 && $kinds[1] === 'C') {
+                return $this->pathResult(
+                    $tF ? 'Өгей қыз' : 'Өгей ұл',
+                    $tF ? 'Падчерица (дочь супруга/супруги)' : 'Пасынок (сын супруга/супруги)',
+                    $tF ? 'step_daughter' : 'step_son',
+                    'Жұбайының басқа некеден туған баласы',
+                    $basePerson,
+                    $bGender === 'M'
+                );
+            }
+            if ($k > 0) {
+                $yRel = $this->bloodRelation($baseId, $yId, $byId);
+                if ($yRel !== null) {
+                    $yu = $yRel['up'];
+                    $yd = $yRel['down'];
+                    $yViaM = ($yRel['via'] === 'M');
+                    $nag = $yViaM ? 'Нағашы ' : '';
+                    $nagRu = $yViaM ? ' (по матери)' : '';
+                    if ($suffixLen === 0) {
+                        if ($yd === 0 && $yu === 1) {
+                            return $yF
+                                ? $this->pathResult('Өгей әке', 'Отчим (муж матери)', 'step_father', 'Анасының күйеуі', $basePerson)
+                                : $this->pathResult('Өгей шеше', 'Мачеха (жена отца)', 'step_mother', 'Әкесінің әйелі', $basePerson);
+                        }
+                        if ($yd > 0 || $yu === 0) {
+                            $diff = $yu - $yd;
+                            $yOlder = $this->isOlderThan($y, $basePerson);
+                            $strictOlder = $this->extractYear($y['birth_year'] ?? $y['birth_date'] ?? null) !== null
+                                && $this->extractYear($basePerson['birth_year'] ?? $basePerson['birth_date'] ?? null) !== null
+                                && $yOlder;
+                            $isSib = $this->areSiblings($y, $basePerson);
+                            if (!$yF) { // жена мужчины-родственника
+                                if ($diff < 0 || ($diff === 0 && !($isSib ? $yOlder : $strictOlder))) {
+                                    return $this->pathResult('Келін', 'Келін (жена младшего родственника: сына, племянника, брата)', 'kelin_rel', 'Ер туыстың әйелі', $basePerson);
+                                }
+                                $nagW = $diff >= 1 ? $nag : '';
+                                $nagWRu = $diff >= 1 ? $nagRu : '';
+                                if ($diff <= 1) {
+                                    return $this->pathResult($nagW . ($nagW !== '' ? 'жеңге' : 'Жеңге'), 'Жеңге (жена старшего родственника: брата, дяди' . ')' . $nagWRu, 'zhenge_rel', 'Ер туыстың әйелі', $basePerson);
+                                }
+                                return $this->pathResult($nagW . ($nagW !== '' ? 'әже' : 'Әже'), 'Бабушка (жена деда / старшего родственника деда)' . $nagWRu, 'aje_rel', 'Аға-бабаның әйелі', $basePerson);
+                            }
+                            // муж женщины-родственницы
+                            if ($diff < 0 || ($diff === 0 && !($isSib ? $yOlder : $strictOlder))) {
+                                return $this->pathResult('Күйеу бала', 'Күйеу бала (зять: муж дочери, племянницы, сестры младше, дочери тёти)', 'kuyeubala_rel', 'Қыз туыстың күйеуі', $basePerson);
+                            }
+                            $nagW = $diff >= 1 ? $nag : '';
+                            $nagWRu = $diff >= 1 ? $nagRu : '';
+                            if ($diff <= 1) {
+                                return $this->pathResult($nagW . ($nagW !== '' ? 'жезде' : 'Жезде'), 'Жезде (муж сестры, тёти, старшей бөле)' . $nagWRu, 'zhezde_rel', 'Әпке, апа немесе өзінен үлкен әйел туыстың күйеуі', $basePerson);
+                            }
+                            return $this->pathResult($nagW . ($nagW !== '' ? 'ата' : 'Ата'), 'Дедушка (муж сестры деда / старшей родственницы)' . $nagWRu, 'ata_rel', 'Әжесінің қарындасының күйеуі', $basePerson);
+                        }
+                    } elseif ($yd > 0 && $yu <= $yd) {
+                        // Родня супруга(и) брата/сестры/ребёнка/племянника/внука — құда жағы
+                        $sRel = $this->bloodRelation($sId, $tId, $byId);
+                        if ($sRel !== null && $sRel['up'] > 0) {
+                            $tOlder = ($sRel['up'] > $sRel['down']) || ($sRel['up'] === $sRel['down'] && $this->isOlderThan($targetPerson, $spouse));
+                            if ($tOlder) {
+                                return $tF
+                                    ? $this->pathResult('Құдағи', 'Құдағи (сватья)', 'kudaghy', 'Құда жақтың әйел туысы', $basePerson, true)
+                                    : $this->pathResult('Құда', 'Құда (сват)', 'kuda', 'Құда жақтың ер туысы', $basePerson, true);
+                            }
+                            return $tF
+                                ? $this->pathResult('Құдаша', 'Құдаша (младшая сватья, девушка из рода свата)', 'kudasha', 'Құда жақтың кіші қыз туысы', $basePerson, true)
+                                : $this->pathResult('Құда бала', 'Құда бала (младший родственник свата, парень)', 'kuda_bala', 'Құда жақтың кіші ер туысы', $basePerson, true);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- 3. Составное название по цепочке ----
+        $c = $this->composeChain($nodes, $kinds, $byId);
+        return $this->pathResult($c['kk'], $c['ru'], 'chain', $c['kk'], $basePerson, in_array('P', $kinds, true) && $bGender === 'M');
     }
 
     /**
@@ -1469,9 +1867,27 @@ class KinshipService
         $y1 = $this->extractYear($p1['birth_year'] ?? $p1['birth_date'] ?? null);
         $y2 = $this->extractYear($p2['birth_year'] ?? $p2['birth_date'] ?? null);
         if ($y1 !== null && $y2 !== null) {
-            return $y1 < $y2;
+            if ($y1 !== $y2) {
+                return $y1 < $y2;
+            }
+            // ALT-008: один год — сравниваем полную дату (ГГГГ-ММ-ДД), если она есть у обоих
+            $d1 = $this->fullDate($p1['birth_date'] ?? null);
+            $d2 = $this->fullDate($p2['birth_date'] ?? null);
+            if ($d1 !== null && $d2 !== null) {
+                return $d1 < $d2;
+            }
+            return false;
         }
         return (int)($p1['id'] ?? 0) < (int)($p2['id'] ?? 0);
+    }
+
+    /** ГГГГ-ММ-ДД из строки birth_date (или null, если нет полной даты) */
+    protected function fullDate(mixed $val): ?string
+    {
+        if (is_string($val) && preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $val, $m) && $m[2] !== '00' && $m[3] !== '00') {
+            return $m[1] . $m[2] . $m[3];
+        }
+        return null;
     }
 
     protected function extractYear(mixed $val): ?int

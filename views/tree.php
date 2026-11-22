@@ -5939,7 +5939,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             updateAllKinshipBadges(id);
 
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
-            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${p.middle_name || ''}`.trim();
+            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${p.middle_name || (currentLang === 'ru' ? (p.middle_name_ru || '') : (p.middle_name_kk || ''))}`.trim();
             if (p.maiden_name) {
                 fullNameDisplay += ` (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
             }
@@ -6356,6 +6356,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 document.getElementById('editFirstName').value = p.first_name || '';
                 document.getElementById('editLastName').value = p.last_name || '';
                 document.getElementById('editMiddleName').value = p.middle_name || '';
+                // TASK-028: авто-отчество — только подсказка (placeholder), в БД как ручное не сохраняется
+                document.getElementById('editMiddleName').placeholder = (currentLang === 'ru' ? p.middle_name_ru : p.middle_name_kk) || '';
                 document.getElementById('editMaidenName').value = p.maiden_name || '';
                 document.getElementById('editGender').value = p.gender || 'M';
 

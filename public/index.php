@@ -17,6 +17,11 @@ $router->get('/', 'App\Controllers\HomeController@index');
 $router->get('/privacy', 'App\Controllers\LegalController@privacy');
 $router->get('/terms', 'App\Controllers\LegalController@terms');
 
+// TASK-027: форма обратной связи на приветственной странице (публичная: CSRF, honeypot, лимит) и её управление в админке
+$router->post('/api/feedback', 'App\Controllers\FeedbackController@submit');
+$router->post('/api/admin/contacts/save', 'App\Controllers\FeedbackController@saveContacts', ['auth', 'admin']);
+$router->post('/api/admin/feedback/read', 'App\Controllers\FeedbackController@markRead', ['auth', 'admin']);
+
 // 2. Интерактивное древо (MyHeritage + Шежіре-Орман / Лес)
 $router->get('/tree', 'App\Controllers\TreeController@index', ['auth']);
 

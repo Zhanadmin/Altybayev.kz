@@ -113,9 +113,14 @@ class PersonController
         // Фильтрация по поисковой строке
         $filtered = [];
         foreach ($allPersons as $p) {
-            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? ''));
+            $patrFather = !empty($p['father_id']) ? ($allPersonsById[$p['father_id']] ?? null) : null;
+            $patrBoth = \App\Services\PatronymicService::both($p, $patrFather);
+            $patrShown = \App\Core\I18n::lang() === 'ru' ? $patrBoth['ru'] : $patrBoth['kk'];
+            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . $patrShown);
             if ($q !== '') {
                 $match = mb_stripos($fullName, $q) !== false
+                    || mb_stripos($patrBoth['kk'], $q) !== false
+                    || mb_stripos($patrBoth['ru'], $q) !== false
                     || mb_stripos($p['clan_ru'] ?? '', $q) !== false
                     || mb_stripos($p['birth_place'] ?? '', $q) !== false
                     || mb_stripos($p['birth_year'] ?? '', $q) !== false

@@ -419,7 +419,8 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
     </div>
 
     <?php if ($hasMusic): ?>
-    <button type="button" class="wl-music off" id="wlMusic" aria-pressed="false" aria-label="<?= $T('wl_music_on') ?>">&#9834;</button>
+    <?php /* ALT-014: кнопка ♪ и музыка — общий скрипт bgm.js (на всех страницах) */ ?>
+    <script src="/assets/js/bgm.js?v=1" defer></script>
     <?php endif; ?>
     <script>
         /* TASK-027 п.6: плавное появление карточек при прокрутке */

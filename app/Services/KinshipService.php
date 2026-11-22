@@ -863,10 +863,12 @@ class KinshipService
     }
 
     /** Кратность двоюродности по-русски: 2 → двоюродный, 3 → троюродный... */
-    protected function cousinWordRu(int $n): string
+    protected function cousinWordRu(int $n, bool $feminine = false): string
     {
         $w = [2 => 'двоюродный', 3 => 'троюродный', 4 => 'четвероюродный', 5 => 'пятиюродный', 6 => 'шестиюродный'];
-        return $w[$n] ?? ($n . '-юродный');
+        $word = $w[$n] ?? ($n . '-юродный');
+        // ALT-009: согласование рода (двоюродная сестра, троюродная тётя)
+        return $feminine ? mb_substr($word, 0, -2) . 'ая' : $word;
     }
 
     /** Термин-звено цепочки: [родительный kk, именительный kk, родительный ru, именительный ru] */
@@ -990,21 +992,49 @@ class KinshipService
                     $ruG = 'брат';
                 }
                 if ($u === 2) {
-                    $prefix = ($cross || $viaM) ? 'Бөле ' : '';
-                    $kk = $prefix . ($prefix === '' ? mb_strtoupper(mb_substr($kkG, 0, 1)) . mb_substr($kkG, 1) : $kkG);
-                    $ru = $this->cousinWordRu(2) . ' ' . $ruG . ($cross || $viaM ? ' (бөле)' : '');
+                    $aF = (($topA['gender'] ?? 'M') === 'F');
+                    $bF = (($topB['gender'] ?? 'M') === 'F');
+                    if ($aF && $bF) {
+                        // ALT-012: бөле — только дети двух сестёр
+                        $kk = 'Бөле ' . $kkG;
+                        $ru = $this->cousinWordRu(2, $tF) . ' ' . $ruG . ' (бөле)';
+                    } elseif ($bF) {
+                        // ALT-012: смотрящий — ребёнок брата, цель — ребёнок сестры отца
+                        $kk = 'Әкесінің жиені';
+                        $ru = $this->cousinWordRu(2, $tF) . ' ' . ($tF ? 'сестра' : 'брат') . ' (' . ($tF ? 'дочь' : 'сын') . ' тёти по отцу)';
+                    } elseif ($aF) {
+                        // ALT-012: смотрящий — ребёнок сестры, цель — ребёнок её брата: нағашы аға/іні/әпке/қарындас
+                        $kk = 'Нағашы ' . $kkG;
+                        $ru = $this->cousinWordRu(2, $tF) . ' ' . ($tF ? 'сестра' : 'брат') . ' (' . ($tF ? 'дочь' : 'сын') . ' брата матери)';
+                    } else {
+                        $kk = mb_strtoupper(mb_substr($kkG, 0, 1)) . mb_substr($kkG, 1);
+                        $ru = $this->cousinWordRu(2, $tF) . ' ' . $ruG;
+                    }
                 } else {
                     $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . $kkG;
-                    $ru = $this->cousinWordRu($u) . ' ' . $ruG . $nagRu;
+                    $ru = $this->cousinWordRu($u, $tF) . ' ' . $ruG . $nagRu;
                 }
                 return $this->pathResult($kk, mb_strtoupper(mb_substr($ru, 0, 1)) . mb_substr($ru, 1), 'blood_cousin_' . $u, "Ортақ ата-бабадан {$u}-ші буын", $basePerson);
             }
             if ($u > $d) {
                 $diff = $u - $d;
                 $deg = $d;
-                if ($diff === 1) {
+                $topGender = ($byId[$rel['atop']]['gender'] ?? 'M');
+                if ($diff === 1 && $u === 3 && $d === 2) {
+                    // ALT-011: ребёнок сестры/брата бабушки (дедушки) — бөле отца/матери, на поколение старше
+                    $kk = $nag . ($viaM ? 'аға' : 'Аға');
+                    if ($tF) {
+                        $kk = $nag . ($viaM ? 'апа' : 'Апа');
+                    }
+                    $kk .= $viaM ? ' (анасының бөлесі)' : ' (әкесінің бөлесі)';
+                    $ru = ($tF ? 'Двоюродная тётя' : 'Двоюродный дядя') . ' (' . ($viaM ? 'бөле матери' : 'бөле отца') . ')' . $nagRu;
+                } elseif ($diff === 1) {
                     $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . ($tF ? 'апа' : 'аға');
-                    $ru = ($tF ? 'Тётя' : 'Дядя') . ($deg >= 2 ? ' (' . $this->cousinWordRu($deg) . ')' : '') . $nagRu;
+                    $ru = ($tF ? 'Тётя' : 'Дядя') . ($deg >= 2 ? ' (' . $this->cousinWordRu($deg, $tF) . ')' : '') . $nagRu;
+                } elseif ($diff === 2 && $d === 1 && $tF && $topGender === 'F') {
+                    // ALT-011: сестра бабушки — «Әже» (по матери смотрящего — «Нағашы әже»)
+                    $kk = $nag . ($viaM ? 'әже' : 'Әже') . ' (әжесінің апасы/сіңлісі)';
+                    $ru = 'Сестра бабушки' . $nagRu;
                 } else {
                     $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . ($tF ? 'әже' : 'ата');
                     $ru = ($tF ? 'Двоюродная бабушка' : 'Двоюродный дедушка') . $nagRu;
@@ -1019,8 +1049,14 @@ class KinshipService
             if ($u >= 2) {
                 $diff = $d - $u;
                 if ($diff === 1) {
-                    $kk = 'Туыс ' . ($tF ? ($bGender === 'M' ? 'қарындас' : 'сіңлі') : 'іні');
-                    $ru = ($tF ? 'Племянница' : 'Племянник') . ' (' . $this->cousinWordRu($u) . ')';
+                    $crossY = ((($byId[$rel['atop']]['gender'] ?? 'M')) !== (($byId[$rel['btop']]['gender'] ?? 'M')));
+                    if ($u === 2 && ($crossY || $viaM)) {
+                        // ALT-010: ребёнок бөле — бөлешік (поколение младше, не «туыс іні»)
+                        return $this->pathResult('Бөлешік', 'Бөлешік (ребёнок двоюродного брата/сестры по матери)', 'boleshik', 'Бөленің баласы', $basePerson);
+                    }
+                    // ALT-010: ребёнок двоюродного/дальнего родственника — младшее поколение, не термины ровесников
+                    $kk = $nag . ($viaM ? 'туыс ' : 'Туыс ') . 'бала';
+                    $ru = ($tF ? 'Племянница' : 'Племянник') . ' (ребёнок ' . ($u === 2 ? 'двоюродного' : $this->cousinWordRu($u)) . ' брата/сестры)' . $nagRu;
                 } else {
                     $kk = 'Туыс немере';
                     $ru = ($tF ? 'Внучка' : 'Внук') . ' (дальний)';

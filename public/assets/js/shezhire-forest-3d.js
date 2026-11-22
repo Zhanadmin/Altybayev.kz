@@ -3273,7 +3273,9 @@
                     const b = el('button', 'sf3-rel');
                     b.type = 'button';
                     b.appendChild(el('span', null, personName({ first_name: it.first_name, last_name: it.last_name }) || latinize(it.full_name || '') || '?'));
-                    const term = (this.lang === 'ru' || this.lang === 'en' || this.lang === 'es') ? (it.term_ru || it.term_kk) : (it.term_kk || it.term_ru);
+                    const term = this.lang === 'es' ? (it.term_es || it.term_ru || it.term_kk)
+                        : (this.lang === 'en' ? (it.term_en || it.term_ru || it.term_kk)
+                        : (this.lang === 'ru' ? (it.term_ru || it.term_kk) : (it.term_kk || it.term_ru)));
                     if (term) b.appendChild(el('span', 'sf3-term', term));
                     b.addEventListener('click', () => this.selectPersonById(it.id));
                     box.appendChild(b);

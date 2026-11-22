@@ -215,6 +215,11 @@ class I18n
         // ALT-007: английский/испанский — переводим русскую подпись, казахский термин оставляем в скобках,
         // если он был частью term_ru (например, «Әке (Отец)» → «Әке (Father)» / «Әке (Padre)»).
         if (self::lang() === 'en' || self::lang() === 'es') {
+            // ALT-013: сначала термин из глоссария родства (испанский/английский термин вместо казахского)
+            $glossary = \App\Config\KinshipGlossary::label($termKk, $termRu, self::lang());
+            if ($glossary !== null && $glossary !== '') {
+                return $glossary;
+            }
             $base = $termRu !== '' ? $termRu : $termKk;
             return self::translateText($base, true, self::lang());
         }
@@ -229,6 +234,21 @@ class I18n
         }
 
         return $termKk;
+    }
+
+    /**
+     * ALT-013: термин родства с подсказкой-расшифровкой (HTML, уже экранирован).
+     * Пояснение берётся из KinshipGlossary на текущем языке; тап/наведение показывает его (JS: .kin-hint).
+     */
+    public static function kinshipHtml(string $termKk, ?string $termRu = null): string
+    {
+        $label = htmlspecialchars(self::formatKinship($termKk, $termRu), ENT_QUOTES, 'UTF-8');
+        $hint = \App\Config\KinshipGlossary::hint($termKk, $termRu, self::lang());
+        if ($hint === null || $hint === '') {
+            return $label;
+        }
+        $h = htmlspecialchars($hint, ENT_QUOTES, 'UTF-8');
+        return '<span class="kin-term">' . $label . ' <button type="button" class="kin-hint" aria-label="' . $h . '" data-hint="' . $h . '">ⓘ</button></span>';
     }
 
     /**
@@ -966,6 +986,54 @@ class I18n
             'fb_err_message' => ['kk' => 'Хабарлама: 5–2000 таңба.', 'ru' => 'Сообщение: от 5 до 2000 символов.', 'en' => 'Message: 5 to 2000 characters.', 'es' => 'Mensaje: de 5 a 2000 caracteres.'],
             'fb_err_limit' => ['kk' => 'Тым көп өтініш, кейінірек көріңіз.', 'ru' => 'Слишком много обращений, попробуйте позже.', 'en' => 'Too many messages, please try again later.', 'es' => 'Demasiados mensajes, inténtalo más tarde.'],
             'fb_err_send' => ['kk' => 'Жіберу мүмкін болмады, кейінірек көріңіз.', 'ru' => 'Не удалось отправить, попробуйте позже.', 'en' => 'Could not send, please try again later.', 'es' => 'No se pudo enviar, inténtalo más tarde.'],
+            // TASK-027 п.8: все тексты приветственной страницы на 4 языках
+            'wl_page_title' => ['kk' => 'Жүйеге кіру', 'ru' => 'Вход в систему', 'en' => 'Sign in', 'es' => 'Iniciar sesión'],
+            'wl_login' => ['kk' => 'Кіру / Войти', 'ru' => 'Кіру / Войти', 'en' => 'Sign in', 'es' => 'Entrar'],
+            'wl_lang_label' => ['kk' => 'Тіл', 'ru' => 'Язык', 'en' => 'Language', 'es' => 'Idioma'],
+            'wl_theme_label' => ['kk' => 'Жарық / қараңғы тақырып', 'ru' => 'Светлая / тёмная тема', 'en' => 'Light / dark theme', 'es' => 'Tema claro / oscuro'],
+            'wl_lead' => ['kk' => 'Мұнда Алтыбаевтар әулетінің шежіресі сақталады: кім кімнен тарады, тамыр қайда, отбасылар қалай өсті. Бұл — интернеттегі жылы отбасылық үй: балалар ата-бабасын білсін, жақындар үнемі қасымызда болсын.', 'ru' => 'Здесь живёт шежіре семьи Алтыбаевых: кто от кого пошёл, где чьи корни, как выросли наши семьи. Это тёплый семейный дом в интернете — чтобы дети знали своих предков, а родные всегда были рядом.', 'en' => 'This is the shezhire — the family chronicle — of the Altybayev family: who descends from whom, where our roots lie, how our families have grown. It is a warm family home on the internet, so that children know their ancestors and loved ones are always close.', 'es' => 'Aquí vive el shezhire —la crónica familiar— de los Altybáyev: quién desciende de quién, dónde están nuestras raíces, cómo han crecido nuestras familias. Es un cálido hogar familiar en internet, para que los niños conozcan a sus antepasados y los seres queridos estén siempre cerca.'],
+            'wl_chip_1' => ['kk' => 'Ру ағашы', 'ru' => 'Древо рода', 'en' => 'Family tree', 'es' => 'Árbol familiar'],
+            'wl_chip_2' => ['kk' => 'Жеті ата', 'ru' => 'Жеті ата', 'en' => 'Seven generations (Zheti ata)', 'es' => 'Siete generaciones (Zheti ata)'],
+            'wl_chip_3' => ['kk' => 'Үш жұрт', 'ru' => 'Үш жұрт', 'en' => 'Three kin lines (Üsh zhurt)', 'es' => 'Tres linajes (Üsh zhurt)'],
+            'wl_chip_4' => ['kk' => 'Отбасылар мен балалар', 'ru' => 'Семьи и дети', 'en' => 'Families and children', 'es' => 'Familias e hijos'],
+            'wl_chip_5' => ['kk' => 'Туған күндер', 'ru' => 'Дни рождения', 'en' => 'Birthdays', 'es' => 'Cumpleaños'],
+            'wl_chip_6' => ['kk' => 'Фотоальбомдар', 'ru' => 'Фотоальбомы', 'en' => 'Photo albums', 'es' => 'Álbumes de fotos'],
+            'wl_chip_7' => ['kk' => '3D емен орманы', 'ru' => '3D-дубрава', 'en' => '3D oak grove', 'es' => 'Robledal en 3D'],
+            'wl_chip_8' => ['kk' => 'Туыстар байланысы', 'ru' => 'Контакты родных', 'en' => 'Relatives\' contacts', 'es' => 'Contactos de familiares'],
+            'wl_what' => ['kk' => 'Мұнда не істеуге болады', 'ru' => 'Что здесь можно делать', 'en' => 'What you can do here', 'es' => 'Qué puedes hacer aquí'],
+            'wl_what_sub' => ['kk' => 'Бірнеше үлгі сурет — мұнда ойдан шығарылған есімдер, нақты адамдар емес.', 'ru' => 'Несколько картинок-образцов — на них вымышленные имена, не настоящие люди.', 'en' => 'A few sample pictures — the names are fictional, not real people.', 'es' => 'Unas imágenes de muestra: los nombres son ficticios, no personas reales.'],
+            'wl_a_tree' => ['kk' => 'Ру ағашының сызбасы', 'ru' => 'Схема родового древа', 'en' => 'Family tree diagram', 'es' => 'Esquema del árbol genealógico'],
+            'wl_t_tree' => ['kk' => 'Ру ағашы', 'ru' => 'Древо рода', 'en' => 'Family tree', 'es' => 'Árbol familiar'],
+            'wl_d_tree' => ['kk' => 'Бүкіл ру бір экранда: ата-бабадан немерелерге дейін. Жылжытыңыз, үлкейтіңіз, жеті ата мен Үш жұртты қараңыз.', 'ru' => 'Весь род на одном экране: от предков до внуков. Листайте, приближайте, смотрите жеті ата и Үш жұрт.', 'en' => 'The whole clan on one screen: from ancestors to grandchildren. Scroll, zoom in, explore the seven generations and the Üsh zhurt.', 'es' => 'Todo el linaje en una pantalla: de los antepasados a los nietos. Desplázate, acerca y explora las siete generaciones y el Üsh zhurt.'],
+            'wl_a_families' => ['kk' => 'Балалар тізімі ашылатын отбасы', 'ru' => 'Семья с раскрывающимся списком детей', 'en' => 'A family with an expandable list of children', 'es' => 'Familia con lista de hijos desplegable'],
+            'wl_t_families' => ['kk' => 'Отбасылар мен балалар', 'ru' => 'Семьи и дети', 'en' => 'Families and children', 'es' => 'Familias e hijos'],
+            'wl_d_families' => ['kk' => 'Әр отбасы — бөлек карточка. Басыңыз — балалары ашылады, олардың артынан өз отбасылары.', 'ru' => 'Каждая семья — отдельная карточка. Нажмите — и раскроются дети, а за ними и их семьи.', 'en' => 'Every family is its own card. Tap it and the children unfold, followed by their own families.', 'es' => 'Cada familia es una tarjeta. Pulsa y se despliegan los hijos, y tras ellos sus propias familias.'],
+            'wl_a_person' => ['kk' => 'Адам карточкасы', 'ru' => 'Карточка человека', 'en' => 'Person card', 'es' => 'Ficha de persona'],
+            'wl_t_person' => ['kk' => 'Адам карточкасы', 'ru' => 'Карточка человека', 'en' => 'Person card', 'es' => 'Ficha de persona'],
+            'wl_d_person' => ['kk' => 'Фото, күндер, ата-ана, жұбай мен балалар, өмір баяны және адам рұқсат етсе — байланыс деректері.', 'ru' => 'Фото, даты, родители, супруги и дети, история жизни и, если человек разрешил, — контакты.', 'en' => 'Photo, dates, parents, spouses and children, life story and — if the person allows it — contact details.', 'es' => 'Foto, fechas, padres, cónyuges e hijos, historia de vida y, si la persona lo permite, datos de contacto.'],
+            'wl_a_birthdays' => ['kk' => 'Туған күндер күнтізбесі', 'ru' => 'Календарь дней рождения', 'en' => 'Birthday calendar', 'es' => 'Calendario de cumpleaños'],
+            'wl_t_birthdays' => ['kk' => 'Туған күндер мен ескерту күндері', 'ru' => 'Дни рождения и памятные даты', 'en' => 'Birthdays and memorable dates', 'es' => 'Cumpleaños y fechas memorables'],
+            'wl_d_birthdays' => ['kk' => 'Кімнің туған күні жақындағанын еске салып, отбасының ескерткіш күндерін сақтайды.', 'ru' => 'Сайт напомнит, у кого скоро день рождения, и сохранит памятные даты семьи.', 'en' => 'The site reminds you whose birthday is coming up and keeps the family\'s memorable dates.', 'es' => 'El sitio te recuerda quién cumple años pronto y guarda las fechas memorables de la familia.'],
+            'wl_a_albums' => ['kk' => 'Фотоальбом', 'ru' => 'Фотоальбом', 'en' => 'Photo album', 'es' => 'Álbum de fotos'],
+            'wl_t_albums' => ['kk' => 'Фотоальбомдар', 'ru' => 'Фотоальбомы', 'en' => 'Photo albums', 'es' => 'Álbumes de fotos'],
+            'wl_d_albums' => ['kk' => 'Отбасылар мен отбасылық шаралар альбомдары: той, мерейтой, кездесу. Ескі суреттер енді жоғалмайды.', 'ru' => 'Альбомы семей и семейных событий: тои, юбилеи, встречи. Старые снимки больше не потеряются.', 'en' => 'Albums of families and family events: weddings, anniversaries, gatherings. Old photos will never be lost again.', 'es' => 'Álbumes de familias y de eventos familiares: bodas, aniversarios, reuniones. Las fotos antiguas ya no se perderán.'],
+            'wl_a_grove' => ['kk' => '3D емен орманы', 'ru' => '3D-дубрава', 'en' => '3D oak grove', 'es' => 'Robledal en 3D'],
+            'wl_t_grove' => ['kk' => '3D емен орманы', 'ru' => '3D-дубрава', 'en' => '3D oak grove', 'es' => 'Robledal en 3D'],
+            'wl_d_grove' => ['kk' => 'Ру — орман іспетті: әр ағаш — бір отбасы. Арасында серуендеп, бәрінің қалай өскенін көруге болады.', 'ru' => 'Род как роща: каждое дерево — семья. Можно пройтись между ними и увидеть, как всё выросло.', 'en' => 'The clan as a grove: every tree is a family. Walk between them and see how it all grew.', 'es' => 'El linaje como un bosque: cada árbol es una familia. Pasea entre ellos y mira cómo todo ha crecido.'],
+            'wl_privacy' => ['kk' => 'Құпиялылық саясаты', 'ru' => 'Политика конфиденциальности', 'en' => 'Privacy policy', 'es' => 'Política de privacidad'],
+            'wl_terms' => ['kk' => 'Шарттар', 'ru' => 'Условия', 'en' => 'Terms', 'es' => 'Condiciones'],
+            'wl_info' => ['kk' => 'Мәліметтер', 'ru' => 'Сведения', 'en' => 'Information', 'es' => 'Información'],
+            'wl_err_auth_t' => ['kk' => 'Кіру сәтсіз аяқталды:', 'ru' => 'Ошибка входа:', 'en' => 'Sign-in failed:', 'es' => 'Error de inicio de sesión:'],
+            'wl_err_auth' => ['kk' => 'Google арқылы кіру кезінде қате орын алды. Қайталап көріңіз.', 'ru' => 'При авторизации через Google произошла ошибка. Попробуйте снова.', 'en' => 'An error occurred while signing in with Google. Please try again.', 'es' => 'Se produjo un error al iniciar sesión con Google. Inténtalo de nuevo.'],
+            'wl_err_state_t' => ['kk' => 'Қауіпсіздік қатесі:', 'ru' => 'Ошибка сессии:', 'en' => 'Session error:', 'es' => 'Error de sesión:'],
+            'wl_err_state' => ['kk' => 'Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз.', 'ru' => 'Сессия устарела. Обновите страницу и попробуйте снова.', 'en' => 'The session has expired. Refresh the page and try again.', 'es' => 'La sesión ha caducado. Actualiza la página e inténtalo de nuevo.'],
+            'wl_err_forbidden_t' => ['kk' => 'Рұқсат жоқ:', 'ru' => 'Доступ запрещен:', 'en' => 'Access denied:', 'es' => 'Acceso denegado:'],
+            'wl_err_forbidden' => ['kk' => 'Бұл бөлімге кіруге құқығыңыз жеткіліксіз.', 'ru' => 'Недостаточно прав для доступа к этому разделу.', 'en' => 'You do not have enough rights to access this section.', 'es' => 'No tienes permisos suficientes para acceder a esta sección.'],
+            'wl_err_admin_t' => ['kk' => 'Тек әкімшіге:', 'ru' => 'Только для администратора:', 'en' => 'Administrators only:', 'es' => 'Solo administradores:'],
+            'wl_err_admin' => ['kk' => 'Бұл бет тек әкімшіге арналған.', 'ru' => 'Этот раздел доступен только администратору.', 'en' => 'This section is available to administrators only.', 'es' => 'Esta sección está disponible solo para administradores.'],
+            'wl_err_other_t' => ['kk' => 'Қате:', 'ru' => 'Ошибка:', 'en' => 'Error:', 'es' => 'Error:'],
+            'wl_music_on' => ['kk' => 'Музыканы қосу', 'ru' => 'Включить музыку', 'en' => 'Turn music on', 'es' => 'Activar la música'],
+            'wl_music_off' => ['kk' => 'Музыканы өшіру', 'ru' => 'Выключить музыку', 'en' => 'Turn music off', 'es' => 'Desactivar la música'],
 
             // Общие элементы шапки и навигации
             'site_title' => [

@@ -231,9 +231,9 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     $termText = I18n::formatKinship($kinship['term_kk'] ?? '', $kinship['term_ru'] ?? null);
                 ?>
                     <span class="badge <?= $isOwnZhurt ? 'badge-accent' : '' ?>"><?= htmlspecialchars((string)$kinship['zhurt']) ?></span>
-                    <div class="pc-kin-term"><?= htmlspecialchars($termText) ?></div>
+                    <div class="pc-kin-term"><?= I18n::kinshipHtml($kinship['term_kk'] ?? '', $kinship['term_ru'] ?? null) ?></div>
                 <?php elseif ($kinship && !empty($kinship['term_kk'])): ?>
-                    <div class="pc-kin-term"><?= htmlspecialchars(I18n::formatKinship($kinship['term_kk'], $kinship['term_ru'] ?? null)) ?></div>
+                    <div class="pc-kin-term"><?= I18n::kinshipHtml($kinship['term_kk'], $kinship['term_ru'] ?? null) ?></div>
                 <?php else: ?>
                     <div class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Родственная связь уточняется' : 'Туыстық байланысы анықталуда' ?></div>
                 <?php endif; ?>
@@ -772,7 +772,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                     <?php if ($h): ?>
                                                         <a href="/person/<?= (int)$h['id'] ?>"><?= htmlspecialchars($hName) ?></a>
                                                         <?php if (!empty($fam['husband_kinship']['term_kk'])): ?>
-                                                            <span class="badge"><?= htmlspecialchars(I18n::formatKinship($fam['husband_kinship']['term_kk'], $fam['husband_kinship']['term_ru'] ?? null)) ?></span>
+                                                            <span class="badge"><?= I18n::kinshipHtml($fam['husband_kinship']['term_kk'], $fam['husband_kinship']['term_ru'] ?? null) ?></span>
                                                         <?php endif; ?>
                                                     <?php else: ?>
                                                         <span class="muted"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Неизвестно' : 'Белгісіз' ?></span>
@@ -781,7 +781,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                     <?php if ($w): ?>
                                                         <a href="/person/<?= (int)$w['id'] ?>"><?= htmlspecialchars($wName) ?></a>
                                                         <?php if (!empty($fam['wife_kinship']['term_kk'])): ?>
-                                                            <span class="badge"><?= htmlspecialchars(I18n::formatKinship($fam['wife_kinship']['term_kk'], $fam['wife_kinship']['term_ru'] ?? null)) ?></span>
+                                                            <span class="badge"><?= I18n::kinshipHtml($fam['wife_kinship']['term_kk'], $fam['wife_kinship']['term_ru'] ?? null) ?></span>
                                                         <?php endif; ?>
                                                         <?php if (!empty($fam['wife_kinship']['uzatylgan']['husband_id'])):
                                                             $uzInfo = $fam['wife_kinship']['uzatylgan'];
@@ -814,7 +814,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                                     </span>
                                                                 </a>
                                                                 <?php if (!empty($chKin['term_kk'])): ?>
-                                                                    <span class="right"><span class="badge"><?= htmlspecialchars(I18n::formatKinship($chKin['term_kk'], $chKin['term_ru'] ?? null)) ?></span></span>
+                                                                    <span class="right"><span class="badge"><?= I18n::kinshipHtml($chKin['term_kk'], $chKin['term_ru'] ?? null) ?></span></span>
                                                                 <?php endif; ?>
                                                             </div>
                                                         <?php endforeach; ?>
@@ -835,7 +835,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                                     <a href="/person/<?= (int)$stP['id'] ?>" class="badge pc-tag">
                                                         <b><?= htmlspecialchars(trim(($stP['last_name'] ?? '') . ' ' . $stP['first_name'])) ?></b>
                                                         <?php if (!empty($stKin['term_kk'])): ?>
-                                                            <span>· <?= htmlspecialchars(I18n::formatKinship($stKin['term_kk'], $stKin['term_ru'] ?? null)) ?></span>
+                                                            <span>· <?= I18n::kinshipHtml($stKin['term_kk'], $stKin['term_ru'] ?? null) ?></span>
                                                         <?php endif; ?>
                                                     </a>
                                                 <?php endforeach; ?>

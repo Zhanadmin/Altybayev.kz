@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Config\KinshipDictionary;
+use App\Config\KinshipGlossary;
+
+require_once __DIR__ . '/../Config/KinshipGlossary.php';
 
 /**
  * Қазақтың туыстық қатынастарын есептеудің толық академиялық сервисі
@@ -1273,6 +1276,11 @@ class KinshipService
             }
         }
 
+        // ALT-013: английский/испанский термин и подсказка-расшифровка (kk/ru/en/es) для каждого термина
+        foreach ($result as $pId => $kin) {
+            $result[$pId] = KinshipGlossary::annotate($kin);
+        }
+
         return $result;
     }
 
@@ -2107,6 +2115,13 @@ class KinshipService
                 'clan_ru' => $p['clan_ru'] ?? 'белгісіз',
                 'term_kk' => $termKk,
                 'term_ru' => $termRu,
+                // ALT-013: term_en/term_es и hint_* — для испанского/английского и подсказок
+                'term_en' => $kin['term_en'] ?? '',
+                'term_es' => $kin['term_es'] ?? '',
+                'hint_kk' => $kin['hint_kk'] ?? '',
+                'hint_ru' => $kin['hint_ru'] ?? '',
+                'hint_en' => $kin['hint_en'] ?? '',
+                'hint_es' => $kin['hint_es'] ?? '',
                 'code' => $kin['code'] ?? '',
                 'explanation' => $kin['explanation'] ?? '',
                 'badge_class' => $kin['badge_class'] ?? 'badge-relative',
@@ -2171,6 +2186,12 @@ class KinshipService
         if ($baseFormatted) {
             $baseFormatted['term_kk'] = 'Өзі';
             $baseFormatted['term_ru'] = 'Сам(а)';
+            $baseFormatted['term_en'] = 'Myself';
+            $baseFormatted['term_es'] = 'Yo mismo/a';
+            $baseFormatted['hint_kk'] = 'Бұл сіз өзіңіз.';
+            $baseFormatted['hint_ru'] = 'Это вы сами.';
+            $baseFormatted['hint_en'] = 'This is you.';
+            $baseFormatted['hint_es'] = 'Es usted.';
         }
 
         return [

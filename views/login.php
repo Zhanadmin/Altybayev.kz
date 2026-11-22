@@ -10,7 +10,11 @@ use App\Core\I18n;
 $lang = I18n::lang();
 $langRef = !empty($isHome) ? '/' : '/login';
 $siteTitle = I18n::siteTitle();
-$pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTitle} — Вход в систему" : "{$siteTitle} — Жүйеге кіру";
+$T = static fn(string $k): string => htmlspecialchars(I18n::t($k));
+$pageTitle = $siteTitle . ' — ' . I18n::t('wl_page_title');
+// TASK-027 п.7: музыка — кнопка ♪ показывается только если файл лежит на месте
+$musicFile = dirname(__DIR__) . '/public/assets/audio/welcome.mp3';
+$hasMusic = is_file($musicFile);
 
 // TASK-027: контакты владельца из настроек админки; токен CSRF и метка времени показа формы (защита от ботов)
 $ru = ($lang === 'ru' || $lang === 'en' || $lang === 'es');
@@ -106,6 +110,27 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         .wl-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
         .wl-fmsg { min-height: 1.4em; font-size: 14px; text-align: center; }
         .wl-fmsg.ok { color: var(--c-success); } .wl-fmsg.err { color: var(--c-danger, #b42318); }
+        /* TASK-027 п.6: мягкая анимация (только transform/opacity/stroke — лёгкая для телефона) */
+        .wl-growtree { width: min(300px, 70%); height: auto; display: block; margin: 0 auto var(--sp-3); overflow: visible; }
+        .wl-growtree .gt-b { fill: none; stroke: var(--c-border-strong); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: wl-draw 1.6s ease-out forwards; }
+        .wl-growtree .gt-b2 { animation-delay: .7s; } .wl-growtree .gt-b3 { animation-delay: 1.2s; }
+        .wl-growtree .gt-n { fill: var(--c-accent); opacity: 0; transform-box: fill-box; transform-origin: center; animation: wl-pop .5s ease-out forwards; }
+        .wl-growtree .gt-l { fill: var(--c-success); opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; animation: wl-pop .5s ease-out forwards, wl-sway 5s ease-in-out infinite alternate; }
+        @keyframes wl-draw { to { stroke-dashoffset: 0; } }
+        @keyframes wl-pop { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
+        @keyframes wl-sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+        .wl-rv { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+        .wl-rv.in { opacity: 1; transform: none; }
+        .wl-grove-tree { transform-box: fill-box; transform-origin: 50% 100%; animation: wl-sway 6s ease-in-out infinite alternate; }
+        .wl-music { position: fixed; right: 14px; bottom: 14px; z-index: 900; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--c-border-strong); background: var(--c-island, #fff); color: inherit; font-size: 20px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+        .wl-music[aria-pressed="true"] { background: var(--c-accent-soft); border-color: var(--c-accent); }
+        .wl-music.off::after { content: ''; position: absolute; left: 10px; right: 10px; top: 50%; border-top: 2px solid currentColor; transform: rotate(-45deg); }
+        @media (prefers-reduced-motion: reduce) {
+            .wl-growtree .gt-b { animation: none; stroke-dashoffset: 0; }
+            .wl-growtree .gt-n, .wl-growtree .gt-l { animation: none; opacity: 1; }
+            .wl-rv { opacity: 1; transform: none; transition: none; }
+            .wl-grove-tree { animation: none; }
+        }
         @media (max-width: 480px) { .wl-body { padding-top: 60px; } .wl-prev { height: 150px; } .wl-contact { padding: var(--sp-5) var(--sp-4); } }
     </style>
 </head>
@@ -120,46 +145,48 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
 
     <!-- Язык и тема -->
     <div class="au-top">
-        <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Язык' : 'Тіл' ?>">
+        <div class="seg" role="group" aria-label="<?= $T('wl_lang_label') ?>">
             <a href="/lang/kk?ref=<?= $langRef ?>" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
             <a href="/lang/ru?ref=<?= $langRef ?>" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
             <a href="/lang/en?ref=<?= $langRef ?>" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
             <a href="/lang/es?ref=<?= $langRef ?>" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
-        <a href="/auth/google" class="btn btn-primary wl-login-top">Кіру / Войти</a>
+        <a href="/auth/google" class="btn btn-primary wl-login-top"><?= $T('wl_login') ?></a>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
-                aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
+                aria-label="<?= $T('wl_theme_label') ?>">
             <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
         </button>
     </div>
 
     <main class="wl">
     <header class="wl-hero">
-        <div class="au-mark" aria-hidden="true">
-            <svg class="ic"><use href="#i-tamga"/></svg>
-        </div>
+        <svg class="wl-growtree" viewBox="0 0 300 150" aria-hidden="true">
+            <path class="gt-b" pathLength="1" d="M150 148V90"/>
+            <path class="gt-b gt-b2" pathLength="1" d="M150 90C150 70 90 70 70 40M150 90C150 70 210 70 230 40"/>
+            <path class="gt-b gt-b3" pathLength="1" d="M70 40C70 28 50 24 40 14M70 40C70 28 90 24 100 14M230 40C230 28 210 24 200 14M230 40C230 28 250 24 260 14"/>
+            <circle class="gt-n" style="animation-delay:.6s" cx="150" cy="90" r="7"/>
+            <circle class="gt-n" style="animation-delay:1.3s" cx="70" cy="40" r="6"/>
+            <circle class="gt-n" style="animation-delay:1.4s" cx="230" cy="40" r="6"/>
+            <circle class="gt-l" style="animation-delay:2s,2s" cx="40" cy="14" r="8"/>
+            <circle class="gt-l" style="animation-delay:2.1s,2.1s" cx="100" cy="14" r="8"/>
+            <circle class="gt-l" style="animation-delay:2.2s,2.2s" cx="200" cy="14" r="8"/>
+            <circle class="gt-l" style="animation-delay:2.3s,2.3s" cx="260" cy="14" r="8"/>
+        </svg>
 
         <h1><?= htmlspecialchars($siteTitle) ?></h1>
         <hr class="oyu-rule">
-        <p class="wl-lead">
-            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es')
-                ? 'Здесь живёт шежіре семьи Алтыбаевых: кто от кого пошёл, где чьи корни, как выросли наши семьи. Это тёплый семейный дом в интернете — чтобы дети знали своих предков, а родные всегда были рядом.'
-                : 'Мұнда Алтыбаевтар әулетінің шежіресі сақталады: кім кімнен тарады, тамыр қайда, отбасылар қалай өсті. Бұл — интернеттегі жылы отбасылық үй: балалар ата-бабасын білсін, жақындар үнемі қасымызда болсын.' ?>
-        </p>
+        <p class="wl-lead"><?= $T('wl_lead') ?></p>
         <div class="wl-chips">
             <?php
             // TASK-027: чипы открывают окно соответствующей возможности
             $chipKeys = ['tree', 'tree', 'tree', 'families', 'birthdays', 'albums', 'grove', 'person'];
-            $chipLabels = $ru
-                ? ['Древо рода', 'Жеті ата', 'Үш жұрт', 'Семьи и дети', 'Дни рождения', 'Фотоальбомы', '3D-дубрава', 'Контакты родных']
-                : ['Ру ағашы', 'Жеті ата', 'Үш жұрт', 'Отбасылар мен балалар', 'Туған күндер', 'Фотоальбомдар', '3D емен орманы', 'Туыстар байланысы'];
-            foreach ($chipLabels as $i => $chip): ?>
-                <button type="button" class="wl-chip" data-feat="<?= $chipKeys[$i] ?>"><?= htmlspecialchars($chip) ?></button>
+            foreach ($chipKeys as $i => $ck): ?>
+                <button type="button" class="wl-chip" data-feat="<?= $ck ?>"><?= $T('wl_chip_' . ($i + 1)) ?></button>
             <?php endforeach; ?>
         </div>
 
         <div class="wl-cta">
-            <a href="/auth/google" class="btn btn-primary">Кіру / Войти</a>
+            <a href="/auth/google" class="btn btn-primary"><?= $T('wl_login') ?></a>
             <p class="wl-invite"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
                 <strong><?= htmlspecialchars(I18n::t('wl_invite')) ?></strong>
                 <?= htmlspecialchars(I18n::t('wl_invite_google')) ?></p>
@@ -170,19 +197,15 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                 <svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>
                 <div>
                     <?php if ($error === 'auth_failed'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Ошибка входа:' : 'Кіру сәтсіз аяқталды:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'При авторизации через Google произошла ошибка. Попробуйте снова.' : 'Google арқылы кіру кезінде қате орын алды. Қайталап көріңіз.' ?>
+                        <strong><?= $T('wl_err_auth_t') ?></strong><br><?= $T('wl_err_auth') ?>
                     <?php elseif ($error === 'invalid_state'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Ошибка сессии:' : 'Қауіпсіздік қатесі:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сессия устарела. Обновите страницу и попробуйте снова.' : 'Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз.' ?>
+                        <strong><?= $T('wl_err_state_t') ?></strong><br><?= $T('wl_err_state') ?>
                     <?php elseif ($error === 'forbidden'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Доступ запрещен:' : 'Рұқсат жоқ:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Недостаточно прав для доступа к этому разделу.' : 'Бұл бөлімге кіруге құқығыңыз жеткіліксіз.' ?>
+                        <strong><?= $T('wl_err_forbidden_t') ?></strong><br><?= $T('wl_err_forbidden') ?>
                     <?php elseif ($error === 'admin_only'): ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Только для администратора:' : 'Тек әкімшіге:' ?></strong><br>
-                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Этот раздел доступен только администратору.' : 'Бұл бет тек әкімшіге арналған.' ?>
+                        <strong><?= $T('wl_err_admin_t') ?></strong><br><?= $T('wl_err_admin') ?>
                     <?php else: ?>
-                        <strong><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Ошибка:' : 'Қате:' ?></strong> <?= htmlspecialchars($error) ?>
+                        <strong><?= $T('wl_err_other_t') ?></strong> <?= htmlspecialchars($error) ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -190,12 +213,12 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
     </header>
 
     <section aria-labelledby="wl-what">
-        <h2 id="wl-what"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Что здесь можно делать' : 'Мұнда не істеуге болады' ?></h2>
-        <p class="wl-h2-sub"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Несколько картинок-образцов — на них вымышленные имена, не настоящие люди.' : 'Бірнеше үлгі сурет — мұнда ойдан шығарылған есімдер, нақты адамдар емес.' ?></p>
+        <h2 id="wl-what"><?= $T('wl_what') ?></h2>
+        <p class="wl-h2-sub"><?= $T('wl_what_sub') ?></p>
         <div class="wl-grid">
 
             <article class="island wl-card" role="button" tabindex="0" data-feat="tree">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Схема родового древа' : 'Ру ағашының сызбасы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= $T('wl_a_tree') ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <path class="wl-s-line" d="M150 36v16M150 52H70v14M150 52h80v14M70 94v14M70 108H40v10M70 108h30v10M230 94v14M230 108v10"/>
                         <rect class="wl-s-m" x="110" y="10" width="80" height="26" rx="8"/>
@@ -210,13 +233,13 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Древо рода' : 'Ру ағашы' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Весь род на одном экране: от предков до внуков. Листайте, приближайте, смотрите жеті ата и Үш жұрт.' : 'Бүкіл ру бір экранда: ата-бабадан немерелерге дейін. Жылжытыңыз, үлкейтіңіз, жеті ата мен Үш жұртты қараңыз.' ?></p>
+                    <h3><?= $T('wl_t_tree') ?></h3>
+                    <p><?= $T('wl_d_tree') ?></p>
                 </div>
             </article>
 
             <article class="island wl-card" role="button" tabindex="0" data-feat="families">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семья с раскрывающимся списком детей' : 'Балалар тізімі ашылатын отбасы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= $T('wl_a_families') ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="20" y="10" width="260" height="54" rx="12"/>
                         <circle class="wl-s-m" cx="52" cy="37" r="14"/>
@@ -233,13 +256,13 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Семьи и дети' : 'Отбасылар мен балалар' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Каждая семья — отдельная карточка. Нажмите — и раскроются дети, а за ними и их семьи.' : 'Әр отбасы — бөлек карточка. Басыңыз — балалары ашылады, олардың артынан өз отбасылары.' ?></p>
+                    <h3><?= $T('wl_t_families') ?></h3>
+                    <p><?= $T('wl_d_families') ?></p>
                 </div>
             </article>
 
             <article class="island wl-card" role="button" tabindex="0" data-feat="person">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка человека' : 'Адам карточкасы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= $T('wl_a_person') ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="50" y="8" width="200" height="134" rx="14"/>
                         <circle class="wl-s-acc" cx="150" cy="44" r="24"/>
@@ -252,13 +275,13 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка человека' : 'Адам карточкасы' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фото, даты, родители, супруги и дети, история жизни и, если человек разрешил, — контакты.' : 'Фото, күндер, ата-ана, жұбай мен балалар, өмір баяны және адам рұқсат етсе — байланыс деректері.' ?></p>
+                    <h3><?= $T('wl_t_person') ?></h3>
+                    <p><?= $T('wl_d_person') ?></p>
                 </div>
             </article>
 
             <article class="island wl-card" role="button" tabindex="0" data-feat="birthdays">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Календарь дней рождения' : 'Туған күндер күнтізбесі' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= $T('wl_a_birthdays') ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="60" y="12" width="180" height="126" rx="14"/>
                         <rect class="wl-s-acc" x="60" y="12" width="180" height="30" rx="14"/>
@@ -273,13 +296,13 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дни рождения и памятные даты' : 'Туған күндер мен ескерту күндері' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сайт напомнит, у кого скоро день рождения, и сохранит памятные даты семьи.' : 'Кімнің туған күні жақындағанын еске салып, отбасының ескерткіш күндерін сақтайды.' ?></p>
+                    <h3><?= $T('wl_t_birthdays') ?></h3>
+                    <p><?= $T('wl_d_birthdays') ?></p>
                 </div>
             </article>
 
             <article class="island wl-card" role="button" tabindex="0" data-feat="albums">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фотоальбом' : 'Фотоальбом' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= $T('wl_a_albums') ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect class="wl-s-box" x="20" y="22" width="120" height="86" rx="10" transform="rotate(-5 80 65)"/>
                         <rect class="wl-s-acc" x="30" y="32" width="100" height="56" rx="6" transform="rotate(-5 80 65)"/>
@@ -291,16 +314,16 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Фотоальбомы' : 'Фотоальбомдар' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Альбомы семей и семейных событий: тои, юбилеи, встречи. Старые снимки больше не потеряются.' : 'Отбасылар мен отбасылық шаралар альбомдары: той, мерейтой, кездесу. Ескі суреттер енді жоғалмайды.' ?></p>
+                    <h3><?= $T('wl_t_albums') ?></h3>
+                    <p><?= $T('wl_d_albums') ?></p>
                 </div>
             </article>
 
             <article class="island wl-card" role="button" tabindex="0" data-feat="grove">
-                <div class="wl-prev" role="img" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? '3D-дубрава' : '3D емен орманы' ?>">
+                <div class="wl-prev" role="img" aria-label="<?= $T('wl_a_grove') ?>">
                     <svg viewBox="0 0 300 150" aria-hidden="true">
                         <rect x="0" y="112" width="300" height="38" fill="var(--c-success-soft)"/>
-                        <g>
+                        <g class="wl-grove-tree">
                             <rect class="wl-s-dark" x="146" y="82" width="8" height="40" rx="3"/>
                             <circle class="wl-s-green" cx="150" cy="62" r="34"/>
                             <rect class="wl-s-dark" x="62" y="98" width="6" height="26" rx="3"/>
@@ -312,8 +335,8 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                     </svg>
                 </div>
                 <div class="wl-txt">
-                    <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? '3D-дубрава' : '3D емен орманы' ?></h3>
-                    <p><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Род как роща: каждое дерево — семья. Можно пройтись между ними и увидеть, как всё выросло.' : 'Ру — орман іспетті: әр ағаш — бір отбасы. Арасында серуендеп, бәрінің қалай өскенін көруге болады.' ?></p>
+                    <h3><?= $T('wl_t_grove') ?></h3>
+                    <p><?= $T('wl_d_grove') ?></p>
                 </div>
             </article>
 
@@ -372,12 +395,12 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
     </div>
 
     <!-- TASK-027: единая точка входа — кнопка «Кіру / Войти» вверху и на первом экране; здесь только ссылки и подвал -->
-    <section class="wl-enter" aria-label="<?= $ru ? 'Сведения' : 'Мәліметтер' ?>">
+    <section class="wl-enter" aria-label="<?= $T('wl_info') ?>">
         <!-- TASK-014: ссылки для проверки Google OAuth -->
         <div class="au-legal">
-            <a href="/privacy"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Политика конфиденциальности' : 'Құпиялылық саясаты' ?></a>
+            <a href="/privacy"><?= $T('wl_privacy') ?></a>
             <span aria-hidden="true">·</span>
-            <a href="/terms"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Условия' : 'Шарттар' ?></a>
+            <a href="/terms"><?= $T('wl_terms') ?></a>
         </div>
 
         <div class="au-foot">altybayev.kz &bull; 2026</div>
@@ -395,7 +418,47 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         </div>
     </div>
 
+    <?php if ($hasMusic): ?>
+    <button type="button" class="wl-music off" id="wlMusic" aria-pressed="false" aria-label="<?= $T('wl_music_on') ?>">&#9834;</button>
+    <?php endif; ?>
     <script>
+        /* TASK-027 п.6: плавное появление карточек при прокрутке */
+        (function () {
+            const els = document.querySelectorAll('.wl-card, .wl-contact');
+            if (!('IntersectionObserver' in window) || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+            const io = new IntersectionObserver(function (es) {
+                es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+            }, { threshold: 0.12 });
+            els.forEach(function (el, i) { el.classList.add('wl-rv'); el.style.transitionDelay = ((i % 3) * 80) + 'ms'; io.observe(el); });
+        })();
+        /* TASK-027 п.7: тихая фоновая музыка, по кнопке ♪; выбор хранится в localStorage */
+        (function () {
+            const b = document.getElementById('wlMusic');
+            if (!b) return;
+            const L = <?= json_encode(['on' => I18n::t('wl_music_on'), 'off' => I18n::t('wl_music_off')], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+            let a = null, fade = null; const VOL = 0.18;
+            function ui(on) { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? L.off : L.on); }
+            function ramp(to, done) {
+                clearInterval(fade);
+                fade = setInterval(function () {
+                    const d = to - a.volume;
+                    if (Math.abs(d) < 0.02) { a.volume = to; clearInterval(fade); if (done) done(); return; }
+                    a.volume = Math.max(0, Math.min(1, a.volume + (d > 0 ? 0.02 : -0.02)));
+                }, 100);
+            }
+            function play() {
+                if (!a) { a = new Audio('/assets/audio/welcome.mp3'); a.loop = true; a.volume = 0; }
+                a.play().then(function () { ui(true); ramp(VOL); }).catch(function () { ui(false); });
+            }
+            function stop() { ui(false); if (a) ramp(0, function () { a.pause(); }); }
+            b.addEventListener('click', function () {
+                const on = b.getAttribute('aria-pressed') !== 'true';
+                try { localStorage.setItem('shezhire_music', on ? '1' : '0'); } catch (e) {}
+                on ? play() : stop();
+            });
+            /* если пользователь ранее включал музыку — пробуем продолжить; при блокировке браузером остаётся выключенной до нажатия */
+            try { if (localStorage.getItem('shezhire_music') === '1') play(); } catch (e) {}
+        })();
         (function () {
             const EXTRA = {
                 <?php foreach (['tree', 'families', 'person', 'birthdays', 'albums', 'grove'] as $fk): ?>

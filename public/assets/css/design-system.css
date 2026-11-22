@@ -571,6 +571,11 @@ p { margin: 0; }
 .pc-grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-5); }
 .pc-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-text-3); font-weight: 600; margin-bottom: var(--sp-2); }
 .pc-kin-term { font-size: var(--fs-lg); font-weight: 600; margin-top: var(--sp-2); }
+/* ALT-013: значок-подсказка «ⓘ» у термина родства */
+.kin-hint { appearance: none; background: none; border: 0; padding: 0 2px; margin: 0; font: inherit; font-size: 0.9em; line-height: 1; color: var(--c-text-3, #888); cursor: help; touch-action: manipulation; min-width: 20px; min-height: 20px; }
+.kin-hint:hover, .kin-hint:focus-visible { color: var(--c-accent, #2a7); }
+.kin-hint-pop { position: fixed; z-index: 100000; max-width: min(320px, calc(100vw - 16px)); padding: 8px 10px; border-radius: 8px; background: #222; color: #fff; font-size: 13px; font-weight: 400; line-height: 1.35; text-transform: none; letter-spacing: 0; box-shadow: 0 4px 16px rgba(0,0,0,.3); pointer-events: none; }
+.kin-hint-pop[hidden] { display: none; }
 .pc-upload { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--c-border); }
 .pc-drop {
     display: flex; align-items: center; justify-content: center; gap: var(--sp-2);

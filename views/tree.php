@@ -30,7 +30,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
     <!-- TASK-013 (шаг 9): шрифты и слой «Шежіре-кітап», как на остальных страницах -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=15">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=16">
+    <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=6">
     <style>
         :root {
@@ -3931,7 +3932,23 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         let treeData = null;
         let selectedPersonId = initialFocusId || userPersonId;
-        let activeKinships = {}; // person_id -> { term_kk, term_ru, code, badge_class }
+        let activeKinships = {}; // person_id -> { term_kk, term_ru, term_en, term_es, hint_kk/ru/en/es, code, badge_class }
+
+        // ALT-013: название термина родства и подсказка-расшифровка (данные из KinshipGlossary на сервере)
+        function kinLabelOf(kin) {
+            if (!kin) return '';
+            if (currentLang === 'es') return kin.term_es || kin.term_ru || kin.term_kk || '';
+            if (currentLang === 'en') return kin.term_en || kin.term_ru || kin.term_kk || '';
+            if (currentLang === 'ru') return kin.term_ru || kin.term_kk || '';
+            return kin.term_kk || '';
+        }
+        function kinHtmlOf(kin) {
+            const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const label = esc(kinLabelOf(kin));
+            const hint = kin ? (kin['hint_' + currentLang] || '') : '';
+            if (!hint) return label;
+            return `<span class="kin-term">${label} <button type="button" class="kin-hint" aria-label="${esc(hint)}" data-hint="${esc(hint)}">ⓘ</button></span>`;
+        }
         let expandedBranches = []; // ашылған тармақтардың ID тізімі
 
         // Масштабтау және жылжыту координаталары
@@ -4970,7 +4987,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 // Туыстық атауын алу
                 const kin = activeKinships[node.id] || { term_kk: 'Туысқан', term_ru: 'Родственник' };
-                const kinLabel = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk;
+                const kinLabel = kinLabelOf(kin);
 
                 // Батырмалар жазбалары
                 const tFather = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? '+ Отец' : '+ Әке';
@@ -4996,7 +5013,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 card.innerHTML = `
                     ${expandTopHtml}
                     <div class="card-kinship-badge ${isSelf ? 'self-rel' : (isSelected ? 'active-rel' : '')}" id="kin-badge-${node.id}">
-                        <span>${isSelf && !isSelected ? i18n[currentLang].you_are_here_badge : (isSelected ? i18n[currentLang].selected_badge : kinLabel)}</span>
+                        <span>${isSelf && !isSelected ? i18n[currentLang].you_are_here_badge : (isSelected ? i18n[currentLang].selected_badge : kinHtmlOf(kin))}</span>
                         <span class="kin-mark ${isSelected ? 'is-active' : (isDeceased ? 'is-deceased' : '')}"></span>
                     </div>
 
@@ -6027,12 +6044,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 } else if (isSelf) {
                     badge.classList.add('self-rel');
                     const kin = activeKinships[p.id];
-                    const label = kin ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk) : '';
+                    const label = kin ? kinLabelOf(kin) : '';
                     badge.innerHTML = `<span>${i18n[currentLang].you_are_here_badge} ${label ? `(${label})` : ''}</span> <span class="kin-mark ${p.is_deceased ? 'is-deceased' : ''}"></span>`;
                 } else {
                     const kin = activeKinships[p.id];
                     if (kin) {
-                        const label = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk;
+                        const label = kinHtmlOf(kin);
                         badge.innerHTML = `<span>${label}</span> <span class="kin-mark ${p.is_deceased ? 'is-deceased' : ''}"></span>`;
                     }
                 }
@@ -6710,7 +6727,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     else if (kin.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
                     else if (kin.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
                     else if (kin.zhurt.includes('Құда')) zCls = 'zhurt-quda';
-                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div class="lt-sub" style="margin-top:2px;">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (kin.term_ru || kin.term_kk) : kin.term_kk}</div>`;
+                    zhurtHtml = `<span class="zhurt-pill ${zCls}">${kin.zhurt}</span> <div class="lt-sub" style="margin-top:2px;">${kinHtmlOf(kin)}</div>`;
                 }
 
                 // Супруги (разведённые — зачёркнуты, без эмодзи)
@@ -6955,7 +6972,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const isM = (p.gender === 'M');
                     const isDeceased = (p.is_deceased == 1);
                     const initials = (p.first_name ? p.first_name[0] : '') + (p.last_name ? p.last_name[0] : '');
-                    const term = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (p.term_ru || p.term_kk) : p.term_kk;
+                    const term = kinHtmlOf(p);
                     const years = p.years_display || (p.birth_year ? p.birth_year + (p.death_year ? '–' + p.death_year : '–...') : '—');
                     // Двойная связь: пометка второй стороны
                     const secondHtml = p.zhurt_second
@@ -6974,7 +6991,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 </div>
                             </td>
                             <td class="lt-ush-col-term">
-                                <span class="kin-term-badge female">${uzEsc(term)}</span>
+                                <span class="kin-term-badge female">${term}</span>
                             </td>
                         </tr>
                     `;
@@ -6996,7 +7013,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                 <span class="lt-ush-years-text">${lifeHtml(p, uzEsc(years))}</span>
                             </td>
                             <td class="lt-ush-col-term">
-                                <span class="kin-term-badge ${isM ? 'male' : 'female'}">${uzEsc(term)}</span>
+                                <span class="kin-term-badge ${isM ? 'male' : 'female'}">${term}</span>
                                 ${secondHtml}
                             </td>
                         </tr>
@@ -7193,8 +7210,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 ? `<div class="uz-msg">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Другие родственники' : 'Басқа туыстар'}: ${standalone.map(s => {
                     const sp = s.person || {};
                     const k = s.kinship || {};
-                    const term = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? (k.term_ru || k.term_kk || '') : (k.term_kk || '');
-                    return `${uzEsc((sp.first_name || '') + ' ' + (sp.last_name || ''))}${term ? ' — ' + uzEsc(term) : ''}`;
+                    const term = kinHtmlOf(k);
+                    return `${uzEsc((sp.first_name || '') + ' ' + (sp.last_name || ''))}${term ? ' — ' + term : ''}`;
                 }).join(', ')}</div>`
                 : '';
             // TASK-034: супруг(а) и дети — отдельным блоком «Отбасы», не внутри жұртов

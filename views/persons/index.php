@@ -228,11 +228,9 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
                     $termText = I18n::formatKinship($kin['term_kk'] ?? '', $kin['term_ru'] ?? null);
                 ?>
                     <span class="badge<?= $isOwn ? ' badge-accent' : '' ?>"><?= htmlspecialchars($kin['zhurt']) ?></span>
-                    <div class="clip pp-term" title="<?= htmlspecialchars($termText) ?>"><?= htmlspecialchars($termText) ?></div>
-                <?php elseif ($kin && !empty($kin['term_kk'])):
-                    $termText = I18n::formatKinship($kin['term_kk'], $kin['term_ru'] ?? null);
-                ?>
-                    <div class="clip pp-term" title="<?= htmlspecialchars($termText) ?>"><?= htmlspecialchars($termText) ?></div>
+                    <div class="pp-term"><?= I18n::kinshipHtml($kin['term_kk'] ?? '', $kin['term_ru'] ?? null) ?></div>
+                <?php elseif ($kin && !empty($kin['term_kk'])): ?>
+                    <div class="pp-term"><?= I18n::kinshipHtml($kin['term_kk'], $kin['term_ru'] ?? null) ?></div>
                 <?php else: ?>
                     <span class="pp-none">—</span>
                 <?php endif; ?>

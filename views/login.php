@@ -32,7 +32,8 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
 <html lang="<?= htmlspecialchars($lang) ?>">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <script>
         /* TASK-008: тема — сохранённый выбор, иначе как в системе */
@@ -125,7 +126,62 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         .wl-music { position: fixed; right: 14px; bottom: 14px; z-index: 900; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--c-border-strong); background: var(--c-island, #fff); color: inherit; font-size: 20px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
         .wl-music[aria-pressed="true"] { background: var(--c-accent-soft); border-color: var(--c-accent); }
         .wl-music.off::after { content: ''; position: absolute; left: 10px; right: 10px; top: 50%; border-top: 2px solid currentColor; transform: rotate(-45deg); }
+        /* ALT-015: закреплённая верхняя панель */
+        .wl-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 800; height: 56px; padding: 0 var(--sp-4); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            background: color-mix(in srgb, var(--c-island, #fff) 78%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--c-border); }
+        .wl-bar .au-top { position: static; flex: 0 0 auto; }
+        .wl-brand { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; font-weight: 700; color: var(--c-text); text-decoration: none; }
+        .wl-brand .ic { width: 22px; height: 22px; flex: 0 0 auto; color: var(--c-accent-text); }
+        .wl-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wl-body { padding-top: 56px; scroll-padding-top: 64px; }
+        html { scroll-behavior: smooth; }
+        /* ALT-015: первый экран на всю высоту окна */
+        .wl { max-width: 1100px; }
+        .wl-hero { min-height: calc(100vh - 56px); min-height: calc(100svh - 56px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--sp-6); align-items: center; text-align: left; padding: var(--sp-6) 0 64px; position: relative; }
+        .wl-hero-text { min-width: 0; }
+        .wl-eyebrow { margin: 0 0 var(--sp-2); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--c-accent-text); }
+        .wl-hero h1 { font-size: clamp(36px, 5.2vw, 60px); }
+        .wl-hero .wl-lead { margin: var(--sp-4) 0 0; max-width: 520px; font-size: 18px; }
+        .wl-hero .wl-cta { margin-top: var(--sp-5); }
+        .wl-hero .wl-invite { justify-content: flex-start; }
+        .wl-hero .wl-chips { justify-content: flex-start; gap: 6px; margin: var(--sp-4) 0 0; max-width: 520px; }
+        .wl-hero .wl-chip { padding: 4px 11px; min-height: 30px; font-size: 13px; }
+        .wl-hero .alert { grid-column: 1 / -1; margin: 0 auto; }
+        .wl-demo-tree { margin: 0; min-width: 0; }
+        .wl-demo-tree svg { width: 100%; height: auto; display: block; overflow: visible; }
+        .wl-demo-tree .wl-demo { margin-top: 4px; text-align: center; }
+        .dt-e { fill: none; stroke: var(--c-border-strong); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: wl-draw 1s ease-out var(--d) forwards; }
+        .dt-pop { opacity: 0; transform-box: fill-box; transform-origin: center; animation: wl-pop .55s ease-out calc(var(--d) + .55s) forwards; }
+        .dt-i { font: 700 17px 'PT Sans', sans-serif; fill: var(--c-text); }
+        .dt-t { font: 600 13px 'PT Sans', sans-serif; fill: var(--c-text-2); }
+        .wl-scroll { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; color: var(--c-text-2); text-decoration: none; }
+        .wl-scroll .ic { width: 24px; height: 24px; animation: wl-bounce 1.6s ease-in-out infinite; }
+        .wl-scroll:hover, .wl-scroll:focus-visible { color: var(--c-accent-text); }
+        @keyframes wl-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+        .wl-points { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--sp-3); }
+        .wl-points li { display: grid; grid-template-columns: 40px 1fr; column-gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-lg); background: var(--c-island); border: 1px solid var(--c-border); }
+        .wl-points .ic { grid-row: 1 / span 2; width: 40px; height: 40px; padding: 8px; box-sizing: border-box; border-radius: 12px; background: var(--c-accent-soft); color: var(--c-accent-text); }
+        .wl-points b { font-size: 16px; }
+        .wl-points span { font-size: 13px; color: var(--c-text-2); line-height: 1.35; }
+        @media (max-width: 860px) {
+            .wl-hero { grid-template-columns: 1fr; text-align: center; gap: var(--sp-4); padding-top: var(--sp-5); }
+            .wl-hero .wl-lead { margin-left: auto; margin-right: auto; font-size: 16px; }
+            .wl-hero .wl-invite, .wl-hero .wl-chips { justify-content: center; margin-left: auto; margin-right: auto; }
+            .wl-demo-tree { max-width: 460px; margin: 0 auto; }
+        }
+        @media (max-width: 520px) {
+            .wl-bar { height: auto; flex-wrap: wrap; justify-content: center; padding: 6px 10px; row-gap: 4px; }
+            .wl-brand { font-size: 18px; }
+            .wl-bar .au-top { gap: 4px; }
+            .wl-login-top { padding: 0 10px; }
+            .wl-body, .wl-body.wl-body { padding-top: 96px; }
+            .wl-hero { min-height: calc(100svh - 96px); }
+        }
         @media (prefers-reduced-motion: reduce) {
+            .dt-e { animation: none; stroke-dashoffset: 0; }
+            .dt-pop { animation: none; opacity: 1; }
+            .wl-scroll .ic { animation: none; }
+            html { scroll-behavior: auto; }
             .wl-growtree .gt-b { animation: none; stroke-dashoffset: 0; }
             .wl-growtree .gt-n, .wl-growtree .gt-l { animation: none; opacity: 1; }
             .wl-rv { opacity: 1; transform: none; transition: none; }
@@ -140,10 +196,18 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
         <symbol id="i-tamga" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7c0 3 2.7 5 6 5s6-2 6-5"/><path d="M8 21h8"/></symbol>
         <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
-        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+        <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+        <symbol id="i-gen" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="12.5" r="2.5"/><circle cx="18" cy="12.5" r="2.5"/><circle cx="12" cy="20" r="2.5"/><path d="M11 7.2L7 10.5M13 7.2l4 3.3M7 14.7l4 3.3"/></symbol>
+        <symbol id="i-fam" viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><circle cx="16.5" cy="8" r="2.4"/><path d="M2.5 19c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5M14.5 14c3 0 6 1.5 6 5"/></symbol>
+        <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 4 3 3-2.5 4 3.5"/></symbol>
+        <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></symbol>
+        <symbol id="i-lock"viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
     </svg>
 
     <!-- Язык и тема -->
+    <!-- ALT-015: закреплённая верхняя панель: название слева; музыка (bgm.js), язык, вход, тема справа -->
+    <div class="wl-bar">
+    <a href="#top" class="wl-brand"><svg class="ic" aria-hidden="true"><use href="#i-tamga"/></svg><span><?= htmlspecialchars($siteTitle) ?></span></a>
     <div class="au-top">
         <div class="seg" role="group" aria-label="<?= $T('wl_lang_label') ?>">
             <a href="/lang/kk?ref=<?= $langRef ?>" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
@@ -157,40 +221,66 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
             <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
         </button>
     </div>
+    </div>
 
-    <main class="wl">
+    <main class="wl" id="top">
     <header class="wl-hero">
-        <svg class="wl-growtree" viewBox="0 0 300 150" aria-hidden="true">
-            <path class="gt-b" pathLength="1" d="M150 148V90"/>
-            <path class="gt-b gt-b2" pathLength="1" d="M150 90C150 70 90 70 70 40M150 90C150 70 210 70 230 40"/>
-            <path class="gt-b gt-b3" pathLength="1" d="M70 40C70 28 50 24 40 14M70 40C70 28 90 24 100 14M230 40C230 28 210 24 200 14M230 40C230 28 250 24 260 14"/>
-            <circle class="gt-n" style="animation-delay:.6s" cx="150" cy="90" r="7"/>
-            <circle class="gt-n" style="animation-delay:1.3s" cx="70" cy="40" r="6"/>
-            <circle class="gt-n" style="animation-delay:1.4s" cx="230" cy="40" r="6"/>
-            <circle class="gt-l" style="animation-delay:2s,2s" cx="40" cy="14" r="8"/>
-            <circle class="gt-l" style="animation-delay:2.1s,2.1s" cx="100" cy="14" r="8"/>
-            <circle class="gt-l" style="animation-delay:2.2s,2.2s" cx="200" cy="14" r="8"/>
-            <circle class="gt-l" style="animation-delay:2.3s,2.3s" cx="260" cy="14" r="8"/>
-        </svg>
+        <div class="wl-hero-text">
+            <p class="wl-eyebrow"><?= $T('wl_hero_eyebrow') ?></p>
+            <h1><?= htmlspecialchars($siteTitle) ?></h1>
+            <p class="wl-lead"><?= $T('wl_hero_tag') ?></p>
 
-        <h1><?= htmlspecialchars($siteTitle) ?></h1>
-        <hr class="oyu-rule">
-        <p class="wl-lead"><?= $T('wl_lead') ?></p>
-        <div class="wl-chips">
-            <?php
-            // TASK-027: чипы открывают окно соответствующей возможности
-            $chipKeys = ['tree', 'tree', 'tree', 'families', 'birthdays', 'albums', 'grove', 'person'];
-            foreach ($chipKeys as $i => $ck): ?>
-                <button type="button" class="wl-chip" data-feat="<?= $ck ?>"><?= $T('wl_chip_' . ($i + 1)) ?></button>
-            <?php endforeach; ?>
+            <div class="wl-cta">
+                <a href="/auth/google" class="btn btn-primary"><?= $T('wl_login') ?></a>
+                <p class="wl-invite"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
+                    <strong><?= htmlspecialchars(I18n::t('wl_invite')) ?></strong>
+                    <?= htmlspecialchars(I18n::t('wl_invite_google')) ?></p>
+            </div>
+
+            <div class="wl-chips">
+                <?php
+                // TASK-027: чипы открывают окно соответствующей возможности
+                $chipKeys = ['tree', 'tree', 'tree', 'families', 'birthdays', 'albums', 'grove', 'person'];
+                foreach ($chipKeys as $i => $ck): ?>
+                    <button type="button" class="wl-chip" data-feat="<?= $ck ?>"><?= $T('wl_chip_' . ($i + 1)) ?></button>
+                <?php endforeach; ?>
+            </div>
         </div>
 
-        <div class="wl-cta">
-            <a href="/auth/google" class="btn btn-primary"><?= $T('wl_login') ?></a>
-            <p class="wl-invite"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
-                <strong><?= htmlspecialchars(I18n::t('wl_invite')) ?></strong>
-                <?= htmlspecialchars(I18n::t('wl_invite_google')) ?></p>
-        </div>
+        <?php
+        // ALT-015: демо-древо — вымышленные имена; [id, x, y, имя, пол, родитель]
+        $demo = [
+            ['a', 260, 40, 'Қасым', 'm', null],
+            ['b', 140, 135, 'Серік', 'm', 'a'], ['c', 380, 135, 'Айгүл', 'f', 'a'],
+            ['d', 70, 230, 'Арман', 'm', 'b'], ['e', 210, 230, 'Дина', 'f', 'b'], ['f', 310, 230, 'Ерлан', 'm', 'c'], ['g', 450, 230, 'Әлия', 'f', 'c'],
+            ['h', 40, 325, 'Тимур', 'm', 'd'], ['i', 120, 325, 'Мадина', 'f', 'd'], ['j', 230, 325, 'Нұрай', 'f', 'e'], ['k', 340, 325, 'Дәурен', 'm', 'f'], ['l', 450, 325, 'Томирис', 'f', 'g'],
+        ];
+        $dpos = [];
+        foreach ($demo as $n) { $dpos[$n[0]] = $n; }
+        $gen = static fn(int $y): int => (int)(($y - 40) / 95);
+        ?>
+        <figure class="wl-demo-tree">
+            <svg viewBox="0 0 500 380" role="img" aria-label="<?= $T('wl_a_tree') ?>">
+                <?php foreach ($demo as $n): if ($n[5] === null) continue; $p = $dpos[$n[5]]; $my = ($p[2] + $n[2]) / 2; ?>
+                <path class="dt-e" pathLength="1" style="--d:<?= number_format(0.2 + $gen($n[2]) * 0.55, 2, '.', '') ?>s" d="M<?= $p[1] ?> <?= $p[2] + 22 ?>C<?= $p[1] ?> <?= $my ?> <?= $n[1] ?> <?= $my ?> <?= $n[1] ?> <?= $n[2] - 22 ?>"/>
+                <?php endforeach; ?>
+                <?php foreach ($demo as $n): ?>
+                <g class="dt-n" style="--d:<?= number_format(0.1 + $gen($n[2]) * 0.55, 2, '.', '') ?>s" transform="translate(<?= $n[1] ?> <?= $n[2] ?>)">
+                    <g class="dt-pop">
+                        <circle class="<?= $n[4] === 'f' ? 'wl-s-f' : 'wl-s-m' ?>" r="22"/>
+                        <text class="dt-i" text-anchor="middle" dy="6"><?= htmlspecialchars(mb_substr($n[3], 0, 1)) ?></text>
+                        <text class="dt-t" text-anchor="middle" y="38"><?= htmlspecialchars($n[3]) ?></text>
+                    </g>
+                </g>
+                <?php endforeach; ?>
+            </svg>
+            <figcaption class="wl-demo"><?= $T('wl_demo_note') ?></figcaption>
+        </figure>
+
+        <a href="#wl-what" class="wl-scroll" aria-label="<?= $T('wl_scroll') ?>">
+            <span><?= $T('wl_scroll') ?></span>
+            <svg class="ic" aria-hidden="true"><use href="#i-chev"/></svg>
+        </a>
 
         <?php if (!empty($error)): ?>
             <div class="alert error" role="alert">
@@ -211,6 +301,14 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
             </div>
         <?php endif; ?>
     </header>
+
+    <!-- ALT-015: полоска «в двух словах» — иконки без чисел и личных данных -->
+    <ul class="wl-points">
+        <?php foreach ([['i-gen', 1], ['i-fam', 2], ['i-photo', 3], ['i-cal', 4]] as $pt): ?>
+        <li><svg class="ic" aria-hidden="true"><use href="#<?= $pt[0] ?>"/></svg>
+            <b><?= $T('wl_pt_' . $pt[1]) ?></b><span><?= $T('wl_pt_' . $pt[1] . 's') ?></span></li>
+        <?php endforeach; ?>
+    </ul>
 
     <section aria-labelledby="wl-what">
         <h2 id="wl-what"><?= $T('wl_what') ?></h2>

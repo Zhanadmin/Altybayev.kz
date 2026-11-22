@@ -13,7 +13,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 <html lang="<?= htmlspecialchars(\App\Core\I18n::lang()) ?>">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <?php include __DIR__ . '/partials/clan_tamga.php'; // TASK-030 ?>
     <title><?= htmlspecialchars(\App\Core\I18n::siteTitle()) ?> — <?= htmlspecialchars(\App\Core\I18n::t('nav_tree')) ?> («Өңдеу» / «Шежіре-Орман»)</title>
     <script>
@@ -34,6 +34,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
         :root {
             --bg-canvas: #090e17;
@@ -6187,6 +6188,54 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 updateTransform();
             }, { passive: false });
+
+            // ALT-016: сенсорлы экран — бір саусақпен жылжыту, екі саусақпен масштаб (pinch)
+            (function () {
+                let tMode = null, tDist = 0, tMoved = false;
+                const skip = (t) => !!(t && t.closest && t.closest('#forestRodoslovMount, .radial-btn, button, input, select, textarea, a'));
+                const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+                viewport.addEventListener('touchstart', (e) => {
+                    if (skip(e.target)) { tMode = null; return; }
+                    if (e.touches.length === 2) {
+                        tMode = 'pinch'; tDist = dist(e.touches[0], e.touches[1]);
+                    } else if (e.touches.length === 1) {
+                        tMode = 'pan'; tMoved = false;
+                        startX = e.touches[0].clientX - posX;
+                        startY = e.touches[0].clientY - posY;
+                    }
+                }, { passive: true });
+                viewport.addEventListener('touchmove', (e) => {
+                    if (!tMode) return;
+                    if (tMode === 'pan' && e.touches.length === 1) {
+                        posX = e.touches[0].clientX - startX;
+                        posY = e.touches[0].clientY - startY;
+                        tMoved = true;
+                        updateTransform();
+                        e.preventDefault();
+                    } else if (e.touches.length === 2) {
+                        const d = dist(e.touches[0], e.touches[1]);
+                        if (!tDist) { tDist = d; return; }
+                        const rect = viewport.getBoundingClientRect();
+                        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                        const newScale = Math.min(Math.max(scale * (d / tDist), 0.3), 2.5);
+                        posX = cx - (cx - posX) * (newScale / scale);
+                        posY = cy - (cy - posY) * (newScale / scale);
+                        scale = newScale; tDist = d;
+                        updateTransform();
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+                const tEnd = (e) => {
+                    if (e.touches.length === 1 && tMode === 'pinch') {
+                        tMode = 'pan';
+                        startX = e.touches[0].clientX - posX;
+                        startY = e.touches[0].clientY - posY;
+                    } else if (e.touches.length === 0) { tMode = null; tDist = 0; }
+                };
+                viewport.addEventListener('touchend', tEnd, { passive: true });
+                viewport.addEventListener('touchcancel', tEnd, { passive: true });
+            })();
 
             // Іздеу оқиғасы
             const searchInput = document.getElementById('treeSearchInput');

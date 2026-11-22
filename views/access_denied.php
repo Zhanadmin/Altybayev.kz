@@ -16,7 +16,8 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
 <html lang="<?= htmlspecialchars($lang) ?>">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <script>
         /* TASK-008: тема — сохранённый выбор, иначе как в системе */

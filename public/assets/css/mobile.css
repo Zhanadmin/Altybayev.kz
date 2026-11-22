@@ -1,0 +1,157 @@
+/* ALT-016: общий мобильный слой. Подключается ПОСЛЕ design-system.css / book.css.
+   Десктоп (>900px) не затрагивается: все правила — в media-запросах (кроме безопасных сбросов). */
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+img, video, canvas, svg, iframe { max-width: 100%; }
+img, video { height: auto; }
+
+/* ---------- Планшет и телефон (≤900px) ---------- */
+@media (max-width: 900px) {
+    body { overflow-x: clip; }
+    .ds-content, .ds-page { overflow-wrap: anywhere; }
+    .ds-content pre { white-space: pre-wrap; max-width: 100%; }
+
+    /* safe-area: вырез и нижняя полоса iPhone */
+    .ds-topbar {
+        padding-top: calc(var(--sp-2, 8px) + env(safe-area-inset-top, 0px));
+        padding-left: calc(var(--sp-3, 12px) + env(safe-area-inset-left, 0px));
+        padding-right: calc(var(--sp-3, 12px) + env(safe-area-inset-right, 0px));
+        flex-wrap: wrap; gap: 4px; row-gap: 4px;
+    }
+    .ds-content {
+        padding-left: calc(var(--sp-4, 16px) + env(safe-area-inset-left, 0px));
+        padding-right: calc(var(--sp-4, 16px) + env(safe-area-inset-right, 0px));
+        padding-bottom: calc(var(--sp-4, 16px) + env(safe-area-inset-bottom, 0px));
+    }
+    .ds-sidebar {
+        width: min(300px, 86vw);
+        padding-top: calc(var(--sp-3, 12px) + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(var(--sp-3, 12px) + env(safe-area-inset-bottom, 0px));
+        height: 100%; height: 100dvh;
+    }
+    .ds-main { min-height: 100vh; min-height: 100dvh; }
+
+    /* таблицы: прокрутка внутри, страница не уезжает вбок */
+    .ds-page table, .ds-content table {
+        display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+
+    /* модальные окна: помещаются в экран, прокручиваются внутри */
+    .modal-backdrop { padding: 0; }
+    .modal {
+        width: 100%; max-width: 100%;
+        max-height: 92vh; max-height: 92dvh;
+        overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    }
+    .modal-head, .modal-body, .modal-foot {
+        padding-left: max(var(--sp-4, 16px), env(safe-area-inset-left, 0px));
+        padding-right: max(var(--sp-4, 16px), env(safe-area-inset-right, 0px));
+    }
+    .modal-foot {
+        padding-bottom: calc(var(--sp-4, 16px) + env(safe-area-inset-bottom, 0px));
+        position: sticky; bottom: 0; background: var(--c-island, #fff); flex-wrap: wrap;
+    }
+    .modal-foot .btn { flex: 1 1 auto; }
+
+    /* уведомления на всю ширину, над нижней полосой */
+    .toast-stack {
+        left: max(var(--sp-3, 12px), env(safe-area-inset-left, 0px));
+        right: max(var(--sp-3, 12px), env(safe-area-inset-right, 0px));
+        bottom: calc(var(--sp-3, 12px) + env(safe-area-inset-bottom, 0px));
+    }
+    .toast { max-width: 100%; }
+
+    /* заголовки и действия страниц */
+    .ds-page-head { align-items: flex-start; }
+    .ds-page-head .actions { margin-left: 0; width: 100%; }
+    .ds-crumbs { flex-wrap: wrap; }
+}
+
+/* ---------- Размер для пальца: ≥44px ---------- */
+@media (max-width: 900px), (pointer: coarse) {
+    .btn { min-height: 44px; }
+    .btn-icon { min-width: 44px; width: 44px; }
+    .btn-sm { min-height: 44px; }
+    .input, .select, .textarea { min-height: 44px; font-size: 16px; } /* 16px — iOS не масштабирует страницу при фокусе */
+    .textarea { min-height: 90px; }
+    .check { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
+    .check input[type="checkbox"], .check input[type="radio"] { width: 22px; height: 22px; flex: 0 0 auto; }
+    .ds-nav a { min-height: 44px; }
+    .seg a, .seg button { min-height: 40px; }
+    .ds-topbar .seg button { min-height: 40px; padding: 4px 9px; }
+    .ds-crumbs a { display: inline-flex; align-items: center; min-height: 32px; }
+    #bgmToggle { width: 44px !important; height: 44px !important; min-width: 44px !important; margin-right: 4px !important; }
+    .pp-table .actions .btn-icon { width: 44px; height: 44px; }
+}
+
+/* ---------- Узкие телефоны (≤420px) ---------- */
+@media (max-width: 420px) {
+    .ds-topbar .user-chip { display: none; }          /* аватар не нужен: меню и выход остаются */
+    .ds-topbar .seg button { padding: 4px 7px; font-size: 11px; }
+    .ds-page-head h1 { font-size: var(--fs-xl, 22px); }
+    .ds-page-head .actions .btn { flex: 1 1 auto; }
+}
+
+/* ---------- Альбомная ориентация телефона ---------- */
+@media (max-height: 480px) and (orientation: landscape) {
+    .modal { max-height: 100vh; max-height: 100dvh; border-radius: 0; }
+    .ds-sidebar { overflow-y: auto; }
+}
+
+/* ---------- Древо (tree.php), 2D/3D, «Өңдеу», Тізім ---------- */
+@media (max-width: 900px) {
+    body.tree-page, body:has(header.tree-nav) { overflow-x: clip; }
+    header.tree-nav {
+        padding-top: calc(8px + env(safe-area-inset-top, 0px));
+        padding-left: calc(8px + env(safe-area-inset-left, 0px));
+        padding-right: calc(8px + env(safe-area-inset-right, 0px));
+        flex-wrap: wrap; gap: 6px;
+    }
+    header.tree-nav .btn-tool, header.tree-nav .mode-btn, header.tree-nav .scope-btn { min-height: 44px; min-width: 44px; }
+    header.tree-nav .mode-switcher { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* боковая карточка человека: на всю ширину экрана, а не 400px */
+    aside.side-profile-panel {
+        width: min(400px, 100vw - 16px);
+        right: calc(-1 * min(420px, 100vw));
+        height: calc(100vh - 60px); height: calc(100dvh - 60px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    /* модалки древа: в экран, прокрутка внутри, safe-area */
+    .modal-overlay { width: 100%; height: 100%; height: 100dvh; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+    .modal-card { max-width: 96vw !important; max-height: 92vh; max-height: 92dvh; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .modal-card input, .modal-card select, .modal-card textarea { font-size: 16px; min-height: 44px; }
+    .modal-card button { min-height: 44px; }
+    .close-panel-btn { min-width: 44px; min-height: 44px; }
+    /* масштаб: над нижней полосой, кнопки под палец */
+    .zoom-controls {
+        left: calc(12px + env(safe-area-inset-left, 0px));
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    }
+    .zoom-controls button { min-width: 44px; min-height: 44px; }
+    /* дерево и 3D: жесты (перетаскивание/щипок) обрабатывает скрипт, браузер не должен скроллить страницу */
+    #canvasViewport { touch-action: none; -webkit-user-select: none; user-select: none; overscroll-behavior: contain; }
+    .list-table { font-size: 14px; }
+    .list-table td, .list-table th { padding-left: 8px; padding-right: 8px; }
+    .list-table .lt-act { width: auto; white-space: nowrap; }
+    .list-view-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 520px) {
+    /* двухколонные формы внутри модалок — в одну колонку */
+    .modal-card div[style*="grid-template-columns: 1fr 1fr"],
+    .modal-card div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+
+/* ---------- Админка и формы ---------- */
+@media (max-width: 900px) {
+    .ad-invite, .cl-form { max-width: 100% !important; }
+    .cl-canvas { max-width: 100%; height: auto; aspect-ratio: 1 / 1; }
+    td[style*="max-width:360px"] { max-width: 60vw !important; }
+    #clSearch { max-width: 100% !important; margin-left: 0 !important; width: 100%; }
+    .modal[style*="max-width"] { max-width: 100% !important; }
+}
+
+/* ---------- Установленное приложение: без прокрутки «резиной» ---------- */
+@media (display-mode: standalone) {
+    html, body { overscroll-behavior-y: none; }
+}

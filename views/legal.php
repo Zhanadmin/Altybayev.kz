@@ -28,7 +28,8 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 <html lang="<?= $e($lang) ?>">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <title><?= $e($pageTitle) ?></title>
     <script>
         (function () {

@@ -90,7 +90,7 @@ $dsThemeReady = !empty($dsThemeReady);
 <html lang="<?= htmlspecialchars($lang) ?>"<?= $dsThemeReady ? '' : ' data-theme="light" data-theme-locked="1"' ?>>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <?php if ($dsThemeReady): ?>
     <script>
@@ -111,6 +111,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
         .ds-clan-switch { cursor: pointer; }

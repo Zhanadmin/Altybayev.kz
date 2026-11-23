@@ -293,7 +293,7 @@ class KinshipDictionary
             'cousin_paternal_brother' => [
                 'code' => 'cousin_paternal_brother',
                 'kk' => 'Аға / Іні',
-                'ru' => 'Двоюродный брат по отцу (немере аға/іні)',
+                'ru' => 'Двоюродный брат по отцу',
                 'desc' => 'Ағайынды әкелердің ұлдары бір-біріне жасына қарай Аға немесе Іні болады',
                 'zhurt_male' => 'Өз жұрты',
                 'zhurt_female' => 'Төркіні',
@@ -304,7 +304,7 @@ class KinshipDictionary
             'cousin_paternal_sister' => [
                 'code' => 'cousin_paternal_sister',
                 'kk' => 'Әпке / Қарындас',
-                'ru' => 'Двоюродная сестра по отцу (немере әпке/қарындас)',
+                'ru' => 'Двоюродная сестра по отцу',
                 'desc' => 'Ағайынды әкелердің қыздары',
                 'zhurt_male' => 'Өз жұрты',
                 'zhurt_female' => 'Төркіні',

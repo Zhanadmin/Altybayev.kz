@@ -549,9 +549,11 @@ class KinshipService
             $tFather = $allPersonsById[$targetFatherId];
             $bFather = $allPersonsById[$baseFatherId];
             if ($this->areSiblings($tFather, $bFather)) {
+                // ALT-017: старшинство по полной дате рождения, если её нет — по году
+                $isOlder = ($targetYear !== null && $baseYear !== null) ? $this->isOlderThan($targetPerson, $basePerson) : false;
                 if ($targetGender === 'M') {
                     $termKk = $isOlder ? 'Аға' : 'Іні';
-                    $termRu = $isOlder ? 'Двоюродный брат по отцу (немере аға)' : 'Двоюродный брат по отцу (немере іні)';
+                    $termRu = 'Двоюродный брат по отцу';
                     return [
                         'term_kk' => $termKk,
                         'term_ru' => $termRu,
@@ -564,7 +566,7 @@ class KinshipService
                     if ($isOlder) {
                         return [
                             'term_kk' => 'Әпке',
-                            'term_ru' => 'Двоюродная сестра по отцу (немере әпке)',
+                            'term_ru' => 'Двоюродная сестра по отцу',
                             'code' => 'cousin_paternal',
                             'zhurt' => $this->getZhurtForPerson($basePerson, 'paternal'),
                             'explanation' => 'Ағайынды әкелердің қыздары',
@@ -572,7 +574,7 @@ class KinshipService
                         ];
                     }
                     $termKk = $baseGender === 'M' ? 'Қарындас' : 'Сіңлі';
-                    $termRu = $baseGender === 'M' ? 'Двоюродная сестра по отцу (немере қарындас)' : 'Двоюродная сестра по отцу (немере сіңлі)';
+                    $termRu = 'Двоюродная сестра по отцу';
                     return [
                         'term_kk' => $termKk,
                         'term_ru' => $termRu,

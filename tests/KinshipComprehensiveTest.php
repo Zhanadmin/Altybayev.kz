@@ -139,7 +139,7 @@ assertCheck(str_contains($resUncle['term_ru'], 'дядя по отцу'), "term_
 // 7. ТЕСТ ДЕТИ РОДНЫХ БРАТЬЕВ ДРУГ ДРУГУ (Двоюродные братья по отцу)
 $resCousin1 = $service->determineKinship($testPersons[5], $testPersons[3], 'auto', $testPersons, $testMarriages);
 assertCheck($resCousin1['term_kk'] === 'Аға', "Арнур (2014) для Айбека (2015) — старший двоюродный брат (Аға)");
-assertCheck(str_contains($resCousin1['term_ru'], 'немере аға'), "term_ru содержит пояснение 'немере аға'");
+assertCheck(!str_contains($resCousin1['term_ru'], 'немере') && str_contains($resCousin1['term_ru'], 'Двоюродный брат по отцу'), "ALT-017: term_ru без «немере»");
 
 $resCousin2 = $service->determineKinship($testPersons[3], $testPersons[5], 'auto', $testPersons, $testMarriages);
 assertCheck($resCousin2['term_kk'] === 'Іні', "Айбек (2015) для Арнура (2014) — младший двоюродный брат (Іні)");

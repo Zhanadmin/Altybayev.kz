@@ -3226,7 +3226,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 <svg class="ic"><use href="#t-focus"/></svg>
                 <span data-i18n="scope_focal">Окрестность</span>
             </button>
-            <button class="scope-btn" id="btnScopeFull" onclick="switchScope('full')" title="Показать всё древо (270 человек)">
+            <button class="scope-btn" id="btnScopeFull" onclick="switchScope('full')" title="Показать всё древо (<?= \App\Services\PeopleCountService::people() ?> человек)">
                 <svg class="ic"><use href="#t-globe"/></svg>
                 <span data-i18n="scope_full">Все древо</span>
             </button>
@@ -3963,7 +3963,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         let initialFocusId = focusFromUrl ? parseInt(focusFromUrl) : (<?= (int)($focusId ?? 0) ?> || userPersonId || 6);
 
         let currentMode = urlParams.get('mode') === 'list' ? 'list' : 'editing'; // 'editing', 'forest', 'list'
-        let currentScope = 'focal'; // 'focal' (окрестность) немесе 'full' (барлық шежіре 270)
+        const ALT_TOTAL_PEOPLE = <?= \App\Services\PeopleCountService::people() ?>; // ALT-026: число живых людей, одно на весь сайт
+        let currentScope = 'focal'; // 'focal' (окрестность) немесе 'full' (барлық шежіре)
         let currentLang = urlParams.get('lang') || localStorage.getItem('shezhire_lang') || <?= json_encode(\App\Core\I18n::lang()) ?>;
 
         let treeData = null;
@@ -4123,7 +4124,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 lbl_import_gedcom: "Импортировать GEDCOM",
                 lbl_return_real: "🌳 Вернуться к реальной базе",
                 scope_focal: "Окрестность",
-                scope_full: "Все древо (270)",
+                scope_full: "Все древо (" + ALT_TOTAL_PEOPLE + ")",
                 forest_submode_rodoslov: "Шежіре-Ағаш (Rodoslov)",
                 forest_submode_3d: "3D Шежіре-Орман",
                 rodoslov_paternal_trunk: "Отцовский ствол: род Керей",
@@ -4189,7 +4190,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 lbl_import_gedcom: "Import GEDCOM",
                 lbl_return_real: "🌳 Return to the main database",
                 scope_focal: "Neighborhood",
-                scope_full: "Whole tree (270)",
+                scope_full: "Whole tree (" + ALT_TOTAL_PEOPLE + ")",
                 forest_submode_rodoslov: "Shezhire Tree (Rodoslov)",
                 forest_submode_3d: "3D Shezhire Forest",
                 rodoslov_paternal_trunk: "Paternal trunk: Kerey clan",
@@ -4255,7 +4256,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 lbl_import_gedcom: "Importar GEDCOM",
                 lbl_return_real: "🌳 Volver a la base de datos principal",
                 scope_focal: "Alrededores",
-                scope_full: "Árbol completo (270)",
+                scope_full: "Árbol completo (" + ALT_TOTAL_PEOPLE + ")",
                 forest_submode_rodoslov: "Árbol Shezhire (Rodoslov)",
                 forest_submode_3d: "Bosque Shezhire 3D",
                 rodoslov_paternal_trunk: "Tronco paterno: clan Kerey",

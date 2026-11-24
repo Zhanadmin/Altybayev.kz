@@ -49,8 +49,8 @@ $roleBadgeText = match ($userRole) {
 // TASK-008: пункты меню (линейные SVG-иконки вместо эмодзи) и хлебные крошки
 $navItems = [
     'home'     => ['href' => '/',         'icon' => 'i-home',     'label' => I18n::t('nav_home'),     'count' => null,  'group' => 1],
-    'persons'  => ['href' => '/persons',  'icon' => 'i-users',    'label' => I18n::t('nav_persons'),  'count' => '270', 'group' => 1],
-    'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => '71',  'group' => 1],
+    'persons'  => ['href' => '/persons',  'icon' => 'i-users',    'label' => I18n::t('nav_persons'),  'count' => (string)\App\Services\PeopleCountService::people(), 'group' => 1], // ALT-026
+    'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => (string)\App\Services\PeopleCountService::families(), 'group' => 1],
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
     'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018

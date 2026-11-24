@@ -80,13 +80,13 @@ require __DIR__ . '/layout/master_start.php';
     <div class="hm-stats">
         <a href="/persons" class="stat-leaf hm-link">
             <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>
-            <div class="value">270</div>
+            <div class="value"><?= \App\Services\PeopleCountService::people() ?></div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_persons')) ?></div>
             <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'человек, поиск, карточки' : 'тұлға, іздеу, парақшалар' ?></div>
         </a>
         <a href="/families" class="stat-leaf hm-link">
             <svg class="ic" aria-hidden="true"><use href="#i-family"/></svg>
-            <div class="value">71</div>
+            <div class="value"><?= \App\Services\PeopleCountService::families() ?></div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_families')) ?></div>
             <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'семья, союзы и дети' : 'шаңырақ, некелер және балалар' ?></div>
         </a>

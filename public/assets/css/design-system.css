@@ -528,6 +528,8 @@ p { margin: 0; }
 .pp-table td, .pp-table .person .name, .pp-table .pp-rel, .pp-table .pp-rel a, .pp-table .pp-term, .pp-table .pp-term *, .pp-table .pp-years, .pp-table .pp-none, .pp-table .badge, .pp-table .pp-lbl { font-family: var(--font-book); font-size: 15px; font-weight: 400; font-style: normal; line-height: 1.35; }
 .pp-table .person .name, .pp-table .pp-rel, .pp-table .pp-rel a, .pp-table .pp-term, .pp-table .pp-years, .pp-table .badge, .pp-table .pp-none { color: var(--c-text); }
 .pp-table .pp-lbl, .pp-table .person .meta { font-size: 13px; color: var(--c-text-2); }
+.pp-table td .person .name { font-size: 17px; font-weight: 400; }
+.pp-table td:not(.actions) .pp-rel, .pp-table td.pp-rel, .pp-table td.pp-rel a, .pp-table .pp-term, .pp-table .pp-term *, .pp-table .pp-years, .pp-table .pp-years-sub, .pp-table .pp-none, .pp-table td .badge, .pp-table .pp-lbl, .pp-table td.clip { font-style: italic; }
 .pp-years-sub { font-size: var(--fs-xs); color: var(--c-text-3); margin-top: 2px; }
 .pp-gender-cell { text-align: center; }
 .g-badge.g-icon { padding: 4px; width: 28px; height: 28px; justify-content: center; }

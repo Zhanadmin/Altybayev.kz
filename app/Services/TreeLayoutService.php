@@ -24,12 +24,12 @@ namespace App\Services;
  */
 class TreeLayoutService
 {
-    public const CARD_WIDTH = 260;
-    public const CARD_HEIGHT = 120;
+    public const CARD_WIDTH = 280; // ALT-059: шире и выше, чтобы все надписи помещались внутри
+    public const CARD_HEIGHT = 150;
     public const GAP_SPOUSE = 12; // Общая плашка пары: карточки вплотную
     public const GAP_ENDED = 96; // ALT-059: между бывшими супругами — шире, без общей рамки, чтобы поместилась пометка «ажырасқан»
     public const GAP_SIBLING = 55; // Зазор между семейными блоками братьев
-    public const ROW_HEIGHT = 220; // 120px карточка + 100px канал для связей
+    public const ROW_HEIGHT = 250; // 150px карточка + 100px канал для связей
 
     /**
      * Основной метод вычисления координат

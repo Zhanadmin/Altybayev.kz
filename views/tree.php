@@ -3070,10 +3070,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
         /* ALT-059: заголовок-полоса семьи над плашкой («Отбасы» / «Семья») */
         /* ALT-059: заголовок «Отбасы» убран по замечанию; метки держим внутри карточки (высота = CARD_HEIGHT) */
-        .person-card { box-sizing: border-box; height: 120px; overflow: visible; }
-        .person-card .card-header-inner + div { flex-wrap: nowrap !important; overflow: hidden; max-width: 100%; }
-        .person-card .card-clan-tag, .person-card .card-zhurt-tag { min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0; }
-        .person-card .card-maiden { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* все надписи целиком внутри карточки: карточка 280×150, строки переносятся, без обрезки */
+        .person-card { box-sizing: border-box; width: 280px; height: 150px; overflow: visible; }
+        .person-card .card-header-inner + div { flex-wrap: wrap !important; max-width: 100%; }
+        .person-card .card-clan-tag, .person-card .card-zhurt-tag { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; margin-top: 0; }
+        .person-card .card-maiden { white-space: normal; overflow-wrap: anywhere; }
+        .person-card .card-name { white-space: normal; overflow-wrap: anywhere; }
+        .radial-action-wrap { display: none !important; } /* в древе ничего не добавляем: только фокус */
         .person-card.in-couple.selected,
         .person-card.in-couple.is-self { background: var(--c-accent-soft, rgba(0,0,0,.04)); }
         .person-card.in-couple:hover { background: rgba(0,0,0,.03); }
@@ -5125,10 +5128,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 card.style.top = `${node.y}px`;
 
                 // девичья фамилия показывается одной строкой «қыз кезіндегі — …», из фамилии скобки с ней убираем
-                if (node.maiden_name && node.last_name) {
-                    const mn = String(node.maiden_name).trim().toLowerCase();
-                    node = Object.assign({}, node, { last_name: String(node.last_name).replace(/\s*\(([^)]*)\)\s*$/, (all, g) => g.trim().toLowerCase() === mn ? '' : all) });
-                }
+                // (ОТМЕНА 23:25: двойная фамилия «Алтыбаева (Баядилова)» показывается как есть)
                 const initials = (node.first_name ? node.first_name[0] : '') + (node.last_name ? node.last_name[0] : '');
 
                 // Туыстық атауын алу
@@ -5187,14 +5187,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     </div>
 
                     <!-- Карточканың айналасындағы жылдам қосу радиалды батырмалары -->
-                    <div class="radial-action-wrap">
-                        <button class="radial-btn radial-top-father" data-tip="${tFather}" onclick="event.stopPropagation(); openAddModal('father', ${node.id})">+</button>
-                        <button class="radial-btn radial-top-mother" data-tip="${tMother}" onclick="event.stopPropagation(); openAddModal('mother', ${node.id})">+</button>
-                        <button class="radial-btn radial-left-spouse" data-tip="${tSpouse}" onclick="event.stopPropagation(); openAddModal('spouse', ${node.id})">+</button>
-                        <button class="radial-btn radial-right-sibling" data-tip="${tSibling}" onclick="event.stopPropagation(); openAddModal('sibling', ${node.id})">+</button>
-                        <button class="radial-btn radial-bottom-son" data-tip="${tSon}" onclick="event.stopPropagation(); openAddModal('son', ${node.id})">+</button>
-                        <button class="radial-btn radial-bottom-daughter" data-tip="${tDaughter}" onclick="event.stopPropagation(); openAddModal('daughter', ${node.id})">+</button>
-                    </div>
+                    <!-- ALT-059: кнопки «+» убраны: в древе только фокус, добавление — из «Адамдар» и карточки человека -->
                     ${expandBottomHtml}
                 `;
 
@@ -5409,8 +5402,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 is_deceased: p.is_deceased,
                 x: 1000 + (idx % 8) * 310,
                 y: 300 + Math.floor(idx / 8) * 220,
-                width: 260,
-                height: 120,
+                width: 280,
+                height: 150,
             }));
         }
 

@@ -252,7 +252,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
                     </button>
                 <?php endif; ?>
                 <?php if (!empty($isAdminRow) || in_array((int)$p['id'], $deletableIdsRow, true)): /* ALT-018 */ ?>
-                    <button type="button" class="btn btn-ghost btn-icon" onclick="pdDelete(<?= (int)$p['id'] ?>, this)" data-name="<?= htmlspecialchars(trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''))) ?>" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>">
+                    <button type="button" class="btn btn-ghost btn-icon btn-danger" onclick="pdDelete(<?= (int)$p['id'] ?>, this)" data-name="<?= htmlspecialchars(trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''))) ?>" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>">
                         <svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>
                     </button>
                 <?php endif; ?>

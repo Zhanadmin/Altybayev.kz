@@ -7,5 +7,5 @@
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/assets/img/pwa/icon-512.svg">
     <link rel="apple-touch-icon" href="/assets/img/pwa/icon-512.svg">
-    <link rel="stylesheet" href="/assets/css/mobile.css?v=1">
+    <link rel="stylesheet" href="/assets/css/mobile.css?v=2">
     <script src="/assets/js/pwa.js?v=1" defer></script>

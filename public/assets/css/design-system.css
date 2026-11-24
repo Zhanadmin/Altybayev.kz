@@ -525,8 +525,13 @@ p { margin: 0; }
 .g-badge.g-icon .gmark { width: 16px; height: 16px; }
 .pp-w-rel { width: 15%; }
 .pp-w-kin { width: 14%; }
-.pp-w-act3 { width: 132px; }
-.pp-w-act2 { width: 96px; }
+.pp-w-act3 { width: 180px; }   /* ALT-018: 4 кнопки (карточка, древо, правка, удалить) */
+.pp-w-act2 { width: 140px; }
+.pp-table .actions .btn-danger { color: var(--c-danger); border-color: var(--c-danger); }
+.pp-table .actions .btn-danger:hover { background: var(--c-danger-soft); border-color: var(--c-danger); }
+.pp-table .actions .btn-icon { flex-shrink: 0; }
+#btnPersonDelete.btn-danger { border-color: var(--c-danger); font-weight: 600; }
+#btnPersonDelete.btn-danger .ic { stroke: currentColor; }
 .pp-sort { display: inline-flex; align-items: center; gap: 4px; color: inherit; }
 .pp-sort:hover { color: var(--c-text); }
 .pp-name { display: block; color: var(--c-text); }

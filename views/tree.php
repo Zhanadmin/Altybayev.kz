@@ -30,7 +30,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
     <!-- TASK-013 (шаг 9): шрифты и слой «Шежіре-кітап», как на остальных страницах -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=16">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
@@ -2343,8 +2343,19 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             box-shadow: none;
         }
         :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit:hover { opacity: .88; }
-        #editPersonModal #btnDeletePerson { align-items: center; gap: 6px; background: var(--c-island); color: var(--c-danger); border-color: var(--c-border-strong); }
-        #editPersonModal #btnDeletePerson:hover { background: var(--c-danger-soft); border-color: var(--c-danger); }
+        /* ALT-018: кнопка «Удалить» целиком видна: подвал не сжимается, переносится на узких экранах, закреплён внизу окна */
+        #editPersonModal .modal-footer { flex-shrink: 0; flex-wrap: wrap; gap: 10px; position: sticky; bottom: 0; z-index: 2; background: var(--c-island); }
+        #editPersonModal #btnDeletePerson { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 38px; padding: 8px 16px; white-space: nowrap; background: var(--c-danger); color: #fff; border: 1px solid var(--c-danger); font-weight: 700; }
+        #editPersonModal #btnDeletePerson .ic { stroke: #fff; flex-shrink: 0; }
+        #editPersonModal #btnDeletePerson:hover { background: var(--c-danger); opacity: .88; }
+        #editPersonModal .modal-footer .btn-modal-cancel, #editPersonModal .modal-footer .btn-modal-submit { min-height: 38px; white-space: nowrap; }
+        @media (max-width: 600px) {
+            #editPersonModal .modal-footer > div:first-child { width: 100%; }
+            #editPersonModal #btnDeletePerson { width: 100%; min-height: 44px; }
+            #editPersonModal .modal-footer > div:last-child { width: 100%; justify-content: flex-end; }
+        }
+        .btn-table-action.btn-table-danger { color: var(--c-danger); border-color: var(--c-danger); }
+        .btn-table-action.btn-table-danger:hover { background: var(--c-danger-soft); color: var(--c-danger); border-color: var(--c-danger); }
         .audit-log-section { margin-top: 12px; border-top: 1px solid var(--c-border); padding-top: 12px; }
         .audit-log-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--c-text-2); margin-bottom: 8px; }
         .audit-log-title .ic { width: 15px; height: 15px; }
@@ -2480,7 +2491,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .list-table .lt-parents { width: 19%; }
         .list-table .lt-spouse { width: 16%; }
         .list-table .lt-zhurt { width: 12%; }
-        .list-table .lt-act { width: 128px; }   /* 3 кнопки по 30 px + промежутки + поля ячейки */
+        .list-table .lt-act { width: 176px; }   /* ALT-018: 4 кнопки по 30 px + промежутки + поля ячейки */
+        .list-table td.lt-act { overflow: visible; }
         .list-msg { text-align: center; padding: 28px; color: var(--c-text-2); }
         .list-msg.is-error { color: var(--c-danger); }
         .lt-person { display: flex; align-items: center; min-width: 0; }
@@ -6839,7 +6851,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id}); event.stopPropagation();" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
                             <button type="button" class="btn-table-action" onclick="togglePersonUshZhurt(${p.id}); event.stopPropagation();" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
                             ${canEditPersonUi(p.id) ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id}); event.stopPropagation();" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
-                            ${canDeletePersonUi(p.id) ? `<button type="button" class="btn-table-action" data-name="${encodeURIComponent([p.last_name, p.first_name].filter(Boolean).join(' '))}" onclick="deletePersonFlow(${p.id}, decodeURIComponent(this.dataset.name)); event.stopPropagation();" title="${tDel}" aria-label="${tDel}"><svg class="ic"><use href="#t-trash"/></svg></button>` : ''}
+                            ${canDeletePersonUi(p.id) ? `<button type="button" class="btn-table-action btn-table-danger" data-name="${encodeURIComponent([p.last_name, p.first_name].filter(Boolean).join(' '))}" onclick="deletePersonFlow(${p.id}, decodeURIComponent(this.dataset.name)); event.stopPropagation();" title="${tDel}" aria-label="${tDel}"><svg class="ic"><use href="#t-trash"/></svg></button>` : ''}
                         </div>
                     </td>
                 `;

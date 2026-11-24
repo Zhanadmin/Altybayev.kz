@@ -93,12 +93,12 @@ $actions = [
             <table class="table hs-table" id="hsTable">
                 <thead>
                     <tr>
-                        <th style="width:118px"><?= $ru ? 'Когда' : 'Қашан' ?></th>
-                        <th style="width:15%"><?= $ru ? 'Кто' : 'Кім' ?></th>
-                        <th style="width:100px"><?= $ru ? 'Действие' : 'Әрекет' ?></th>
-                        <th style="width:28%"><?= $ru ? 'Кого / что' : 'Кімді / нені' ?></th>
+                        <th class="hs-th-fit"><?= $ru ? 'Когда' : 'Қашан' ?></th>
+                        <th class="hs-th-fit"><?= $ru ? 'Кто' : 'Кім' ?></th>
+                        <th class="hs-th-fit"><?= $ru ? 'Действие' : 'Әрекет' ?></th>
+                        <th class="hs-th-obj"><?= $ru ? 'Кого / что' : 'Кімді / нені' ?></th>
                         <th><?= $ru ? 'Что изменено (по клику — было → стало)' : 'Не өзгерді (басқанда — бұрын → қазір)' ?></th>
-                        <th style="width:90px" class="actions"><?= $ru ? 'Откат' : 'Кері қайтару' ?></th>
+                        <th class="actions hs-th-fit"><?= $ru ? 'Откат' : 'Кері қайтару' ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,7 +126,7 @@ $actions = [
                             ?>
                             <tr class="hs-row" data-log-id="<?= (int)$l['id'] ?>" tabindex="0" aria-expanded="false">
                                 <td class="hs-c-time muted"><?= htmlspecialchars(date('d.m.Y H:i', strtotime((string)$l['created_at']))) ?></td>
-                                <td title="<?= htmlspecialchars($who) ?>"><b><?= htmlspecialchars($who) ?></b></td>
+                                <td class="hs-c-who" title="<?= htmlspecialchars($who) ?>"><b><?= htmlspecialchars($who) ?></b></td>
                                 <td class="hs-c-act"><span class="badge <?= $actClass ?>"><?= htmlspecialchars($l['verb']) ?></span></td>
                                 <td title="<?= htmlspecialchars($l['object_label'] . ': ' . $l['object_name']) ?>">
                                     <span class="muted"><?= htmlspecialchars($l['object_label']) ?>:</span>

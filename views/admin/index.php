@@ -328,7 +328,7 @@ $adRoleLabels = [
         </div>
         <p class="muted" id="trashEmpty" style="margin:0 0 12px;"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Загрузка…' : 'Жүктелуде…' ?></p>
         <div class="table-wrap">
-            <table class="table"><tbody id="trashBody"></tbody></table>
+            <table class="table ad-trash"><tbody id="trashBody"></tbody></table>
         </div>
     </div>
     <script>
@@ -351,8 +351,9 @@ $adRoleLabels = [
                     const td2 = document.createElement('td');
                     td2.textContent = it.updated_at || '';
                     const td3 = document.createElement('td');
+                    td3.className = 'actions';
                     const b = document.createElement('button');
-                    b.type = 'button'; b.className = 'btn';
+                    b.type = 'button'; b.className = 'btn btn-sm';
                     b.textContent = ru ? 'Восстановить' : 'Қалпына келтіру';
                     b.addEventListener('click', async function () {
                         b.disabled = true;

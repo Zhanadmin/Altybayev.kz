@@ -546,14 +546,15 @@ p { margin: 0; }
 /* ALT-023: остальные колонки уже — остаток ширины отдан имени (имя+фамилия в одну строку на ПК) */
 /* ALT-023 (14:45): колонка пола по ширине заголовка «Жынысы»; имя — явная ширина, «⋯» без пустого хвоста */
 .pp-table .pp-w-gender { width: 92px; padding-left: 8px; padding-right: 8px; }
-.pp-table th.pp-w-person { width: 30%; }
+.pp-table th.pp-w-person { width: auto; }   /* ALT-023: без явной ширины — имя берёт весь остаток, «⋯» не растягивается */
+.pp-table th.pp-w-act { width: 48px; }
 .pp-table .pp-w-clan { width: 120px; }
 .pp-table .pp-w-years { width: 112px; }
 .pp-table .num { width: 48px; }
 .pp-table .pp-w-rel { width: 12%; }
-.pp-table .pp-w-kin { width: 11%; }
+.pp-table .pp-w-kin { width: 170px; }   /* ALT-023 (14:50): «Туыстығы» по содержимому ~170 px, остаток — имени */
 .pp-table .pp-w-person { min-width: 300px; }
-@media (max-width: 1180px) { .pp-table .pp-w-kin { width: 22%; } .pp-table .pp-w-person { min-width: 280px; } .pp-table th.pp-w-person { width: auto; } }
+@media (max-width: 1180px) { .pp-table .pp-w-kin { width: 170px; } .pp-table .pp-w-person { min-width: 280px; } .pp-table th.pp-w-person { width: auto; } }
 @media (max-width: 900px) { .pp-table .pp-w-person { min-width: 0; } }
 .pp-table td.actions { padding-left: 0; padding-right: 8px; text-align: right; }
 .pp-table tr.pp-row { cursor: pointer; }

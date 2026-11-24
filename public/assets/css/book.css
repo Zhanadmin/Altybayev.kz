@@ -559,3 +559,36 @@ textarea { font-size: 16px; }
 .hs-row td.hs-c-brief { color: var(--c-text-2); }
 .hs-detail td { background: var(--c-island-2); white-space: normal; padding: 6px 12px; }
 .hs-detail[hidden] { display: none; }
+
+/* =====================================================================
+ * ALT-027: админка — один шрифт Lora, один размер 13px, обычное начертание (жирный только у заголовков страниц и разделов);
+ * колонки по содержимому, «Вернуть/Откатить» помещается целиком. Только .ds-admin-ui (админка, журнал, рұқсаттар).
+ * ===================================================================== */
+.ds-admin-ui .ds-page, .ds-admin-ui .ds-page *:not(svg):not(svg *) { font-family: var(--font-sans); }
+.ds-admin-ui .ds-page :is(.table td, .table th, .btn, .badge, .select, .input, p, li, label, a, span, div, b, strong, td, th, small, .person .name, .person .meta, .pp-name, .hs-chip, .hs-chip b, .ad-mono, .hs-mono, .muted, .small) {
+    font-size: 13px; font-weight: 400; font-style: normal; letter-spacing: 0;
+}
+.ds-admin-ui .ds-page :is(b, strong, th, tr[style], .person .name, .btn, .badge, .hs-chip b, .pp-name) { font-weight: 400 !important; }
+.ds-admin-ui .ds-page .ad-mono, .ds-admin-ui .ds-page .hs-mono { font-family: var(--font-sans); }
+/* заголовки страниц и разделов — единственное, что остаётся выделенным */
+.ds-admin-ui .ds-page h1, .ds-admin-ui .ds-page h3, .ds-admin-ui .ds-page .island-head h3 { font-weight: 700; font-style: italic; }
+.ds-admin-ui .ds-page h1 { font-size: 22px; }
+.ds-admin-ui .ds-page h3 { font-size: 16px; }
+.ds-admin-ui .ds-page .ad-exec h3 { font-size: 16px; font-weight: 700; }
+
+/* журнал изменений: колонки по содержимому, остаток — описанию изменения */
+.ds-admin-ui .hs-table { table-layout: auto; width: 100%; }
+.ds-admin-ui .hs-table th.hs-th-fit, .ds-admin-ui .hs-table td.hs-c-time, .ds-admin-ui .hs-table td.hs-c-who, .ds-admin-ui .hs-table td.hs-c-act, .ds-admin-ui .hs-table td.hs-c-roll {
+    width: 1%; max-width: none; white-space: nowrap; overflow: visible;
+}
+.ds-admin-ui .hs-table th.hs-th-obj { width: 24%; }
+.ds-admin-ui .hs-table td.hs-c-roll .btn { white-space: nowrap; flex: 0 0 auto; }
+.ds-admin-ui .hs-table td.actions, .ds-admin-ui .hs-table th.actions { padding-left: var(--sp-2); padding-right: var(--sp-3); }
+
+/* корзина и таблица доступа: колонка действий по ширине кнопок */
+.ds-admin-ui .ad-trash { table-layout: auto; }
+.ds-admin-ui .ad-trash td { overflow: visible; white-space: nowrap; }
+.ds-admin-ui .ad-trash td.actions { width: 1%; }
+.ds-admin-ui .ad-trash td:first-child { width: auto; }
+.ds-admin-ui .ad-table th.actions, .ds-admin-ui .ad-table td.actions { width: 1%; white-space: nowrap; }
+.ds-admin-ui .ad-actions .btn, .ds-admin-ui .table .actions .btn { white-space: nowrap; flex: 0 0 auto; }

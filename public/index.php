@@ -8,6 +8,35 @@ require_once __DIR__ . '/../app/bootstrap.php';
 use App\Core\Request;
 use App\Core\Router;
 
+// ALT-046: ответ зависит от Sec-Fetch-Dest (страница целиком / во фрейме оболочки) — кэши должны это учитывать
+header('Vary: Sec-Fetch-Dest', false);
+
+// ALT-046: обычный переход браузера по HTML-адресу получает «оболочку» с постоянным плеером (iframe с этой же страницей).
+// Не оборачиваем: API, файлы, вход и OAuth (Google не открывается во фрейме), смену языка, печать, тестовый вход;
+// боты и старые браузеры (нет заголовка Sec-Fetch-Dest) получают обычную страницу; ?noshell=1 — обычная страница.
+(static function (): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+        return;
+    }
+    if (($_SERVER['HTTP_SEC_FETCH_DEST'] ?? '') !== 'document' || ($_SERVER['HTTP_SEC_FETCH_MODE'] ?? '') !== 'navigate') {
+        return;
+    }
+    if (isset($_GET['noshell'])) {
+        return;
+    }
+    $path = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+    if (preg_match('#^/(api|auth|media|album/media|uploads|assets|login|logout|lang|__test-login|tree/print|admin/import)(/|$)#', $path)) {
+        return;
+    }
+    if (preg_match('#\.[a-z0-9]{2,5}$#i', $path)) {
+        return; // файлы
+    }
+    header('Content-Type: text/html; charset=UTF-8');
+    header('Cache-Control: no-cache');
+    require __DIR__ . '/../views/shell.php';
+    exit;
+})();
+
 $router = new Router();
 
 // 1. Главная страница: гостю — название и кнопка входа (TASK-014: Google проверяет домашнюю страницу), члену семьи — шежіре

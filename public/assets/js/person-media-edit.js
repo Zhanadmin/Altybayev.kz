@@ -310,7 +310,20 @@
         var ctx = cv.getContext('2d');
         ctx.clearRect(0, 0, CS, CS);
         ctx.drawImage(crop.img, g.sx, g.sy, g.side, g.side, 0, 0, CS, CS);
+        var pv = $('pmeCropPreview');
+        if (pv) {
+            var pc = pv.getContext('2d');
+            pc.clearRect(0, 0, pv.width, pv.height);
+            pc.drawImage(crop.img, g.sx, g.sy, g.side, g.side, 0, 0, pv.width, pv.height);
+        }
     }
+
+    window.pmeZoomStep = function (dir) {
+        if (!crop) return;
+        crop.zoom = Math.max(1, Math.min(4, crop.zoom + dir * 0.2));
+        $('pmeZoom').value = Math.round(crop.zoom * 100);
+        drawCrop();
+    };
 
     window.pmeZoom = function () {
         if (!crop) return;

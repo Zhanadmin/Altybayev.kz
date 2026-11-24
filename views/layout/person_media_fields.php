@@ -10,7 +10,7 @@ $pmeE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
 $pmeJs = static fn(string $k): string => (string)json_encode(I18n::t($k), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $pmeAccept = 'image/jpeg,image/png,image/webp';
 ?>
-<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=4">
+<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=5">
 <div id="pmeBox" class="pme" style="display:none;">
     <div id="pmeNoMigration" class="pme-note" style="display:none;"><?= $pmeE('pme_no_migration') ?></div>
 
@@ -67,8 +67,12 @@ $pmeAccept = 'image/jpeg,image/png,image/webp';
         <div id="pmeCropPane" style="display:none; text-align:center;">
             <div class="pme-sub" style="margin-bottom:8px;"><?= $pmeE('pme_crop_hint') ?></div>
             <div class="pme-cropwrap"><canvas id="pmeCropCanvas" class="pme-canvas" width="300" height="300"></canvas></div>
-            <label class="pme-slider" style="max-width:300px; margin:10px auto 0;"><span><?= $pmeE('pme_zoom') ?></span>
-                <input type="range" id="pmeZoom" min="100" max="400" value="100" oninput="pmeZoom()"></label>
+            <div class="pme-zoomrow">
+                <button type="button" class="pme-btn" onclick="pmeZoomStep(-1)" aria-label="<?= $pmeE('pme_zoom') ?> −">−</button>
+                <input type="range" id="pmeZoom" min="100" max="400" value="100" oninput="pmeZoom()" aria-label="<?= $pmeE('pme_zoom') ?>">
+                <button type="button" class="pme-btn" onclick="pmeZoomStep(1)" aria-label="<?= $pmeE('pme_zoom') ?> +">+</button>
+            </div>
+            <div class="pme-prevrow"><canvas id="pmeCropPreview" class="pme-preview" width="96" height="96"></canvas><span class="pme-sub"><?= $pmeE('pme_preview') ?></span></div>
             <div class="pme-actions" style="justify-content:center; margin-top:12px;">
                 <button type="button" class="pme-btn" onclick="pmeClose()"><?= $pmeE('pme_cancel') ?></button>
                 <button type="button" class="pme-btn pme-primary" id="pmeCropApply" onclick="pmeCropApply()"><?= $pmeE('pme_apply') ?></button>
@@ -84,4 +88,4 @@ window.PME_T = {
     imgError: <?= $pmeJs('pme_img_error') ?>
 };
 </script>
-<script src="/assets/js/person-media-edit.js?v=3" defer></script>
+<script src="/assets/js/person-media-edit.js?v=4" defer></script>

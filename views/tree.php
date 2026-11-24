@@ -3071,8 +3071,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         /* ALT-059: заголовок-полоса семьи над плашкой («Отбасы» / «Семья») */
         /* ALT-059: заголовок «Отбасы» убран по замечанию; метки держим внутри карточки (высота = CARD_HEIGHT) */
         /* все надписи целиком внутри карточки: карточка 280×150, строки переносятся, без обрезки */
-        .person-card { box-sizing: border-box; width: 280px; height: 150px; overflow: visible; }
-        .person-card .card-header-inner + div { flex-wrap: wrap !important; max-width: 100%; }
+        /* замечание 23:33: все карточки одной высоты (190) с запасом под самую длинную (двойная фамилия + «қыз кезіндегі» + возраст + метки);
+           метки прижаты к низу карточки на одном уровне, линии к детям идут от нижнего края */
+        .person-card { box-sizing: border-box; width: 280px; height: 190px; overflow: visible; display: flex; flex-direction: column; }
+        .person-card .card-header-inner + div { flex-wrap: wrap !important; max-width: 100%; margin-top: auto !important; }
         .person-card .card-clan-tag, .person-card .card-zhurt-tag { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; margin-top: 0; }
         .person-card .card-maiden { white-space: normal; overflow-wrap: anywhere; }
         .person-card .card-name { white-space: normal; overflow-wrap: anywhere; }
@@ -5403,7 +5405,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 x: 1000 + (idx % 8) * 310,
                 y: 300 + Math.floor(idx / 8) * 220,
                 width: 280,
-                height: 150,
+                height: 190,
             }));
         }
 

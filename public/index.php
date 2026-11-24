@@ -97,6 +97,8 @@ $router->post('/api/person/clan-propagate', 'App\Controllers\TreeController@apiC
 $router->post('/api/person/create-relative', 'App\Controllers\TreeController@apiPersonCreateRelative', ['auth']);
 $router->get('/api/person/spouse-search', 'App\Controllers\SpouseController@search', ['auth']); // ALT-048
 $router->post('/api/person/add-spouse', 'App\Controllers\SpouseController@add', ['auth']); // ALT-048
+$router->get('/api/person/parent-search', 'App\Controllers\ParentController@search', ['auth']); // ALT-060
+$router->post('/api/person/add-parent', 'App\Controllers\ParentController@add', ['auth']); // ALT-060
 $router->post('/api/person/delete','App\Controllers\TreeController@apiPersonDelete', ['auth']);
 $router->get('/api/admin/persons/trash', 'App\Controllers\TreeController@apiTrashList', ['auth', 'admin']); // ALT-018
 $router->post('/api/admin/person/restore', 'App\Controllers\TreeController@apiPersonRestore', ['auth', 'admin']); // ALT-018

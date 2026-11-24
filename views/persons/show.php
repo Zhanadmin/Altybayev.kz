@@ -253,6 +253,19 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         <span><?= htmlspecialchars($spLabel) ?></span>
                     </button>
                 </span>
+                <?php /* ALT-060: добавить отца/мать, пока не указаны */ ?>
+                <?php if (empty($person['father_id'])): ?>
+                <button type="button" class="btn" id="addFatherBtn" onclick="openAddParentModal('father')">
+                    <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
+                    <span><?= $pcRu ? 'Добавить отца' : 'Әкесін қосу' ?></span>
+                </button>
+                <?php endif; ?>
+                <?php if (empty($person['mother_id'])): ?>
+                <button type="button" class="btn" id="addMotherBtn" onclick="openAddParentModal('mother')">
+                    <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
+                    <span><?= $pcRu ? 'Добавить мать' : 'Анасын қосу' ?></span>
+                </button>
+                <?php endif; ?>
                 <button type="button" class="btn btn-primary" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
@@ -1161,6 +1174,126 @@ window.addEventListener('resize', (function () { var t; return function () { cle
         saveBtn.disabled = true;
         try {
             const res = await fetch('/api/person/add-spouse', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f.toString() });
+            const data = await res.json();
+            if (data && data.status === 'success') { window.location.reload(); return; }
+            err.textContent = (data && data.error) || 'Қате / Ошибка';
+        } catch (e) { err.textContent = 'Сұраныс қатесі: ' + e.message; }
+        saveBtn.disabled = false;
+    }
+</script>
+
+<!-- ALT-060: добавить отца/мать -->
+<div id="addParentModal" class="modal-backdrop" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addParentTitle" style="max-width: 480px;">
+        <div class="modal-head">
+            <h3 id="addParentTitle"></h3>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="closeAddParentModal()" aria-label="Жабу / Закрыть">
+                <svg class="ic"><use href="#i-x"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <button type="button" class="btn btn-primary" id="apTabExisting" onclick="apSetMode('existing')">Бар адам / Существующий</button>
+                <button type="button" class="btn" id="apTabNew" onclick="apSetMode('new')">Жаңа / Новый</button>
+            </div>
+            <div id="apPaneExisting">
+                <div class="field">
+                    <label for="apSearch">Іздеу / Поиск</label>
+                    <input type="text" id="apSearch" class="input" autocomplete="off" placeholder="Аты, тегі / Имя, фамилия">
+                </div>
+                <div id="apResults" class="list" role="listbox" style="max-height:240px; overflow:auto;"></div>
+            </div>
+            <div id="apPaneNew" style="display:none;">
+                <div class="field"><label for="apFirst">Аты / Имя *</label><input type="text" id="apFirst" class="input"></div>
+                <div class="field"><label for="apLast">Тегі / Фамилия</label><input type="text" id="apLast" class="input"></div>
+                <div class="field"><label for="apMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="apMaiden" class="input"></div>
+                <div class="field"><label for="apYear">Туған жылы / Год</label><input type="text" id="apYear" class="input"></div>
+            </div>
+            <div id="apError" class="muted" style="color:var(--c-danger); margin-top:8px;"></div>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" onclick="closeAddParentModal()">Бас тарту / Отмена</button>
+            <button type="button" class="btn btn-primary" id="apSave" onclick="apSubmit()">Қосу / Добавить</button>
+        </div>
+    </div>
+</div>
+<script>
+    // ALT-060
+    let apMode = 'existing', apKind = 'father', apPicked = 0, apTimer = null;
+    function openAddParentModal(kind) {
+        apKind = kind; apPicked = 0;
+        document.getElementById('addParentTitle').textContent = kind === 'father' ? 'Әкесін қосу / Добавить отца' : 'Анасын қосу / Добавить мать';
+        document.getElementById('apError').textContent = '';
+        document.getElementById('addParentModal').style.display = 'flex';
+        apSetMode('existing');
+        apLoad('');
+    }
+    function closeAddParentModal() { document.getElementById('addParentModal').style.display = 'none'; }
+    function apSetMode(m) {
+        apMode = m;
+        document.getElementById('apPaneExisting').style.display = m === 'existing' ? '' : 'none';
+        document.getElementById('apPaneNew').style.display = m === 'new' ? '' : 'none';
+        document.getElementById('apTabExisting').className = 'btn' + (m === 'existing' ? ' btn-primary' : '');
+        document.getElementById('apTabNew').className = 'btn' + (m === 'new' ? ' btn-primary' : '');
+    }
+    async function apLoad(q) {
+        const box = document.getElementById('apResults');
+        try {
+            const res = await fetch('/api/person/parent-search?target_id=' + SP_TARGET + '&kind=' + apKind + '&q=' + encodeURIComponent(q));
+            const data = await res.json();
+            box.textContent = '';
+            (data.results || []).forEach(function (p) {
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'btn btn-ghost';
+                row.style.cssText = 'display:block; width:100%; text-align:left;';
+                row.setAttribute('role', 'option');
+                row.appendChild(document.createTextNode(p.name));
+                if (p.maiden_name) {
+                    const em = document.createElement('em');
+                    em.className = 'maiden-it';
+                    em.textContent = ' (' + p.maiden_name + ')';
+                    row.appendChild(em);
+                }
+                row.appendChild(document.createTextNode(' · ' + p.years));
+                row.onclick = function () {
+                    apPicked = p.id;
+                    Array.from(box.children).forEach(function (c) { c.classList.remove('btn-primary'); });
+                    row.classList.add('btn-primary');
+                };
+                box.appendChild(row);
+            });
+            if (!box.children.length) { box.textContent = 'Табылмады / Не найдено'; }
+        } catch (e) { box.textContent = 'Қате / Ошибка'; }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const s = document.getElementById('apSearch');
+        if (s) { s.addEventListener('input', function () { clearTimeout(apTimer); apTimer = setTimeout(function () { apLoad(s.value.trim()); }, 250); }); }
+    });
+    async function apSubmit() {
+        const err = document.getElementById('apError');
+        const saveBtn = document.getElementById('apSave');
+        if (saveBtn.disabled) return;
+        err.textContent = '';
+        const f = new URLSearchParams();
+        f.append('csrf_token', SP_CSRF);
+        f.append('target_id', SP_TARGET);
+        f.append('kind', apKind);
+        f.append('mode', apMode);
+        if (apMode === 'existing') {
+            if (!apPicked) { err.textContent = 'Тізімнен таңдаңыз / Выберите человека из списка'; return; }
+            f.append('parent_id', apPicked);
+        } else {
+            const first = document.getElementById('apFirst').value.trim();
+            if (!first) { err.textContent = 'Аты / Имя обязательно'; return; }
+            f.append('first_name', first);
+            f.append('last_name', document.getElementById('apLast').value.trim());
+            f.append('maiden_name', document.getElementById('apMaiden').value.trim());
+            f.append('birth_year', document.getElementById('apYear').value.trim());
+        }
+        saveBtn.disabled = true;
+        try {
+            const res = await fetch('/api/person/add-parent', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f.toString() });
             const data = await res.json();
             if (data && data.status === 'success') { window.location.reload(); return; }
             err.textContent = (data && data.error) || 'Қате / Ошибка';

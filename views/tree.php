@@ -27,11 +27,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     </script>
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=23">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=24">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=8">
+    <link rel="stylesheet" href="/assets/css/book.css?v=9">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
         :root {
@@ -3137,7 +3137,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         #kinshipDictModal .modal-body [style*="font-weight:700; color:#fef08a"] { font-family: var(--font-book); font-size: 16px !important; }
         #kinshipDictModal .modal-body [style*="rgba(212,175,55,0.15)"] { background: var(--c-accent-soft) !important; border-color: transparent !important; font-family: var(--font-book); font-style: italic; }
         /* ALT-020: крупно и читаемо для пожилых (панель, список, формы; узлы древа не трогаем — у них фиксированная раскладка) */
-        .side-name { font-size: 20px; }
+        .side-name { font-size: 19px; }
         .side-clan, .pm-meta, .pm-text, .pm-msg, .modal-sub, .lt-small, .lt-spouse-row, .uz-none, .uz-count, .audit-empty, .search-item .tf-sub { font-size: 15px; }
         .lt-name { font-size: 17px; }
         .lt-sub { font-size: 15px; }
@@ -3145,9 +3145,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .uz-child-row, :is(#editPersonModal, #marriageModal, #addPersonModal) .checkbox-label { font-size: 16px; }
         .side-sub-title { font-size: 15px; }
         :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) .form-group label { font-size: 15px; }
-        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select) { min-height: 44px; font-size: 17px; }
-        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) textarea { font-size: 17px; }
-        .btn-modal-submit, .btn-modal-cancel, .btn-table-action, .btn-tool, .btn-empty-action { min-height: 44px; font-size: 16px; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select) { min-height: 40px; font-size: 16px; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) textarea { font-size: 16px; }
+        .btn-modal-submit, .btn-modal-cancel, .btn-table-action, .btn-tool, .btn-empty-action { min-height: 40px; font-size: 15px; }
         .tree-legend { font-size: 14px; }
         /* ALT-020: подписи в узлах древа — умеренно крупнее (карточка фиксированной высоты, поэтому +1–1,5px, а не больше) */
         .card-name { font-size: 15.5px; }
@@ -5992,7 +5992,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             updateAllKinshipBadges(id);
 
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
-            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${p.middle_name || (currentLang === 'ru' ? (p.middle_name_ru || '') : (p.middle_name_kk || ''))}`.trim();
+            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${(currentLang === 'ru' ? (p.middle_name_ru || p.middle_name || '') : (p.middle_name_kk || p.middle_name || ''))}`.trim();
             if (p.maiden_name) {
                 fullNameDisplay += ` (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
             }

@@ -60,7 +60,7 @@ class PatronymicService
     {
         $manual = trim((string)($person['middle_name'] ?? ''));
         if ($manual !== '') {
-            return $manual;
+            return $lang === 'ru' ? self::localizeManual($manual, (string)($person['gender'] ?? '')) : $manual;
         }
         if (!$father || trim((string)($father['first_name'] ?? '')) === '') {
             return '';
@@ -82,7 +82,25 @@ class PatronymicService
         ];
     }
 
-    /** Русская форма или null, если по-русски неестественно (имя на гласную и т.п.). */
+    /**
+     * ALT-021: сохранённое «X ұлы / X қызы» при русском языке -> русское отчество.
+     * Данные в БД не меняются. Другие ручные значения возвращаются как есть.
+     */
+    public static function localizeManual(string $manual, string $gender): string
+    {
+        if (!preg_match('/^(.+?)\s+(ұлы|улы|қызы|кызы)$/iu', $manual, $m)) {
+            return $manual;
+        }
+        $male = in_array(mb_strtolower($m[2]), ['ұлы', 'улы'], true);
+        $g = strtoupper($gender);
+        if ($g === 'M' || $g === 'F') {
+            $male = $g === 'M';
+        }
+        $ru = self::russian(trim($m[1]), $male);
+        return $ru ?? $manual;
+    }
+
+    /** Русская форма или null, если имя не кириллическое (латиница, цифры). */
     private static function russian(string $name, bool $male): ?string
     {
         $words = explode(' ', strtr($name, self::KK_TO_RU));
@@ -98,8 +116,21 @@ class PatronymicService
         if (!preg_match('/^[а-яё\-]+$/u', $lower)) {
             return null; // латиница, цифры и т.п. — показываем казахскую форму
         }
-        if (mb_strpos('аяоеиыуэю', $end) !== false) {
-            return null; // на гласную: «Нурлана-ович» неестественно
+        $suffV = $male ? 'евич' : 'евна';
+        $suffC = $male ? 'ович' : 'овна';
+        if ($end === 'у' || $end === 'ю') {
+            // Ахмету -> Ахметович (казахская форма дательного/усечённая основа)
+            $word = mb_substr($last, 0, -1) . $suffC;
+            return trim(implode(' ', array_merge($words, [$word])));
+        }
+        if ($end === 'ы') {
+            // Мусы -> Мусаевич
+            $word = mb_substr($last, 0, -1) . 'а' . $suffV;
+            return trim(implode(' ', array_merge($words, [$word])));
+        }
+        if (mb_strpos('аяоеиэ', $end) !== false) {
+            // на гласную: Мурата -> Муратаевич, Бейсенби -> Бейсенбиевич
+            return trim(implode(' ', array_merge($words, [$last . $suffV])));
         }
 
         if ($end === 'й' || $end === 'ь') {

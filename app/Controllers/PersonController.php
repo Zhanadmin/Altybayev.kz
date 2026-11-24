@@ -132,6 +132,8 @@ class PersonController
                 }
             }
             $p['full_name'] = $fullName;
+            $p['name_base'] = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '')); // ALT-029: отчество выводится отдельным неразрывным элементом
+            $p['patr_shown'] = $patrShown;
             $p['father'] = !empty($p['father_id']) ? ($allPersonsById[$p['father_id']] ?? null) : null;
             $p['mother'] = !empty($p['mother_id']) ? ($allPersonsById[$p['mother_id']] ?? null) : null;
             $p['spouses'] = $marriagesMap[$p['id']] ?? [];

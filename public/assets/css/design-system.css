@@ -561,7 +561,10 @@ p { margin: 0; }
 /* ALT-029: «Жұбайы» уже на ~35 px, эта ширина отдана «Үш жұрт» (только ПК) */
 /* ALT-029 (15:18): «Ата-анасы» по содержимому 200 px, весь остаток — «Жұбайы» (auto) */
 /* ALT-029 (15:36): «Жұбайы» — фиксированно 190 px (не по содержимому), лишний текст — максимум 2 строки с «…», целиком в подсказке; остаток — «Үш жұрт» (auto) */
-@media (min-width: 1181px) { .pp-table th.pp-w-spouse { width: 190px; max-width: 190px; } .pp-table th.pp-w-parents { width: 220px; } .pp-table th.pp-w-kin { width: auto; } }
+/* ALT-029 (15:40): без «auto»-колонки — свободная ширина делится пропорционально между всеми колонками (таблица на всю ширину, без пустоты справа); «Жұбайы» ограничена по тексту */
+@media (min-width: 1181px) { .pp-table th.pp-w-spouse { width: 190px; } .pp-table th.pp-w-parents { width: 220px; } .pp-table th.pp-w-kin { width: 205px; } .pp-table th.pp-w-person { width: 320px; } .pp-table td.pp-rel .clip { max-width: 240px; } }
+/* ALT-029: отчество («Кенен-ұлы») не рвётся по дефису — при нехватке места уходит на новую строку целиком */
+.pp-table .pp-patr { display: inline-block; white-space: nowrap; }
 .pp-table td.pp-rel:has(a[title]) .clip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .pp-table td.actions { padding-left: 0; padding-right: 8px; text-align: right; }
 .pp-table tr.pp-row { cursor: pointer; }

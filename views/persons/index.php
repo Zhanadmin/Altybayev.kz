@@ -163,7 +163,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
                         <?php endif; ?>
                     </span>
                     <div>
-                        <a href="/person/<?= (int)$p['id'] ?>" class="name pp-name" title="<?= htmlspecialchars($p['full_name']) ?>"><?= htmlspecialchars($p['full_name']) ?></a>
+                        <a href="/person/<?= (int)$p['id'] ?>" class="name pp-name" title="<?= htmlspecialchars($p['full_name']) ?>"><?= htmlspecialchars((string)($p['name_base'] ?? $p['full_name'])) ?><?php if (!empty($p['patr_shown'])): ?> <span class="pp-patr"><?= htmlspecialchars((string)$p['patr_shown']) ?></span><?php endif; ?></a>
                         <?php if ($metaParts): ?>
                             <div class="meta" title="<?= htmlspecialchars(implode(' · ', $metaParts)) ?>"><?= htmlspecialchars(implode(' · ', $metaParts)) ?></div>
                         <?php endif; ?>

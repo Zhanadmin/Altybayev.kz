@@ -605,7 +605,8 @@ class TreeLayoutService
                     $md = $marriageDetails["{$mId}_{$sId}"] ?? $marriageDetails["{$sId}_{$mId}"] ?? null;
                     $isEx = $md && ((($md['status'] ?? '') === 'divorced') || !empty($md['divorce_date']) || !empty($md['end_date']));
                     $start = $md ? (string)($md['start_date'] ?? $md['marriage_date'] ?? '') : '';
-                    return [$isEx ? 1 : 0, $start === '' ? '9999' : $start, $sId];
+                    // ALT-057 (замечание): браки строго по дате — первый, второй, третий; без даты — в конце
+                    return [$start === '' ? '9999' : $start, $isEx ? 0 : 1, $sId];
                 };
                 usort($spousesInGen, fn($a, $b) => $rank($a) <=> $rank($b));
             }
@@ -617,28 +618,10 @@ class TreeLayoutService
             } elseif (count($spousesInGen) > 1) {
                 // ALT-057: несколько браков — нынешний супруг вплотную к «центру» (mId), бывшие по бокам:
                 // первый бывший — на свободной стороне рядом с центром, второй — с другой стороны за нынешним и т. д.
-                $isHubWoman = ($p['gender'] ?? '') !== 'M';
-                $firstIsEx = false;
-                $md0 = $marriageDetails["{$mId}_{$spousesInGen[0]}"] ?? null;
-                if ($md0 && ((($md0['status'] ?? '') === 'divorced') || !empty($md0['divorce_date']) || !empty($md0['end_date']))) {
-                    $firstIsEx = true;
-                }
-                $current = null;
-                $exes = $spousesInGen;
-                if (!$firstIsEx) {
-                    $current = array_shift($exes);
-                }
-                $leftN = [];
-                $rightN = [];
-                // у женщины нынешний муж слева (муж слева от жены), свободна правая сторона; у мужчины — наоборот
-                if ($current !== null) {
-                    if ($isHubWoman) { $leftN[] = $current; } else { $rightN[] = $current; }
-                }
-                foreach (array_values($exes) as $i => $exId) {
-                    $toRight = $isHubWoman ? ($i % 2 === 0) : ($i % 2 === 1);
-                    if ($toRight) { $rightN[] = $exId; } else { $leftN[] = $exId; }
-                }
-                $unitMembers = array_merge(array_reverse($leftN), [$mId], $rightN);
+                // Замечание владельца: браки слева направо по порядку (1-й, 2-й, 3-й); центр стоит после первого супруга
+                $first = array_shift($spousesInGen);
+                $unitMembers = array_merge([$first, $mId], $spousesInGen);
+                $spousesInGen = array_merge([$first], $spousesInGen);
                 $processed[$mId] = true;
                 foreach ($spousesInGen as $spId) {
                     $processed[$spId] = true;
@@ -1276,8 +1259,16 @@ class TreeLayoutService
                 }
             }
 
+            // ALT-057: у разведённого/прекращённого брака — две отдельные линии: от отца и от матери
+            $endedMarriage = false;
+            if ($spouseId !== null) {
+                $mdE = $marriageDetails["{$id}_{$spouseId}"] ?? $marriageDetails["{$spouseId}_{$id}"] ?? null;
+                $endedMarriage = $mdE && ((($mdE['status'] ?? '') === 'divorced') || !empty($mdE['divorce_date']) || !empty($mdE['end_date']));
+            }
+
             $famKey = $spouseId ? min($id, $spouseId) . '_' . max($id, $spouseId) : (string)$id;
             if ($gKey === 'n') $famKey = 'n' . $famKey . '_' . $id;
+            if ($endedMarriage) $famKey = 'x' . $famKey . '_' . $id;
             if (isset($processedFamilies[$famKey])) continue;
             $processedFamilies[$famKey] = true;
 
@@ -1285,7 +1276,7 @@ class TreeLayoutService
             $parentMidX = $pNode['x'] + $pNode['width'] / 2;
             $parentBottomY = $pNode['y'] + $pNode['height'];
 
-            if ($spouseId !== null) {
+            if ($spouseId !== null && !$endedMarriage) {
                 $spNode = $nodes[$spouseId];
                 $leftNode = ($pNode['x'] < $spNode['x']) ? $pNode : $spNode;
                 $rightNode = ($pNode['x'] < $spNode['x']) ? $spNode : $pNode;
@@ -1309,6 +1300,10 @@ class TreeLayoutService
             }
 
             $busY = $parentBottomY + 45;
+            if ($endedMarriage) {
+                // шины отца и матери на разной высоте, чтобы линии не сливались
+                $busY += (($pNode['x'] < $nodes[$spouseId]['x']) ? 0 : 14);
+            }
 
             $childDropPoints = [];
             foreach ($children as $cId) {

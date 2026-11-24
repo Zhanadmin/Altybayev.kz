@@ -27,8 +27,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     </script>
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=26">
-    <script src="/assets/js/tooltip.js?v=3" defer></script>
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=27">
+    <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
@@ -2320,6 +2320,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             user-select: text;
         }
         :is(#editPersonModal, #marriageModal, #addPersonModal) :is(.form-input, .form-textarea)::placeholder { color: var(--c-text-3); }
+        /* ALT-052: пропущенное обязательное поле подсвечивается; сообщение — у самого поля */
+        .form-input.field-missing, .input.field-missing { border-color: #c0392b !important; box-shadow: 0 0 0 3px rgba(192,57,43,.18); }
+        .field-missing-msg { color: #c0392b; font-size: 13px; margin-top: 4px; }
         :is(#editPersonModal, #marriageModal, #addPersonModal) :is(.form-input, .form-select, .form-textarea):focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-focus); }
         :is(#editPersonModal, #marriageModal, #addPersonModal) .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--c-text); cursor: pointer; }
         :is(#editPersonModal, #marriageModal, #addPersonModal) .checkbox-label input { accent-color: var(--c-accent); }
@@ -3554,7 +3557,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         </div>
                         <div class="form-group">
                             <label>Руы (Шежіре желісі)</label>
-                            <input type="text" class="form-input" id="editClanRu" placeholder="Мысалы: Керей, Жағалбайлы, Қоңырат...">
+                            <input type="text" class="form-input" id="editClanRu">
                             <div id="editClanHint" style="font-size:11px; color:var(--c-text-2); margin-top:3px; font-style:italic;"></div>
                         </div>
                     </div>
@@ -3562,17 +3565,17 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_birth_year">Туған жылы</label>
-                            <input type="text" class="form-input" id="editBirthYear" placeholder="Мысалы: 1985">
+                            <input type="text" class="form-input" id="editBirthYear">
                         </div>
                         <div class="form-group">
                             <label>Туған нақты күні (КК.АА.ЖЖЖЖ)</label>
-                            <input type="text" class="form-input" id="editBirthDate" placeholder="Мысалы: 12.05.1985">
+                            <input type="text" class="form-input" id="editBirthDate">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label data-i18n="form_birth_place">Туған жері</label>
-                        <input type="text" class="form-input" id="editBirthPlace" placeholder="Мысалы: ШҚО, Үржар ауданы">
+                        <input type="text" class="form-input" id="editBirthPlace">
                     </div>
 
                     <!-- TASK-033: отметка о кончине — в свёрнутом блоке «Дополнительно» -->
@@ -3587,23 +3590,23 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label data-i18n="form_death_year">Қайтыс болған жылы</label>
-                                    <input type="text" class="form-input" id="editDeathYear" placeholder="Мысалы: 1972">
+                                    <input type="text" class="form-input" id="editDeathYear">
                                 </div>
                                 <div class="form-group">
                                     <label>Қайтыс болған күні</label>
-                                    <input type="text" class="form-input" id="editDeathDate" placeholder="Мысалы: 15.08.1972">
+                                    <input type="text" class="form-input" id="editDeathDate">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Дүниеден өткен жері</label>
-                                <input type="text" class="form-input" id="editDeathPlace" placeholder="Мысалы: Алматы қ.">
+                                <input type="text" class="form-input" id="editDeathPlace">
                             </div>
                         </div>
                     </details>
 
                     <div class="form-group">
                         <label data-i18n="form_biography">Өмірбаяны мен естеліктер</label>
-                        <textarea class="form-textarea" id="editBiography" rows="3" placeholder="Өмірбаяны, естеліктері, еңбек жолы..."></textarea>
+                        <textarea class="form-textarea" id="editBiography" rows="3"></textarea>
                     </div>
 
                     <?php
@@ -3668,11 +3671,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="form-row-2">
                         <div class="form-group">
                             <label>Неке басталған жылы/күні</label>
-                            <input type="text" class="form-input" id="marriageStartDate" placeholder="Мысалы: 2008">
+                            <input type="text" class="form-input" id="marriageStartDate">
                         </div>
                         <div class="form-group">
                             <label>Аяқталған / Ажырасқан жылы</label>
-                            <input type="text" class="form-input" id="marriageEndDate" placeholder="Мысалы: 2016">
+                            <input type="text" class="form-input" id="marriageEndDate">
                         </div>
                     </div>
 
@@ -3727,22 +3730,22 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_first_name">Аты *</label>
-                            <input type="text" class="form-input" id="formFirstName" required placeholder="Мысалы: Арнұр">
+                            <input type="text" class="form-input" id="formFirstName" required placeholder="<?= htmlspecialchars(['kk'=>'Атын енгізіңіз','ru'=>'Введите имя','en'=>'Enter the first name','es'=>'Introduzca el nombre'][\App\Core\I18n::lang()] ?? 'Атын енгізіңіз') ?>">
                         </div>
                         <div class="form-group">
                             <label data-i18n="form_last_name">Тегі (Фамилия)</label>
-                            <input type="text" class="form-input" id="formLastName" placeholder="Мысалы: Алтыбаев">
+                            <input type="text" class="form-input" id="formLastName">
                         </div>
                     </div>
 
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_middle_name">Әкесінің аты</label>
-                            <input type="text" class="form-input" id="formMiddleName" placeholder="Мысалы: Жандосұлы">
+                            <input type="text" class="form-input" id="formMiddleName">
                         </div>
                         <div class="form-group" id="maidenNameGroup">
                             <label data-i18n="form_maiden_name">Қыз кезіндегі тегі (Девичья)</label>
-                            <input type="text" class="form-input" id="formMaidenName" placeholder="Мысалы: Сейітқызы">
+                            <input type="text" class="form-input" id="formMaidenName">
                         </div>
                     </div>
 
@@ -3765,28 +3768,28 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_birth_year">Туған жылы</label>
-                            <input type="text" class="form-input" id="formBirthYear" placeholder="Мысалы: 1985">
+                            <input type="text" class="form-input" id="formBirthYear">
                         </div>
                         <div class="form-group" id="deathYearGroup" style="display:none;">
                             <label data-i18n="form_death_year">Қайтыс болған жылы</label>
-                            <input type="text" class="form-input" id="formDeathYear" placeholder="Мысалы: 1972">
+                            <input type="text" class="form-input" id="formDeathYear">
                         </div>
                     </div>
 
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_birth_place">Туған жері</label>
-                            <input type="text" class="form-input" id="formBirthPlace" placeholder="Мысалы: Алматы қ.">
+                            <input type="text" class="form-input" id="formBirthPlace">
                         </div>
                         <div class="form-group">
                             <label>Руы (Шежіре тегі)</label>
-                            <input type="text" class="form-input" id="formClanRu" placeholder="Мысалы: Керей, Жағалбайлы...">
+                            <input type="text" class="form-input" id="formClanRu">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label data-i18n="form_biography">Өмірбаяны мен естеліктер</label>
-                        <textarea class="form-textarea" id="formBiography" rows="3" placeholder="Қысқаша естелік немесе тарихы..."></textarea>
+                        <textarea class="form-textarea" id="formBiography" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -3902,7 +3905,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                     <div class="form-group">
                         <label>Тақырыбы (Атауы) *</label>
-                        <input type="text" class="form-input" id="mediaTitle" placeholder="Мысалы: 1982 жылғы әкенің естелігі" required>
+                        <input type="text" class="form-input" id="mediaTitle" required placeholder="<?= htmlspecialchars(['kk'=>'Атауын енгізіңіз','ru'=>'Введите название','en'=>'Enter a title','es'=>'Introduzca el título'][\App\Core\I18n::lang()] ?? 'Атауын енгізіңіз') ?>">
                     </div>
 
                     <!-- Поле файла (для аудио и фото) -->
@@ -3917,17 +3920,17 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <!-- Поле текста истории (для story) -->
                     <div class="form-group" id="mediaStoryGroup" style="display:none;">
                         <label>Естелік мәтіні (Хикая, шежірелік деректер) *</label>
-                        <textarea class="form-textarea" id="mediaStoryContent" rows="6" placeholder="Ақсақалдың айтқан сөздері, естеліктері, өмір жолы туралы деректер..."></textarea>
+                        <textarea class="form-textarea" id="mediaStoryContent" rows="6"></textarea>
                     </div>
 
                     <div class="form-row-2">
                         <div class="form-group">
                             <label>Кім айтып берді (Айтушы / Автор)</label>
-                            <input type="text" class="form-input" id="mediaRecordedBy" placeholder="Мысалы: Ғабит ақсақал">
+                            <input type="text" class="form-input" id="mediaRecordedBy">
                         </div>
                         <div class="form-group">
                             <label>Оқиға немесе жазба жылы</label>
-                            <input type="text" class="form-input" id="mediaEventYear" placeholder="Мысалы: 1985">
+                            <input type="text" class="form-input" id="mediaEventYear">
                         </div>
                     </div>
                 </div>
@@ -6487,8 +6490,32 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // ========================================================
         // РЕАЛЬНОЕ ДОБАВЛЕНИЕ РОДСТВЕННИКА (API -> БАЗА ДАННЫХ)
         // ========================================================
+        // ALT-052: обязательное поле пусто → подсветка и понятное сообщение у самого поля
+        function checkRequiredField(id) {
+            const el = document.getElementById(id);
+            if (!el) return true;
+            const old = el.parentNode.querySelector('.field-missing-msg');
+            if (old) old.remove();
+            el.classList.remove('field-missing');
+            if (el.value.trim() !== '') return true;
+            const msgs = { kk: 'Бұл өрісті толтырыңыз', ru: 'Заполните это поле', en: 'Please fill in this field', es: 'Rellene este campo' };
+            const m = document.createElement('div');
+            m.className = 'field-missing-msg';
+            m.textContent = msgs[currentLang] || msgs.kk;
+            el.classList.add('field-missing');
+            el.parentNode.appendChild(m);
+            el.focus();
+            el.addEventListener('input', function clr() {
+                el.classList.remove('field-missing');
+                if (m.parentNode) m.remove();
+                el.removeEventListener('input', clr);
+            });
+            return false;
+        }
+
         async function handleSavePerson(e) {
             e.preventDefault();
+            if (!checkRequiredField('formFirstName')) return;
             const relType = document.getElementById('formRelationType').value;
             const targetId = parseInt(document.getElementById('formBasePersonId').value) || selectedPersonId;
 
@@ -6659,6 +6686,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         async function handleSavePersonEdit(e) {
             e.preventDefault();
+            if (!checkRequiredField('editFirstName')) return;
             const id = document.getElementById('editPersonId').value;
             const isDeceased = document.getElementById('editIsDeceased').checked ? 1 : 0;
 
@@ -7623,6 +7651,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const eventYear = document.getElementById('mediaEventYear').value.trim();
             const submitBtn = document.getElementById('btnSubmitMedia');
 
+            if (!checkRequiredField('mediaTitle')) return;
             if (!personId || !title) return;
 
             submitBtn.disabled = true;

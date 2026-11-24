@@ -9,9 +9,9 @@ $evFamilies = array_map(fn($f) => is_array($f) ? (int)$f['id'] : (int)$f, $ev['f
 $uid = 'ev' . substr(md5((string)($ev['id'] ?? 'new')), 0, 6);
 ?>
 <div class="field">
-    <label for="<?= $uid ?>Title"><?= $L('Атауы', 'Название') ?></label>
+    <label for="<?= $uid ?>Title"><?= $L('Атауы *', 'Название *') ?></label>
     <input id="<?= $uid ?>Title" name="title" class="input" required maxlength="200" value="<?= htmlspecialchars((string)($ev['title'] ?? '')) ?>"
-           placeholder="<?= htmlspecialchars($L('Мысалы: Айшаның туған күні', 'Например: День рождения Айши')) ?>">
+           placeholder="<?= htmlspecialchars($L('Атауын енгізіңіз', 'Введите название')) ?>">
 </div>
 <div class="form-row">
     <div class="field">

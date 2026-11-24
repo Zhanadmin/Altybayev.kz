@@ -79,7 +79,7 @@ $adRoleLabels = [
                 <div class="field">
                     <label for="inviteEmail">Gmail *</label>
                     <input type="email" id="inviteEmail" name="email" class="input" required maxlength="191"
-                           autocomplete="off" placeholder="name@gmail.com">
+                           autocomplete="off" placeholder="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Введите адрес Gmail' : 'Gmail мекенжайын енгізіңіз' ?>">
                 </div>
                 <div class="field">
                     <label for="inviteRole"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Роль' : 'Рөлі' ?></label>
@@ -91,14 +91,12 @@ $adRoleLabels = [
                 </div>
                 <div class="field">
                     <label for="invitePerson"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка в шежіре (№)' : 'Шежіредегі карточка (№)' ?></label>
-                    <input type="number" id="invitePerson" name="person_id" class="input" min="1" step="1" inputmode="numeric"
-                           placeholder="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'необязательно' : 'міндетті емес' ?>">
+                    <input type="number" id="invitePerson" name="person_id" class="input" min="1" step="1" inputmode="numeric">
                 </div>
             </div>
             <div class="field">
                 <label for="inviteNotes"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Заметка — кто это' : 'Ескертпе — бұл кім' ?></label>
-                <input type="text" id="inviteNotes" name="notes" class="input" maxlength="255"
-                       placeholder="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'например: Әкем — Ғабит' : 'мысалы: Әкем — Ғабит' ?>">
+                <input type="text" id="inviteNotes" name="notes" class="input" maxlength="255">
             </div>
             <div class="ad-invite-actions">
                 <button type="button" class="btn" onclick="toggleInviteForm(false)"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Отмена' : 'Бас тарту' ?></button>
@@ -231,7 +229,7 @@ $adRoleLabels = [
                 <input class="input" type="email" name="email" maxlength="190" value="<?= htmlspecialchars((string)($contacts['email'] ?? '')) ?>">
             </label>
             <label>WhatsApp (<?= $adRu ? 'номер с кодом страны' : 'ел кодымен нөмір' ?>)
-                <input class="input" name="whatsapp" maxlength="25" placeholder="+7 777 000 00 00" value="<?= htmlspecialchars((string)($contacts['whatsapp'] ?? '')) ?>">
+                <input class="input" name="whatsapp" maxlength="25"value="<?= htmlspecialchars((string)($contacts['whatsapp'] ?? '')) ?>">
             </label>
             <div><button type="submit" class="btn btn-primary"><?= $adRu ? 'Сохранить контакты' : 'Сақтау' ?></button>
                 <span id="contactsMsg" class="small muted" role="status"></span></div>

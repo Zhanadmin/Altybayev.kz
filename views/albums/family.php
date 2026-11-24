@@ -63,8 +63,8 @@ require __DIR__ . '/../layout/master_start.php';
         <form data-api="/api/album/save">
             <input type="hidden" name="owner_id" value="<?= (int)$family['id'] ?>">
             <div class="modal-body">
-                <div class="field"><label for="alNewName"><?= $L('Атауы', 'Название') ?></label>
-                    <input id="alNewName" name="title" class="input" required maxlength="200" placeholder="<?= htmlspecialchars($L('Мысалы: Жазғы демалыс 2026', 'Например: Летний отдых 2026')) ?>"></div>
+                <div class="field"><label for="alNewName"><?= $L('Атауы *', 'Название *') ?></label>
+                    <input id="alNewName" name="title" class="input" required maxlength="200" placeholder="<?= htmlspecialchars($L('Атауын енгізіңіз', 'Введите название')) ?>"></div>
                 <div class="field"><label for="alNewDate"><?= $L('Күні', 'Дата') ?></label>
                     <input id="alNewDate" name="album_date" type="date" class="input"></div>
                 <div class="field"><label for="alNewDescr"><?= $L('Сипаттама', 'Описание') ?></label>

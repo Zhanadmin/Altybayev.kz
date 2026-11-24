@@ -44,8 +44,8 @@ $dark = (($_COOKIE['shezhire_theme'] ?? '') === 'dark');
     </script>
     <!-- без defer: плеер должен быть готов до загрузки страницы во фрейме -->
     <script src="/assets/js/bgm.js?v=5"></script>
-    <script src="/assets/js/tooltip.js?v=3" defer></script>
-    <iframe id="shellFrame" src="<?= htmlspecialchars($startUrl, ENT_QUOTES) ?>" title="<?= htmlspecialchars(I18n::siteTitle()) ?>"
+    <script src="/assets/js/tooltip.js?v=4" defer></script>
+    <iframe id="shellFrame" src="<?= htmlspecialchars($startUrl, ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::siteTitle()) ?>"
             allow="fullscreen; autoplay; camera; microphone; geolocation; clipboard-read; clipboard-write" allowfullscreen></iframe>
     <script>
         (function () {

@@ -354,11 +354,11 @@ document.addEventListener('click', function (e) {
                 <div class="form-row">
                     <div class="field">
                         <label for="editMarriageStartDate"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата брака' : 'Неке күні' ?></label>
-                        <input type="text" id="editMarriageStartDate" class="input" placeholder="1995">
+                        <input type="text" id="editMarriageStartDate" class="input">
                     </div>
                     <div class="field" id="editMarriageEndField" style="display:none">
                         <label for="editMarriageEndDate"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата развода' : 'Ажырасқан күні' ?></label>
-                        <input type="text" id="editMarriageEndDate" class="input" placeholder="2010">
+                        <input type="text" id="editMarriageEndDate" class="input">
                     </div>
                 </div>
                 <div class="field">
@@ -384,6 +384,23 @@ document.addEventListener('click', function (e) {
         document.getElementById('editMarriageNotes').value = notes || '';
         document.getElementById('marriageEditModal').style.display = 'flex';
     }
+
+    // ALT-051: возврат в карточку человека после сохранения; допустим только /person/N
+    const FM_RETURN = <?= json_encode(preg_match('#^/person/\d+$#', (string)($_GET['return'] ?? '')) ? (string)$_GET['return'] : '') ?>;
+    document.addEventListener('DOMContentLoaded', function () {
+        const mid = <?= (int)($_GET['edit_marriage'] ?? 0) ?>;
+        if (!mid || !FM_RETURN) { return; }
+        const card = document.getElementById('fam-' + mid);
+        const btn = card && card.querySelector('.fm-card-head button[onclick^="openMarriageEditModal"]');
+        if (!btn) { fmNotify('Бұл некені табу мүмкін болмады / Этот брак не найден на странице'); return; }
+        btn.click();
+        const cb = document.getElementById('editMarriageDivorced');
+        cb.checked = true;
+        toggleMarriageDivorce();
+        cb.closest('.field').style.cssText = 'background:#fff7d6;border:2px solid #e0a800;border-radius:8px;padding:8px;';
+        document.getElementById('editMarriageEndField').style.cssText = 'background:#fff7d6;border:2px solid #e0a800;border-radius:8px;padding:8px;';
+        document.getElementById('editMarriageEndDate').focus();
+    });
 
     function toggleMarriageDivorce() {
         const on = document.getElementById('editMarriageDivorced').checked;
@@ -418,7 +435,7 @@ document.addEventListener('click', function (e) {
             });
             const data = await res.json();
             if (data && (data.status === 'success' || data.success)) {
-                window.location.reload();
+                if (FM_RETURN) { window.location.href = FM_RETURN; } else { window.location.reload(); }
             } else {
                 fmNotify('Қате: ' + (data.error || 'Сақтау мүмкін болмады'));
             }

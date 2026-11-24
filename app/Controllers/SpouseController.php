@@ -25,8 +25,16 @@ class SpouseController
      */
     public static function blockReason(PDO $db, int $personId): ?string
     {
+        return self::activeMarriages($db, $personId) ? 'Уже в браке. Укажите дату развода, чтобы добавить нового супруга' : null;
+    }
+
+    /** ALT-051: действующие браки человека: [['id' => marriage_id, 'name' => имя супруга(и)], ...] */
+    public static function activeMarriages(PDO $db, int $personId): array
+    {
+        $out = [];
         $st = $db->prepare(
-            'SELECT m.*, p.is_deceased AS sp_deceased, p.death_date AS sp_death_date
+            'SELECT m.*, p.is_deceased AS sp_deceased, p.death_date AS sp_death_date,
+                    p.first_name AS sp_first, p.last_name AS sp_last
              FROM marriages m
              JOIN persons p ON p.id = IF(m.husband_id = ?, m.wife_id, m.husband_id) AND p.is_deleted = 0
              WHERE m.husband_id = ? OR m.wife_id = ?'
@@ -45,9 +53,12 @@ class SpouseController
             if ($dead) {
                 continue;
             }
-            return 'Уже в браке. Укажите дату развода, чтобы добавить нового супруга';
+            $out[] = [
+                'id'   => (int)$m['id'],
+                'name' => trim((string)($m['sp_first'] ?? '') . ' ' . (string)($m['sp_last'] ?? '')),
+            ];
         }
-        return null;
+        return $out;
     }
 
     private function loadTarget(PDO $db, int $id): ?array

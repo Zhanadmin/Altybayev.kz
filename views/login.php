@@ -46,7 +46,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
     </script>
     <!-- ALT-020: шрифты локально -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=16">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
     <link rel="stylesheet" href="/assets/css/book.css?v=7">
     <style>
         .au-legal { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: var(--sp-4, 16px); font-size: 14px; }
@@ -516,7 +516,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
 
     <?php if ($hasMusic): ?>
     <?php /* ALT-014: кнопка ♪ и музыка — общий скрипт bgm.js (на всех страницах) */ ?>
-    <script src="/assets/js/tooltip.js?v=3" defer></script>
+    <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <?php endif; ?>
     <script>

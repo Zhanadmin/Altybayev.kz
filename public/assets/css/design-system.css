@@ -639,6 +639,14 @@ p { margin: 0; }
 }
 .pc-drop:hover { color: var(--c-text); border-color: var(--c-accent); }
 .pc-props-tight { grid-template-columns: 110px 1fr; }
+/* ALT-054: «Контакты» — подпись над значением, телефон/email без разрыва посреди */
+#contactsIsland .props { grid-template-columns: 1fr; gap: 2px 0; }
+#contactsIsland .props dt { margin-top: 10px; }
+#contactsIsland .props dt:first-child { margin-top: 0; }
+#contactsIsland .props dd { margin: 0; min-width: 0; }
+#contactsIsland .props dd > div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+#contactsIsland .props dd > div > a:first-child { white-space: nowrap; }
+#contactsIsland .props dd a[href^="mailto:"] { white-space: normal; overflow-wrap: normal; word-break: keep-all; font-size: clamp(13px, 3.8vw, 15px); }
 .pc-accent { color: var(--c-accent-text); }
 .pc-bio { margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 1px solid var(--c-border); }
 .pc-bio-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }

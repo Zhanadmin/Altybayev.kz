@@ -40,7 +40,7 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         })();
     </script>
     <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=15">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
     <link rel="stylesheet" href="/assets/css/book.css?v=7">
     <style>
         /* TASK-014: лист «книги» шире карточки входа, текст — слева */

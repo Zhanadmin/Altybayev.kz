@@ -32,7 +32,6 @@
 .pme-fab .ic { width: 16px; height: 16px; }
 .pme-fab-cover { position: absolute; top: 10px; right: 10px; padding: 6px 12px; }
 .pme-fab-avatar { position: absolute; right: 10px; bottom: 34px; width: 34px; height: 34px; padding: 0; z-index: 6; }
-.pme-fab-reframe { position: absolute; right: 10px; bottom: 76px; width: 34px; height: 34px; padding: 0; z-index: 6; font-size: 16px; }
 .pme-menu { position: absolute; top: 46px; right: 10px; z-index: 7; width: min(300px, calc(100% - 20px)); padding: 8px; border-radius: 12px; background: var(--c-surface, #fff); color: var(--c-text, #222); box-shadow: 0 6px 24px rgba(0,0,0,.28); font-size: 13px; text-align: left; }
 .pme-menu[hidden] { display: none; }
 .pme-menu-item { display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }

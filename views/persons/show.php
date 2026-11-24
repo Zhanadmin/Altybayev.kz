@@ -182,9 +182,6 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <label class="pme-fab pme-fab-avatar" for="pmeAvatarInput" title="<?= htmlspecialchars(I18n::t('pme_change_avatar'), ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::t('pme_change_avatar'), ENT_QUOTES) ?>" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
                     <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
                 </label>
-                <?php if (!empty($person['avatar_path'])): /* ALT-045 */ ?>
-                    <button type="button" class="pme-fab pme-fab-reframe" onclick="pmeReframe()" title="<?= htmlspecialchars(I18n::t('pme_reframe'), ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::t('pme_reframe'), ENT_QUOTES) ?>">&#x2194;</button>
-                <?php endif; ?>
             <?php endif; ?>
             <!-- рисованная рамка: мүйіз сверху, венок из листьев снизу (у марқұм — золотые листья) -->
             <svg class="wreath" viewBox="0 0 168 196" aria-hidden="true" focusable="false">
@@ -240,8 +237,18 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         ? (($person['gender'] ?? '') === 'M' ? 'Добавить жену' : (($person['gender'] ?? '') === 'F' ? 'Добавить мужа' : 'Добавить мужа (жену)'))
                         : (($person['gender'] ?? '') === 'M' ? 'Әйелін қосу' : (($person['gender'] ?? '') === 'F' ? 'Күйеуін қосу' : 'Жұбайын қосу'));
                 ?>
-                <span class="pc-spouse-btn-wrap"<?= $spBlock !== null ? ' title="' . htmlspecialchars($spBlock) . '"' : '' ?>>
-                    <button type="button" class="btn" id="addSpouseBtn" <?= $spBlock !== null ? 'disabled aria-disabled="true"' : 'onclick="openAddSpouseModal()"' ?>>
+                <?php
+                    // ALT-051: в браке — кнопка нажимаема и ведёт в правку текущего брака
+                    $spActive = in_array($person['gender'] ?? '', ['M', 'F'], true)
+                        ? \App\Controllers\SpouseController::activeMarriages(\App\Core\Database::getConnection(), (int)$person['id'])
+                        : [];
+                    $spActiveJs = [];
+                    foreach ($spActive as $am) {
+                        $spActiveJs[] = ['id' => $am['id'], 'name' => $am['name']];
+                    }
+                ?>
+                <span class="pc-spouse-btn-wrap"<?= $spBlock !== null && !$spActiveJs ? ' title="' . htmlspecialchars($spBlock) . '"' : '' ?>>
+                    <button type="button" class="btn" id="addSpouseBtn" <?= $spActiveJs ? 'onclick="goEditActiveMarriage()"' : ($spBlock !== null ? 'disabled aria-disabled="true"' : 'onclick="openAddSpouseModal()"') ?>>
                         <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
                         <span><?= htmlspecialchars($spLabel) ?></span>
                     </button>
@@ -353,7 +360,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                             <?php endif; ?>
                             <?php if ($ctEmail !== ''): ?>
                                 <dt><?= htmlspecialchars(I18n::t('contacts_email')) ?></dt>
-                                <dd><a href="mailto:<?= htmlspecialchars($ctEmail) ?>"><?= htmlspecialchars($ctEmail) ?></a></dd>
+                                <dd><a href="mailto:<?= htmlspecialchars($ctEmail) ?>"><?= str_replace('@', '@<wbr>', htmlspecialchars($ctEmail)) ?></a></dd>
                             <?php endif; ?>
                             <?php if (!empty($ctSocials)): ?>
                                 <dt><?= htmlspecialchars(I18n::t('socials_title')) ?></dt>
@@ -1007,7 +1014,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <div class="form-row">
                     <div class="field">
                         <label for="addChildBirthYear">Туған жылы / Год</label>
-                        <input type="text" id="addChildBirthYear" class="input" placeholder="2020">
+                        <input type="text" id="addChildBirthYear" class="input">
                     </div>
                     <div class="field">
                         <label for="addChildBirthDate">Туған күні / Дата</label>
@@ -1049,7 +1056,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <div class="field"><label for="spFirst">Аты / Имя *</label><input type="text" id="spFirst" class="input"></div>
                 <div class="field"><label for="spLast">Тегі / Фамилия</label><input type="text" id="spLast" class="input"></div>
                 <div class="field"><label for="spMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="spMaiden" class="input"></div>
-                <div class="field"><label for="spYear">Туған жылы / Год</label><input type="text" id="spYear" class="input" placeholder="1990"></div>
+                <div class="field"><label for="spYear">Туған жылы / Год</label><input type="text" id="spYear" class="input"></div>
             </div>
             <div id="spError" class="muted" style="color:var(--c-danger); margin-top:8px;"></div>
         </div>
@@ -1064,6 +1071,24 @@ window.addEventListener('resize', (function () { var t; return function () { cle
     let spMode = 'existing', spPicked = 0, spTimer = null;
     const SP_TARGET = <?= (int)$person['id'] ?>;
     const SP_CSRF = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
+    // ALT-051: действующие браки; идём править выбранный
+    const SP_ACTIVE = <?= json_encode($spActiveJs ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    function goEditActiveMarriage() {
+        if (!SP_ACTIVE.length) { return; }
+        let pick = SP_ACTIVE[0];
+        if (SP_ACTIVE.length > 1) {
+            const list = SP_ACTIVE.map(function (m, i) { return (i + 1) + ' — ' + (m.name || '№' + m.id); }).join('\n');
+            const n = parseInt(window.prompt('Бірнеше әрекеттегі неке / Несколько действующих браков. Какой открыть? Введите номер:\n' + list, '1'), 10);
+            if (!n || n < 1 || n > SP_ACTIVE.length) { return; }
+            pick = SP_ACTIVE[n - 1];
+        }
+        const msg = 'Сейчас в браке с ' + (pick.name || '—') + '. Чтобы добавить нового супруга, сначала отметьте развод';
+        if (typeof showAppToast === 'function') { showAppToast(msg, 'info'); }
+        setTimeout(function () {
+            window.location.href = '/families?edit_marriage=' + pick.id + '&return=' + encodeURIComponent('/person/' + SP_TARGET);
+        }, typeof showAppToast === 'function' ? 1800 : 0);
+        if (typeof showAppToast !== 'function') { window.alert(msg); }
+    }
     function openAddSpouseModal() {
         spPicked = 0;
         document.getElementById('spError').textContent = '';

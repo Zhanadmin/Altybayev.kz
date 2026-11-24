@@ -57,7 +57,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         </div>
                         <div class="field">
                             <label for="editModalClanRu"><?= $__t('Руы', 'Род') ?></label>
-                            <input type="text" id="editModalClanRu" class="input" placeholder="Керей, Жағалбайлы...">
+                            <input type="text" id="editModalClanRu" class="input">
                             <div id="editModalClanHint" class="hint"></div>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         </div>
                         <div class="field">
                             <label for="editModalBirthYear"><?= $__t('Туған жылы', 'Год рождения') ?></label>
-                            <input type="text" id="editModalBirthYear" class="input" placeholder="<?= $__t('мысалы, 1985', 'например, 1985') ?>">
+                            <input type="text" id="editModalBirthYear" class="input">
                         </div>
                     </div>
                     <div class="field">
@@ -110,14 +110,14 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                             </div>
                             <div class="field">
                                 <label for="editModalDeathYear"><?= $__t('Қайтыс болған жылы', 'Год смерти') ?></label>
-                                <input type="text" id="editModalDeathYear" class="input" placeholder="<?= $__t('мысалы, 2020', 'например, 2020') ?>">
+                                <input type="text" id="editModalDeathYear" class="input">
                             </div>
                         </div>
                         <?php /* ALT-002: «Место упокоения» раскрывается сразу под датой смерти, только при отметке «Умер(ла)» */ ?>
                         <div id="editModalBurialBlock" style="display:none; margin-top:12px;">
                             <div class="field">
                                 <label for="editModalDeathPlace"><?= $__t('Мәңгілік мекені (жерленген жері)', 'Место упокоения') ?></label>
-                                <input type="text" id="editModalDeathPlace" class="input" maxlength="255" placeholder="<?= $__t('мысалы, Алматы қ.', 'например, г. Алматы') ?>">
+                                <input type="text" id="editModalDeathPlace" class="input" maxlength="255">
                             </div>
                             <div id="editModalBurialExtra" style="display:none;">
                                 <div class="form-row">

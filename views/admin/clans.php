@@ -138,10 +138,10 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         <h3 id="clFormTitle"><?= $ru ? 'Новый ру' : 'Жаңа ру' ?></h3>
         <form id="clForm" class="cl-form" autocomplete="off">
             <input type="hidden" name="id" value="0">
-            <label><?= $ru ? 'Название (қаз)' : 'Атауы (қаз)' ?>
-                <input class="input" name="name" maxlength="100" required placeholder="Керей"></label>
+            <label><?= $ru ? 'Название (қаз) *' : 'Атауы (қаз) *' ?>
+                <input class="input" name="name" maxlength="100" required placeholder="<?= $ru ? 'Введите название' : 'Атауын енгізіңіз' ?>"></label>
             <label><?= $ru ? 'Название (рус)' : 'Атауы (орыс)' ?>
-                <input class="input" name="name_ru" maxlength="100" placeholder="Кереи"></label>
+                <input class="input" name="name_ru" maxlength="100"></label>
             <label><?= $ru ? 'Жуз' : 'Жүз' ?>
                 <select class="input" name="zhuz">
                     <?php foreach ($zhuzLabels as $k => $v): ?><option value="<?= $e($k) ?>"><?= $e($v) ?></option><?php endforeach; ?>

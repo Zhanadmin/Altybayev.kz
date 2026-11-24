@@ -282,20 +282,7 @@
         if (!f) return;
         var url = URL.createObjectURL(f);
         overlay().style.display = 'flex';
-        startCrop(url, { file: f, objectUrl: url, sendSource: true });
-    };
-
-    // ALT-045: перекадрировать текущую аватарку. Исходник лежит рядом (photo_X_src.jpg); нет его — берём текущую картинку.
-    window.pmeReframe = function () {
-        var el = $('personAvatarImg');
-        if (!el || el.tagName !== 'IMG') { var inp = $('pmeAvatarInput'); if (inp) { inp.click(); } return; }
-        var cur = (el.getAttribute('src') || '').split('?')[0];
-        var srcUrl = cur.replace(/\.(jpe?g|png|webp)$/i, '_src.jpg');
-        overlay().style.display = 'flex';
-        var probe = new Image();
-        probe.onload = function () { startCrop(srcUrl, { sendSource: true }); };
-        probe.onerror = function () { startCrop(cur, { sendSource: false }); };
-        probe.src = srcUrl === cur ? cur : srcUrl + '?t=' + Date.now();
+        startCrop(url, { file: f, objectUrl: url });
     };
 
     function startCrop(src, source) {
@@ -429,18 +416,10 @@
             c.getContext('2d').drawImage(crop.img, g.sx, g.sy, g.rw, g.rh, 0, 0, outW, outH);
             c.toBlob(function (blob) {
                 if (!blob) { toast(T.imgError, 'error'); done(); return; }
-                var send = function (srcBlob) {
-                    var fd2 = new FormData();
-                    fd2.append('photo', blob, 'avatar.jpg');
-                    if (srcBlob) { fd2.append('source', srcBlob, 'source.jpg'); } // ALT-045: исходник для перекадрирования
-                    postForm('/api/person/avatar/upload', fd2).then(function (d) { ok(d.avatar_url); })
-                        .catch(function (e) { toast(e.message, 'error'); }).then(done);
-                };
-                if (!src.sendSource) { send(null); return; }
-                var k = Math.min(1, 2000 / Math.max(crop.w, crop.h)), sc = document.createElement('canvas');
-                sc.width = Math.round(crop.w * k); sc.height = Math.round(crop.h * k);
-                sc.getContext('2d').drawImage(crop.img, 0, 0, sc.width, sc.height);
-                sc.toBlob(function (sb) { send(sb); }, 'image/jpeg', 0.9);
+                var fd2 = new FormData();
+                fd2.append('photo', blob, 'avatar.jpg');
+                postForm('/api/person/avatar/upload', fd2).then(function (d) { ok(d.avatar_url); })
+                    .catch(function (e) { toast(e.message, 'error'); }).then(done);
             }, 'image/jpeg', 0.9);
         }
     };

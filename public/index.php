@@ -67,6 +67,8 @@ $router->get('/api/person/clan-propagate-preview', 'App\Controllers\TreeControll
 $router->post('/api/person/clan-propagate', 'App\Controllers\TreeController@apiClanPropagateApply', ['auth']);
 $router->post('/api/person/create-relative', 'App\Controllers\TreeController@apiPersonCreateRelative', ['auth']);
 $router->post('/api/person/delete', 'App\Controllers\TreeController@apiPersonDelete', ['auth']);
+$router->get('/api/admin/persons/trash', 'App\Controllers\TreeController@apiTrashList', ['auth', 'admin']); // ALT-018
+$router->post('/api/admin/person/restore', 'App\Controllers\TreeController@apiPersonRestore', ['auth', 'admin']); // ALT-018
 $router->post('/api/person/contacts/save', 'App\Controllers\PersonContactController@save', ['auth']); // TASK-022
 $router->post('/api/person/invite', 'App\Controllers\PersonContactController@invite', ['auth']); // TASK-022
 $router->get('/api/album/photos', 'App\Controllers\PersonCoverController@photos', ['auth']); // TASK-022: выбор фото из альбомов

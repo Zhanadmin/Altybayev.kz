@@ -217,6 +217,21 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
                 </button>
             <?php endif; ?>
+            <?php if (!empty($canDelete)): /* ALT-018: админ и тот, кто добавил человека */ ?>
+                <button type="button" class="btn" id="btnPersonDelete" data-name="<?= htmlspecialchars($fullName) ?>">
+                    <svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>
+                    <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?></span>
+                </button>
+                <script src="/assets/js/person-delete.js?v=1"></script>
+                <script>
+                document.getElementById('btnPersonDelete').addEventListener('click', function () {
+                    altDeletePerson(<?= (int)$person['id'] ?>, this.dataset.name, {
+                        lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($csrfToken ?? '') ?>,
+                        onDone: function () { window.location.href = '/persons'; }
+                    });
+                });
+                </script>
+            <?php endif; ?>
         </div>
     </div>
 

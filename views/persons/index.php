@@ -118,7 +118,9 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
 
 <?php
 // Функция вывода строк персон в таблице
-$renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit) {
+$isAdminRow = !empty($isAdmin);
+$deletableIdsRow = array_map('intval', $deletableIds ?? []);
+$renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit, $isAdminRow, $deletableIdsRow) {
     if (empty($items)) {
         return;
     }
@@ -249,6 +251,11 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit)
                         <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     </button>
                 <?php endif; ?>
+                <?php if (!empty($isAdminRow) || in_array((int)$p['id'], $deletableIdsRow, true)): /* ALT-018 */ ?>
+                    <button type="button" class="btn btn-ghost btn-icon" onclick="pdDelete(<?= (int)$p['id'] ?>, this)" data-name="<?= htmlspecialchars(trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''))) ?>" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>">
+                        <svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>
+                    </button>
+                <?php endif; ?>
             </td>
         </tr>
         <?php
@@ -340,6 +347,12 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
     </div>
 <?php endif; ?>
 
+<script src="/assets/js/person-delete.js?v=1"></script>
+<script>
+function pdDelete(id, btn) { // ALT-018
+    altDeletePerson(id, btn.dataset.name, { lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($csrfToken ?? '') ?>, onDone: function () { window.location.reload(); } });
+}
+</script>
 <script>
 (function() {
     'use strict';

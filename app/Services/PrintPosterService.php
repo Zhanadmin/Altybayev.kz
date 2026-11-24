@@ -58,7 +58,7 @@ class PrintPosterService
             }
         }
 
-        $mStmt = $pdo->query("SELECT * FROM marriages WHERE is_current = 1");
+        $mStmt = $pdo->query("SELECT m.* FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0 WHERE m.is_current = 1");
         while ($m = $mStmt->fetch(PDO::FETCH_ASSOC)) {
             $hId = (int)$m['husband_id'];
             $wId = (int)$m['wife_id'];

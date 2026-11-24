@@ -127,6 +127,30 @@ class PersonAccessService
         return in_array($relationType, ['son', 'daughter', 'spouse', 'sibling'], true);
     }
 
+    /** ALT-018: удалять человека может админ и тот, кто его добавил (persons.created_by). Редактор — нет. */
+    public function canDeletePerson(int $personId, ?array $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+        if (!$user || $personId <= 0) {
+            return false;
+        }
+        if (($user['role'] ?? '') === 'admin') {
+            return true;
+        }
+        return $this->isCreatedBy($personId, (int)($user['id'] ?? 0));
+    }
+
+    /** ALT-018: живые дети человека (для предупреждения при удалении). */
+    public function childrenOf(int $personId): array
+    {
+        $st = $this->db->prepare(
+            'SELECT id, first_name, last_name, father_id, mother_id FROM persons
+             WHERE (father_id = ? OR mother_id = ?) AND is_deleted = 0 ORDER BY id ASC'
+        );
+        $st->execute([$personId, $personId]);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function isCreatedBy(int $personId, int $userId): bool
     {
         if ($personId <= 0 || $userId <= 0) {

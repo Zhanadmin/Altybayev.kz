@@ -53,9 +53,29 @@ class TreeController
             'ownCircle' => (!Auth::canEdit() && !empty($user['person_id']))
                 ? \App\Services\PersonAccessService::make()->circleOf((int)$user['person_id'])
                 : [],
+            // ALT-018: кого пользователь добавил сам (кнопка «Удалить»; сервер проверяет заново)
+            'myCreatedIds' => ($user && !Auth::isAdmin())
+                ? $this->createdPersonIds((int)($user['id'] ?? 0))
+                : [],
+            'csrfToken' => \App\Core\Session::csrfToken(),
             'kinshipTerms' => $allTerms,
             'conceptArtUrl' => $conceptArtUrl,
         ]);
+    }
+
+    /** ALT-018: id живых людей, добавленных этим пользователем. */
+    private function createdPersonIds(int $userId): array
+    {
+        if ($userId <= 0) {
+            return [];
+        }
+        try {
+            $st = Database::getConnection()->prepare('SELECT id FROM persons WHERE created_by = ? AND is_deleted = 0');
+            $st->execute([$userId]);
+            return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**
@@ -77,7 +97,7 @@ class TreeController
             $marriages = [];
             $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
             if ($stmtM->rowCount() > 0) {
-                $stmtMarriages = $db->query("SELECT * FROM `marriages` ORDER BY `id` ASC");
+                $stmtMarriages = $db->query("SELECT m.* FROM `marriages` m JOIN `persons` ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN `persons` pw ON pw.id = m.wife_id AND pw.is_deleted = 0 ORDER BY m.`id` ASC"); // ALT-018: без браков удалённых
                 $marriages = $stmtMarriages->fetchAll(PDO::FETCH_ASSOC);
             }
 
@@ -427,7 +447,7 @@ class TreeController
                 SELECT m.*, p.first_name, p.last_name, p.birth_year, p.gender 
                 FROM marriages m
                 JOIN persons p ON (p.id = IF(m.husband_id = ?, m.wife_id, m.husband_id))
-                WHERE (m.husband_id = ? OR m.wife_id = ?)
+                WHERE (m.husband_id = ? OR m.wife_id = ?) AND p.is_deleted = 0
             ");
             $spStmt->execute([$id, $id, $id]);
             $spouses = $spStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -488,6 +508,7 @@ class TreeController
                 'children' => $children,
                 'audit_logs' => $auditLogs,
                 'can_edit' => \App\Services\PersonAccessService::make()->canEditPerson((int)$person['id']),
+                'can_delete' => \App\Services\PersonAccessService::make()->canDeletePerson((int)$person['id']),
                 'contacts' => $contactsOut,
                 // TASK-036: история проживания (пусто, пока миграция не применена)
                 'residences' => (new \App\Services\PersonResidenceService($db))->list((int)$person['id']),
@@ -931,12 +952,12 @@ class TreeController
                     if ($target['gender'] === 'M') {
                         $fatherId = $targetId;
                         // Ищем супругу для связки матери
-                        $spStmt = $db->prepare("SELECT wife_id FROM marriages WHERE husband_id = ? AND is_current = 1 LIMIT 1");
+                        $spStmt = $db->prepare("SELECT m.wife_id FROM marriages m JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0 WHERE m.husband_id = ? AND m.is_current = 1 LIMIT 1");
                         $spStmt->execute([$targetId]);
                         $motherId = $spStmt->fetchColumn() ?: null;
                     } else {
                         $motherId = $targetId;
-                        $spStmt = $db->prepare("SELECT husband_id FROM marriages WHERE wife_id = ? AND is_current = 1 LIMIT 1");
+                        $spStmt = $db->prepare("SELECT m.husband_id FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 WHERE m.wife_id = ? AND m.is_current = 1 LIMIT 1");
                         $spStmt->execute([$targetId]);
                         $fatherId = $spStmt->fetchColumn() ?: null;
                         if ($fatherId) {
@@ -1047,24 +1068,35 @@ class TreeController
     }
 
     /**
-     * API: Мягкое удаление персоны (Soft-delete, только Администратор)
+     * API: Мягкое удаление персоны (ALT-018).
+     * Права: админ или тот, кто добавил человека (persons.created_by). POST + CSRF.
+     * Если есть живые дети — без children_confirmed=1 отвечает 409 со списком детей;
+     * с подтверждением: дети остаются, связь с удаляемым рвётся (id записываются в журнал для восстановления).
+     * Браки не трогаем: загрузчики пропускают браки с удалёнными людьми, при восстановлении всё вернётся.
      */
     public function apiPersonDelete(Request $request): void
     {
-        if (!Auth::isAdmin()) {
-            Response::json(['error' => 'Жою тек әкімшіге рұқсат етілген / Удаление разрешено только администратору'], 403);
+        $user = Auth::user();
+        if (!$user) {
+            Response::json(['error' => 'Авторизация қажет / Требуется авторизация'], 401);
+            return;
+        }
+        if (!\App\Core\Session::validateCsrf((string)$request->post('csrf_token', ''))) {
+            Response::json(['error' => 'Сессия ескірді, бетті жаңартыңыз / Сессия устарела, обновите страницу'], 403);
             return;
         }
 
-        $id = (int)$request->get('id', 0);
-        if (!$id) {
+        $id = (int)$request->post('id', 0);
+        if ($id <= 0) {
             Response::json(['error' => 'id is required'], 400);
             return;
         }
 
         try {
             $db = Database::getConnection();
-            $stmtOld = $db->prepare("SELECT * FROM persons WHERE id = ?");
+            $access = \App\Services\PersonAccessService::make();
+
+            $stmtOld = $db->prepare("SELECT * FROM persons WHERE id = ? AND is_deleted = 0");
             $stmtOld->execute([$id]);
             $oldPerson = $stmtOld->fetch(PDO::FETCH_ASSOC);
 
@@ -1072,27 +1104,152 @@ class TreeController
                 Response::json(['error' => 'Персона не найдена'], 404);
                 return;
             }
+            if (!$access->canDeletePerson($id, $user)) {
+                Response::json(['error' => 'Жоюға рұқсат жоқ: тек қосқан адам немесе әкімші / Удалять может только тот, кто добавил человека, или администратор'], 403);
+                return;
+            }
 
-            $stmt = $db->prepare("UPDATE `persons` SET `is_deleted` = 1, `updated_at` = NOW() WHERE `id` = ?");
-            $stmt->execute([$id]);
+            // карточка, привязанная к аккаунту, — только админ
+            if (!Auth::isAdmin()) {
+                $lk = $db->prepare('SELECT 1 FROM users WHERE person_id = ? LIMIT 1');
+                $lk->execute([$id]);
+                if ($lk->fetchColumn()) {
+                    Response::json(['error' => 'Бұл карточка пайдаланушыға байланған, жоюды әкімші жасайды / Карточка привязана к пользователю — удаляет только администратор'], 403);
+                    return;
+                }
+            }
 
-            $user = Auth::user();
-            $this->recordAuditLog(
-                'DELETE',
-                'persons',
+            $children = $access->childrenOf($id);
+            if ($children &&(string)$request->post('children_confirmed', '') !== '1') {
+                Response::json([
+                    'status'         => 'needs_confirm',
+                    'has_children'   => true,
+                    'children_count' => count($children),
+                    'children'       => array_map(
+                        static fn($c) => trim(($c['last_name'] ?? '') . ' ' . ($c['first_name'] ?? '')),
+                        array_slice($children, 0, 10)
+                    ),
+                ], 409);
+                return;
+            }
+
+            $db->beginTransaction();
+            $detached = ['father' => [], 'mother' => []];
+            foreach ($children as $c) {
+                if ((int)$c['father_id'] === $id) {
+                    $detached['father'][] = (int)$c['id'];
+                }
+                if ((int)$c['mother_id'] === $id) {
+                    $detached['mother'][] = (int)$c['id'];
+                }
+            }
+            $db->prepare("UPDATE `persons` SET `father_id` = NULL, `updated_at` = NOW() WHERE `father_id` = ? AND `is_deleted` = 0")->execute([$id]);
+            $db->prepare("UPDATE `persons` SET `mother_id` = NULL, `updated_at` = NOW() WHERE `mother_id` = ? AND `is_deleted` = 0")->execute([$id]);
+            $db->prepare("UPDATE `persons` SET `is_deleted` = 1, `updated_at` = NOW() WHERE `id` = ?")->execute([$id]);
+            // журнал — внутри транзакции: без него восстановить связи с детьми нечем (ошибка откатит удаление)
+            $db->prepare(
+                "INSERT INTO `audit_logs` (`user_id`, `user_name`, `user_email`, `action`, `entity_table`, `entity_id`, `summary`, `old_values`, `new_values`, `created_at`)
+                 VALUES (?, ?, ?, 'DELETE', 'persons', ?, ?, ?, ?, NOW())"
+            )->execute([
+                $user['id'] ?? null,
+                $user['name'] ?? 'Система',
+                $user['email'] ?? 'system@altybayev.kz',
                 $id,
-                "Тұлға жойылды (soft-delete): {$oldPerson['first_name']} {$oldPerson['last_name']}",
-                $oldPerson,
-                ['is_deleted' => 1],
-                $user
-            );
+                "Тұлға жойылды (soft-delete) / Удалён: {$oldPerson['first_name']} {$oldPerson['last_name']}",
+                json_encode($oldPerson, JSON_UNESCAPED_UNICODE),
+                json_encode(['is_deleted' => 1, 'detached_children' => $detached], JSON_UNESCAPED_UNICODE),
+            ]);
+            $db->commit();
 
             Response::json([
                 'status' => 'success',
                 'message' => 'Тұлға сәтті жойылды / Персона успешно удалена'
             ]);
         } catch (\Throwable $e) {
-            Response::json(['error' => $e->getMessage()], 500);
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
+            Logger::error('ALT-018 delete: ' . $e->getMessage(), $e);
+            Response::json(['error' => 'Жою қатесі / Ошибка удаления'], 500);
+        }
+    }
+
+    /**
+     * API (админ): корзина — удалённые люди (ALT-018).
+     */
+    public function apiTrashList(Request $request): void
+    {
+        try {
+            $db = Database::getConnection();
+            $rows = $db->query(
+                "SELECT id, first_name, last_name, birth_year, updated_at FROM persons WHERE is_deleted = 1 ORDER BY updated_at DESC, id DESC LIMIT 200"
+            )->fetchAll(PDO::FETCH_ASSOC);
+            Response::json(['status' => 'success', 'items' => $rows]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => 'Қате / Ошибка'], 500);
+        }
+    }
+
+    /**
+     * API (админ): восстановить удалённого человека. Связи с детьми, которых отвязали при удалении,
+     * возвращаются (только если место отца/матери у ребёнка всё ещё пустое).
+     */
+    public function apiPersonRestore(Request $request): void
+    {
+        if (!\App\Core\Session::validateCsrf((string)$request->post('csrf_token', ''))) {
+            Response::json(['error' => 'Сессия ескірді, бетті жаңартыңыз / Сессия устарела, обновите страницу'], 403);
+            return;
+        }
+        $id = (int)$request->post('id', 0);
+        if ($id <= 0) {
+            Response::json(['error' => 'id is required'], 400);
+            return;
+        }
+        try {
+            $db = Database::getConnection();
+            $st = $db->prepare("SELECT * FROM persons WHERE id = ? AND is_deleted = 1");
+            $st->execute([$id]);
+            $person = $st->fetch(PDO::FETCH_ASSOC);
+            if (!$person) {
+                Response::json(['error' => 'Персона не найдена в корзине'], 404);
+                return;
+            }
+
+            $detached = ['father' => [], 'mother' => []];
+            $lg = $db->prepare("SELECT new_values FROM audit_logs WHERE entity_table = 'persons' AND entity_id = ? AND action = 'DELETE' ORDER BY id DESC LIMIT 1");
+            $lg->execute([$id]);
+            $nv = json_decode((string)$lg->fetchColumn(), true);
+            if (is_array($nv) && isset($nv['detached_children']) && is_array($nv['detached_children'])) {
+                $detached = array_merge($detached, $nv['detached_children']);
+            }
+
+            $db->beginTransaction();
+            $db->prepare("UPDATE `persons` SET `is_deleted` = 0, `updated_at` = NOW() WHERE `id` = ?")->execute([$id]);
+            $reattach = ['father' => 'father_id', 'mother' => 'mother_id'];
+            foreach ($reattach as $key => $col) {
+                $upd = $db->prepare("UPDATE `persons` SET `{$col}` = ?, `updated_at` = NOW() WHERE `id` = ? AND `{$col}` IS NULL AND `is_deleted` = 0");
+                foreach ((array)$detached[$key] as $childId) {
+                    $upd->execute([$id, (int)$childId]);
+                }
+            }
+            $db->commit();
+
+            $this->recordAuditLog(
+                'RESTORE',
+                'persons',
+                $id,
+                "Тұлға қалпына келтірілді / Восстановлен: {$person['first_name']} {$person['last_name']}",
+                ['is_deleted' => 1],
+                ['is_deleted' => 0],
+                Auth::user()
+            );
+            Response::json(['status' => 'success', 'message' => 'Қалпына келтірілді / Восстановлено']);
+        } catch (\Throwable $e) {
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
+            Logger::error('ALT-018 restore: ' . $e->getMessage(), $e);
+            Response::json(['error' => 'Қалпына келтіру қатесі / Ошибка восстановления'], 500);
         }
     }
 

@@ -321,6 +321,59 @@ $adRoleLabels = [
         <?php endif; ?>
     </div>
 
+    <!-- ALT-018: корзина — удалённые люди, админ может восстановить -->
+    <div class="island ad-island" id="trash">
+        <div class="island-head ad-head">
+            <h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Корзина (удалённые люди)' : 'Себет (жойылған адамдар)' ?></h3>
+        </div>
+        <p class="muted" id="trashEmpty" style="margin:0 0 12px;"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Загрузка…' : 'Жүктелуде…' ?></p>
+        <div class="table-wrap">
+            <table class="table"><tbody id="trashBody"></tbody></table>
+        </div>
+    </div>
+    <script>
+    (function () { // ALT-018
+        const ru = <?= json_encode($lang === 'ru' || $lang === 'en' || $lang === 'es') ?>;
+        const csrf = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
+        const body = document.getElementById('trashBody');
+        const empty = document.getElementById('trashEmpty');
+        async function load() {
+            body.textContent = '';
+            try {
+                const res = await fetch('/api/admin/persons/trash');
+                const data = await res.json();
+                const items = data.items || [];
+                empty.textContent = items.length ? '' : (ru ? 'Корзина пуста.' : 'Себет бос.');
+                items.forEach(function (it) {
+                    const tr = document.createElement('tr');
+                    const td1 = document.createElement('td');
+                    td1.textContent = ((it.last_name || '') + ' ' + (it.first_name || '')).trim() + ' (#' + it.id + ')';
+                    const td2 = document.createElement('td');
+                    td2.textContent = it.updated_at || '';
+                    const td3 = document.createElement('td');
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.className = 'btn';
+                    b.textContent = ru ? 'Восстановить' : 'Қалпына келтіру';
+                    b.addEventListener('click', async function () {
+                        b.disabled = true;
+                        const r = await fetch('/api/admin/person/restore', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: new URLSearchParams({ id: String(it.id), csrf_token: csrf }).toString()
+                        });
+                        const d = await r.json().catch(function () { return {}; });
+                        if (d.status === 'success') { load(); } else { b.disabled = false; alert(d.error || 'Error'); }
+                    });
+                    td3.appendChild(b);
+                    tr.append(td1, td2, td3);
+                    body.appendChild(tr);
+                });
+            } catch (e) { empty.textContent = (ru ? 'Ошибка загрузки' : 'Жүктеу қатесі'); }
+        }
+        load();
+    })();
+    </script>
+
     <!-- TASK-019: Управление распознаванием лиц (приватность и включение) -->
     <div class="island ad-island">
         <div class="island-head ad-head">

@@ -86,7 +86,7 @@ class PersonController
         $mRows = [];
         $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
         if ($stmtM->rowCount() > 0) {
-            $mRows = $db->query("SELECT * FROM marriages ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+            $mRows = $db->query("SELECT m.* FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0 ORDER BY m.id ASC")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($mRows as $m) {
                 $h = (int)($m['husband_id'] ?? 0);
                 $w = (int)($m['wife_id'] ?? 0);
@@ -272,6 +272,11 @@ class PersonController
             ],
             'canEdit'           => Auth::canEdit(),
             'isAdmin'           => Auth::isAdmin(),
+            // ALT-018: у кого видна кнопка «Удалить» (админ — у всех, остальные — у добавленных ими)
+            'deletableIds'      => (!Auth::isAdmin() && $user)
+                ? array_map('intval', array_column(array_filter($allPersons, static fn($r) => (int)($r['created_by'] ?? 0) === (int)($user['id'] ?? -1)), 'id'))
+                : [],
+            'csrfToken'         => \App\Core\Session::csrfToken(),
         ]);
     }
 
@@ -431,6 +436,8 @@ class PersonController
             'auditLogs'    => $auditLogs,
             'canEdit'      => Auth::canEdit(),
             'isAdmin'      => Auth::isAdmin(),
+            'canDelete'    => \App\Services\PersonAccessService::make()->canDeletePerson($id, $user), // ALT-018
+            'csrfToken'    => \App\Core\Session::csrfToken(),
         ]);
     }
 }

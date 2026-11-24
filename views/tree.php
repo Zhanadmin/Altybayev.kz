@@ -33,6 +33,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <link rel="stylesheet" href="/assets/css/design-system.css?v=16">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
+    <script src="/assets/js/person-delete.js?v=1" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=6">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
@@ -3923,7 +3924,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         const isAdmin = <?= !empty($isAdmin) ? 'true' : 'false' ?>;
         // TASK-032: свой круг для не-редактора (подсказка интерфейсу; права проверяет сервер)
         const ownCircle = <?= json_encode(array_map('intval', $ownCircle ?? []), JSON_NUMERIC_CHECK) ?>;
-        const canEditPersonUi = (pid) => canEdit || ownCircle.indexOf(parseInt(pid, 10)) !== -1;
+        // ALT-018: кого добавил сам пользователь — править и удалять можно; сервер проверяет заново
+        const myCreatedIds = <?= json_encode(array_map('intval', $myCreatedIds ?? [])) ?>;
+        const personCsrf = <?= json_encode($csrfToken ?? '') ?>;
+        const canDeletePersonUi = (pid) => isAdmin || myCreatedIds.indexOf(parseInt(pid, 10)) !== -1;
+        const canEditPersonUi = (pid) => canEdit || ownCircle.indexOf(parseInt(pid, 10)) !== -1 || myCreatedIds.indexOf(parseInt(pid, 10)) !== -1;
         const urlParams = new URLSearchParams(window.location.search);
         const focusFromUrl = urlParams.get('focus') || urlParams.get('id');
         let initialFocusId = focusFromUrl ? parseInt(focusFromUrl) : (<?= (int)($focusId ?? 0) ?> || userPersonId || 6);
@@ -6459,7 +6464,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 const btnDel = document.getElementById('btnDeletePerson');
                 if (btnDel) {
-                    btnDel.style.display = isAdmin ? 'inline-flex' : 'none';
+                    btnDel.style.display = (data.can_delete || canDeletePersonUi(p.id)) ? 'inline-flex' : 'none';
                 }
 
                 const auditContainer = document.getElementById('editAuditLogContainer');
@@ -6588,30 +6593,21 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         async function handleDeleteCurrentPerson() {
             const id = document.getElementById('editPersonId').value;
-            if (!confirm((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Вы уверены, что хотите удалить эту персону?' : 'Бұл тұлғаны өшіруге сенімдісіз бе?')) {
-                return;
+            const nm = (document.getElementById('editLastName').value + ' ' + document.getElementById('editFirstName').value).trim();
+            await deletePersonFlow(id, nm);
+        }
+
+        // ALT-018: общий путь удаления (окно редактирования и таблица «Адамдар»)
+        async function deletePersonFlow(id, name) {
+            const ok = await altDeletePerson(id, name, { lang: currentLang, csrf: personCsrf });
+            if (!ok) { return; }
+            closeEditPersonModal();
+            if (parseInt(id, 10) === parseInt(selectedPersonId, 10)) {
+                selectedPersonId = null;
             }
-            try {
-                const formData = new URLSearchParams();
-                formData.append('id', id);
-                const res = await fetch('/api/person/delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    closeEditPersonModal();
-                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Персона помечена как удаленная' : 'Тұлға өшірілді');
-                    await initTree();
-                    if (currentMode === 'list') {
-                        loadListViewData();
-                    }
-                } else {
-                    alert('Қате: ' + (data.error || 'Белгісіз қате'));
-                }
-            } catch (err) {
-                alert('Қате: ' + err.message);
+            await initTree();
+            if (currentMode === 'list') {
+                loadListViewData();
             }
         }
 
@@ -6801,6 +6797,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const clanLbl = p.clan_ru || 'белгісіз';
                 const tFocus = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Фокус в древе' : 'Шежіреде фокус';
                 const tEdit = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Редактировать' : 'Өңдеу';
+                const tDel = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Удалить' : 'Жою';
 
                 tr.innerHTML = `
                     <td class="lt-col-md" style="color:var(--c-text-3); font-size:11.5px;">${idx + 1}</td>
@@ -6842,6 +6839,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id}); event.stopPropagation();" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
                             <button type="button" class="btn-table-action" onclick="togglePersonUshZhurt(${p.id}); event.stopPropagation();" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
                             ${canEditPersonUi(p.id) ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id}); event.stopPropagation();" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
+                            ${canDeletePersonUi(p.id) ? `<button type="button" class="btn-table-action" data-name="${encodeURIComponent([p.last_name, p.first_name].filter(Boolean).join(' '))}" onclick="deletePersonFlow(${p.id}, decodeURIComponent(this.dataset.name)); event.stopPropagation();" title="${tDel}" aria-label="${tDel}"><svg class="ic"><use href="#t-trash"/></svg></button>` : ''}
                         </div>
                     </td>
                 `;

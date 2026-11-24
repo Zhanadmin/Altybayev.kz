@@ -36,7 +36,7 @@ class FamilyController
         $marriages = [];
         $stmtM = $db->query("SHOW TABLES LIKE 'marriages'");
         if ($stmtM->rowCount() > 0) {
-            $mStmt = $db->query("SELECT * FROM marriages ORDER BY id ASC");
+            $mStmt = $db->query("SELECT m.* FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0 ORDER BY m.id ASC"); // ALT-018
             $marriages = $mStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 

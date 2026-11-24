@@ -50,7 +50,7 @@ class MemorialService
         $this->marriagesMapCache = [];
         $stmtM = $pdo->query("SHOW TABLES LIKE 'marriages'");
         if ($stmtM && $stmtM->rowCount() > 0) {
-            $mRows = $pdo->query("SELECT * FROM marriages ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+            $mRows = $pdo->query("SELECT m.* FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0 ORDER BY m.id ASC")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($mRows as $m) {
                 $h = (int)($m['husband_id'] ?? 0);
                 $w = (int)($m['wife_id'] ?? 0);
@@ -464,7 +464,7 @@ class MemorialService
             return [];
         }
 
-        $mRows = $pdo->query("SELECT * FROM marriages WHERE (is_current = 1 OR status = 'married' OR status IS NULL) ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $mRows = $pdo->query("SELECT m.* FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0 WHERE (m.is_current = 1 OR m.status = 'married' OR m.status IS NULL) ORDER BY m.id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
         $events = [];
         $currentYear = (int)$today->format('Y');

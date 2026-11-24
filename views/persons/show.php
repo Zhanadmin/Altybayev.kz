@@ -1264,6 +1264,8 @@ window.FR_PERSON = <?= json_encode([
 <script src="/assets/js/face-recognition.js?v=2" defer></script>
 <?php endif; ?>
 
+<script src="/assets/js/photo-viewer.js?v=1" defer></script>
+
 <?php
 require __DIR__ . '/../layout/master_end.php';
 ?>

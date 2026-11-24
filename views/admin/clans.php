@@ -21,6 +21,17 @@ $zhuzLabels = [
     'junior' => $ru ? 'Младший жуз' : 'Кіші жүз',
     'other'  => $ru ? 'Вне жузов / не указан' : 'Жүзден тыс / көрсетілмеген',
 ];
+$zhuzFilterLabels = [
+    'senior' => $ru ? 'Старший жуз' : 'Ұлы жүз',
+    'middle' => $ru ? 'Средний жуз' : 'Орта жүз',
+    'junior' => $ru ? 'Младший жуз' : 'Кіші жүз',
+    'other'  => $ru ? 'Жуз не указан / вне жузов' : 'Жүзі көрсетілмеген',
+];
+$zhuzCounts = ['senior' => 0, 'middle' => 0, 'junior' => 0, 'other' => 0];
+foreach ($clans as $c0) {
+    $k0 = in_array($c0['zhuz'], ['senior', 'middle', 'junior'], true) ? $c0['zhuz'] : 'other';
+    $zhuzCounts[$k0]++;
+}
 $csrf = Session::csrfToken();
 $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 ?>
@@ -31,9 +42,13 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 .cl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .cl-table th, .cl-table td { padding: 6px 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
 .cl-table th { opacity: .7; white-space: nowrap; }
+.cl-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.cl-fbtn.active { background: var(--c-accent, #2a6df4); color: #fff; border-color: transparent; }
+.cl-fn { opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.cl-group th { opacity: 1; font-weight: 600; font-size: 14px; padding-top: 14px; background: rgba(128,128,128,.08); }
 .cl-table .fit { width: 1%; white-space: nowrap; }
 .cl-table .cl-sum { opacity: .8; }
-.cl-tamga { width: 32px; height: 32px; border: 1px solid var(--c-border, #ddd); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 8px 8px; overflow: hidden; }
+.cl-tamga { width: 64px; height: 64px; flex: 0 0 auto; border: 1px solid var(--c-border, #ddd); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 8px 8px; overflow: hidden; }
 .cl-tamga img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .cl-tamga span { font-size: 10px; opacity: .55; }
 .cl-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -51,7 +66,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 .cl-msg { font-size: 13px; min-height: 18px; }
 .cl-msg.err { color: #c0392b; }
 .cl-msg.ok { color: #2e7d32; }
-@media (max-width: 560px) { .cl-form { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .cl-form { grid-template-columns: 1fr; } .cl-tamga { width: 52px; height: 52px; } }
 </style>
 
 <div class="cl-wrap">
@@ -75,6 +90,12 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             <h3><?= $ru ? 'Список ру' : 'Ру тізімі' ?> (<span id="clCount"><?= count($clans) ?></span>)</h3>
             <input class="input" id="clSearch" type="search" placeholder="<?= $ru ? 'Поиск…' : 'Іздеу…' ?>" style="max-width:240px;margin-left:auto">
         </div>
+        <div class="cl-filter" id="clFilter" role="group" aria-label="<?= $ru ? 'Фильтр по жузу' : 'Жүз бойынша сүзгі' ?>">
+            <button type="button" class="btn btn-sm cl-fbtn active" data-z="all"><?= $ru ? 'Все' : 'Барлығы' ?> <span class="cl-fn" data-n="all"><?= count($clans) ?></span></button>
+            <?php foreach ($zhuzFilterLabels as $zk => $zl): ?>
+                <button type="button" class="btn btn-sm cl-fbtn" data-z="<?= $e($zk) ?>"><?= $e($zl) ?> <span class="cl-fn" data-n="<?= $e($zk) ?>"><?= (int)($zhuzCounts[$zk] ?? 0) ?></span></button>
+            <?php endforeach; ?>
+        </div>
         <div class="cl-msg" id="clListMsg" role="status"></div>
         <table class="cl-table">
             <thead><tr>
@@ -86,8 +107,12 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                 <th class="fit"></th>
             </tr></thead>
             <tbody id="clList">
-            <?php foreach ($clans as $c): ?>
-                <tr class="cl-row" data-id="<?= (int)$c['id'] ?>"
+            <?php $prevZ = null; foreach ($clans as $c): ?>
+                <?php $zk = in_array($c['zhuz'], ['senior', 'middle', 'junior'], true) ? $c['zhuz'] : 'other'; ?>
+                <?php if ($zk !== $prevZ): $prevZ = $zk; ?>
+                <tr class="cl-group" data-z="<?= $e($zk) ?>"><th colspan="6"><?= $e($zhuzFilterLabels[$zk]) ?> (<span class="cl-gn"><?= (int)($zhuzCounts[$zk] ?? 0) ?></span>)</th></tr>
+                <?php endif; ?>
+                <tr class="cl-row" data-z="<?= $e($zk) ?>" data-id="<?= (int)$c['id'] ?>"
                     data-search="<?= $e(mb_strtolower($c['name'] . ' ' . ($c['name_ru'] ?? ''))) ?>"
                     data-json="<?= $e(json_encode(['id' => (int)$c['id'], 'name' => $c['name'], 'name_ru' => $c['name_ru'] ?? '', 'zhuz' => $c['zhuz'], 'summary' => $c['summary'] ?? '', 'tamga_url' => $c['tamga_url'] ?? ''], JSON_UNESCAPED_UNICODE)) ?>">
                     <td class="fit"><div class="cl-tamga"><?php if (!empty($c['tamga_url'])): ?><img src="<?= $e($c['tamga_url']) ?>" alt="" loading="lazy"><?php else: ?><span>—</span><?php endif; ?></div></td>
@@ -120,7 +145,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             <div class="full">
                 <div style="font-size:13px;margin-bottom:4px"><?= $ru ? 'Знак (таңба)' : 'Таңба' ?></div>
                 <div class="cl-actions">
-                    <div class="cl-tamga" style="width:48px;height:48px" id="clPrev"></div>
+                    <div class="cl-tamga" style="width:120px;height:120px" id="clPrev"></div>
                     <label class="btn btn-sm" style="cursor:pointer"><?= $ru ? 'Загрузить' : 'Жүктеу' ?>
                         <input type="file" id="clFile" accept=".svg,.png,image/svg+xml,image/png" hidden></label>
                     <button type="button" class="btn btn-sm" id="clDrawBtn"><?= $ru ? 'Нарисовать' : 'Салу' ?></button>
@@ -221,12 +246,29 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         if (j.success) { say(RU ? 'Знак убран' : 'Таңба алынды', true); reloadSoon(); } else say(j.error || 'Error', false);
     });
 
-    document.getElementById('clSearch').addEventListener('input', (e) => {
-        const q = e.target.value.trim().toLowerCase(); let n = 0;
+    let zf = 'all';
+    function applyFilter() {
+        const q = document.getElementById('clSearch').value.trim().toLowerCase();
+        const per = { all: 0, senior: 0, middle: 0, junior: 0, other: 0 };
         document.querySelectorAll('#clList .cl-row').forEach(c => {
-            const show = !q || c.dataset.search.includes(q); c.style.display = show ? '' : 'none'; if (show) n++;
+            const bySearch = !q || c.dataset.search.includes(q);
+            if (bySearch) { per.all++; per[c.dataset.z]++; }
+            c.style.display = bySearch && (zf === 'all' || zf === c.dataset.z) ? '' : 'none';
         });
-        document.getElementById('clCount').textContent = n;
+        document.querySelectorAll('#clList .cl-group').forEach(g => {
+            const z = g.dataset.z;
+            g.style.display = zf === 'all' && per[z] > 0 ? '' : 'none';
+            const gn = g.querySelector('.cl-gn'); if (gn) gn.textContent = per[z];
+        });
+        document.querySelectorAll('#clFilter .cl-fn').forEach(s => { s.textContent = per[s.dataset.n]; });
+        document.getElementById('clCount').textContent = per[zf];
+    }
+    document.getElementById('clSearch').addEventListener('input', applyFilter);
+    document.getElementById('clFilter').addEventListener('click', (e) => {
+        const b = e.target.closest('.cl-fbtn'); if (!b) return;
+        zf = b.dataset.z;
+        document.querySelectorAll('#clFilter .cl-fbtn').forEach(x => x.classList.toggle('active', x === b));
+        applyFilter();
     });
 
     // рисование

@@ -208,7 +208,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
                         $isDiv = ($sp['status'] === 'divorced');
                     ?>
                         <div class="clip<?= $isDiv ? ' pp-div' : '' ?>"<?= $isDiv ? ' title="' . (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В разводе' : 'Ажырасқан') . '"' : '' ?>>
-                            <a href="/person/<?= (int)$sp['spouse_id'] ?>"><?= htmlspecialchars($sp['name']) ?></a>
+                            <a href="/person/<?= (int)$sp['spouse_id'] ?>" title="<?= htmlspecialchars($sp['name']) ?>"><?= htmlspecialchars($sp['name']) ?></a>
                             <?php if (!empty($sp['years'])): ?>
                                 <span class="pp-lbl">(<?= htmlspecialchars($sp['years']) ?>)</span>
                             <?php endif; ?>

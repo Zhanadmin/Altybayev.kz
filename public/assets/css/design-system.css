@@ -560,7 +560,9 @@ p { margin: 0; }
 @media (max-width: 900px) { .pp-table .pp-w-person { min-width: 0; } }
 /* ALT-029: «Жұбайы» уже на ~35 px, эта ширина отдана «Үш жұрт» (только ПК) */
 /* ALT-029 (15:18): «Ата-анасы» по содержимому 200 px, весь остаток — «Жұбайы» (auto) */
-@media (min-width: 1181px) { .pp-table th.pp-w-spouse { width: auto; } .pp-table th.pp-w-parents { width: 200px; } .pp-table th.pp-w-kin { width: 205px; } }
+/* ALT-029 (15:36): «Жұбайы» — фиксированно 190 px (не по содержимому), лишний текст — максимум 2 строки с «…», целиком в подсказке; остаток — «Үш жұрт» (auto) */
+@media (min-width: 1181px) { .pp-table th.pp-w-spouse { width: 190px; max-width: 190px; } .pp-table th.pp-w-parents { width: 220px; } .pp-table th.pp-w-kin { width: auto; } }
+.pp-table td.pp-rel:has(a[title]) .clip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .pp-table td.actions { padding-left: 0; padding-right: 8px; text-align: right; }
 .pp-table tr.pp-row { cursor: pointer; }
 .pp-table tr.pp-row:hover > td { background: var(--c-accent-soft, rgba(0,0,0,.04)); }

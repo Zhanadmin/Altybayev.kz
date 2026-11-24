@@ -46,6 +46,25 @@ foreach (['en', 'es'] as $lang) {
     chk(str_contains($alive, $lang === 'en' ? 'years' : 'años'), "$lang возраст");
 }
 
+// Замечание 14:10: боковая панель древа — кнопки/заголовки переводятся, места и страна
+$panel = '<span>Жеті атасын көру / тексеру</span><span>Үш жұртын көру / Три журта</span>'
+    . '<div>ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕР</div><button>Жазба қосу</button>'
+    . '<div class="pm-msg">Әзірге үн жазбасы мен естеліктер қосылмаған. «Жазба қосу» батырмасын басыңыз.</div>'
+    . '<b>Алга РК</b><i>≈74 года</i><u>белгісіз</u>';
+$expect = [
+    'es' => ['Ver las siete generaciones', 'Ver los tres linajes (Üsh zhurt)', 'Voz y recuerdos', 'Añadir grabación', 'Alga, Kazajistán', '≈74 años', 'desconocido'],
+    'en' => ['View seven generations', 'View three kin groups', 'Voice and memories', 'Add recording', 'Alga, Kazakhstan', '≈74 years', 'unknown'],
+];
+foreach ($expect as $lang => $needles) {
+    I18n::setLang($lang);
+    $out = I18n::translateHtml($panel);
+    chk(!hasCyr($out), "$lang панель древа без кириллицы");
+    foreach ($needles as $n) {
+        chk(str_contains($out, $n), "$lang панель: «{$n}»");
+    }
+    if (hasCyr($out)) { echo "     остаток: " . $out . "\n"; }
+}
+
 // Форматы дат
 I18n::setLang('en');
 chk(I18n::formatDate('1952-03-05', 'en') === 'March 5, 1952', 'en дата');

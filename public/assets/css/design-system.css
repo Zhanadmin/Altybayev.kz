@@ -530,8 +530,11 @@ p { margin: 0; }
 .pp-table .pp-lbl, .pp-table .person .meta { font-size: 15px; color: var(--c-text-2); }
 .pp-table td .person .name { font-size: 17px; font-weight: 400; }
 /* ALT-020: аватар в списке людей ~1,4× (32 → 44px), круглый, не сжимается */
-.pp-table .person .avatar { width: 44px; height: 44px; min-width: 44px; flex: 0 0 44px; aspect-ratio: 1 / 1; }
-.pp-table .person .avatar .ic { width: 20px; height: 20px; }
+.pp-table .person .avatar { width: 58px; height: 58px; min-width: 58px; flex: 0 0 58px; aspect-ratio: 1 / 1; }
+.pp-table .person .avatar .ic { width: 26px; height: 26px; }
+/* ALT-023: аватар ещё крупнее (44 → 58px); колонки строки выровнены по центру аватара */
+.pp-table td { vertical-align: middle; }
+.pp-table .person { align-items: center; }
 .pp-table td:not(.actions) .pp-rel, .pp-table td.pp-rel, .pp-table td.pp-rel a, .pp-table .pp-term, .pp-table .pp-term *, .pp-table .pp-years, .pp-table .pp-years-sub, .pp-table .pp-none, .pp-table td .badge, .pp-table .pp-lbl, .pp-table td.clip { font-style: italic; }
 .pp-years-sub { font-size: var(--fs-xs); color: var(--c-text-3); margin-top: 2px; }
 .pp-gender-cell { text-align: center; }
@@ -539,8 +542,16 @@ p { margin: 0; }
 .g-badge.g-icon .gmark { width: 16px; height: 16px; }
 .pp-w-rel { width: 15%; }
 .pp-w-kin { width: 14%; }
-.pp-w-act3 { width: 180px; }   /* ALT-018: 4 кнопки (карточка, древо, правка, удалить) */
-.pp-w-act2 { width: 140px; }
+.pp-w-act { width: 64px; }   /* ALT-023: одна кнопка «⋯» */
+.pp-table td.actions { padding-right: var(--sp-4, 16px); }
+.pp-table tr.pp-row { cursor: pointer; }
+.pp-table tr.pp-row:hover > td { background: var(--c-accent-soft, rgba(0,0,0,.04)); }
+.pp-more { font-size: 22px; line-height: 1; font-weight: 700; }
+.pp-menu { position: fixed; z-index: 1000; min-width: 190px; padding: 6px; background: var(--c-surface, #fff); border: 1px solid var(--c-border-strong, #ccc); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); display: flex; flex-direction: column; }
+.pp-menu[hidden] { display: none; }
+.pp-menu-item { display: block; width: 100%; text-align: left; padding: 10px 12px; min-height: 40px; border: 0; background: none; border-radius: 8px; color: var(--c-text); font: inherit; text-decoration: none; cursor: pointer; }
+.pp-menu-item:hover, .pp-menu-item:focus-visible { background: var(--c-accent-soft, rgba(0,0,0,.06)); }
+.pp-menu-item.is-danger { color: var(--c-danger); }
 .pp-table .actions .btn-danger { color: var(--c-danger); border-color: var(--c-danger); }
 .pp-table .actions .btn-danger:hover { background: var(--c-danger-soft); border-color: var(--c-danger); }
 .pp-table .actions .btn-icon { flex-shrink: 0; }

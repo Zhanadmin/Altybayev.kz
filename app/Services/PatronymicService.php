@@ -48,7 +48,14 @@ class PatronymicService
                 return $ru;
             }
         }
-        return $name . ($g === 'M' ? ' ұлы' : ' қызы');
+        // ALT-022 (замечание 13:59): тире внутри казахского отчества — «Сағали-ұлы»
+        return $name . ($g === 'M' ? '-ұлы' : '-қызы');
+    }
+
+    /** ALT-022: «Сағали ұлы» -> «Сағали-ұлы» (только вывод; БД не меняется). Прочее — как есть. */
+    public static function dashKk(string $manual): string
+    {
+        return preg_replace('/^(.+?)[\s\-]+(ұлы|улы|қызы|кызы)$/iu', '$1-$2', $manual) ?? $manual;
     }
 
     /**
@@ -65,7 +72,7 @@ class PatronymicService
         }
         $manual = trim((string)($person['middle_name'] ?? ''));
         if ($manual !== '') {
-            return $lang === 'ru' ? self::localizeManual($manual, (string)($person['gender'] ?? '')) : $manual;
+            return $lang === 'ru' ? self::localizeManual($manual, (string)($person['gender'] ?? '')) : self::dashKk($manual);
         }
         if (!$father || trim((string)($father['first_name'] ?? '')) === '') {
             return '';
@@ -93,7 +100,7 @@ class PatronymicService
      */
     public static function localizeManual(string $manual, string $gender): string
     {
-        if (!preg_match('/^(.+?)\s+(ұлы|улы|қызы|кызы)$/iu', $manual, $m)) {
+        if (!preg_match('/^(.+?)[\s\-]+(ұлы|улы|қызы|кызы)$/iu', $manual, $m)) {
             return $manual;
         }
         $male = in_array(mb_strtolower($m[2]), ['ұлы', 'улы'], true);
@@ -114,7 +121,7 @@ class PatronymicService
     public static function fatherName(array $person, ?array $father): string
     {
         $manual = trim((string)($person['middle_name'] ?? ''));
-        if ($manual !== '' && preg_match('/^(.+?)\s+(ұлы|улы|қызы|кызы)$/iu', $manual, $m)) {
+        if ($manual !== '' && preg_match('/^(.+?)[\s\-]+(ұлы|улы|қызы|кызы)$/iu', $manual, $m)) {
             return trim($m[1]);
         }
         if ($father) {

@@ -104,11 +104,14 @@ $dsThemeReady = !empty($dsThemeReady);
     </script>
     <?php endif; ?>
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
+    <!-- ALT-025: предзагрузка основных начертаний (текст и заголовки), остальные грузятся по мере надобности (font-display: swap) -->
+    <link rel="preload" href="/assets/fonts/lora-400.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/assets/fonts/lora-italic-700.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=24">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=9">
+    <link rel="stylesheet" href="/assets/css/book.css?v=10">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
@@ -128,7 +131,7 @@ $dsThemeReady = !empty($dsThemeReady);
     </style>
     <?php include __DIR__ . '/../partials/clan_tamga.php'; // TASK-030 ?>
 </head>
-<body>
+<body<?= in_array($activeNav, ['admin', 'history', 'clans'], true) ? ' class="ds-admin-ui"' : '' ?>>
 
     <!-- Линейные иконки (SVG-спрайт) -->
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">

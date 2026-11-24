@@ -12,7 +12,16 @@ require __DIR__ . '/../layout/master_start.php';
 
 $ru = (($lang === 'ru' || $lang === 'en' || $lang === 'es'));
 $f = $filters;
-$hasFilter = ($f['user'] > 0 || $f['date_from'] !== '' || $f['date_to'] !== '' || $f['person'] > 0 || $f['action'] !== '' || $f['table'] !== '' || $f['q'] !== '');
+$hasFilter = ($f['user'] > 0 || $f['date_from'] !== '' || $f['date_to'] !== '' || $f['person'] > 0 || $f['action'] !== '' || $f['table'] !== '' || $f['q'] !== '' || $f['kind'] !== '');
+// ALT-024: вкладки по видам действий (счётчики — при текущих остальных фильтрах)
+$kinds = [
+    ''        => $ru ? 'Все' : 'Барлығы',
+    'create'  => $ru ? 'Добавления' : 'Қосулар',
+    'update'  => $ru ? 'Изменения' : 'Өзгерістер',
+    'delete'  => $ru ? 'Удаления' : 'Жоюлар',
+    'restore' => $ru ? 'Восстановления' : 'Қалпына келтіру',
+    'account' => $ru ? 'Входы и аккаунты' : 'Кіру және аккаунттар',
+];
 $pages = max(1, (int)ceil($totalCount / max(1, $perPage)));
 $qs = static function (array $over) use ($f): string {
     $p = array_filter(array_merge($f, $over), static fn($v) => $v !== '' && $v !== 0 && $v !== null);
@@ -39,20 +48,24 @@ $actions = [
         </div>
     </div>
 
+    <!-- ALT-024: вкладки по видам -->
+    <nav class="hs-chips" aria-label="<?= $ru ? 'Вид действия' : 'Әрекет түрі' ?>">
+        <?php foreach ($kinds as $k => $lbl):
+            $cnt = $k === '' ? ($kindCounts['all'] ?? 0) : ($kindCounts[$k] ?? 0); ?>
+            <a class="hs-chip<?= $f['kind'] === $k ? ' is-active' : '' ?>" href="<?= htmlspecialchars($qs(['kind' => $k, 'page' => 1])) ?>"<?= $f['kind'] === $k ? ' aria-current="true"' : '' ?>>
+                <?= htmlspecialchars($lbl) ?> <b><?= (int)$cnt ?></b></a>
+        <?php endforeach; ?>
+    </nav>
+
     <!-- Фильтры -->
     <form method="GET" action="/history" class="island toolbar pp-filters" id="hsFilters">
+        <?php if ($f['kind'] !== ''): ?><input type="hidden" name="kind" value="<?= htmlspecialchars($f['kind']) ?>"><?php endif; ?>
         <input type="search" name="q" class="input" value="<?= htmlspecialchars($f['q']) ?>" maxlength="80"
                placeholder="<?= $ru ? 'Поиск по имени…' : 'Аты бойынша іздеу…' ?>" aria-label="<?= $ru ? 'Поиск по имени' : 'Аты бойынша іздеу' ?>">
         <select name="user" class="select" aria-label="<?= $ru ? 'Пользователь' : 'Пайдаланушы' ?>">
             <option value=""><?= $ru ? 'Пользователь: все' : 'Пайдаланушы: барлығы' ?></option>
             <?php foreach ($users as $u): ?>
                 <option value="<?= (int)$u['user_id'] ?>" <?= (int)$u['user_id'] === $f['user'] ? 'selected' : '' ?>><?= htmlspecialchars((string)$u['name']) ?></option>
-            <?php endforeach; ?>
-        </select>
-        <select name="action" class="select" aria-label="<?= $ru ? 'Действие' : 'Әрекет' ?>">
-            <option value=""><?= $ru ? 'Действие: все' : 'Әрекет: барлығы' ?></option>
-            <?php foreach ($actions as $k => $lbl): ?>
-                <option value="<?= $k ?>" <?= $f['action'] === $k ? 'selected' : '' ?>><?= htmlspecialchars($lbl) ?></option>
             <?php endforeach; ?>
         </select>
         <select name="table" class="select" aria-label="<?= $ru ? 'Объект' : 'Нысан' ?>">
@@ -80,12 +93,12 @@ $actions = [
             <table class="table hs-table" id="hsTable">
                 <thead>
                     <tr>
-                        <th class="hs-w-time"><?= $ru ? 'Когда' : 'Қашан' ?></th>
-                        <th class="hs-w-user"><?= $ru ? 'Кто' : 'Кім' ?></th>
-                        <th class="hs-w-act"><?= $ru ? 'Действие' : 'Әрекет' ?></th>
-                        <th class="hs-w-obj"><?= $ru ? 'Где / у кого' : 'Қайда / кімде' ?></th>
-                        <th><?= $ru ? 'Что (было → стало)' : 'Не өзгерді (бұрын → қазір)' ?></th>
-                        <th class="hs-w-roll actions"><?= $ru ? 'Откат' : 'Кері қайтару' ?></th>
+                        <th style="width:118px"><?= $ru ? 'Когда' : 'Қашан' ?></th>
+                        <th style="width:15%"><?= $ru ? 'Кто' : 'Кім' ?></th>
+                        <th style="width:100px"><?= $ru ? 'Действие' : 'Әрекет' ?></th>
+                        <th style="width:28%"><?= $ru ? 'Кого / что' : 'Кімді / нені' ?></th>
+                        <th><?= $ru ? 'Что изменено (по клику — было → стало)' : 'Не өзгерді (басқанда — бұрын → қазір)' ?></th>
+                        <th style="width:90px" class="actions"><?= $ru ? 'Откат' : 'Кері қайтару' ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,20 +118,26 @@ $actions = [
                             };
                             $who = (string)($l['who'] ?: ($ru ? 'Система' : 'Жүйе'));
                         ?>
-                            <tr data-log-id="<?= (int)$l['id'] ?>">
-                                <td class="muted small"><?= htmlspecialchars(date('d.m.Y H:i', strtotime((string)$l['created_at']))) ?></td>
-                                <td class="clip" title="<?= htmlspecialchars($who) ?>"><b><?= htmlspecialchars($who) ?></b></td>
-                                <td><span class="badge <?= $actClass ?>"><?= htmlspecialchars($l['verb']) ?></span></td>
-                                <td class="small">
-                                    <span class="muted"><?= htmlspecialchars($l['object_label']) ?>:</span><br>
+                            <?php
+                                $fieldNames = implode(', ', array_map(static fn($c) => (string)$c['field'], array_slice($l['changes'] ?? [], 0, 6)));
+                                if ($fieldNames === '') {
+                                    $fieldNames = (string)$l['summary'];
+                                }
+                            ?>
+                            <tr class="hs-row" data-log-id="<?= (int)$l['id'] ?>" tabindex="0" aria-expanded="false">
+                                <td class="hs-c-time muted"><?= htmlspecialchars(date('d.m.Y H:i', strtotime((string)$l['created_at']))) ?></td>
+                                <td title="<?= htmlspecialchars($who) ?>"><b><?= htmlspecialchars($who) ?></b></td>
+                                <td class="hs-c-act"><span class="badge <?= $actClass ?>"><?= htmlspecialchars($l['verb']) ?></span></td>
+                                <td title="<?= htmlspecialchars($l['object_label'] . ': ' . $l['object_name']) ?>">
+                                    <span class="muted"><?= htmlspecialchars($l['object_label']) ?>:</span>
                                     <?php if (!empty($l['link'])): ?>
                                         <a href="<?= htmlspecialchars($l['link']) ?>" class="pp-name"><?= htmlspecialchars($l['object_name']) ?></a>
                                     <?php else: ?>
                                         <?= htmlspecialchars($l['object_name']) ?>
                                     <?php endif; ?>
                                 </td>
-                                <td class="hs-summary"><?php include __DIR__ . '/_changes.php'; ?></td>
-                                <td class="actions">
+                                <td class="hs-c-brief" title="<?= htmlspecialchars($fieldNames) ?>"><?= htmlspecialchars($fieldNames) ?></td>
+                                <td class="actions hs-c-roll">
                                     <?php if (!empty($l['rolled_back'])): ?>
                                         <span class="badge"><?= $ru ? 'откачено' : 'қайтарылды' ?></span>
                                     <?php elseif (!empty($l['can_rollback'])): ?>
@@ -129,6 +148,9 @@ $actions = [
                                         <span class="muted">—</span>
                                     <?php endif; ?>
                                 </td>
+                            </tr>
+                            <tr class="hs-detail" hidden>
+                                <td colspan="6"><?php include __DIR__ . '/_changes.php'; ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -150,8 +172,29 @@ $actions = [
     .hs-changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
     .hs-old { text-decoration: line-through; opacity: .7; }
     .hs-new { font-weight: 600; }
+    .hs-row td { padding-top: 3px; padding-bottom: 3px; }
 </style>
 <script>
+    // ALT-024: клик по строке раскрывает «было → стало»
+    (function () {
+        const tb = document.querySelector('#hsTable tbody');
+        if (!tb) return;
+        const toggle = (row) => {
+            const d = row.nextElementSibling;
+            if (!d || !d.classList.contains('hs-detail')) return;
+            d.hidden = !d.hidden;
+            row.setAttribute('aria-expanded', d.hidden ? 'false' : 'true');
+        };
+        tb.addEventListener('click', (e) => {
+            if (e.target.closest('a, button')) return;
+            const row = e.target.closest('tr.hs-row');
+            if (row) toggle(row);
+        });
+        tb.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr.hs-row')) { e.preventDefault(); toggle(e.target); }
+        });
+    })();
+
     function hsNotify(message, type) {
         if (typeof showAppToast === 'function') { showAppToast(message, type); } else { alert(message); }
     }

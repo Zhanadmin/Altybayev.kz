@@ -122,6 +122,74 @@ class ChangeLogService
      */
     public function search(array $f, int $page = 1, int $perPage = self::PER_PAGE): array
     {
+        [$from, $p] = $this->build($f, true);
+
+        $st = $this->db->prepare("SELECT COUNT(*) $from");
+        $st->execute($p);
+        $total = (int)$st->fetchColumn();
+
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+        $sql = "SELECT a.*, COALESCE(u.name, a.user_name) AS who,
+                       TRIM(CONCAT_WS(' ', p.last_name, p.first_name, p.middle_name)) AS person_name,
+                       p.is_deleted AS person_is_deleted,
+                       m.husband_id, m.wife_id,
+                       TRIM(CONCAT_WS(' ', hp.last_name, hp.first_name)) AS husband_name,
+                       TRIM(CONCAT_WS(' ', wp.last_name, wp.first_name)) AS wife_name,
+                       pm.person_id AS media_person_id,
+                       EXISTS(SELECT 1 FROM audit_logs r
+                               WHERE r.action = 'ROLLBACK' AND r.entity_table = a.entity_table AND r.entity_id = a.entity_id
+                                 AND (r.summary LIKE CONCAT('%#', a.id, ' для%') OR r.summary LIKE CONCAT('%#', a.id, ':%'))) AS rolled_back
+                $from ORDER BY a.id DESC LIMIT " . (int)$perPage . ' OFFSET ' . (int)$offset;
+        $st = $this->db->prepare($sql);
+        $st->execute($p);
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['rows' => $this->enrich($rows), 'total' => $total];
+    }
+
+    /** ALT-024: виды действий для вкладок. */
+    public const KINDS = ['create', 'update', 'delete', 'restore', 'account'];
+
+    /** SQL-условие вида действий. */
+    private static function kindSql(string $kind): ?string
+    {
+        switch ($kind) {
+            case 'create':  return "a.action = 'CREATE'";
+            case 'update':  return "a.action = 'UPDATE'";
+            case 'delete':  return "a.action = 'DELETE'";
+            case 'restore': return "a.action IN ('RESTORE', 'ROLLBACK')";
+            case 'account': return "a.action NOT IN ('CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'ROLLBACK')";
+        }
+        return null;
+    }
+
+    /**
+     * ALT-024: счётчики по видам при текущих остальных фильтрах (без учёта вида и действия).
+     * @return array<string,int> ключи: all + KINDS
+     */
+    public function kindCounts(array $f): array
+    {
+        $f['kind'] = '';
+        $f['action'] = '';
+        [$from, $p] = $this->build($f, false);
+        $st = $this->db->prepare("SELECT SUM(1) AS n_all,
+                SUM(a.action = 'CREATE') AS n_create, SUM(a.action = 'UPDATE') AS n_update, SUM(a.action = 'DELETE') AS n_delete,
+                SUM(a.action IN ('RESTORE', 'ROLLBACK')) AS n_restore,
+                SUM(a.action NOT IN ('CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'ROLLBACK')) AS n_account
+                $from");
+        $st->execute($p);
+        $r = $st->fetch(PDO::FETCH_ASSOC) ?: [];
+        $out = ['all' => (int)($r['n_all'] ?? 0)];
+        foreach (self::KINDS as $k) {
+            $out[$k] = (int)($r['n_' . $k] ?? 0);
+        }
+        return $out;
+    }
+
+    /** @return array{0:string, 1:array} FROM ... WHERE и параметры */
+    private function build(array $f, bool $withKind): array
+    {
         $where = ['1=1'];
         $p = [];
 
@@ -157,6 +225,10 @@ class ChangeLogService
             $where[] = 'a.action = ?';
             $p[] = $action;
         }
+        $kindSql = $withKind ? self::kindSql((string)($f['kind'] ?? '')) : null;
+        if ($kindSql !== null) {
+            $where[] = $kindSql;
+        }
         $table = (string)($f['table'] ?? '');
         if ($table !== '' && isset(self::TABLES[$table])) {
             $where[] = 'a.entity_table = ?';
@@ -182,28 +254,7 @@ class ChangeLogService
                  LEFT JOIN person_media pm ON a.entity_table = 'person_media' AND pm.id = a.entity_id
                  WHERE " . implode(' AND ', $where);
 
-        $st = $this->db->prepare("SELECT COUNT(*) $from");
-        $st->execute($p);
-        $total = (int)$st->fetchColumn();
-
-        $page = max(1, $page);
-        $offset = ($page - 1) * $perPage;
-        $sql = "SELECT a.*, COALESCE(u.name, a.user_name) AS who,
-                       TRIM(CONCAT_WS(' ', p.last_name, p.first_name, p.middle_name)) AS person_name,
-                       p.is_deleted AS person_is_deleted,
-                       m.husband_id, m.wife_id,
-                       TRIM(CONCAT_WS(' ', hp.last_name, hp.first_name)) AS husband_name,
-                       TRIM(CONCAT_WS(' ', wp.last_name, wp.first_name)) AS wife_name,
-                       pm.person_id AS media_person_id,
-                       EXISTS(SELECT 1 FROM audit_logs r
-                               WHERE r.action = 'ROLLBACK' AND r.entity_table = a.entity_table AND r.entity_id = a.entity_id
-                                 AND (r.summary LIKE CONCAT('%#', a.id, ' для%') OR r.summary LIKE CONCAT('%#', a.id, ':%'))) AS rolled_back
-                $from ORDER BY a.id DESC LIMIT " . (int)$perPage . ' OFFSET ' . (int)$offset;
-        $st = $this->db->prepare($sql);
-        $st->execute($p);
-        $rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
-        return ['rows' => $this->enrich($rows), 'total' => $total];
+        return [$from, $p];
     }
 
     /** История одного человека (для карточки). */

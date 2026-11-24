@@ -13,17 +13,18 @@ $patrOf = static function (array $row, ?array $fatherRow) use ($patrLang): strin
 };
 $fullName = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '') . ' ' . $patrOf($person, $father ?? null));
 $title = $fullName;
-// ALT-022 (13:30): в заголовке карточки отчество/отец через тире. kk: «Фамилия Имя — Сағали ұлы»,
+// ALT-022 (13:30): в заголовке карточки отчество/отец через тире. kk: «Фамилия Имя Сағали-ұлы» (тире внутри отчества),
 // en/es: «Zhandos Altybayev — son of Sagali» / «— hijo de Sagali». ru — как в ALT-021, без тире.
 $headLine = $fullName;
 if ($lang === 'en' || $lang === 'es') {
     $fullName = trim(I18n::latinize(trim(($person['first_name'] ?? '') . ' ' . ($person['last_name'] ?? '')), $lang));
     $title = $fullName;
-    $headLine = $parentLabel !== '' ? $fullName . ' — ' . lcfirst($parentLabel) : $fullName;
+    $headLine = $parentLabel !== '' ? $fullName . ', ' . lcfirst($parentLabel) : $fullName;
 } elseif ($lang === 'kk') {
     $kkPatr = $patrOf($person, $father ?? null);
     if ($kkPatr !== '') {
-        $headLine = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '')) . ' — ' . $kkPatr;
+        // замечание 13:59: тире только внутри отчества («Сағали-ұлы»), после фамилии его нет
+        $headLine = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '') . ' ' . $kkPatr);
     }
 }
 $activeNav = 'persons';

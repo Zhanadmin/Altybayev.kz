@@ -151,7 +151,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
             $metaParts[] = $p['birth_place'];
         }
         ?>
-        <tr>
+        <tr class="pp-row" data-href="/person/<?= (int)$p['id'] ?>">
             <td class="num col-opt-md"><?= $idx ?></td>
 
             <!-- Тұлға -->
@@ -240,22 +240,11 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
 
             <!-- Әрекеттер -->
             <td class="actions">
-                <a href="/person/<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка' : 'Парақшасы' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка' : 'Парақша' ?>">
-                    <svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>
-                </a>
-                <a href="/tree?focus=<?= (int)$p['id'] ?>" class="btn btn-ghost btn-icon btn-action" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Показать в древе' : 'Шежіреде көрсету' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'В древе' : 'Шежіреде' ?>">
-                    <svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>
-                </a>
-                <?php if ($canEdit): ?>
-                    <button type="button" class="btn btn-ghost btn-icon" onclick="openGlobalPersonEditModal(<?= (int)$p['id'] ?>)" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Редактировать' : 'Өңдеу' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Редактировать' : 'Өңдеу' ?>">
-                        <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
-                    </button>
-                <?php endif; ?>
-                <?php if (!empty($isAdminRow) || in_array((int)$p['id'], $deletableIdsRow, true)): /* ALT-018 */ ?>
-                    <button type="button" class="btn btn-ghost btn-icon btn-danger" onclick="pdDelete(<?= (int)$p['id'] ?>, this)" data-name="<?= htmlspecialchars(trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''))) ?>" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>" data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>">
-                        <svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>
-                    </button>
-                <?php endif; ?>
+                <?php $canDelRow = (!empty($isAdminRow) || in_array((int)$p['id'], $deletableIdsRow, true)); /* ALT-023: меню «⋯» вместо кнопок; удаление — ALT-018 */ ?>
+                <button type="button" class="btn btn-ghost btn-icon pp-more" aria-haspopup="menu" aria-expanded="false"
+                        data-id="<?= (int)$p['id'] ?>" data-edit="<?= $canEdit ? '1' : '0' ?>" data-del="<?= $canDelRow ? '1' : '0' ?>"
+                        data-name="<?= htmlspecialchars(trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''))) ?>"
+                        aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Действия' : 'Әрекеттер' ?>">⋯</button>
             </td>
         </tr>
         <?php
@@ -278,7 +267,7 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
             <th class="col-opt-lg pp-w-rel"><?= htmlspecialchars(I18n::t('th_parents')) ?></th>
             <th class="col-opt-xl pp-w-rel"><?= htmlspecialchars(I18n::t('th_spouses')) ?></th>
             <th class="col-opt-md pp-w-kin"><?= htmlspecialchars(I18n::t('th_kinship')) ?></th>
-            <th class="actions <?= $canEdit ? 'pp-w-act3' : 'pp-w-act2' ?>"><span class="pp-sr"><?= htmlspecialchars(I18n::t('th_actions')) ?></span></th>
+            <th class="actions pp-w-act"><span class="pp-sr"><?= htmlspecialchars(I18n::t('th_actions')) ?></span></th>
         </tr>
     </thead>
     <?php
@@ -352,6 +341,49 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
 function pdDelete(id, btn) { // ALT-018
     altDeletePerson(id, btn.dataset.name, { lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($csrfToken ?? '') ?>, onDone: function () { window.location.reload(); } });
 }
+</script>
+<script>
+(function () { // ALT-023: клик по строке — карточка; «⋯» — меню действий
+    var ru = <?= json_encode($lang === 'ru' || $lang === 'en' || $lang === 'es') ?>;
+    var L = ru ? {tree: 'В шежіре', edit: 'Редактировать', del: 'Удалить'} : {tree: 'Шежіреде', edit: 'Өңдеу', del: 'Жою'};
+    var menu = document.createElement('div');
+    menu.className = 'pp-menu'; menu.setAttribute('role', 'menu'); menu.hidden = true;
+    document.body.appendChild(menu);
+    var cur = null;
+    function close() { menu.hidden = true; if (cur) cur.setAttribute('aria-expanded', 'false'); cur = null; }
+    function item(text, cls, fn, href) {
+        var el = document.createElement(href ? 'a' : 'button');
+        if (href) el.href = href; else el.type = 'button';
+        el.className = 'pp-menu-item' + (cls ? ' ' + cls : ''); el.setAttribute('role', 'menuitem'); el.textContent = text;
+        if (fn) el.addEventListener('click', function () { var b = cur; close(); fn(b); });
+        menu.appendChild(el);
+    }
+    function open(btn) {
+        var id = parseInt(btn.dataset.id, 10);
+        menu.innerHTML = '';
+        item(L.tree, '', null, '/tree?focus=' + id);
+        if (btn.dataset.edit === '1') item(L.edit, '', function () { openGlobalPersonEditModal(id); });
+        if (btn.dataset.del === '1') item(L.del, 'is-danger', function (b) { pdDelete(id, b); });
+        menu.hidden = false; cur = btn; btn.setAttribute('aria-expanded', 'true');
+        var r = btn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+        var left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw));
+        var top = r.bottom + 4; if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 4);
+        menu.style.left = left + 'px'; menu.style.top = top + 'px';
+    }
+    document.addEventListener('click', function (e) {
+        var more = e.target.closest('.pp-more');
+        if (more) { e.stopPropagation(); if (cur === more) close(); else open(more); return; }
+        if (menu.contains(e.target)) return;
+        close();
+        var row = e.target.closest('tr.pp-row');
+        if (row && !e.target.closest('a, button')) {
+            var sel = window.getSelection ? String(window.getSelection()) : '';
+            if (!sel) window.location.href = row.dataset.href;
+        }
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    window.addEventListener('scroll', close, true); window.addEventListener('resize', close);
+})();
 </script>
 <script>
 (function() {

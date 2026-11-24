@@ -46,7 +46,7 @@ eq(P::resolve(['gender' => 'M', 'middle_name' => 'Ерлан ұлы'], null, 'en
 eq(P::resolve(['gender' => 'M'], ['first_name' => 'Ерлан'], 'es'), '', 'resolve es — пусто');
 // kk/ru не сломаны
 eq(P::resolve(['gender' => 'M'], ['first_name' => 'Ерлан'], 'ru'), 'Ерланович', 'ru без изменений');
-eq(P::resolve(['gender' => 'M'], ['first_name' => 'Ерлан'], 'kk'), 'Ерлан ұлы', 'kk без изменений');
+eq(P::resolve(['gender' => 'M'], ['first_name' => 'Ерлан'], 'kk'), 'Ерлан-ұлы', 'kk: тире внутри отчества');
 
 echo $fails === 0 ? "ALL OK\n" : "FAILS: $fails\n";
 exit($fails === 0 ? 0 : 1);

@@ -703,6 +703,27 @@ class I18n
     public static function translateText(string $text, bool $latinizeNames = true, ?string $to = null): string
     {
         $to = $to ?? self::lang();
+        if ($to !== 'en' && $to !== 'es') {
+            return $text;
+        }
+        // ALT-022 (скорость): текст без кириллицы переводить нечего; одинаковые подписи на странице
+        // (кнопки, годы, имена) переводятся один раз за запрос — раньше каждый узел шёл через ~35 регулярок.
+        static $cache = [];
+        $key = $to . ($latinizeNames ? '1' : '0') . $text;
+        if (isset($cache[$key])) {
+            return $cache[$key];
+        }
+        if (!preg_match('/[\p{Cyrillic}]/u', $text) && !isset(($to === 'es' ? self::esPhrases() : self::enPhrases())[trim($text)])) {
+            return $cache[$key] = $text;
+        }
+        if (count($cache) > 20000) {
+            $cache = [];
+        }
+        return $cache[$key] = self::translateTextUncached($text, $latinizeNames, $to);
+    }
+
+    private static function translateTextUncached(string $text, bool $latinizeNames, string $to): string
+    {
         if ($to === 'es') {
             return self::translateTextEs($text, $latinizeNames);
         }
@@ -954,6 +975,12 @@ class I18n
             ) ?? $out;
         }
         if ($latinizeNames && preg_match($cyr, $out)) {
+            // «Алга РК» → «Alga, Kazakhstan» / «Alga, Kazajistán»: страна словом нужного языка
+            $out = preg_replace(
+                '/^(.+?)[,\s]+(?:РК|Республика Казахстан|Казахстан|Қазақстан)$/u',
+                '$1, ' . ($lang === 'es' ? 'Kazajistán' : 'Kazakhstan'),
+                $out
+            ) ?? $out;
             $out = preg_replace_callback(
                 '/[\p{Cyrillic}]+(?:-[\p{Cyrillic}]+)*/u',
                 static fn(array $m): string => self::latinize($m[0], $lang),

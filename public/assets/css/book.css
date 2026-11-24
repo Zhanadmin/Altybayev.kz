@@ -524,3 +524,38 @@ textarea { font-size: 16px; }
 .pp-table th { font-size: 15px; }
 .table td, .table th { font-size: 16px; }
 .kin, .small { font-size: 15px; }
+
+/* =====================================================================
+ * ALT-024: админская часть (/admin, журнал, ру, корзина, пользователи, приглашения) —
+ * компактно: шрифт 13–14px, плотные строки, кнопки ~32px. Правило ALT-020 («крупно») здесь не действует.
+ * ===================================================================== */
+.ds-admin-ui .ds-page { font-size: 14px; line-height: 1.4; }
+.ds-admin-ui .ds-page .btn, .ds-admin-ui .ds-page .btn-sm { min-height: 32px; height: 32px; font-size: 13px; padding: 0 10px; }
+.ds-admin-ui .ds-page .btn-icon { min-width: 32px; width: 32px; min-height: 32px; height: 32px; }
+.ds-admin-ui .ds-page .input, .ds-admin-ui .ds-page .select, .ds-admin-ui .ds-page input[type="text"], .ds-admin-ui .ds-page input[type="search"],
+.ds-admin-ui .ds-page input[type="email"], .ds-admin-ui .ds-page input[type="password"], .ds-admin-ui .ds-page input[type="date"],
+.ds-admin-ui .ds-page input[type="number"], .ds-admin-ui .ds-page select { min-height: 32px; height: 32px; font-size: 13px; padding-top: 0; padding-bottom: 0; }
+.ds-admin-ui .ds-page .table td, .ds-admin-ui .ds-page .table th { font-size: 13px; padding-top: 4px; padding-bottom: 4px; line-height: 1.35; }
+.ds-admin-ui .ds-page .small, .ds-admin-ui .ds-page .kin { font-size: 13px; }
+.ds-admin-ui .ds-page .badge { font-size: 12px; padding: 1px 8px; }
+.ds-admin-ui .ds-page h1 { font-size: 22px; }
+.ds-admin-ui .ds-page h3 { font-size: 16px; }
+.ds-admin-ui .ds-page p, .ds-admin-ui .ds-page li { font-size: 13px; }
+.ds-admin-ui .ad, .ds-admin-ui .hs { gap: var(--sp-3); }
+.ds-admin-ui .ds-page .island { padding: var(--sp-3); }
+.ds-admin-ui .ds-page .island.hs-island { padding: 0; }
+/* журнал изменений: одна строка на запись, подробности по клику */
+.hs-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hs-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid var(--c-border-strong); background: var(--c-island-2); color: var(--c-text); font-size: 13px; text-decoration: none; cursor: pointer; }
+.hs-chip b { font-weight: 600; font-size: 12px; color: var(--c-text-2); }
+.hs-chip.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.hs-chip.is-active b { color: #fff; }
+.hs-row { cursor: pointer; }
+.hs-row:hover td { background: var(--c-island-2); }
+.hs-row td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; vertical-align: middle; }
+.hs-row td.hs-c-time { max-width: none; width: 118px; }
+.hs-row td.hs-c-act { max-width: none; width: 100px; }
+.hs-row td.hs-c-roll { max-width: none; width: 90px; text-align: right; }
+.hs-row td.hs-c-brief { color: var(--c-text-2); }
+.hs-detail td { background: var(--c-island-2); white-space: normal; padding: 6px 12px; }
+.hs-detail[hidden] { display: none; }

@@ -38,18 +38,24 @@ class HistoryController
             'action'    => trim((string)$request->get('action', '')),
             'table'     => trim((string)$request->get('table', '')),
             'q'         => trim((string)$request->get('q', '')),
+            'kind'      => trim((string)$request->get('kind', '')),
         ];
+        if (!in_array($filters['kind'], ChangeLogService::KINDS, true)) {
+            $filters['kind'] = '';
+        }
         $page = max(1, (int)$request->get('page', 1));
 
         $logs = [];
         $total = 0;
         $users = [];
         $personName = '';
+        $kindCounts = [];
         if ($svc->isReady()) {
             $res = $svc->search($filters, $page);
             $logs = $res['rows'];
             $total = $res['total'];
             $users = $svc->users();
+            $kindCounts = $svc->kindCounts($filters);
             if ($filters['person'] > 0) {
                 $st = $db->prepare("SELECT TRIM(CONCAT_WS(' ', last_name, first_name, middle_name)) FROM persons WHERE id = ?");
                 $st->execute([$filters['person']]);
@@ -65,6 +71,7 @@ class HistoryController
             'page'         => $page,
             'perPage'      => ChangeLogService::PER_PAGE,
             'users'        => $users,
+            'kindCounts'   => $kindCounts,
             'personName'   => $personName,
             'filters'      => $filters,
             'tableLabels'  => ChangeLogService::tableLabels(I18n::lang()),

@@ -3236,10 +3236,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         <div class="nav-right">
             <!-- Тіл ауыстырғыш (Қаз / Рус) -->
             <div class="lang-switcher">
-                <button class="lang-btn active" id="langBtnKk" onclick="setLanguage('kk')">ҚАЗ</button>
-                <button class="lang-btn" id="langBtnRu" onclick="setLanguage('ru')">РУС</button>
-                <button class="lang-btn" id="langBtnEn" onclick="setLanguage('en')">ENG</button>
-                <button class="lang-btn" id="langBtnEs" onclick="setLanguage('es')">ESP</button>
+                <button class="lang-btn active" id="langBtnKk" onclick="setLanguage('kk', true)">ҚАЗ</button>
+                <button class="lang-btn" id="langBtnRu" onclick="setLanguage('ru', true)">РУС</button>
+                <button class="lang-btn" id="langBtnEn" onclick="setLanguage('en', true)">ENG</button>
+                <button class="lang-btn" id="langBtnEs" onclick="setLanguage('es', true)">ESP</button>
             </div>
 
             <!-- Іздеу жолы -->
@@ -4401,6 +4401,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             'Адам қосу': 'Add person',
             'Бала қосу': 'Add child',
             'Барлығы': 'All',
+            // ALT-022 (замечание 14:10): подписи боковой панели — перевод, а не транслитерация
+            'Жеті атасын көру / тексеру': 'View seven generations',
+            'Үш жұртын көру / Три журта': 'View three kin groups (Ush zhurt)',
+            'ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕР': 'Voice and memories',
+            'Жазба қосу': 'Add recording',
+            'Әзірге үн жазбасы мен естеліктер қосылмаған. «Жазба қосу» батырмасын басыңыз.': 'No voice recordings or memories have been added yet. Click “Add recording”.',
+            'белгісіз': 'unknown',
+            'неизвестен': 'unknown',
+            'не указан': 'not specified',
+            'Жүктелуде...': 'Loading...',
+            'Жүктеу қатесі': 'Loading error',
+            'Аудиожазбалар (ақсақалдар үні)': 'Audio recordings (voices of elders)',
+            'Естеліктер мен тарих': 'Memories and history',
+            'Архивтік фотосуреттер': 'Archive photos',
         };
 
         // ALT-007: испанские подписи для динамических элементов древа.
@@ -4538,6 +4552,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             'Адам қосу': 'Añadir persona',
             'Бала қосу': 'Añadir hijo',
             'Барлығы': 'Todos',
+            // ALT-022 (замечание 14:10)
+            'Жеті атасын көру / тексеру': 'Ver las siete generaciones',
+            'Үш жұртын көру / Три журта': 'Ver los tres linajes (Üsh zhurt)',
+            'ДАУЫС ЖӘНЕ ЕСТЕЛІКТЕР': 'Voz y recuerdos',
+            'Жазба қосу': 'Añadir grabación',
+            'Әзірге үн жазбасы мен естеліктер қосылмаған. «Жазба қосу» батырмасын басыңыз.': 'Aún no se han añadido grabaciones de voz ni recuerdos. Pulse «Añadir grabación».',
+            'белгісіз': 'desconocido',
+            'неизвестен': 'desconocido',
+            'не указан': 'no indicado',
+            'Жүктелуде...': 'Cargando...',
+            'Жүктеу қатесі': 'Error de carga',
+            'Аудиожазбалар (ақсақалдар үні)': 'Grabaciones de audio (voces de los mayores)',
+            'Естеліктер мен тарих': 'Recuerdos e historia',
+            'Архивтік фотосуреттер': 'Fotografías de archivo',
         };
 
         // ALT-007 (замечание 21:29): транслитерация имён в латиницу (схема как в I18n::latinize).
@@ -4563,6 +4591,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             return s.split('').map(ch => (es && ch in LATIN_MAP_ES) ? LATIN_MAP_ES[ch] : (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
         }
 
+        // ALT-022 (замечание 14:10): остаток кириллицы (имена, места) — в латиницу; «РК» → страна по-языку.
+        function finishTreeCyr(out, lang) {
+            const country = lang === 'es' ? 'Kazajistán' : 'Kazakhstan';
+            out = out.replace(/^(.+?)[,\s]+(?:РК|Республика Казахстан|Казахстан|Қазақстан)$/, (m, a) => a + ', ' + country);
+            return out.replace(/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]+(?:-[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]+)*/g, w => latinize(w, lang));
+        }
+
         function enTreeText(value) {
             let s = String(value || '');
             const core = s.trim();
@@ -4573,7 +4608,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             let m;
             if ((m = core.match(/^\+(\d+)\s+предков$/))) return lead + '+' + m[1] + ' ancestors' + trail;
             if ((m = core.match(/^\+(\d+)\s+потомков$/))) return lead + '+' + m[1] + ' descendants' + trail;
-            if ((m = core.match(/^(\d+)\s*(год|года|лет)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'year' : 'years') + trail;
+            if ((m = core.match(/^(≈?)\s*(\d+)\s*(год|года|лет)$/))) return lead + m[1] + m[2] + ' ' + (Number(m[2]) === 1 ? 'year' : 'years') + trail;
             if ((m = core.match(/^(\d+)\s*(дн\.?|день|дня|дней)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'day' : 'days') + trail;
             if ((m = core.match(/^Через\s+(\d+)\s*дн\.?$/))) return lead + 'In ' + m[1] + ' days' + trail;
             if ((m = core.match(/^(\d+)\s*(детей|ребёнка|ребенка)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'child' : 'children') + trail;
@@ -4604,6 +4639,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 Object.keys(EN_TREE).sort((a, b) => b.length - a.length).forEach(k => {
                     if (k.length >= 6 && out.includes(k)) out = out.split(k).join(EN_TREE[k]);
                 });
+                out = finishTreeCyr(out, 'en');
             }
             return lead + out + trail;
         }
@@ -4618,7 +4654,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             let m;
             if ((m = core.match(/^\+(\d+)\s+предков$/))) return lead + '+' + m[1] + ' antepasados' + trail;
             if ((m = core.match(/^\+(\d+)\s+потомков$/))) return lead + '+' + m[1] + ' descendientes' + trail;
-            if ((m = core.match(/^(\d+)\s*(год|года|лет)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'año' : 'años') + trail;
+            if ((m = core.match(/^(≈?)\s*(\d+)\s*(год|года|лет)$/))) return lead + m[1] + m[2] + ' ' + (Number(m[2]) === 1 ? 'año' : 'años') + trail;
             if ((m = core.match(/^(\d+)\s*(дн\.?|день|дня|дней)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'día' : 'días') + trail;
             if ((m = core.match(/^Через\s+(\d+)\s*дн\.?$/))) return lead + 'En ' + m[1] + ' días' + trail;
             if ((m = core.match(/^(\d+)\s*(детей|ребёнка|ребенка)$/))) return lead + m[1] + ' ' + (Number(m[1]) === 1 ? 'hijo' : 'hijos') + trail;
@@ -4649,6 +4685,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 Object.keys(ES_TREE).sort((a, b) => b.length - a.length).forEach(k => {
                     if (k.length >= 6 && out.includes(k)) out = out.split(k).join(ES_TREE[k]);
                 });
+                out = finishTreeCyr(out, 'es');
             }
             return lead + out + trail;
         }
@@ -4712,11 +4749,28 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         // ТІЛДІ ОРНАТУ ЖӘНЕ БАРЛЫҚ ЖАЗБАЛАРДЫ БІР СӘТТЕ АУЫСТЫРУ
-        function setLanguage(lang) {
+        // ALT-022: язык, на котором сервер отрисовал страницу
+        const pageRenderedLang = <?= json_encode(\App\Core\I18n::lang()) ?>;
+        function setLanguage(lang, userInitiated) {
             if (!i18n[lang]) lang = 'kk';
+            const previousLang = currentLang;
             currentLang = lang;
             localStorage.setItem('shezhire_lang', lang);
             document.cookie = `shezhire_lang=${lang}; path=/; max-age=31536000`;
+
+            // ALT-022: клиентский перевод DOM односторонний (текст уже заменён на en/es и назад не
+            // возвращается), поэтому при смене языка пользователем перезагружаем страницу на новом
+            // языке, сохраняя выбранного человека и режим. Так ни одна надпись не остаётся на прежнем языке.
+            if (userInitiated === true && (lang !== previousLang || lang !== pageRenderedLang)) {
+                try {
+                    const u = new URL(window.location.href);
+                    u.searchParams.set('lang', lang);
+                    if (selectedPersonId) { u.searchParams.set('focus', String(selectedPersonId)); u.searchParams.delete('id'); }
+                    if (currentMode === 'list') u.searchParams.set('mode', 'list'); else u.searchParams.delete('mode');
+                    window.location.href = u.toString();
+                    return;
+                } catch (e) { /* ниже — прежний путь без перезагрузки */ }
+            }
 
             document.getElementById('langBtnKk').classList.toggle('active', lang === 'kk');
             document.getElementById('langBtnRu').classList.toggle('active', lang === 'ru');
@@ -6002,11 +6056,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const isEnEs = (currentLang === 'en' || currentLang === 'es');
             let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${isEnEs ? '' : (currentLang === 'ru' ? (p.middle_name_ru || p.middle_name || '') : (p.middle_name_kk || p.middle_name || ''))}`.trim();
             if (p.maiden_name) {
-                fullNameDisplay += ` (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
+                fullNameDisplay += ` (${currentLang === 'en' ? 'née' : (currentLang === 'es' ? 'de soltera' : (currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'))} ${p.maiden_name})`;
             }
             let parentLine = '';
             if (isEnEs && (p.gender === 'M' || p.gender === 'F')) {
-                const pm = String(p.middle_name_kk || p.middle_name || '').match(/^(.+?)\s+(ұлы|улы|қызы|кызы)$/i);
+                const pm = String(p.middle_name_kk || p.middle_name || '').match(/^(.+?)[\s\-]+(ұлы|улы|қызы|кызы)$/i);
                 if (pm) {
                     const fn = latinize(pm[1].trim(), currentLang);
                     parentLine = currentLang === 'en'
@@ -6016,7 +6070,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
             const panelNameEl = document.getElementById('panelPersonName');
             if (parentLine) {
-                panelNameEl.innerText = fullNameDisplay + ' — ' + parentLine.charAt(0).toLowerCase() + parentLine.slice(1);
+                panelNameEl.innerText = fullNameDisplay + ', ' + parentLine.charAt(0).toLowerCase() + parentLine.slice(1);
             } else {
                 panelNameEl.innerText = fullNameDisplay;
             }
@@ -6069,6 +6123,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             // Жүктелген дауыс, естеліктер мен фотосуреттерді шығару (TASK-004)
             loadPersonMedia(p.id);
+
+            // ALT-022: имя, место, возраст, подписи панели — на язык (en/es), без кириллицы
+            scheduleEnTreeTranslate(document.getElementById('sideProfilePanel'));
+            scheduleEsTreeTranslate(document.getElementById('sideProfilePanel'));
 
             openSidePanel();
         }
@@ -7406,6 +7464,15 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // ========================================================
         let currentMediaTab = 'audio';
 
+        // ALT-022: только служебные подписи блока (заголовки и сообщения), пользовательские тексты не трогаем
+        function translatePanelLabels(container) {
+            if (currentLang !== 'en' && currentLang !== 'es') return;
+            const fn = currentLang === 'en' ? enTreeText : esTreeText;
+            container.querySelectorAll('.side-sub-title, .pm-msg').forEach(el => {
+                if (el.children.length === 0) el.textContent = fn(el.textContent);
+            });
+        }
+
         async function loadPersonMedia(personId) {
             const container = document.getElementById('panelMediaContainer');
             if (!container) return;
@@ -7422,6 +7489,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = json.data;
                 if (data.total_count === 0) {
                     container.innerHTML = '<div class="pm-msg">Әзірге үн жазбасы мен естеліктер қосылмаған. «Жазба қосу» батырмасын басыңыз.</div>';
+                    translatePanelLabels(container);
                     return;
                 }
 
@@ -7479,6 +7547,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 }
 
                 container.innerHTML = html;
+                translatePanelLabels(container);
             } catch (e) {
                 container.innerHTML = `<div class="pm-msg is-error">Қате: ${e.message}</div>`;
             }

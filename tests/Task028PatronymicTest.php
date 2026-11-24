@@ -9,8 +9,8 @@ function chk(bool $ok, string $m): void { global $fails; echo ($ok ? 'OK   ' : '
 function eq(string $got, string $exp, string $m): void { chk($got === $exp, $m . ' => «' . $got . '»' . ($got === $exp ? '' : ' (ждали «' . $exp . '»)')); }
 
 // на согласную
-eq(P::generate('Ғабит', 'M', 'kk'), 'Ғабит ұлы', 'Ғабит M kk');
-eq(P::generate('Ғабит', 'F', 'kk'), 'Ғабит қызы', 'Ғабит F kk');
+eq(P::generate('Ғабит', 'M', 'kk'), 'Ғабит-ұлы', 'Ғабит M kk');
+eq(P::generate('Ғабит', 'F', 'kk'), 'Ғабит-қызы', 'Ғабит F kk');
 eq(P::generate('Ғабит', 'M', 'ru'), 'Габитович', 'Ғабит M ru');
 eq(P::generate('Ғабит', 'F', 'ru'), 'Габитовна', 'Ғабит F ru');
 eq(P::generate('Нұрлан', 'M', 'ru'), 'Нурланович', 'Нұрлан M ru');
@@ -18,7 +18,7 @@ eq(P::generate('Қайрат', 'F', 'ru'), 'Кайратовна', 'Қайрат
 // на -й
 eq(P::generate('Сарсенбай', 'M', 'ru'), 'Сарсенбаевич', 'Сарсенбай M ru');
 eq(P::generate('Сарсенбай', 'F', 'ru'), 'Сарсенбаевна', 'Сарсенбай F ru');
-eq(P::generate('Сарсенбай', 'M', 'kk'), 'Сарсенбай ұлы', 'Сарсенбай M kk');
+eq(P::generate('Сарсенбай', 'M', 'kk'), 'Сарсенбай-ұлы', 'Сарсенбай M kk');
 // на -ь
 eq(P::generate('Игорь', 'M', 'ru'), 'Игоревич', 'Игорь M ru');
 // на шипящую
@@ -32,13 +32,13 @@ eq(P::generate('Ахмету', 'M', 'ru'), 'Ахметович', 'Ахмету M
 eq(P::generate('Мусы', 'M', 'ru'), 'Мусаевич', 'Мусы M ru');
 eq(P::generate('Ерлан', 'M', 'ru'), 'Ерланович', 'Ерлан M ru');
 eq(P::generate('Ерлан', 'F', 'ru'), 'Ерлановна', 'Ерлан F ru');
-eq(P::generate('Ерлан', 'F', 'kk'), 'Ерлан қызы', 'Ерлан F kk');
+eq(P::generate('Ерлан', 'F', 'kk'), 'Ерлан-қызы', 'Ерлан F kk');
 eq(P::generate('Ахмет Сарсенбай', 'M', 'ru'), 'Ахмет Сарсенбаевич', 'составное имя');
 // ручное «X ұлы» при ru -> русская форма, при kk без изменений
 eq(P::resolve(['gender' => 'M', 'middle_name' => 'Ерлан ұлы'], null, 'ru'), 'Ерланович', 'ручное ұлы ru');
 eq(P::resolve(['gender' => 'F', 'middle_name' => 'Ерлан қызы'], null, 'ru'), 'Ерлановна', 'ручное қызы ru');
-eq(P::resolve(['gender' => 'F', 'middle_name' => 'Ерлан қызы'], null, 'kk'), 'Ерлан қызы', 'ручное қызы kk');
-eq(P::generate('Мұрата', 'M', 'kk'), 'Мұрата ұлы', 'Мұрата M kk');
+eq(P::resolve(['gender' => 'F', 'middle_name' => 'Ерлан қызы'], null, 'kk'), 'Ерлан-қызы', 'ручное қызы kk');
+eq(P::generate('Мұрата', 'M', 'kk'), 'Мұрата-ұлы', 'Мұрата M kk');
 // словарь исключений
 eq(P::generate('Илья', 'M', 'ru'), 'Ильич', 'Илья M ru');
 eq(P::generate('Илья', 'F', 'ru'), 'Ильинична', 'Илья F ru');
@@ -48,10 +48,10 @@ eq(P::generate('', 'M', 'kk'), '', 'нет имени отца');
 
 // resolve: ручное значение приоритетнее и не затирается
 $father = ['first_name' => 'Ғабит'];
-eq(P::resolve(['gender' => 'M', 'middle_name' => ''], $father, 'kk'), 'Ғабит ұлы', 'resolve авто kk');
+eq(P::resolve(['gender' => 'M', 'middle_name' => ''], $father, 'kk'), 'Ғабит-ұлы', 'resolve авто kk');
 eq(P::resolve(['gender' => 'M', 'middle_name' => null], $father, 'ru'), 'Габитович', 'resolve авто ru');
 eq(P::resolve(['gender' => 'F', 'middle_name' => ''], $father, 'ru'), 'Габитовна', 'resolve сестра ru');
-eq(P::resolve(['gender' => 'F', 'middle_name' => ''], $father, 'kk'), 'Ғабит қызы', 'resolve сестра kk');
+eq(P::resolve(['gender' => 'F', 'middle_name' => ''], $father, 'kk'), 'Ғабит-қызы', 'resolve сестра kk');
 eq(P::resolve(['gender' => 'M', 'middle_name' => 'Ручное'], $father, 'ru'), 'Ручное', 'ручное приоритетнее');
 eq(P::resolve(['gender' => 'M', 'middle_name' => ''], null, 'ru'), '', 'нет отца');
 

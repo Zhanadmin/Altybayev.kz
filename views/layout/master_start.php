@@ -111,7 +111,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="stylesheet" href="/assets/css/design-system.css?v=31">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=12">
+    <link rel="stylesheet" href="/assets/css/book.css?v=13">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */

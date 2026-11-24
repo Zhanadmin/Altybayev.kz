@@ -452,6 +452,15 @@ h1, h2, h3, .ds-brand-title, .book-page .ribbon-lg { font-family: var(--font-scr
 .fm .pc-tag.fm-uzatylgan { border-style: solid; border-color: var(--c-border-strong); opacity: 1; font-style: normal; color: var(--c-text); }
 .fm-card:target { border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent); }
 .fm-foot { border-top: 1px dashed var(--c-border-strong); }
+/* ALT-047: карточки шире, имена целиком (без переноса внутри слова), кнопки внутри рамки */
+.fm-grid { grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 460px)); }
+.fm-kids-row { grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 460px)); }
+.fm-pair { grid-template-columns: minmax(min-content, 1fr) auto minmax(min-content, 1fr); }
+.fm-spouse { padding: 8px 10px; }
+.fm-name, .fm .pc-tag, .fm .maiden-it { hyphens: none; -webkit-hyphens: none; overflow-wrap: normal; word-break: normal; }
+.fm-name { font-size: 17px; }
+.fm-foot { flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 0; }
+.fm-foot .btn { max-width: 100%; white-space: normal; text-align: center; }
 @media (max-width: 480px) {
     .fm-pair { grid-template-columns: 1fr; }
     .fm-rings { justify-self: center; }

@@ -3033,6 +3033,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
         svg.connections-layer line { stroke: var(--c-bark); }
         svg.connections-layer line[stroke-dasharray] { stroke: var(--c-accent); }
+        /* ALT-059: разведённые — серый пунктир и пометка «ажырасқан», без общей рамки */
+        svg.connections-layer line.marriage-ended { stroke: #94a3b8; }
+        .marriage-edge-badge.is-divorced {
+            width: auto; height: auto; min-width: 0; padding: 2px 8px;
+            border-radius: 10px; border: 1px dashed #94a3b8; color: #64748b;
+            font-size: 11px; line-height: 1.3; font-weight: 600; white-space: nowrap;
+            background: var(--c-island);
+        }
 
         /* ореол семьи и плашка пары */
         .family-aura { border: 1.5px dashed var(--c-accent); opacity: .9; }
@@ -5063,6 +5071,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 treeData.layout.couples.forEach(cp => {
                     const plateEl = document.createElement('div');
                     plateEl.className = 'couple-unit-plate';
+                    plateEl.dataset.members = (cp.member_ids || [cp.husband_id, cp.wife_id]).join(',');
                     plateEl.style.left = `${cp.x}px`;
                     plateEl.style.top = `${cp.y}px`;
                     plateEl.style.width = `${cp.width}px`;
@@ -5186,17 +5195,26 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     line.setAttribute('y1', m.y1);
                     line.setAttribute('x2', m.x2);
                     line.setAttribute('y2', m.y2);
-                    line.setAttribute('stroke', '#ec4899');
+                    // ALT-059: действующий брак — розовая линия и кольца внутри общей рамки;
+                    // разведённые — серый пунктир и пометка «ажырасқан», вне рамки
+                    const ruLang = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es');
+                    line.setAttribute('stroke', m.is_divorced ? '#94a3b8' : '#ec4899');
                     line.setAttribute('stroke-width', '2.5');
-                    line.setAttribute('stroke-dasharray', '5 4');
+                    line.setAttribute('stroke-dasharray', m.is_divorced ? '3 5' : '5 4');
+                    if (m.is_divorced) line.classList.add('marriage-ended');
                     svg.appendChild(line);
 
                     const badge = document.createElement('div');
-                    badge.className = 'marriage-edge-badge';
+                    badge.className = 'marriage-edge-badge' +(m.is_divorced ? ' is-divorced' : '');
                     badge.style.left = `${m.mid_x}px`;
                     badge.style.top = `${m.mid_y}px`;
-                    badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
-                    badge.title = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Супружеский союз' : 'Некелік одақ';
+                    if (m.is_divorced) {
+                        badge.textContent = ruLang ? 'развод' : 'ажырасқан';
+                        badge.title = (ruLang ? 'В разводе' : 'Ажырасқан') + (m.years ? ` (${m.years})` : '');
+                    } else {
+                        badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
+                        badge.title = ruLang ? 'Супружеский союз' : 'Некелік одақ';
+                    }
                     container.appendChild(badge);
                 });
 

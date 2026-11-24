@@ -27,6 +27,7 @@ class TreeLayoutService
     public const CARD_WIDTH = 260;
     public const CARD_HEIGHT = 120;
     public const GAP_SPOUSE = 12; // Общая плашка пары: карточки вплотную
+    public const GAP_ENDED = 64; // ALT-059: между бывшими супругами — шире, без общей рамки, чтобы поместилась пометка «ажырасқан»
     public const GAP_SIBLING = 55; // Зазор между семейными блоками братьев
     public const ROW_HEIGHT = 220; // 120px карточка + 100px канал для связей
 
@@ -508,6 +509,14 @@ class TreeLayoutService
     }
 
     /**
+     * ALT-059: брак прекращён (развод или дата окончания)
+     */
+    public static function isEndedMarriage(?array $md): bool
+    {
+        return $md !== null && ((($md['status'] ?? '') === 'divorced') || !empty($md['divorce_date']) || !empty($md['end_date']));
+    }
+
+    /**
      * Сравнение персон по возрасту (старший слева)
      */
     public function comparePersonsByAge(array $pA, array $pB): int
@@ -653,14 +662,24 @@ class TreeLayoutService
                 }
             }
 
+            // ALT-059: смещения карточек в юните; между бывшими супругами зазор шире (они не в общей рамке)
             $mCount = count($unitMembers);
-            $unitWidth = $mCount * self::CARD_WIDTH + ($mCount - 1) * self::GAP_SPOUSE;
+            $offsets = [0.0];
+            for ($i = 1; $i < $mCount; $i++) {
+                $a = $unitMembers[$i - 1];
+                $b = $unitMembers[$i];
+                $md = $marriageDetails["{$a}_{$b}"] ?? null;
+                $gap = self::isEndedMarriage($md) ? self::GAP_ENDED : self::GAP_SPOUSE;
+                $offsets[$i] = $offsets[$i - 1] + self::CARD_WIDTH + $gap;
+            }
+            $unitWidth = $offsets[$mCount - 1] + self::CARD_WIDTH;
 
             $uId = $unitCounter++;
             $units[$uId] = [
                 'id' => $uId,
                 'generation' => $gen,
                 'members' => $unitMembers,
+                'offsets' => $offsets,
                 'width' => $unitWidth,
                 'x' => 0,
                 'y' => 200 + $gen * self::ROW_HEIGHT,
@@ -854,7 +873,7 @@ class TreeLayoutService
                         if (($personToUnitMap[$cId] ?? null) !== $cuId) continue;
                         $idx = array_search($cId, $units[$cuId]['members'], true);
                         if ($idx === false) continue;
-                        $childCenters[] = $units[$cuId]['x'] + $idx * (self::CARD_WIDTH + self::GAP_SPOUSE) + self::CARD_WIDTH / 2.0;
+                        $childCenters[] = $units[$cuId]['x'] + $units[$cuId]['offsets'][$idx] + self::CARD_WIDTH / 2.0;
                     }
                 }
                 if ($hasUzatylgan || empty($childCenters)) continue;
@@ -867,7 +886,7 @@ class TreeLayoutService
                     if (!isset($uzatylganUnits[$cId]) || !isset($personToUnitMap[$cId])) continue;
                     $du = $units[$personToUnitMap[$cId]];
                     $idx = array_search($cId, $du['members'], true);
-                    $daughterCenters[] = $du['x'] + $idx * (self::CARD_WIDTH + self::GAP_SPOUSE) + self::CARD_WIDTH / 2.0;
+                    $daughterCenters[] = $du['x'] + $du['offsets'][$idx] + self::CARD_WIDTH / 2.0;
                 }
             }
             if (empty($daughterCenters)) continue;
@@ -927,47 +946,43 @@ class TreeLayoutService
         $auras = [];
 
         foreach ($units as $uId => $u) {
-            $memX = $u['x'];
             $memY = $u['y'];
 
-            foreach ($u['members'] as $mId) {
+            foreach ($u['members'] as $k => $mId) {
                 $positions[$mId] = [
-                    'x' => $memX,
+                    'x' => $u['x'] + $u['offsets'][$k],
                     'y' => $memY,
                 ];
-                $memX += self::CARD_WIDTH + self::GAP_SPOUSE;
             }
 
-            // Формирование плашки пары
-            if (count($u['members']) >= 2) {
-                $hId = $u['members'][0];
-                $wId = $u['members'][1];
-                // ALT-057: при 3+ членах плашка называется по центральной паре (центр + его нынешний супруг, иначе соседний)
-                if (count($u['members']) >= 3) {
-                    $bestPair = null;
-                    for ($i = 0; $i + 1 < count($u['members']); $i++) {
-                        $a = $u['members'][$i];
-                        $b = $u['members'][$i + 1];
-                        $md = $marriageDetails["{$a}_{$b}"] ?? null;
-                        if (!$md) continue;
-                        $ex = (($md['status'] ?? '') === 'divorced') || !empty($md['divorce_date']) || !empty($md['end_date']);
-                        if (!$ex) { $bestPair = [$a, $b]; break; }
-                        if ($bestPair === null) $bestPair = [$a, $b];
-                    }
-                    if ($bestPair) { [$hId, $wId] = $bestPair; }
+            // ALT-059: общая рамка — только у действующего брака. Подряд идущие действующие связи
+            // образуют одну рамку; разведённые/прекращённые стоят вне рамки (с пометкой на линии).
+            $cnt = count($u['members']);
+            $k = 0;
+            while ($k < $cnt - 1) {
+                $a = $u['members'][$k];
+                $b = $u['members'][$k + 1];
+                if (self::isEndedMarriage($marriageDetails["{$a}_{$b}"] ?? null)) { $k++; continue; }
+                $start = $k;
+                while ($k < $cnt - 1) {
+                    $a2 = $u['members'][$k];
+                    $b2 = $u['members'][$k + 1];
+                    if (self::isEndedMarriage($marriageDetails["{$a2}_{$b2}"] ?? null)) break;
+                    $k++;
                 }
-                $mDetail = $marriageDetails["{$hId}_{$wId}"] ?? null;
-                $isDiv = ($mDetail && (($mDetail['status'] ?? '') === 'divorced' || !empty($mDetail['divorce_date'])));
-
+                $end = $k; // индекс последней карточки в рамке
+                $hId = $u['members'][$start];
+                $wId = $u['members'][$start + 1];
                 $couples[] = [
                     'id' => "couple_{$hId}_{$wId}",
                     'husband_id' => $hId,
                     'wife_id' => $wId,
-                    'x' => $u['x'] - 8,
+                    'member_ids' => array_slice($u['members'], $start, $end - $start + 1),
+                    'x' => $u['x'] + $u['offsets'][$start] - 8,
                     'y' => $u['y'] - 8,
-                    'width' => $u['width'] + 16,
+                    'width' => $u['offsets'][$end] + self::CARD_WIDTH - $u['offsets'][$start] + 16,
                     'height' => self::CARD_HEIGHT + 16,
-                    'is_divorced' => $isDiv,
+                    'is_divorced' => false,
                 ];
             }
 
@@ -1197,7 +1212,7 @@ class TreeLayoutService
                 $midX = ($x1 + $x2) / 2;
                 $midY = ($y1 + $y2) / 2;
                 // ALT-055: не соседние карточки (3+ брака) — значок в зазоре у правой карточки, а не поверх средней
-                if ($x2 - $x1 > self::GAP_SPOUSE + 1 && abs($y1 - $y2) < 1) {
+                if ($x2 - $x1 > self::GAP_ENDED + 1 && abs($y1 - $y2) < 1) {
                     $midX = $x2 - self::GAP_SPOUSE / 2;
                 }
 
@@ -1286,7 +1301,7 @@ class TreeLayoutService
                 $parentBottomY = $leftNode['y'] + $leftNode['height'];
                 // ALT-057: карточки пары не соседние (между ними другой супруг) — линия детей выходит
                 // из карточки «центра» со стороны этого супруга, а не из середины чужой карточки
-                if ($rightNode['x'] - ($leftNode['x'] + $leftNode['width']) > self::GAP_SPOUSE + 1
+                if ($rightNode['x'] - ($leftNode['x'] + $leftNode['width']) > self::GAP_ENDED + 1
                     && abs($leftNode['y'] - $rightNode['y']) < 1) {
                     $cntL = 0;
                     $cntR = 0;

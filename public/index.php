@@ -95,7 +95,9 @@ $router->post('/api/person/update', 'App\Controllers\TreeController@apiPersonUpd
 $router->get('/api/person/clan-propagate-preview', 'App\Controllers\TreeController@apiClanPropagatePreview', ['auth']);
 $router->post('/api/person/clan-propagate', 'App\Controllers\TreeController@apiClanPropagateApply', ['auth']);
 $router->post('/api/person/create-relative', 'App\Controllers\TreeController@apiPersonCreateRelative', ['auth']);
-$router->post('/api/person/delete', 'App\Controllers\TreeController@apiPersonDelete', ['auth']);
+$router->get('/api/person/spouse-search', 'App\Controllers\SpouseController@search', ['auth']); // ALT-048
+$router->post('/api/person/add-spouse', 'App\Controllers\SpouseController@add', ['auth']); // ALT-048
+$router->post('/api/person/delete','App\Controllers\TreeController@apiPersonDelete', ['auth']);
 $router->get('/api/admin/persons/trash', 'App\Controllers\TreeController@apiTrashList', ['auth', 'admin']); // ALT-018
 $router->post('/api/admin/person/restore', 'App\Controllers\TreeController@apiPersonRestore', ['auth', 'admin']); // ALT-018
 $router->post('/api/person/contacts/save', 'App\Controllers\PersonContactController@save', ['auth']); // TASK-022

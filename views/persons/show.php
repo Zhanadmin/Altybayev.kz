@@ -225,6 +225,27 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_add_daughter')) ?></span>
                 </button>
+<?php
+                    // ALT-048: добавить мужа/жену; серая кнопка, пока есть действующий брак
+                    $pcRu = ($lang === 'ru' || $lang === 'en' || $lang === 'es');
+                    $spBlock = in_array($person['gender'] ?? '', ['M', 'F'], true)
+                        ? \App\Controllers\SpouseController::blockReason(\App\Core\Database::getConnection(), (int)$person['id'])
+                        : ($pcRu ? 'Укажите пол человека' : 'Адамның жынысын көрсетіңіз');
+                    if ($spBlock !== null && ($person['gender'] ?? '') !== '' && $pcRu === false) {
+                        $spBlock = 'Некеде. Жаңа жұбай қосу үшін ажырасу күнін көрсетіңіз';
+                    } elseif ($spBlock !== null && $pcRu && strpos($spBlock, 'Уже в браке') === 0) {
+                        $spBlock = 'Уже в браке. Укажите дату развода, чтобы добавить нового супруга';
+                    }
+                    $spLabel = $pcRu
+                        ? (($person['gender'] ?? '') === 'M' ? 'Добавить жену' : (($person['gender'] ?? '') === 'F' ? 'Добавить мужа' : 'Добавить мужа (жену)'))
+                        : (($person['gender'] ?? '') === 'M' ? 'Әйелін қосу' : (($person['gender'] ?? '') === 'F' ? 'Күйеуін қосу' : 'Жұбайын қосу'));
+                ?>
+                <span class="pc-spouse-btn-wrap"<?= $spBlock !== null ? ' title="' . htmlspecialchars($spBlock) . '"' : '' ?>>
+                    <button type="button" class="btn" id="addSpouseBtn" <?= $spBlock !== null ? 'disabled aria-disabled="true"' : 'onclick="openAddSpouseModal()"' ?>>
+                        <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
+                        <span><?= htmlspecialchars($spLabel) ?></span>
+                    </button>
+                </span>
                 <button type="button" class="btn btn-primary" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
@@ -1001,6 +1022,128 @@ window.addEventListener('resize', (function () { var t; return function () { cle
         </form>
     </div>
 </div>
+
+<?php if ($canEdit || !empty($canEditContacts)): ?>
+<!-- ALT-048: добавить мужа/жену -->
+<div id="addSpouseModal" class="modal-backdrop" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addSpouseTitle" style="max-width: 480px;">
+        <div class="modal-head">
+            <h3 id="addSpouseTitle"><?= htmlspecialchars($spLabel ?? 'Жұбайын қосу') ?></h3>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="closeAddSpouseModal()" aria-label="Жабу / Закрыть">
+                <svg class="ic"><use href="#i-x"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <button type="button" class="btn btn-primary" id="spTabExisting" onclick="spSetMode('existing')">Бар адам / Существующий</button>
+                <button type="button" class="btn" id="spTabNew" onclick="spSetMode('new')">Жаңа / Новый</button>
+            </div>
+            <div id="spPaneExisting">
+                <div class="field">
+                    <label for="spSearch">Іздеу / Поиск</label>
+                    <input type="text" id="spSearch" class="input" autocomplete="off" placeholder="Аты, тегі / Имя, фамилия">
+                </div>
+                <div id="spResults" class="list" role="listbox" style="max-height:240px; overflow:auto;"></div>
+            </div>
+            <div id="spPaneNew" style="display:none;">
+                <div class="field"><label for="spFirst">Аты / Имя *</label><input type="text" id="spFirst" class="input"></div>
+                <div class="field"><label for="spLast">Тегі / Фамилия</label><input type="text" id="spLast" class="input"></div>
+                <div class="field"><label for="spMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="spMaiden" class="input"></div>
+                <div class="field"><label for="spYear">Туған жылы / Год</label><input type="text" id="spYear" class="input" placeholder="1990"></div>
+            </div>
+            <div id="spError" class="muted" style="color:var(--c-danger); margin-top:8px;"></div>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" onclick="closeAddSpouseModal()">Бас тарту / Отмена</button>
+            <button type="button" class="btn btn-primary" id="spSave" onclick="spSubmit()">Қосу / Добавить</button>
+        </div>
+    </div>
+</div>
+<script>
+    // ALT-048
+    let spMode = 'existing', spPicked = 0, spTimer = null;
+    const SP_TARGET = <?= (int)$person['id'] ?>;
+    const SP_CSRF = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
+    function openAddSpouseModal() {
+        spPicked = 0;
+        document.getElementById('spError').textContent = '';
+        document.getElementById('addSpouseModal').style.display = 'flex';
+        spSetMode('existing');
+        spLoad('');
+    }
+    function closeAddSpouseModal() { document.getElementById('addSpouseModal').style.display = 'none'; }
+    function spSetMode(m) {
+        spMode = m;
+        document.getElementById('spPaneExisting').style.display = m === 'existing' ? '' : 'none';
+        document.getElementById('spPaneNew').style.display = m === 'new' ? '' : 'none';
+        document.getElementById('spTabExisting').className = 'btn' + (m === 'existing' ? ' btn-primary' : '');
+        document.getElementById('spTabNew').className = 'btn' + (m === 'new' ? ' btn-primary' : '');
+    }
+    async function spLoad(q) {
+        const box = document.getElementById('spResults');
+        try {
+            const res = await fetch('/api/person/spouse-search?target_id=' + SP_TARGET + '&q=' + encodeURIComponent(q));
+            const data = await res.json();
+            box.textContent = '';
+            (data.results || []).forEach(function (p) {
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'btn btn-ghost';
+                row.style.cssText = 'display:block; width:100%; text-align:left;';
+                row.setAttribute('role', 'option');
+                row.appendChild(document.createTextNode(p.name));
+                if (p.maiden_name) {
+                    const em = document.createElement('em');
+                    em.className = 'maiden-it';
+                    em.textContent = ' (' + p.maiden_name + ')';
+                    row.appendChild(em);
+                }
+                row.appendChild(document.createTextNode(' · ' + p.years));
+                row.onclick = function () {
+                    spPicked = p.id;
+                    Array.from(box.children).forEach(function (c) { c.classList.remove('btn-primary'); });
+                    row.classList.add('btn-primary');
+                };
+                box.appendChild(row);
+            });
+            if (!box.children.length) { box.textContent = 'Табылмады / Не найдено'; }
+        } catch (e) { box.textContent = 'Қате / Ошибка'; }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const s = document.getElementById('spSearch');
+        if (s) { s.addEventListener('input', function () { clearTimeout(spTimer); spTimer = setTimeout(function () { spLoad(s.value.trim()); }, 250); }); }
+    });
+    async function spSubmit() {
+        const err = document.getElementById('spError');
+        const saveBtn = document.getElementById('spSave');
+        if (saveBtn.disabled) return;
+        err.textContent = '';
+        const f = new URLSearchParams();
+        f.append('csrf_token', SP_CSRF);
+        f.append('target_id', SP_TARGET);
+        f.append('mode', spMode);
+        if (spMode === 'existing') {
+            if (!spPicked) { err.textContent = 'Тізімнен таңдаңыз / Выберите человека из списка'; return; }
+            f.append('spouse_id', spPicked);
+        } else {
+            const first = document.getElementById('spFirst').value.trim();
+            if (!first) { err.textContent = 'Аты / Имя обязательно'; return; }
+            f.append('first_name', first);
+            f.append('last_name', document.getElementById('spLast').value.trim());
+            f.append('maiden_name', document.getElementById('spMaiden').value.trim());
+            f.append('birth_year', document.getElementById('spYear').value.trim());
+        }
+        saveBtn.disabled = true;
+        try {
+            const res = await fetch('/api/person/add-spouse', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f.toString() });
+            const data = await res.json();
+            if (data && data.status === 'success') { window.location.reload(); return; }
+            err.textContent = (data && data.error) || 'Қате / Ошибка';
+        } catch (e) { err.textContent = 'Сұраныс қатесі: ' + e.message; }
+        saveBtn.disabled = false;
+    }
+</script>
+<?php endif; ?>
 
 <script>
     function openAddChildModal(gender) {

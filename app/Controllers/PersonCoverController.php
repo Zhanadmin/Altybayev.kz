@@ -137,8 +137,33 @@ class PersonCoverController
             Response::json(['success' => false, 'error' => $e->getMessage()], 422);
         }
         $db->prepare('UPDATE persons SET avatar_path = ?, updated_at = NOW() WHERE id = ?')->execute([$res['relative_url'], (int)$person['id']]);
+        $this->saveAvatarSource($res, !empty($user['id']) ? (int)$user['id'] : null, (int)$person['id']);
         $this->audit($db, (int)$person['id'], 'Аватар жаңартылды / Аватар обновлён', ['avatar_path' => $person['avatar_path'] ?? null], ['avatar_path' => $res['relative_url']]);
         Response::json(['success' => true, 'avatar_url' => $res['relative_url']]);
+    }
+
+    /**
+     * ALT-045: исходник аватарки хранится рядом: photo_X.jpg → photo_X_src.jpg (без правок БД).
+     * Необязательное поле source (JPEG, уменьшенный в браузере); ошибки исходника аватарку не ломают.
+     */
+    private function saveAvatarSource(array $avatarRes, ?int $userId, int $personId): void
+    {
+        if (empty($_FILES['source']) || !is_array($_FILES['source'])) {
+            return;
+        }
+        try {
+            $src = (new PhotoUploadService())->processUpload($_FILES['source'], $personId, $userId);
+            $dir = dirname((string)$avatarRes['file_path']);
+            $base = pathinfo((string)$avatarRes['file_name'], PATHINFO_FILENAME);
+            $ext = strtolower(pathinfo((string)$src['file_name'], PATHINFO_EXTENSION));
+            if ($ext !== 'jpg') { // браузер шлёт JPEG; иное — не храним
+                @unlink((string)$src['file_path']);
+                return;
+            }
+            @rename((string)$src['file_path'], $dir . DIRECTORY_SEPARATOR . $base . '_src.jpg');
+        } catch (\Throwable $e) {
+            Logger::error('avatar source: ' . $e->getMessage(), $e);
+        }
     }
 
     /**

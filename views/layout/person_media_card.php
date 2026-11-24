@@ -12,7 +12,7 @@ $pmeE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
 $pmeJs = static fn(string $k): string => (string)json_encode(I18n::t($k), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $pmeAccept = 'image/jpeg,image/png,image/webp';
 ?>
-<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=6">
+<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=7">
 <input type="file" id="pmeAvatarInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeAvatarFile(this)">
 <input type="file" id="pmeCoverInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeCoverFile(this)">
 
@@ -87,4 +87,4 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/assets/js/person-media-edit.js?v=5" defer></script>
+<script src="/assets/js/person-media-edit.js?v=6" defer></script>

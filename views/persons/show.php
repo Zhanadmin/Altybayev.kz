@@ -182,6 +182,9 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <label class="pme-fab pme-fab-avatar" for="pmeAvatarInput" title="<?= htmlspecialchars(I18n::t('pme_change_avatar'), ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::t('pme_change_avatar'), ENT_QUOTES) ?>" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
                     <svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>
                 </label>
+                <?php if (!empty($person['avatar_path'])): /* ALT-045 */ ?>
+                    <button type="button" class="pme-fab pme-fab-reframe" onclick="pmeReframe()" title="<?= htmlspecialchars(I18n::t('pme_reframe'), ENT_QUOTES) ?>" aria-label="<?= htmlspecialchars(I18n::t('pme_reframe'), ENT_QUOTES) ?>">&#x2194;</button>
+                <?php endif; ?>
             <?php endif; ?>
             <!-- рисованная рамка: мүйіз сверху, венок из листьев снизу (у марқұм — золотые листья) -->
             <svg class="wreath" viewBox="0 0 168 196" aria-hidden="true" focusable="false">

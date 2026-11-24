@@ -8,7 +8,7 @@
 
     var SRC = '/assets/audio/welcome.mp3';
     var VOL = 0.18;
-    var KEY = 'shezhire_music', POS = 'shezhire_music_pos';
+    var KEY = 'shezhire_music', POS = 'shezhire_music_pos', POSAT = 'shezhire_music_pos_at';
     var T = {
         kk: ['Музыканы қосу', 'Музыканы өшіру'],
         ru: ['Включить музыку', 'Выключить музыку'],
@@ -85,7 +85,11 @@
             }, 100);
         }
 
-        function savePos() { if (a && !a.paused) ls(POS, String(a.currentTime)); }
+        // ALT-046: сохраняем позицию + время сохранения; на новой странице компенсируем паузу перехода
+        function savePos() {
+            if (a && !a.paused) { ls(POS, String(a.currentTime)); ls(POSAT, String(Date.now())); }
+        }
+        var resumed = false;
 
         function ensure() {
             if (a) return;
@@ -94,9 +98,15 @@
             a.volume = 0;
             a.preload = 'auto';
             var p = parseFloat(ls(POS));
-            if (p > 0) {
-                var setPos = function () { try { if (a.duration && p < a.duration) a.currentTime = p; } catch (e) {} };
-                if (a.readyState >= 1) setPos(); else a.addEventListener('loadedmetadata', setPos, { once: true });
+            var at = parseFloat(ls(POSAT));
+            if (p >= 0) {
+                var gap = (at > 0) ? (Date.now() - at) / 1000 : 0;
+                // недавно играло (переход между страницами) — продолжаем без разрыва, сразу с рабочей громкостью
+                if (gap >= 0 && gap < 15) { p += gap; resumed = true; a.volume = VOL; }
+                try { a.currentTime = p; } catch (e) {}
+                a.addEventListener('loadedmetadata', function () {
+                    try { if (a.duration && p >= a.duration) a.currentTime = p % a.duration; } catch (e) {}
+                }, { once: true });
             }
         }
 
@@ -161,6 +171,8 @@
 
         setInterval(savePos, 1000);
         window.addEventListener('pagehide', savePos);
+        window.addEventListener('beforeunload', savePos);
+        document.addEventListener('visibilitychange', function () { if (document.hidden) savePos(); });
 
         // выбор «выкл» из другой вкладки/страницы
         window.addEventListener('storage', function (e) {

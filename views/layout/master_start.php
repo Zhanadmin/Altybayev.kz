@@ -110,7 +110,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=31">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
-    <script src="/assets/js/bgm.js?v=3" defer></script>
+    <script src="/assets/js/bgm.js?v=4" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=12">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>

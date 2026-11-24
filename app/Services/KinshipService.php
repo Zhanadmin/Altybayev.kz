@@ -1285,12 +1285,168 @@ class KinshipService
             }
         }
 
+        // ALT-059: бывшим (разведённым) супругам термин «Жезде/Жеңге/Келін…» не даём
+        $this->applyExSpouseLabels($result, $baseId, $allPersonsById, $marriages);
+
         // ALT-013: английский/испанский термин и подсказка-расшифровка (kk/ru/en/es) для каждого термина
         foreach ($result as $pId => $kin) {
+            if (!empty($kin['ex_spouse'])) {
+                $result[$pId] = $kin; // свои переводы уже заданы
+                continue;
+            }
             $result[$pId] = KinshipGlossary::annotate($kin);
         }
 
         return $result;
+    }
+
+    /**
+     * ALT-059: разведённый супруг (в браке, прекращённом и без действующего брака с тем же человеком)
+     * подписывается через общего ребёнка: «Таирдың әкесі» / «Отец Таира»; без общих детей — «Бұрынғы жұбайы».
+     * Нынешний супруг и все остальные термины не меняются. Считается от человека в фокусе (по его терминам).
+     */
+    protected function applyExSpouseLabels(array &$result, int $baseId, array $personsById, array $marriages): void
+    {
+        $ended = static function (array $m): bool {
+            return (($m['status'] ?? '') === 'divorced') || !empty($m['divorce_date']) || !empty($m['end_date']);
+        };
+        $exOf = []; // targetId => [spouseId, ...] по прекращённым бракам
+        $activeSet = []; // targetId => true, если есть действующий брак
+        foreach ($marriages as $m) {
+            $h = (int)($m['husband_id'] ?? 0);
+            $w = (int)($m['wife_id'] ?? 0);
+            if (!$h || !$w) {
+                continue;
+            }
+            if ($ended($m)) {
+                $exOf[$h][$w] = true;
+                $exOf[$w][$h] = true;
+            } else {
+                $activeSet[$h] = true;
+                $activeSet[$w] = true;
+            }
+        }
+        $inLawCodes = ['zhezde', 'zhenge', 'kelin', 'kelin_brother', 'kuyeubala', 'kuyeubala_sister', 'husband', 'wife'];
+        foreach ($exOf as $tId => $spouses) {
+            if ($tId === $baseId || !isset($result[$tId]) || !isset($personsById[$tId]) || !empty($activeSet[$tId])) {
+                continue;
+            }
+            $code = (string)($result[$tId]['code'] ?? '');
+            $isInLaw = ($result[$tId]['badge_class'] ?? '') === 'badge-inlaw';
+            if (!$isInLaw && !in_array($code, $inLawCodes, true)) {
+                continue;
+            }
+            $t = $personsById[$tId];
+            $male = ($t['gender'] ?? 'M') !== 'F';
+            // общие дети с любым из бывших супругов
+            $kids = [];
+            foreach ($personsById as $c) {
+                $f = (int)($c['father_id'] ?? 0);
+                $mo = (int)($c['mother_id'] ?? 0);
+                $parentOk = $male ? $f === $tId : $mo === $tId;
+                $otherId = $male ? $mo : $f;
+                if ($parentOk && $otherId && isset($spouses[$otherId]) && trim((string)($c['first_name'] ?? '')) !== '') {
+                    $kids[] = $c;
+                }
+            }
+            usort($kids, function ($a, $b) {
+                $ya = $this->extractYear($a['birth_year'] ?? $a['birth_date'] ?? null);
+                $yb = $this->extractYear($b['birth_year'] ?? $b['birth_date'] ?? null);
+                if ($ya !== null && $yb !== null && $ya !== $yb) {
+                    return $ya <=> $yb;
+                }
+                if ($ya !== null && $yb === null) {
+                    return -1;
+                }
+                if ($ya === null && $yb !== null) {
+                    return 1;
+                }
+                return ((int)$a['id']) <=> ((int)$b['id']);
+            });
+            if (!$kids) {
+                $kk = 'Бұрынғы жұбайы';
+                $ru = 'Бывший супруг' . ($male ? '' : 'а');
+                $en = 'Former spouse';
+                $es = 'Excónyuge';
+            } else {
+                $names = array_map(fn($c) => trim((string)$c['first_name']), array_slice($kids, 0, 2));
+                $kkNames = count($names) === 2
+                    ? $names[0] . ' мен ' . self::kkGenitive($names[1])
+                    : self::kkGenitive($names[0]);
+                $ruNames = count($names) === 2
+                    ? self::ruGenitive($names[0]) . ' и ' . self::ruGenitive($names[1])
+                    : self::ruGenitive($names[0]);
+                $kk = $kkNames . ($male ? ' әкесі' : ' анасы');
+                $ru = ($male ? 'Отец ' : 'Мать ') . $ruNames;
+                $en = ($male ? 'Father of ' : 'Mother of ') . implode(' and ', $names);
+                $es = ($male ? 'Padre de ' : 'Madre de ') . implode(' y ', $names);
+            }
+            $result[$tId]['term_kk'] = $kk;
+            $result[$tId]['term_ru'] = $ru;
+            $result[$tId]['term_en'] = $en;
+            $result[$tId]['term_es'] = $es;
+            $result[$tId]['explanation'] = 'Ажырасқан жұбайы';
+            foreach (['kk', 'ru', 'en', 'es'] as $l) {
+                $result[$tId]['hint_' . $l] = '';
+            }
+            $result[$tId]['ex_spouse'] = true;
+        }
+    }
+
+    /** Казахский родительный падеж имени: Таир → Таирдың, Серік → Серіктің, Әли → Әлидің. */
+    public static function kkGenitive(string $name): string
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return '';
+        }
+        $lower = mb_strtolower($name, 'UTF-8');
+        $chars = preg_split('//u', $lower, -1, PREG_SPLIT_NO_EMPTY);
+        $front = false;
+        for ($i = count($chars) - 1; $i >= 0; $i--) {
+            if (mb_strpos('әеөүіэ', $chars[$i], 0, 'UTF-8') !== false) {
+                $front = true;
+                break;
+            }
+            if (mb_strpos('аоұыяю', $chars[$i], 0, 'UTF-8') !== false) {
+                break;
+            }
+        }
+        $last = end($chars);
+        if (mb_strpos('қкпстшчщфхцбг', $last, 0, 'UTF-8') !== false) {
+            $d = 'т';
+        } elseif (mb_strpos('мнң', $last, 0, 'UTF-8') !== false || mb_strpos('аәеёоөұүыіэюя', $last, 0, 'UTF-8') !== false) {
+            $d = 'н';
+        } else {
+            $d = 'д';
+        }
+        return $name . $d . ($front ? 'ің' : 'ың');
+    }
+
+    /** Русский родительный падеж имени (простое правило): Таир → Таира, Асила → Асилы. */
+    public static function ruGenitive(string $name): string
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return '';
+        }
+        $last = mb_substr($name, -1, 1, 'UTF-8');
+        $head = mb_substr($name, 0, -1, 'UTF-8');
+        $l = mb_strtolower($last, 'UTF-8');
+        if ($l === 'а') {
+            $prev = mb_strtolower(mb_substr($name, -2, 1, 'UTF-8'), 'UTF-8');
+            return $head . (mb_strpos('гкхжчшщ', $prev, 0, 'UTF-8') !== false ? 'и' : 'ы');
+        }
+        if ($l === 'я') {
+            return $head . 'и';
+        }
+        if ($l === 'й' || $l === 'ь') {
+            return $head . 'я';
+        }
+        if (mb_strpos('еёиоуыэю', $l, 0, 'UTF-8') !== false) {
+            return $name;
+        }
+        return $name . 'а';
     }
 
     /**

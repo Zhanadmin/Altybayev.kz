@@ -2135,6 +2135,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .person-card.male .card-avatar { background: var(--c-island-2); color: var(--c-male); border-color: var(--c-male); }
         .person-card.female .card-avatar { background: var(--c-island-2); color: var(--c-female); border-color: var(--c-female); }
         .person-card.deceased .card-avatar { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); }
+        .card-avatar { overflow: hidden; }
+        .card-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
         .card-name { color: var(--c-text); font-weight: 600; }
         .card-maiden { color: var(--c-female); font-style: italic; white-space: normal; overflow-wrap: anywhere; }
         .card-years { color: var(--c-text-2); }
@@ -3063,10 +3065,16 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .person-card.in-couple.selected {
             background: transparent;
             box-shadow: none;
-            border-left-color: transparent;
-            border-right-color: transparent;
-            border-bottom-color: transparent;
+            border-color: transparent;
             transform: none;
+        }
+        /* ALT-059: заголовок-полоса семьи над плашкой («Отбасы» / «Семья») */
+        .couple-unit-plate::before {
+            content: attr(data-label);
+            position: absolute; left: 50%; top: -11px; transform: translateX(-50%);
+            padding: 1px 14px; border-radius: 10px; white-space: nowrap; pointer-events: none;
+            font-family: var(--font-book); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+            background: var(--c-island); color: var(--c-accent-text); border: 1px solid var(--c-accent);
         }
         .person-card.in-couple.selected,
         .person-card.in-couple.is-self { background: var(--c-accent-soft, rgba(0,0,0,.04)); }
@@ -5093,6 +5101,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const plateEl = document.createElement('div');
                     plateEl.className = 'couple-unit-plate';
                     plateEl.dataset.members = (cp.member_ids || [cp.husband_id, cp.wife_id]).join(',');
+                    plateEl.dataset.label = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Семья' : 'Отбасы';
                     plateEl.style.left = `${cp.x}px`;
                     plateEl.style.top = `${cp.y}px`;
                     plateEl.style.width = `${cp.width}px`;
@@ -5153,7 +5162,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     </div>
 
                     <div class="card-header-inner">
-                        <div class="card-avatar">${initials}</div>
+                        <div class="card-avatar">${(typeof node.avatar_path === 'string' && /^\/uploads\/[A-Za-z0-9._\/-]+$/.test(node.avatar_path)) ? `<img class="card-avatar-img" src="${node.avatar_path}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode(this.dataset.i))" data-i="${initials}">` : initials}</div>
                         <div class="card-info">
                             <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
                             ${node.maiden_name ? `<div class="card-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}

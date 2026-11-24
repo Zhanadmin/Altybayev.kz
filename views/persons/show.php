@@ -204,7 +204,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
         <?php endif; ?>
         <div class="chips">
             <?php if (!empty($person['maiden_name'])): ?>
-                <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
+                <span class="badge maiden-it"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
             <?php endif; ?>
         </div>
 
@@ -567,7 +567,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                         <span>
                                             <span class="name"><?= htmlspecialchars($spName) ?></span>
                                             <?php if (!empty($sp['maiden_name'])): ?>
-                                                <span class="meta"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі:' ?> <?= htmlspecialchars((string)$sp['maiden_name']) ?></span>
+                                                <span class="meta maiden-it"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі:' ?> <?= htmlspecialchars((string)$sp['maiden_name']) ?></span>
                                             <?php endif; ?>
                                         </span>
                                     </a>

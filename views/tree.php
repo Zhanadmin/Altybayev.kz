@@ -27,7 +27,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     </script>
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=24">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=25">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
@@ -2133,7 +2133,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .person-card.female .card-avatar { background: var(--c-island-2); color: var(--c-female); border-color: var(--c-female); }
         .person-card.deceased .card-avatar { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); }
         .card-name { color: var(--c-text); font-weight: 600; }
-        .card-maiden { color: var(--c-female); font-style: normal; white-space: normal; overflow-wrap: anywhere; }
+        .card-maiden { color: var(--c-female); font-style: italic; white-space: normal; overflow-wrap: anywhere; }
         .card-years { color: var(--c-text-2); }
         .card-place { color: var(--c-text-3); }
         .card-clan-tag {
@@ -6057,8 +6057,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             // ALT-022: в en/es отчества в строке имени нет; отец — отдельной строкой «Son of …» / «Hijo de …»
             const isEnEs = (currentLang === 'en' || currentLang === 'es');
             let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${isEnEs ? '' : (currentLang === 'ru' ? (p.middle_name_ru || p.middle_name || '') : (p.middle_name_kk || p.middle_name || ''))}`.trim();
+            let maidenPart = '';
             if (p.maiden_name) {
-                fullNameDisplay += ` (${currentLang === 'en' ? 'née' : (currentLang === 'es' ? 'de soltera' : (currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'))} ${p.maiden_name})`;
+                maidenPart = ` (${currentLang === 'en' ? 'née' : (currentLang === 'es' ? 'de soltera' : (currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'))} ${p.maiden_name})`;
             }
             let parentLine = '';
             if (isEnEs && (p.gender === 'M' || p.gender === 'F')) {
@@ -6071,10 +6072,16 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 }
             }
             const panelNameEl = document.getElementById('panelPersonName');
+            // ALT-035: девичья фамилия курсивом (через DOM, без innerHTML)
+            panelNameEl.textContent = fullNameDisplay;
+            if (maidenPart) {
+                const mEm = document.createElement('em');
+                mEm.className = 'maiden-it';
+                mEm.textContent = maidenPart;
+                panelNameEl.appendChild(mEm);
+            }
             if (parentLine) {
-                panelNameEl.innerText = fullNameDisplay + ', ' + parentLine.charAt(0).toLowerCase() + parentLine.slice(1);
-            } else {
-                panelNameEl.innerText = fullNameDisplay;
+                panelNameEl.appendChild(document.createTextNode(', ' + parentLine.charAt(0).toLowerCase() + parentLine.slice(1)));
             }
             const clanDisplay = p.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'не указан' : 'белгісіз');
             document.getElementById('panelPersonClan').innerHTML = window.clanTamga(p.clan_ru) + uzEsc(clanDisplay);

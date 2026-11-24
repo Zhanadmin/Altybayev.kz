@@ -3232,7 +3232,12 @@
             }
             const yrs = yearsText(p);
             if (yrs) subs.push(yrs + (Number(p.is_deceased) ? ' · ' + t.deceased : ''));
-            subs.forEach(s => card.appendChild(el('div', 'sf3-sub', s)));
+            subs.forEach(s => {
+                const d = el('div', 'sf3-sub', s);
+                // ALT-035: девичья фамилия — курсивом
+                if (p.maiden_name && String(s).endsWith(String(p.maiden_name))) d.style.fontStyle = 'italic';
+                card.appendChild(d);
+            });
             card.appendChild(el('div', 'sf3-orn'));
             const uz = el('div', 'sf3-uz');
             uz.appendChild(el('div', 'sf3-sub', t.loading));

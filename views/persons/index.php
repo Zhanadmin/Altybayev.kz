@@ -144,8 +144,11 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
 
         // Строка-подпись под именем: на узких экранах сюда попадают скрытые колонки
         $metaParts = [];
+        $maidenHtml = '';
         if (!empty($p['maiden_name'])) {
-            $metaParts[] = (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд. ' : 'қыз кезіндегі: ') . $p['maiden_name'];
+            $maidenLbl = (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд. ' : 'қыз кезіндегі: ') . $p['maiden_name'];
+            $metaParts[] = $maidenLbl;
+            $maidenHtml = '<em class="maiden-it">' . htmlspecialchars($maidenLbl) . '</em>';
         }
         // ALT-023: места рождения/смерти в списке не показываем — только в карточке человека
         ?>
@@ -165,7 +168,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
                     <div>
                         <a href="/person/<?= (int)$p['id'] ?>" class="name pp-name" title="<?= htmlspecialchars($p['full_name']) ?>"><?= htmlspecialchars((string)($p['name_base'] ?? $p['full_name'])) ?><?php if (!empty($p['patr_shown'])): ?> <span class="pp-patr"><?= htmlspecialchars((string)$p['patr_shown']) ?></span><?php endif; ?></a>
                         <?php if ($metaParts): ?>
-                            <div class="meta" title="<?= htmlspecialchars(implode(' · ', $metaParts)) ?>"><?= htmlspecialchars(implode(' · ', $metaParts)) ?></div>
+                            <div class="meta" title="<?= htmlspecialchars(implode(' · ', $metaParts)) ?>"><?= $maidenHtml ?></div>
                         <?php endif; ?>
                         <div class="meta pp-narrow-meta"><span class="pp-nm-xl"><?= htmlspecialchars($clanText) ?></span><span class="pp-nm-lg"><?= htmlspecialchars($genderText) ?></span><span class="pp-nm-md"><?= htmlspecialchars($yearsDisp) ?></span></div>
                     </div>

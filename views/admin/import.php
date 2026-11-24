@@ -207,7 +207,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <td class="col-name">
                                         <strong><?= htmlspecialchars($p['full_name']) ?></strong>
                                         <?php if (!empty($p['maiden_name'])): ?>
-                                            <div class="small muted">(қыз күнінде: <?= htmlspecialchars($p['maiden_name']) ?>)</div>
+                                            <div class="small muted maiden-it">(қыз күнінде: <?= htmlspecialchars($p['maiden_name']) ?>)</div>
                                         <?php endif; ?>
                                         <?php if ($fatherName !== '' || $motherName !== ''): ?>
                                             <!-- Скрытые на узком экране колонки «Әкесі / Анасы» -->

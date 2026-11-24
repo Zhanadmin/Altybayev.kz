@@ -146,7 +146,7 @@ require __DIR__ . '/../layout/master_start.php';
                                     <?php if ($w): ?>
                                         <a href="/person/<?= (int)$w['id'] ?>" class="fm-name" title="<?= htmlspecialchars($f['w_name']) ?>"><?= htmlspecialchars($f['w_name']) ?></a>
                                         <?php if (!empty($w['maiden_name'])): ?>
-                                            <div class="small muted">(<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезінде:' ?> <?= htmlspecialchars($w['maiden_name']) ?>)</div>
+                                            <div class="small muted maiden-it">(<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезінде:' ?> <?= htmlspecialchars($w['maiden_name']) ?>)</div>
                                         <?php endif; ?>
                                         <?php $wl = I18n::lifeLabel($w); ?>
                                         <div class="small muted"><?php if ($wl['short'] !== ''): ?><span title="<?= htmlspecialchars($wl['title']) ?>"><?= htmlspecialchars($wl['short']) ?></span><?php endif; ?></div>

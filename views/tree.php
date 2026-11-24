@@ -3069,13 +3069,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             transform: none;
         }
         /* ALT-059: заголовок-полоса семьи над плашкой («Отбасы» / «Семья») */
-        .couple-unit-plate::before {
-            content: attr(data-label);
-            position: absolute; left: 50%; top: -11px; transform: translateX(-50%);
-            padding: 1px 14px; border-radius: 10px; white-space: nowrap; pointer-events: none;
-            font-family: var(--font-book); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-            background: var(--c-island); color: var(--c-accent-text); border: 1px solid var(--c-accent);
-        }
+        /* ALT-059: заголовок «Отбасы» убран по замечанию; метки держим внутри карточки (высота = CARD_HEIGHT) */
+        .person-card { box-sizing: border-box; height: 120px; overflow: visible; }
+        .person-card .card-header-inner + div { flex-wrap: nowrap !important; overflow: hidden; max-width: 100%; }
+        .person-card .card-clan-tag, .person-card .card-zhurt-tag { min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0; }
+        .person-card .card-maiden { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .person-card.in-couple.selected,
         .person-card.in-couple.is-self { background: var(--c-accent-soft, rgba(0,0,0,.04)); }
         .person-card.in-couple:hover { background: rgba(0,0,0,.03); }
@@ -5101,7 +5099,6 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const plateEl = document.createElement('div');
                     plateEl.className = 'couple-unit-plate';
                     plateEl.dataset.members = (cp.member_ids || [cp.husband_id, cp.wife_id]).join(',');
-                    plateEl.dataset.label = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Семья' : 'Отбасы';
                     plateEl.style.left = `${cp.x}px`;
                     plateEl.style.top = `${cp.y}px`;
                     plateEl.style.width = `${cp.width}px`;
@@ -5127,6 +5124,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 card.style.left = `${node.x}px`;
                 card.style.top = `${node.y}px`;
 
+                // девичья фамилия показывается одной строкой «қыз кезіндегі — …», из фамилии скобки с ней убираем
+                if (node.maiden_name && node.last_name) {
+                    const mn = String(node.maiden_name).trim().toLowerCase();
+                    node = Object.assign({}, node, { last_name: String(node.last_name).replace(/\s*\(([^)]*)\)\s*$/, (all, g) => g.trim().toLowerCase() === mn ? '' : all) });
+                }
                 const initials = (node.first_name ? node.first_name[0] : '') + (node.last_name ? node.last_name[0] : '');
 
                 // Туыстық атауын алу
@@ -5165,7 +5167,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div class="card-avatar">${(typeof node.avatar_path === 'string' && /^\/uploads\/[A-Za-z0-9._\/-]+$/.test(node.avatar_path)) ? `<img class="card-avatar-img" src="${node.avatar_path}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode(this.dataset.i))" data-i="${initials}">` : initials}</div>
                         <div class="card-info">
                             <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
-                            ${node.maiden_name ? `<div class="card-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name})</div>` : ''}
+                            ${node.maiden_name ? `<div class="card-maiden" title="${node.maiden_name}">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name}</div>` : ''}
                             <div class="card-years">${lifeHtml(node, '—')}</div>
                         </div>
                     </div>
@@ -5235,17 +5237,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     if (m.is_divorced) line.classList.add('marriage-ended');
                     svg.appendChild(line);
 
+                    // надпись «ажырасқан» убрана (замечание 23:24): у разведённых только серый пунктир
+                    if (m.is_divorced) return;
                     const badge = document.createElement('div');
-                    badge.className = 'marriage-edge-badge' +(m.is_divorced ? ' is-divorced' : '');
+                    badge.className = 'marriage-edge-badge';
                     badge.style.left = `${m.mid_x}px`;
                     badge.style.top = `${m.mid_y}px`;
-                    if (m.is_divorced) {
-                        badge.textContent = ruLang ? 'развод' : 'ажырасқан';
-                        badge.title = (ruLang ? 'В разводе' : 'Ажырасқан') + (m.years ? ` (${m.years})` : '');
-                    } else {
-                        badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
-                        badge.title = ruLang ? 'Супружеский союз' : 'Некелік одақ';
-                    }
+                    badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
+                    badge.title = ruLang ? 'Супружеский союз' : 'Некелік одақ';
                     container.appendChild(badge);
                 });
 

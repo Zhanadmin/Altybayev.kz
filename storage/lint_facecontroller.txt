@@ -1,2 +1,0 @@
-﻿Errors parsing C:\Projects\Altybayev.kz\app\Controllers\FaceController.php
-

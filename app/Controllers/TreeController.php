@@ -1513,6 +1513,7 @@ class TreeController
                 $results[] = [
                     'id' => $p['id'],
                     'name' => $fullName,
+                    'maiden_name' => $p['maiden_name'] ?? null,
                     'years' => $years,
                     'clan' => $p['clan_ru'] ?? 'белгісіз',
                     'gender' => $p['gender'],

@@ -37,5 +37,8 @@ Thumbs.db
 /database/backups/
 
 # Временные файлы агента
+storage/tok_check*.php
+storage/tmp_*.txt
+storage/lint_*.txt
 tmp_*
 /tmp/

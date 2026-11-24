@@ -2496,7 +2496,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .lt-person > div:last-child { min-width: 0; }
         .lt-name { font-weight: 600; color: var(--c-text); font-size: 13.5px; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
         .lt-sub { font-size: 11.5px; color: var(--c-text-2); white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
-        .lt-sub.is-maiden { color: var(--c-female); }
+        .lt-sub.is-maiden { color: var(--c-female); font-style: italic; }
+        .maiden-it { font-style: italic; font-weight: 400; }
         .lt-sub-opt { display: none; }
         .lt-small { font-size: 12px; color: var(--c-text-2); }
         .lt-spouse-row { display: block; font-size: 12px; color: var(--c-text); white-space: normal; overflow-wrap: anywhere; }
@@ -6375,7 +6376,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             row.className = 'search-item';
                             row.innerHTML = `
                                 <div>
-                                    <strong>${item.name}</strong>
+                                    <strong>${item.name}</strong>${item.maiden_name ? ` <em class="maiden-it">(${String(item.maiden_name).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))})</em>` : ''}
                                     <div class="tf-sub">${item.years} &bull; ${item.clan}</div>
                                 </div>
                                 <span class="tf-g ${item.gender === 'M' ? 'tf-g-m' : 'tf-g-f'}" aria-hidden="true"></span>
@@ -7690,12 +7691,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             sorted.forEach(p => {
                 const optA = document.createElement('option');
                 optA.value = p.id;
-                optA.text = `${p.first_name} ${p.last_name || ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
+                optA.text = `${p.first_name} ${p.last_name || ''}${p.maiden_name ? ' (' + p.maiden_name + ')' : ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
+                if (p.maiden_name) optA.style.fontStyle = 'italic';
                 selA.appendChild(optA);
 
                 const optB = document.createElement('option');
                 optB.value = p.id;
-                optB.text = `${p.first_name} ${p.last_name || ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
+                optB.text = `${p.first_name} ${p.last_name || ''}${p.maiden_name ? ' (' + p.maiden_name + ')' : ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
+                if (p.maiden_name) optB.style.fontStyle = 'italic';
                 selB.appendChild(optB);
             });
 

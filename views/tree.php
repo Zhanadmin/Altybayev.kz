@@ -27,8 +27,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     </script>
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=25">
-    <script src="/assets/js/tooltip.js?v=1" defer></script>
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=26">
+    <script src="/assets/js/tooltip.js?v=3" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>

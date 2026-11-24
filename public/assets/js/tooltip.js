@@ -32,8 +32,21 @@
         el.removeAttribute('title');
         t = t.trim();
         if (!t) return;
+        // бестолковая подсказка: повторяет видимый текст элемента — не показываем
+        if (isRepeat(el, t)) return;
         if (!el.hasAttribute('data-tip')) el.setAttribute('data-tip', t);
         ensureA11y(el, el.getAttribute('data-tip'));
+    }
+
+    function norm(s) { return (s || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+
+    // подсказка повторяет видимый текст (имя на карточке, строка списка) — ничего не объясняет
+    function isRepeat(el, t) {
+        var tip = norm(t), vis = norm(el.textContent);
+        if (!tip || !vis) return false;
+        if (vis === tip || vis.indexOf(tip) !== -1) return true;
+        if (vis.length >= 5 && vis.indexOf(' ') !== -1 && tip.indexOf(vis) === 0) return true;
+        return false;
     }
 
     function ensureA11y(el, text) {
@@ -78,7 +91,8 @@
         var tw = tip.offsetWidth, th = tip.offsetHeight;
         var cx = r.left + r.width / 2;
         var left = Math.max(m, Math.min(cx - tw / 2, vw - tw - m));
-        var below = (r.top - th - gap) < m && (r.bottom + th + gap) <= vh - m;
+        // по умолчанию подсказка снизу (как нравится владельцу); сверху — только если снизу нет места
+        var below = !((r.bottom + th + gap) > vh - m && (r.top - th - gap) >= m);
         var top = below ? r.bottom + gap : r.top - th - gap;
         top = Math.max(m, Math.min(top, vh - th - m));
         tip.style.left = Math.round(left) + 'px';
@@ -89,7 +103,7 @@
 
     function show(el) {
         var text = el.getAttribute('data-tip');
-        if (!text || !el.isConnected) return;
+        if (!text || !el.isConnected || isRepeat(el, text)) return;
         var tip = ensureTip();
         current = el;
         tip.textContent = text;

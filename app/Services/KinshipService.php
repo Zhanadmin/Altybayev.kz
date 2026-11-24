@@ -102,9 +102,9 @@ class KinshipService
         // 2. БАЛАЛАРЫ (Дети basePerson)
         if (($targetFatherId && $targetFatherId === $baseId) || ($targetMotherId && $targetMotherId === $baseId)) {
             if ($targetGender === 'F') {
-                return $this->formatResult('daughter', 'Туған қызы', 'Қыз', 'Дочь', $basePerson, 'Өз жұрты', 'Өз жұрты');
+                return $this->formatResult('daughter', 'Туған қызы', 'Қызы', 'Дочь', $basePerson, '', '');
             }
-            return $this->formatResult('son', 'Туған ұлы', 'Ұл', 'Сын', $basePerson, 'Өз жұрты', 'Өз жұрты');
+            return $this->formatResult('son', 'Туған ұлы', 'Ұлы', 'Сын', $basePerson, '', '');
         }
 
         // 3. ЖҰБАЙЫ (Супруг / Супруга)
@@ -1266,6 +1266,13 @@ class KinshipService
                 $result[$pId]['zhurt_key'] = '';
                 continue;
             }
+            // ALT-058: свои дети, внуки и их супруги — собственная семья, не жұрт (құда — остаются)
+            if (($side['group'] ?? '') === 'children' && ($side['mode'] ?? '') !== 'quda' && ($side['mode'] ?? '') !== 'quda_end'
+                && empty($side['second'])) {
+                $result[$pId]['zhurt'] = '';
+                $result[$pId]['zhurt_key'] = '';
+                continue;
+            }
             $result[$pId]['zhurt'] = self::ZHURT_LABELS[$side['side']]['kk'];
             $result[$pId]['zhurt_key'] = $side['side'];
             $result[$pId]['zhurt_dist'] = $side['dist'];
@@ -1662,6 +1669,7 @@ class KinshipService
                 'side' => $side,
                 'group' => $primaryGroup,
                 'dist' => $primary['dist'],
+                'mode' => $primary['mode'],
                 'second' => $second,
                 'uzatylgan' => $uzatylgan,
             ];

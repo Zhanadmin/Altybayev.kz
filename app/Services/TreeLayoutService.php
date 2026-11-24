@@ -614,6 +614,35 @@ class TreeLayoutService
             if (empty($spousesInGen)) {
                 $unitMembers = [$mId];
                 $processed[$mId] = true;
+            } elseif (count($spousesInGen) > 1) {
+                // ALT-057: несколько браков — нынешний супруг вплотную к «центру» (mId), бывшие по бокам:
+                // первый бывший — на свободной стороне рядом с центром, второй — с другой стороны за нынешним и т. д.
+                $isHubWoman = ($p['gender'] ?? '') !== 'M';
+                $firstIsEx = false;
+                $md0 = $marriageDetails["{$mId}_{$spousesInGen[0]}"] ?? null;
+                if ($md0 && ((($md0['status'] ?? '') === 'divorced') || !empty($md0['divorce_date']) || !empty($md0['end_date']))) {
+                    $firstIsEx = true;
+                }
+                $current = null;
+                $exes = $spousesInGen;
+                if (!$firstIsEx) {
+                    $current = array_shift($exes);
+                }
+                $leftN = [];
+                $rightN = [];
+                // у женщины нынешний муж слева (муж слева от жены), свободна правая сторона; у мужчины — наоборот
+                if ($current !== null) {
+                    if ($isHubWoman) { $leftN[] = $current; } else { $rightN[] = $current; }
+                }
+                foreach (array_values($exes) as $i => $exId) {
+                    $toRight = $isHubWoman ? ($i % 2 === 0) : ($i % 2 === 1);
+                    if ($toRight) { $rightN[] = $exId; } else { $leftN[] = $exId; }
+                }
+                $unitMembers = array_merge(array_reverse($leftN), [$mId], $rightN);
+                $processed[$mId] = true;
+                foreach ($spousesInGen as $spId) {
+                    $processed[$spId] = true;
+                }
             } else {
                 // В паре: муж слева, жена справа
                 if ($p['gender'] === 'M') {
@@ -673,6 +702,7 @@ class TreeLayoutService
                 || (!empty($hParents['mother']) && isset($personToUnitMap[$hParents['mother']]));
             if (!$hParentsVisible) continue;
             foreach (array_slice($u['members'], 1) as $wId) {
+                if (($personsById[$wId]['gender'] ?? '') === 'M') continue; // ALT-057: несколько мужей в юните
                 $mDetail = $marriageDetails["{$hId}_{$wId}"] ?? null;
                 $isDiv = $mDetail && ((($mDetail['status'] ?? '') === 'divorced') || !empty($mDetail['divorce_date']));
                 if (!$isDiv) {
@@ -712,8 +742,25 @@ class TreeLayoutService
                 }
                 return $personsById[$units[$cuId]['members'][0]];
             };
-            usort($childrenUnitList, function ($cuA, $cuB) use ($childOfParent) {
-                return $this->comparePersonsByAge($childOfParent($cuA), $childOfParent($cuB));
+            // ALT-057: при нескольких браках дети идут слева направо в порядке своих пар (по месту второго родителя в юните)
+            $anchorIdx = function (array $child) use ($parentMembers, $parentsMap) {
+                $idxs = [];
+                foreach ([$parentsMap[(int)$child['id']]['father'] ?? null, $parentsMap[(int)$child['id']]['mother'] ?? null] as $pid) {
+                    if ($pid === null) continue;
+                    $k = array_search($pid, $parentMembers, true);
+                    if ($k !== false) $idxs[] = $k;
+                }
+                return empty($idxs) ? 0.0 : array_sum($idxs) / count($idxs);
+            };
+            $multi = count($parentMembers) > 2;
+            usort($childrenUnitList, function ($cuA, $cuB) use ($childOfParent, $anchorIdx, $multi) {
+                $a = $childOfParent($cuA);
+                $b = $childOfParent($cuB);
+                if ($multi) {
+                    $c = $anchorIdx($a) <=> $anchorIdx($b);
+                    if ($c !== 0) return $c;
+                }
+                return $this->comparePersonsByAge($a, $b);
             });
 
             $u['children_units'] = $childrenUnitList;
@@ -911,6 +958,20 @@ class TreeLayoutService
             if (count($u['members']) >= 2) {
                 $hId = $u['members'][0];
                 $wId = $u['members'][1];
+                // ALT-057: при 3+ членах плашка называется по центральной паре (центр + его нынешний супруг, иначе соседний)
+                if (count($u['members']) >= 3) {
+                    $bestPair = null;
+                    for ($i = 0; $i + 1 < count($u['members']); $i++) {
+                        $a = $u['members'][$i];
+                        $b = $u['members'][$i + 1];
+                        $md = $marriageDetails["{$a}_{$b}"] ?? null;
+                        if (!$md) continue;
+                        $ex = (($md['status'] ?? '') === 'divorced') || !empty($md['divorce_date']) || !empty($md['end_date']);
+                        if (!$ex) { $bestPair = [$a, $b]; break; }
+                        if ($bestPair === null) $bestPair = [$a, $b];
+                    }
+                    if ($bestPair) { [$hId, $wId] = $bestPair; }
+                }
                 $mDetail = $marriageDetails["{$hId}_{$wId}"] ?? null;
                 $isDiv = ($mDetail && (($mDetail['status'] ?? '') === 'divorced' || !empty($mDetail['divorce_date'])));
 
@@ -1231,6 +1292,20 @@ class TreeLayoutService
                 // Центр родительской плашки
                 $parentMidX = ($leftNode['x'] + $rightNode['x'] + $rightNode['width']) / 2;
                 $parentBottomY = $leftNode['y'] + $leftNode['height'];
+                // ALT-057: карточки пары не соседние (между ними другой супруг) — линия детей выходит
+                // из карточки «центра» со стороны этого супруга, а не из середины чужой карточки
+                if ($rightNode['x'] - ($leftNode['x'] + $leftNode['width']) > self::GAP_SPOUSE + 1
+                    && abs($leftNode['y'] - $rightNode['y']) < 1) {
+                    $cntL = 0;
+                    $cntR = 0;
+                    foreach ($spousesMap[$leftNode['id']] ?? [] as $s) { if (isset($nodes[$s])) $cntL++; }
+                    foreach ($spousesMap[$rightNode['id']] ?? [] as $s) { if (isset($nodes[$s])) $cntR++; }
+                    if ($cntR >= $cntL) {
+                        $parentMidX = $rightNode['x'] + 60;
+                    } else {
+                        $parentMidX = $leftNode['x'] + $leftNode['width'] - 60;
+                    }
+                }
             }
 
             $busY = $parentBottomY + 45;

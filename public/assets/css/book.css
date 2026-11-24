@@ -199,6 +199,7 @@ h1, h2, h3, .ds-brand-title, .book-page .ribbon-lg { font-family: var(--font-scr
     background-image: radial-gradient(circle, var(--c-border-strong) 1px, transparent 1.5px); background-size: 8px 10px; background-repeat: repeat-x; background-position: center; }
 .ds-sidebar-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-family: var(--font-book); font-style: italic; font-size: 13px; }
 .ds-sidebar-foot .orn-branch { width: 170px; height: 30px; opacity: .8; }
+.ds-sidebar-foot .ds-version { font-family: var(--font-ui, inherit); font-style: normal; font-size: 11px; opacity: .6; cursor: help; outline-offset: 2px; }
 
 /* ---------- Рабочая область: страница книги ---------- */
 .ds-main { background: var(--c-island); border-color: var(--c-border-strong); position: relative; }

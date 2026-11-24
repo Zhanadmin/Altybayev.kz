@@ -766,6 +766,11 @@ class AlbumController
                 $this->fail('Қате кесу аймағы', 'Неверная область обрезки', 400);
             }
             $crop = ['x' => (float)$cx, 'y' => (float)$cy, 's' => (float)$cs];
+        } elseif ($cx !== '' && $cy !== '' && is_numeric($cx) && is_numeric($cy)
+            && is_numeric(self::str($request, 'crop_w')) && is_numeric(self::str($request, 'crop_h'))) {
+            // ALT-043: прямоугольник по пропорциям овала аватарки (доли ширины/высоты фото)
+            $crop = ['x' => (float)$cx, 'y' => (float)$cy,
+                     'w' => (float)self::str($request, 'crop_w'), 'h' => (float)self::str($request, 'crop_h')];
         }
 
         $url = $this->media->makeAvatar((string)$m['file_path'], dirname(__DIR__, 2) . '/public/uploads/photos', '/uploads/photos/', $crop);

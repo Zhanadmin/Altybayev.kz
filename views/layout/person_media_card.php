@@ -12,7 +12,7 @@ $pmeE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
 $pmeJs = static fn(string $k): string => (string)json_encode(I18n::t($k), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $pmeAccept = 'image/jpeg,image/png,image/webp';
 ?>
-<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=5">
+<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=6">
 <input type="file" id="pmeAvatarInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeAvatarFile(this)">
 <input type="file" id="pmeCoverInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeCoverFile(this)">
 
@@ -50,13 +50,19 @@ $pmeAccept = 'image/jpeg,image/png,image/webp';
         </div>
         <div id="pmeCropPane" style="display:none; text-align:center;">
             <div class="pme-sub" style="margin-bottom:8px;"><?= $pmeE('pme_crop_hint') ?></div>
-            <div class="pme-cropwrap"><canvas id="pmeCropCanvas" class="pme-canvas" width="300" height="300"></canvas></div>
+            <div class="pme-cropwrap"><canvas id="pmeCropCanvas" class="pme-canvas" width="240" height="304"></canvas></div>
+            <div class="pme-arrows">
+                <button type="button" class="pme-btn" onclick="pmeMove(-1,0)" aria-label="←">←</button>
+                <button type="button" class="pme-btn" onclick="pmeMove(0,-1)" aria-label="↑">↑</button>
+                <button type="button" class="pme-btn" onclick="pmeMove(0,1)" aria-label="↓">↓</button>
+                <button type="button" class="pme-btn" onclick="pmeMove(1,0)" aria-label="→">→</button>
+            </div>
             <div class="pme-zoomrow">
                 <button type="button" class="pme-btn" onclick="pmeZoomStep(-1)" aria-label="<?= $pmeE('pme_zoom') ?> −">−</button>
                 <input type="range" id="pmeZoom" min="100" max="400" value="100" oninput="pmeZoom()" aria-label="<?= $pmeE('pme_zoom') ?>">
                 <button type="button" class="pme-btn" onclick="pmeZoomStep(1)" aria-label="<?= $pmeE('pme_zoom') ?> +">+</button>
             </div>
-            <div class="pme-prevrow"><canvas id="pmeCropPreview" class="pme-preview" width="96" height="96"></canvas><span class="pme-sub"><?= $pmeE('pme_preview') ?></span></div>
+            <div class="pme-prevrow"><canvas id="pmeCropPreview" class="pme-preview" width="120" height="152"></canvas><span class="pme-sub"><?= $pmeE('pme_preview') ?></span></div>
             <div class="pme-actions" style="justify-content:center; margin-top:12px;">
                 <button type="button" class="pme-btn" onclick="pmeClose()"><?= $pmeE('pme_cancel') ?></button>
                 <button type="button" class="pme-btn pme-primary" id="pmeCropApply" onclick="pmeCropApply()"><?= $pmeE('pme_apply') ?></button>
@@ -81,4 +87,4 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/assets/js/person-media-edit.js?v=4" defer></script>
+<script src="/assets/js/person-media-edit.js?v=5" defer></script>

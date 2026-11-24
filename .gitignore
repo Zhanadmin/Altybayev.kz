@@ -30,6 +30,9 @@ Thumbs.db
 
 .claude/
 
+# ALT-044: кеш версии сайта (создаётся на сервере)
+/storage/version.json
+
 # Бэкапы БД (содержат данные — не выкладывать)
 *_backup*.sql
 *_backup*.sql.gz

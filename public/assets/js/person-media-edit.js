@@ -13,7 +13,8 @@
     var st = { personId: 0, csrf: '', coverReady: false, cover: { url: null, pos_y: 50, dim: 30 }, saved: { pos_y: 50, dim: 30 } };
     var picker = { mode: 'avatar', offset: 0 };
     var crop = null; // {img, w, h, cx, cy, zoom, source:{file|mediaId}}
-    var CS = 300;    // размер холста обрезки
+    var AR = 120 / 152;      // пропорции овала аватарки на карточке (ширина/высота)
+    var CW = 240, CH = Math.round(240 / AR); // холст обрезки
 
     function $(id) { return document.getElementById(id); }
     function toast(msg, type) {
@@ -287,8 +288,11 @@
     function startCrop(src, source) {
         var img = new Image();
         img.onload = function () {
-            var min = Math.min(img.naturalWidth, img.naturalHeight);
-            crop = { img: img, w: img.naturalWidth, h: img.naturalHeight, cx: img.naturalWidth / 2, cy: img.naturalHeight / 2, zoom: 1, min: min, source: source };
+            // рамка = овал аватарки на карточке (.photo-frame .oval 120×152), поэтому пропорции AR
+            var fit = Math.min(img.naturalWidth, img.naturalHeight * AR); // ширина области при масштабе 1
+            crop = { img: img, w: img.naturalWidth, h: img.naturalHeight, cx: img.naturalWidth / 2, cy: img.naturalHeight / 2, zoom: 1, fit: fit, source: source };
+            var cv = $('pmeCropCanvas'); cv.width = CW; cv.height = CH;
+            var pv = $('pmeCropPreview'); if (pv) { pv.width = 120; pv.height = 152; }
             $('pmeZoom').value = 100;
             showPane('crop');
             drawCrop();
@@ -298,25 +302,34 @@
     }
 
     function cropGeom() {
-        var side = crop.min / crop.zoom;
-        var sx = Math.max(0, Math.min(crop.cx - side / 2, crop.w - side));
-        var sy = Math.max(0, Math.min(crop.cy - side / 2, crop.h - side));
-        crop.cx = sx + side / 2; crop.cy = sy + side / 2;
-        return { side: side, sx: sx, sy: sy };
+        var rw = crop.fit / crop.zoom, rh = rw / AR;
+        var sx = Math.max(0, Math.min(crop.cx - rw / 2, crop.w - rw));
+        var sy = Math.max(0, Math.min(crop.cy - rh / 2, crop.h - rh));
+        crop.cx = sx + rw / 2; crop.cy = sy + rh / 2;
+        return { rw: rw, rh: rh, sx: sx, sy: sy };
     }
 
     function drawCrop() {
         var cv = $('pmeCropCanvas'), g = cropGeom();
         var ctx = cv.getContext('2d');
-        ctx.clearRect(0, 0, CS, CS);
-        ctx.drawImage(crop.img, g.sx, g.sy, g.side, g.side, 0, 0, CS, CS);
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(crop.img, g.sx, g.sy, g.rw, g.rh, 0, 0, cv.width, cv.height);
         var pv = $('pmeCropPreview');
         if (pv) {
             var pc = pv.getContext('2d');
             pc.clearRect(0, 0, pv.width, pv.height);
-            pc.drawImage(crop.img, g.sx, g.sy, g.side, g.side, 0, 0, pv.width, pv.height);
+            pc.drawImage(crop.img, g.sx, g.sy, g.rw, g.rh, 0, 0, pv.width, pv.height);
         }
     }
+
+    // ALT-043: точный сдвиг кнопками-стрелками (шаг — 6 % области кадра)
+    window.pmeMove = function (dx, dy) {
+        if (!crop) return;
+        var g = cropGeom();
+        crop.cx += dx * g.rw * 0.06;
+        crop.cy += dy * g.rh * 0.06;
+        drawCrop();
+    };
 
     window.pmeZoomStep = function (dir) {
         if (!crop) return;
@@ -361,7 +374,7 @@
                 pinch = d;
                 return;
             }
-            var k = cropGeom().side / cv.getBoundingClientRect().width;
+            var k = cropGeom().rw / cv.getBoundingClientRect().width;
             crop.cx -= (e.clientX - prev.x) * k;
             crop.cy -= (e.clientY - prev.y) * k;
             drawCrop();
@@ -393,13 +406,14 @@
             fd.append('id', String(src.mediaId));
             fd.append('crop_x', (g.sx / crop.w).toFixed(5));
             fd.append('crop_y', (g.sy / crop.h).toFixed(5));
-            fd.append('crop_s', (g.side / crop.min).toFixed(5));
+            fd.append('crop_w', (g.rw / crop.w).toFixed(5));
+            fd.append('crop_h', (g.rh / crop.h).toFixed(5));
             postForm('/api/album/media/avatar', fd).then(function (d) { ok(d.avatar_url); })
                 .catch(function (e) { toast(e.message, 'error'); }).then(done);
         } else {
-            var out = Math.min(600, Math.round(g.side)), c = document.createElement('canvas');
-            c.width = out; c.height = out;
-            c.getContext('2d').drawImage(crop.img, g.sx, g.sy, g.side, g.side, 0, 0, out, out);
+            var outW = Math.max(16, Math.min(480, Math.round(g.rw))), outH = Math.round(outW / AR), c = document.createElement('canvas');
+            c.width = outW; c.height = outH;
+            c.getContext('2d').drawImage(crop.img, g.sx, g.sy, g.rw, g.rh, 0, 0, outW, outH);
             c.toBlob(function (blob) {
                 if (!blob) { toast(T.imgError, 'error'); done(); return; }
                 var fd2 = new FormData();

@@ -273,7 +273,13 @@ $dsThemeReady = !empty($dsThemeReady);
 
             <div class="ds-sidebar-foot">
                 <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
-                <span>altybayev.kz · 2026 · v2.1</span>
+                <span>altybayev.kz · 2026</span>
+                <?php $__ver = \App\Core\Version::info(); if ($__ver): ?>
+                <?php /* ALT-044: версия из git; время, затем дата */ ?>
+                <span class="ds-version" tabindex="0" title="<?= htmlspecialchars($__ver['full'] . "\n" . $__ver['subject'], ENT_QUOTES) ?>">
+                    <?= $__ver['count'] > 0 ? 'v.' . (int)$__ver['count'] . ' · ' : '' ?><?= htmlspecialchars($__ver['short']) ?> · <?= date('H:i d.m.Y', (int)$__ver['updated']) ?>
+                </span>
+                <?php endif; ?>
             </div>
         </aside>
 

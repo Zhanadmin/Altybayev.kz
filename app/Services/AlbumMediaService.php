@@ -333,6 +333,19 @@ class AlbumMediaService
         $w = imagesx($img);
         $h = imagesy($img);
         $min = min($w, $h);
+        if ($crop !== null && isset($crop['w'], $crop['h'])) {
+            // ALT-043: прямоугольник 120:152 (как овал аватарки), выход до 480 px по ширине
+            $rw = max(16, min($w, (int)round($w * max(0.02, min(1.0, (float)$crop['w'])))));
+            $rh = max(16, min($h, (int)round($h * max(0.02, min(1.0, (float)$crop['h'])))));
+            $sx = max(0, min((int)round($w * max(0.0, min(1.0, (float)$crop['x']))), $w - $rw));
+            $sy = max(0, min((int)round($h * max(0.0, min(1.0, (float)$crop['y']))), $h - $rh));
+            $ow = min(480, $rw);
+            $oh = max(1, (int)round($ow * $rh / $rw));
+            $canvas = imagecreatetruecolor($ow, $oh);
+            imagecopyresampled($canvas, $img, 0, 0, $sx, $sy, $ow, $oh, $rw, $rh);
+            imagedestroy($img);
+            return $this->saveAvatarCanvas($canvas, $publicDir, $publicPrefix);
+        }
         if ($crop !== null) {
             $fs = max(0.05, min(1.0, (float)$crop['s']));
             $side = max(16, (int)round($min * $fs));
@@ -350,7 +363,12 @@ class AlbumMediaService
         $canvas = imagecreatetruecolor($out, $out);
         imagecopyresampled($canvas, $img, 0, 0, $sx, $sy, $out, $out, $side, $side);
         imagedestroy($img);
+        return $this->saveAvatarCanvas($canvas, $publicDir, $publicPrefix);
+    }
 
+    /** Сохранить готовый холст аватара как JPEG и вернуть публичный URL (холст освобождается). */
+    private function saveAvatarCanvas($canvas, string $publicDir, string $publicPrefix): string
+    {
         if (!is_dir($publicDir)) {
             @mkdir($publicDir, 0755, true);
         }

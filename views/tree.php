@@ -3051,7 +3051,26 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 var(--oyu-br) right 3px bottom 3px / 16px 16px no-repeat,
                 var(--c-island-2);
             border-color: var(--c-border-strong);
+            /* ALT-059: одна общая плашка на двоих — общие фон, рамка и тень */
+            background-color: var(--c-island);
+            border: 1px solid var(--c-border);
+            box-shadow: var(--shadow-island);
         }
+        /* половины плашки: без собственных фона, рамки и тени; нажимаются отдельно */
+        .person-card.in-couple,
+        .person-card.in-couple:hover,
+        .person-card.in-couple.is-self,
+        .person-card.in-couple.selected {
+            background: transparent;
+            box-shadow: none;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            transform: none;
+        }
+        .person-card.in-couple.selected,
+        .person-card.in-couple.is-self { background: var(--c-accent-soft, rgba(0,0,0,.04)); }
+        .person-card.in-couple:hover { background: rgba(0,0,0,.03); }
 
         /* кнопки на холсте */
         .btn-branch-expand { font-family: var(--font-book); font-size: 13px; border-color: var(--c-accent); color: var(--c-accent-text); }
@@ -5067,8 +5086,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
 
             // 2. Жұбайлар біртұтас планкасы (Couple Unit Plate)
+            const coupleMemberIds = new Set();
             if (treeData.layout && treeData.layout.couples) {
                 treeData.layout.couples.forEach(cp => {
+                    (cp.member_ids || [cp.husband_id, cp.wife_id]).forEach(mid => coupleMemberIds.add(Number(mid)));
                     const plateEl = document.createElement('div');
                     plateEl.className = 'couple-unit-plate';
                     plateEl.dataset.members = (cp.member_ids || [cp.husband_id, cp.wife_id]).join(',');
@@ -5093,6 +5114,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const card = document.createElement('div');
                 card.className = `person-card ${isMale ? 'male' : 'female'} ${isDeceased ? 'deceased' : ''} ${isSelf ? 'is-self' : ''} ${isSelected ? 'selected' : ''}`;
                 card.id = `card-${node.id}`;
+                if (coupleMemberIds.has(node.id)) card.classList.add('in-couple'); // ALT-059: половина общей плашки
                 card.style.left = `${node.x}px`;
                 card.style.top = `${node.y}px`;
 

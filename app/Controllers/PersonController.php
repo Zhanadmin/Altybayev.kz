@@ -177,39 +177,82 @@ class PersonController
             ],
         ];
 
-        foreach ($filtered as &$p) {
-            $bYear = (int)($p['birth_year'] ?? 0);
-            $isDec = !empty($p['is_deceased']);
-
-            // Старшинство семей внутри поколения считать по возрасту МУЖА
-            $seniorityYear = $bYear;
-            // TASK-020: по возрасту мужа — только если у женщины нет своей даты рождения
-            if ($bYear === 0 && $p['gender'] === 'F' && !empty($p['spouses'])) {
-                $firstSpouse = $allPersonsById[$p['spouses'][0]['spouse_id']] ?? null;
+        // ALT-032: базовое поколение — по году (старшинство), затем поколение не ниже «поколение родителя + 1»
+        // без верхнего предела; дети людей 3-го поколения образуют 4-е и т.д.
+        $seniorityOf = function (array $row) use ($allPersonsById, $marriagesMap): int {
+            $bYear = (int)($row['birth_year'] ?? 0);
+            $y = $bYear;
+            if ($bYear === 0 && ($row['gender'] ?? '') === 'F' && !empty($marriagesMap[(int)$row['id']])) {
+                $firstSpouse = $allPersonsById[$marriagesMap[(int)$row['id']][0]['spouse_id']] ?? null;
                 if ($firstSpouse && !empty($firstSpouse['birth_year'])) {
-                    $seniorityYear = (int)$firstSpouse['birth_year'];
+                    $y = (int)$firstSpouse['birth_year'];
                 }
             }
-            if ($seniorityYear === 0) {
-                $seniorityYear = 9999;
+            return $y === 0 ? 9999 : $y;
+        };
+        $baseGenOf = function (array $row, int $sy) {
+            if (!empty($row['is_deceased']) || ($sy > 0 && $sy < 1945)) {
+                return 'ancestors';
             }
+            if ($sy < 1975) {
+                return 1;
+            }
+            if ($sy < 1996) {
+                return 2;
+            }
+            if ($sy < 9999) {
+                return 3;
+            }
+            return 2;
+        };
+        $genMemo = [];
+        $genOf = function (int $id, int $depth = 0) use (&$genOf, &$genMemo, $allPersonsById, $seniorityOf, $baseGenOf) {
+            if (isset($genMemo[$id])) {
+                return $genMemo[$id];
+            }
+            $row = $allPersonsById[$id] ?? null;
+            if (!$row) {
+                return 'ancestors';
+            }
+            $g = $baseGenOf($row, $seniorityOf($row));
+            if ($depth < 50) {
+                foreach (['father_id', 'mother_id'] as $pk) {
+                    $pid = (int)($row[$pk] ?? 0);
+                    if ($pid > 0 && $pid !== $id && isset($allPersonsById[$pid])) {
+                        $pg = $genOf($pid, $depth + 1);
+                        if (is_int($pg) && ($g === 'ancestors' || $pg + 1 > $g)) {
+                            $g = $pg + 1;
+                        }
+                    }
+                }
+            }
+            return $genMemo[$id] = $g;
+        };
+
+        foreach ($filtered as &$p) {
+            $seniorityYear = $seniorityOf($p);
             $p['seniority_year'] = $seniorityYear;
 
-            if ($isDec || ($seniorityYear > 0 && $seniorityYear < 1945)) {
-                $genKey = 'ancestors';
-            } elseif ($seniorityYear >= 1945 && $seniorityYear < 1975) {
-                $genKey = 1;
-            } elseif ($seniorityYear >= 1975 && $seniorityYear < 1996) {
-                $genKey = 2;
-            } elseif ($seniorityYear >= 1996 && $seniorityYear < 9999) {
-                $genKey = 3;
-            } else {
-                $genKey = 2;
+            $genKey = $genOf((int)$p['id']);
+            if (is_int($genKey) && !isset($generationGroups[$genKey])) {
+                $generationGroups[$genKey] = [
+                    'key'      => $genKey,
+                    'title_kk' => $genKey . '-ұрпақ',
+                    'title_ru' => $genKey . '-е поколение',
+                    'badge'    => '🌱',
+                    'persons'  => [],
+                ];
             }
             $p['generation_key'] = $genKey;
             $generationGroups[$genKey]['persons'][] = &$p;
         }
         unset($p);
+        // Порядок групп: предки, затем 1, 2, 3, 4, ...
+        uksort($generationGroups, function ($a, $b) {
+            $na = $a === 'ancestors' ? 0 : (int)$a;
+            $nb = $b === 'ancestors' ? 0 : (int)$b;
+            return $na <=> $nb;
+        });
 
         // Внутри каждого поколения сортируем строго по старшинству (старшие сверху)
         foreach ($generationGroups as &$grp) {

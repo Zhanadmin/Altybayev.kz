@@ -147,9 +147,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
         if (!empty($p['maiden_name'])) {
             $metaParts[] = (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд. ' : 'қыз кезіндегі: ') . $p['maiden_name'];
         }
-        if (!empty($p['birth_place'])) {
-            $metaParts[] = $p['birth_place'];
-        }
+        // ALT-023: места рождения/смерти в списке не показываем — только в карточке человека
         ?>
         <tr class="pp-row" data-href="/person/<?= (int)$p['id'] ?>">
             <td class="num col-opt-md"><?= $idx ?></td>

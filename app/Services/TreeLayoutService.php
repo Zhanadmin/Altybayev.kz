@@ -619,9 +619,10 @@ class TreeLayoutService
                 // ALT-057: несколько браков — нынешний супруг вплотную к «центру» (mId), бывшие по бокам:
                 // первый бывший — на свободной стороне рядом с центром, второй — с другой стороны за нынешним и т. д.
                 // Замечание владельца: браки слева направо по порядку (1-й, 2-й, 3-й); центр стоит после первого супруга
-                $first = array_shift($spousesInGen);
-                $unitMembers = array_merge([$first, $mId], $spousesInGen);
-                $spousesInGen = array_merge([$first], $spousesInGen);
+                // Замечание 2: бывшие по дате слева, затем центр, вплотную к нему последний (нынешний) супруг
+                $lastSp = array_pop($spousesInGen);
+                $unitMembers = array_merge($spousesInGen, [$mId, $lastSp]);
+                $spousesInGen[] = $lastSp;
                 $processed[$mId] = true;
                 foreach ($spousesInGen as $spId) {
                     $processed[$spId] = true;

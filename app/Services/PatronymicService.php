@@ -52,6 +52,31 @@ class PatronymicService
         return $name . ($g === 'M' ? '-ұлы' : '-қызы');
     }
 
+    /**
+     * ALT-023: русское отчество («Кененович», «Алтыбаевна») -> казахская форма «Кенен-ұлы» / «…-қызы».
+     * Имя отца берётся из записи отца, если есть; иначе — основа отчества без суффикса.
+     * null — значение не похоже на русское отчество.
+     * @param array<string,mixed>|null $father
+     */
+    private static function kkFromRussian(string $manual, string $gender, ?array $father): ?string
+    {
+        if (!preg_match('/^(.+?)(овна|евна|ична|инична|ович|евич|ьич|ич)$/iu', trim($manual), $m)) {
+            return null;
+        }
+        $g = strtoupper($gender);
+        if ($g !== 'M' && $g !== 'F') {
+            $g = in_array(mb_strtolower($m[2]), ['ович', 'евич', 'ьич', 'ич'], true) ? 'M' : 'F';
+        }
+        if ($father && trim((string)($father['first_name'] ?? '')) !== '') {
+            return self::generate((string)$father['first_name'], $g, 'kk');
+        }
+        $stem = trim($m[1]);
+        if ($stem === '') {
+            return null;
+        }
+        return $stem . ($g === 'M' ? '-ұлы' : '-қызы');
+    }
+
     /** ALT-022: «Сағали ұлы» -> «Сағали-ұлы» (только вывод; БД не меняется). Прочее — как есть. */
     public static function dashKk(string $manual): string
     {
@@ -72,7 +97,12 @@ class PatronymicService
         }
         $manual = trim((string)($person['middle_name'] ?? ''));
         if ($manual !== '') {
-            return $lang === 'ru' ? self::localizeManual($manual, (string)($person['gender'] ?? '')) : self::dashKk($manual);
+            if ($lang === 'ru') {
+                return self::localizeManual($manual, (string)($person['gender'] ?? ''));
+            }
+            // ALT-023: на kk русское отчество («Кененович») -> «Кенен-ұлы» (только вывод; БД не меняется)
+            $kkForm = self::kkFromRussian($manual, (string)($person['gender'] ?? ''), $father);
+            return $kkForm ?? self::dashKk($manual);
         }
         if (!$father || trim((string)($father['first_name'] ?? '')) === '') {
             return '';

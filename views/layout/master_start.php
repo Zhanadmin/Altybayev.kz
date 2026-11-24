@@ -105,7 +105,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <?php endif; ?>
     <!-- ALT-020: шрифты локально — Pacifico (название, заголовки), Lora (текст) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=18">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=7">

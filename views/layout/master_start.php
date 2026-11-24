@@ -103,21 +103,19 @@ $dsThemeReady = !empty($dsThemeReady);
         })();
     </script>
     <?php endif; ?>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- TASK-012: заголовки — Cormorant Garamond, текст — PT Sans (обе с казахскими буквами ә ғ қ ң ө ұ ү һ і) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <!-- ALT-020: шрифты локально — Pacifico (название, заголовки), Lora (текст) -->
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <link rel="stylesheet" href="/assets/css/book.css?v=7">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
         .ds-clan-switch { cursor: pointer; }
         .ds-clan-switch .ds-tamga .ic { margin: 0; color: var(--c-accent-text); }
         .ds-clan-switch > span:last-child { min-width: 0; }
-        .ds-brand-title { font-weight: 600; font-size: var(--fs-md); }
+        .ds-brand-title { font-weight: 400; font-size: var(--fs-md); }
         .ds-you-are { font-size: var(--fs-sm); color: var(--c-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         .ds-you-are b { color: var(--c-text); font-weight: 600; }
         .ds-topbar .seg button { padding: 4px 11px; font-size: var(--fs-xs); font-weight: 600; }

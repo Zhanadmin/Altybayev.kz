@@ -28,12 +28,9 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
             } catch (e) {}
         })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- TASK-012: шрифты с казахскими буквами и слой «Шежіре-кітап» -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=15">
-    <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <link rel="stylesheet" href="/assets/css/book.css?v=7">
     <style>
         .au-legal { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: var(--sp-4, 16px); font-size: 14px; }
         .au-legal a { text-decoration: underline; text-underline-offset: 3px; }

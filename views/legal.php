@@ -39,11 +39,9 @@ $e = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             } catch (e) {}
         })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=15">
-    <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <link rel="stylesheet" href="/assets/css/book.css?v=7">
     <style>
         /* TASK-014: лист «книги» шире карточки входа, текст — слева */
         .au-card.lg-card { max-width: 760px; text-align: left; }

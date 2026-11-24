@@ -25,16 +25,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             } catch (e) {}
         })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext">
-    <!-- TASK-013 (шаг 9): шрифты и слой «Шежіре-кітап», как на остальных страницах -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=PT+Sans:wght@400;700&display=swap&subset=cyrillic,cyrillic-ext">
+    <!-- ALT-020: шрифты локально — Pacifico (заголовки), Lora (текст) -->
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=6">
+    <link rel="stylesheet" href="/assets/css/book.css?v=7">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
         :root {
@@ -65,7 +62,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: var(--font-sans, "Lora", Georgia, serif); /* ALT-020 */
             background-color: var(--bg-canvas);
             color: var(--text-light);
             height: 100vh;
@@ -2918,7 +2915,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             border-color: var(--c-border-strong);
             padding-bottom: 16px;
         }
-        .brand-title { font-family: var(--font-book); font-size: 21px; font-weight: 700; letter-spacing: 0; }
+        .brand-title { font-family: var(--font-script); font-size: 18px; font-weight: 400; letter-spacing: 0; }
         header.tree-nav .mode-btn.active, header.tree-nav .scope-btn.active, header.tree-nav .lang-btn.active {
             background: var(--c-island);
             color: var(--c-accent-text);

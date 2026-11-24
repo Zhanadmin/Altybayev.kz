@@ -1,0 +1,10 @@
+/* ALT-020: локальные шрифты (Google Fonts, лицензия OFL), без внешних CDN.
+   Pacifico — название сайта и заголовки; Lora — основной текст.
+   Файлы TTF полные (не урезанные по диапазонам): кириллица и казахские буквы внутри. */
+@font-face { font-family: "Lora"; font-style: normal; font-weight: 400; font-display: swap; src: url(/assets/fonts/lora-400.ttf) format("truetype"); }
+@font-face { font-family: "Lora"; font-style: normal; font-weight: 500; font-display: swap; src: url(/assets/fonts/lora-500.ttf) format("truetype"); }
+@font-face { font-family: "Lora"; font-style: normal; font-weight: 600; font-display: swap; src: url(/assets/fonts/lora-600.ttf) format("truetype"); }
+@font-face { font-family: "Lora"; font-style: normal; font-weight: 700; font-display: swap; src: url(/assets/fonts/lora-700.ttf) format("truetype"); }
+@font-face { font-family: "Lora"; font-style: italic; font-weight: 400 500; font-display: swap; src: url(/assets/fonts/lora-italic-400.ttf) format("truetype"); }
+@font-face { font-family: "Lora"; font-style: italic; font-weight: 600 700; font-display: swap; src: url(/assets/fonts/lora-italic-600.ttf) format("truetype"); }
+@font-face { font-family: "Pacifico"; font-style: normal; font-weight: 400; font-display: swap; src: url(/assets/fonts/pacifico-400.ttf) format("truetype"); }

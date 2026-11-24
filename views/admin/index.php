@@ -113,14 +113,22 @@ $adRoleLabels = [
             <div class="hm-empty ad-empty"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Пользователей и приглашений пока нет' : 'Пайдаланушылар мен шақырулар жоқ' ?></div>
         <?php else: ?>
         <div class="table-wrap">
-            <table class="table ad-table">
+            <table class="table ad-table ad-access">
+                <colgroup>
+                    <col>
+                    <col class="ad-col-status">
+                    <col class="ad-col-role">
+                    <col class="ad-col-person col-opt-lg">
+                    <col class="ad-col-login col-opt-md">
+                    <col class="ad-col-act">
+                </colgroup>
                 <thead>
                     <tr>
                         <th><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Имя / Email' : 'Аты / Email' ?></th>
                         <th><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Статус' : 'Күйі' ?></th>
-                        <th class="ad-w-role"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Роль' : 'Рөлі' ?></th>
-                        <th class="ad-w-person col-opt-lg"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?></th>
-                        <th class="ad-w-login col-opt-md"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Последний вход' : 'Соңғы кіруі' ?></th>
+                        <th><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Роль' : 'Рөлі' ?></th>
+                        <th class="col-opt-lg"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Карточка в шежіре' : 'Шежіредегі карточка' ?></th>
+                        <th class="col-opt-md"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Последний вход' : 'Соңғы кіруі' ?></th>
                         <th class="actions"><span class="ad-sr"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Действия' : 'Әрекеттер' ?></span></th>
                     </tr>
                 </thead>
@@ -156,7 +164,7 @@ $adRoleLabels = [
                                 <?php if ($isProtected): ?>
                                     <span class="badge"><?= htmlspecialchars($adRoleLabels[$r['role']] ?? (string)$r['role']) ?></span>
                                 <?php else: ?>
-                                    <select id="roleSelect_<?= $rid ?>" class="select" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Роль' : 'Рөлі' ?>">
+                                    <select id="roleSelect_<?= $rid ?>" class="select" onchange="saveAccessRole('<?= $rid ?>')" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Роль' : 'Рөлі' ?>">
                                         <?php foreach ($adRoleLabels as $roleKey => $roleLabel): ?>
                                             <option value="<?= $roleKey ?>" <?= $r['role'] === $roleKey ? 'selected' : '' ?>><?= htmlspecialchars($roleLabel) ?></option>
                                         <?php endforeach; ?>
@@ -180,43 +188,19 @@ $adRoleLabels = [
                                 <?= !empty($r['last_login_at']) ? date('d.m.Y H:i', strtotime((string)$r['last_login_at'])) : '—' ?>
                             </td>
                             <td class="actions">
-                                <div class="ad-actions">
-                                <?php if (!$isProtected): ?>
-                                    <button type="button" class="btn btn-sm" onclick="saveAccessRole('<?= $rid ?>')">
-                                        <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сменить роль' : 'Рөлді өзгерту' ?>
-                                    </button>
-                                    <?php if ($isUser && (int)$r['person_id'] > 0): ?>
-                                        <button type="button" class="btn btn-sm" onclick="unlinkUser(<?= (int)$r['user_id'] ?>)">
-                                            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Отвязать' : 'Ажырату' ?>
-                                        </button>
-                                    <?php endif; ?>
-                                    <?php if ($rStatus !== 'disabled' && (int)$r['invitation_id'] > 0): ?>
-                                        <button type="button" class="btn btn-sm" onclick="revokeInvitation(<?= (int)$r['invitation_id'] ?>)">
-                                            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Отключить' : 'Бұғаттау' ?>
-                                        </button>
-                                    <?php endif; ?>
-                                    <?php if ($rStatus === 'invited'): ?>
-                                        <button type="button" class="btn btn-sm" onclick="copyInviteText(this)"
-                                                data-email="<?= htmlspecialchars($rEmail) ?>">
-                                            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Повторно отправить' : 'Қайта жіберу' ?>
-                                        </button>
-                                    <?php elseif ($rStatus === 'disabled'): ?>
-                                        <button type="button" class="btn btn-sm"
-                                                data-email="<?= htmlspecialchars($rEmail) ?>"
-                                                data-role="<?= htmlspecialchars((string)$r['role']) ?>"
-                                                data-notes="<?= htmlspecialchars((string)$r['notes']) ?>"
-                                                data-person="<?= (int)$r['person_id'] ?>"
-                                                onclick="prefillInvite(this)">
-                                            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Пригласить снова' : 'Қайта шақыру' ?>
-                                        </button>
-                                    <?php endif; ?>
-                                    <?php if ($isUser): ?>
-                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser(<?= (int)$r['user_id'] ?>)">
-                                            <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить' : 'Жою' ?>
-                                        </button>
-                                    <?php endif; ?>
+                                <?php if (!$isProtected): /* ALT-030: действия — в меню «⋯» (логика прежняя) */ ?>
+                                    <button type="button" class="btn btn-ghost btn-icon pp-more ad-more" aria-haspopup="menu" aria-expanded="false"
+                                            aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Действия' : 'Әрекеттер' ?>"
+                                            data-rid="<?= $rid ?>"
+                                            data-user="<?= $isUser ? (int)$r['user_id'] : 0 ?>"
+                                            data-inv="<?= (int)$r['invitation_id'] ?>"
+                                            data-status="<?= htmlspecialchars($rStatus) ?>"
+                                            data-linked="<?= ($isUser && (int)$r['person_id'] > 0) ? 1 : 0 ?>"
+                                            data-email="<?= htmlspecialchars($rEmail) ?>"
+                                            data-role="<?= htmlspecialchars((string)$r['role']) ?>"
+                                            data-notes="<?= htmlspecialchars((string)$r['notes']) ?>"
+                                            data-person="<?= (int)$r['person_id'] ?>">⋯</button>
                                 <?php endif; ?>
-                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -417,10 +401,19 @@ $adRoleLabels = [
     .ad-invite { margin: 0 0 var(--sp-5, 20px); display: grid; gap: var(--sp-3, 12px); }
     .ad-invite[hidden] { display: none; }
     .ad-invite-actions { display: flex; justify-content: flex-end; gap: 8px; }
-    .ad-table td.actions { white-space: nowrap; }
-    /* кнопки строки — всегда в одну линию, при нехватке места прокручивается таблица, а не ломаются кнопки */
-    .ad-actions { display: flex; flex-wrap: nowrap; gap: 6px; justify-content: flex-end; align-items: center; }
-    .ad-actions .btn { white-space: nowrap; flex: 0 0 auto; }
+    /* ALT-030: колонки таблицы доступа заданы явно, действия — в меню «⋯» */
+    .ad-access { table-layout: fixed; }
+    .ad-access .ad-col-status { width: 110px; }
+    .ad-access .ad-col-role { width: 190px; }
+    .ad-access .ad-col-person { width: 180px; }
+    .ad-access .ad-col-login { width: 150px; }
+    .ad-access .ad-col-act { width: 48px; }
+    .ad-access td, .ad-access th { overflow: hidden; }
+    .ad-access td.ad-role { overflow: visible; }
+    .ad-access .ad-role .select { width: 100%; max-width: 100%; }
+    .ad-access td.actions { padding-left: 0; padding-right: 8px; text-align: right; overflow: visible; }
+    .ad-access .person > div { min-width: 0; }
+    .ad-access .person .name, .ad-access .person .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 
 <script>
@@ -585,6 +578,47 @@ $adRoleLabels = [
             window.prompt(AD_RU ? 'Скопируйте текст приглашения:' : 'Шақыру мәтінін көшіріңіз:', text);
         }
     }
+
+    // ALT-030: меню «⋯» строки доступа (тот же приём, что на /persons)
+    (function () {
+        const L = AD_RU
+            ? {role: 'Сменить роль', unlink: 'Отвязать', revoke: 'Отключить', resend: 'Повторно отправить', again: 'Пригласить снова', del: 'Удалить'}
+            : {role: 'Рөлді өзгерту', unlink: 'Ажырату', revoke: 'Бұғаттау', resend: 'Қайта жіберу', again: 'Қайта шақыру', del: 'Жою'};
+        const menu = document.createElement('div');
+        menu.className = 'pp-menu'; menu.setAttribute('role', 'menu'); menu.hidden = true;
+        document.body.appendChild(menu);
+        let cur = null;
+        function close() { menu.hidden = true; if (cur) cur.setAttribute('aria-expanded', 'false'); cur = null; }
+        function item(text, cls, fn) {
+            const el = document.createElement('button');
+            el.type = 'button'; el.className = 'pp-menu-item' + (cls ? ' ' + cls : '');
+            el.setAttribute('role', 'menuitem'); el.textContent = text;
+            el.addEventListener('click', function () { const b = cur; close(); fn(b); });
+            menu.appendChild(el);
+        }
+        function open(btn) {
+            const d = btn.dataset, uid = parseInt(d.user, 10), inv = parseInt(d.inv, 10);
+            menu.innerHTML = '';
+            item(L.role, '', function () { saveAccessRole(d.rid); });
+            if (d.linked === '1') item(L.unlink, '', function () { unlinkUser(uid); });
+            if (d.status !== 'disabled' && inv > 0) item(L.revoke, '', function () { revokeInvitation(inv); });
+            if (d.status === 'invited') item(L.resend, '', function (b) { copyInviteText(b); });
+            else if (d.status === 'disabled') item(L.again, '', function (b) { prefillInvite(b); });
+            if (uid > 0) item(L.del, 'is-danger', function () { deleteUser(uid); });
+            menu.hidden = false; cur = btn; btn.setAttribute('aria-expanded', 'true');
+            const r = btn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+            const left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw));
+            let top = r.bottom + 4; if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 4);
+            menu.style.left = left + 'px'; menu.style.top = top + 'px';
+        }
+        document.addEventListener('click', function (e) {
+            const more = e.target.closest('.ad-more');
+            if (more) { e.stopPropagation(); if (cur === more) close(); else open(more); return; }
+            if (!menu.contains(e.target)) close();
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+        window.addEventListener('scroll', close, true); window.addEventListener('resize', close);
+    })();
 
     async function toggleFaceRecognition(enable) {
         try {

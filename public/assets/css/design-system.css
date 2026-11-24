@@ -558,6 +558,8 @@ p { margin: 0; }
 @media (min-width: 1181px) { .pp-table th.pp-w-person { width: 320px; } .pp-table th.pp-w-rel { width: auto; } }
 @media (max-width: 1180px) { .pp-table .pp-w-kin { width: 170px; } .pp-table .pp-w-person { min-width: 280px; } .pp-table th.pp-w-person { width: auto; } }
 @media (max-width: 900px) { .pp-table .pp-w-person { min-width: 0; } }
+/* ALT-029: «Жұбайы» уже на ~35 px, эта ширина отдана «Үш жұрт» (только ПК) */
+@media (min-width: 1181px) { .pp-table th.pp-w-spouse { width: 170px; } .pp-table th.pp-w-kin { width: 205px; } }
 .pp-table td.actions { padding-left: 0; padding-right: 8px; text-align: right; }
 .pp-table tr.pp-row { cursor: pointer; }
 .pp-table tr.pp-row:hover > td { background: var(--c-accent-soft, rgba(0,0,0,.04)); }

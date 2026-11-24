@@ -592,5 +592,6 @@ textarea { font-size: 16px; }
 .ds-admin-ui .ad-trash td { overflow: visible; white-space: nowrap; }
 .ds-admin-ui .ad-trash td.actions { width: 1%; }
 .ds-admin-ui .ad-trash td:first-child { width: auto; }
-.ds-admin-ui .ad-table th.actions, .ds-admin-ui .ad-table td.actions { width: 1%; white-space: nowrap; }
+.ds-admin-ui .ad-table:not(.ad-access) th.actions, .ds-admin-ui .ad-table:not(.ad-access) td.actions { width: 1%; white-space: nowrap; }
+.ds-admin-ui .ad-access th.actions, .ds-admin-ui .ad-access td.actions { width: auto; }  /* ALT-030: ширина — из colgroup */
 .ds-admin-ui .ad-actions .btn, .ds-admin-ui .table .actions .btn { white-space: nowrap; flex: 0 0 auto; }

@@ -263,7 +263,7 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
                 <a href="<?= htmlspecialchars($buildSortUrl('birth_asc')) ?>" class="pp-sort"><?= htmlspecialchars(I18n::t('th_years')) ?> <span aria-hidden="true">↕</span></a>
             </th>
             <th class="col-opt-lg pp-w-rel"><?= htmlspecialchars(I18n::t('th_parents')) ?></th>
-            <th class="col-opt-xl pp-w-rel"><?= htmlspecialchars(I18n::t('th_spouses')) ?></th>
+            <th class="col-opt-xl pp-w-rel pp-w-spouse"><?= htmlspecialchars(I18n::t('th_spouses')) ?></th>
             <th class="col-opt-md pp-w-kin"><?= htmlspecialchars(I18n::t('th_kinship')) ?></th>
             <th class="actions pp-w-act"><span class="pp-sr"><?= htmlspecialchars(I18n::t('th_actions')) ?></span></th>
         </tr>

@@ -328,10 +328,10 @@ class I18n
 
         if ($year && $month && $day && isset($monthsRu[$month])) {
             if ($lang === 'ru') {
-                return "{$day} {$monthsRu[$month]} {$year}";
+                return "{$day} {$monthsRu[$month]} {$year} г.";
             }
             if ($lang === 'en') {
-                return "{$day} {$monthsEn[$month]} {$year}";
+                return "{$monthsEn[$month]} {$day}, {$year}";
             }
             if ($lang === 'es') {
                 return "{$day} de {$monthsEs[$month]} de {$year}";
@@ -494,6 +494,12 @@ class I18n
         if ($deceased) {
             if (!$birth && !$death) return ['short' => '', 'title' => '', 'deceased' => true];
             $span = ($birth ? $birth[0] : '?') . '–' . ($death ? $death[0] : '?');
+            // ALT-022: в en/es при одном известном годе — «b. 1952» / «d. 2010» («n.» / «m.» по-испански)
+            if (($en || $es) && (!$birth || !$death)) {
+                $span = $birth
+                    ? ($en ? 'b. ' : 'n. ') . $birth[0]
+                    : ($en ? 'd. ' : 'm. ') . $death[0];
+            }
             if ($birth && $death) {
                 $n = self::yearsBetween($birth, $death);
                 if ($n >= 0 && $n <= 130) {
@@ -596,6 +602,22 @@ class I18n
         return self::$esPhrases;
     }
 
+    /**
+     * ALT-022: месяцы заменяются только целыми словами и только в тексте с цифрами (датах),
+     * иначе «сен», «мар», «дек» ломали имена (Хасен → ХаSep).
+     */
+    private static function translateMonths(string $core, array $months): string
+    {
+        if (!preg_match('/\d/', $core)) {
+            return $core;
+        }
+        return preg_replace_callback(
+            '/(?<![\p{L}])(?:' . implode('|', array_map(static fn($k) => preg_quote((string)$k, '/'), array_keys($months))) . ')(?![\p{L}])/u',
+            static fn(array $m): string => $months[$m[0]] ?? $m[0],
+            $core
+        ) ?? $core;
+    }
+
     private static function enYears(int $n): string
     {
         return $n === 1 ? 'year' : 'years';
@@ -638,12 +660,38 @@ class I18n
         'ы' => 'y', 'і' => 'i', 'ь' => '', 'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
     ];
 
-    public static function latinize(string $text): string
+    /**
+     * ALT-022: схема по языку. en — как в загранпаспортах и англоязычной прессе
+     * (Ң→Ng, Х→Kh); es — по испанскому чтению (Х/Һ→J, Щ→Sh, Г перед е/и→Gu).
+     * Ударения не ставятся, казахская латиница 2021 не используется.
+     */
+    private const LATIN_MAP_ES = [
+        'Х' => 'J', 'х' => 'j', 'Һ' => 'J', 'һ' => 'j', 'Щ' => 'Sh', 'щ' => 'sh',
+    ];
+
+    public static function latinize(string $text, ?string $lang = null): string
     {
         if ($text === '') {
             return '';
         }
-        return strtr($text, self::LATIN_MAP);
+        $lang = $lang ?? self::lang();
+        $map = ['Ң' => 'Ng', 'ң' => 'ng'] + self::LATIN_MAP;
+        if ($lang === 'es') {
+            $map = self::LATIN_MAP_ES + $map;
+            // ge/gi по-испански читается как «хе/хи», поэтому Ге/Ги → Gue/Gui
+            $text = preg_replace_callback(
+                '/([ГгҒғ])(?=[еиэіЕИЭІ])/u',
+                static fn(array $m): string => ($m[1] === 'Г' || $m[1] === 'Ғ') ? 'Gu' : 'gu',
+                $text
+            ) ?? $text;
+        }
+        // «Алтыбаев» → Altybayev: е после гласной читается как «ye».
+        $text = preg_replace_callback(
+            '/([аеёиоуыэюяәіөұүАЕЁИОУЫЭЮЯӘІӨҰҮ])([Ее])/u',
+            static fn(array $m): string => $m[1] . ($m[2] === 'Е' ? (mb_strtoupper($m[1]) === $m[1] ? 'YE' : 'Ye') : 'ye'),
+            $text
+        ) ?? $text;
+        return strtr($text, $map);
     }
 
     /**
@@ -688,7 +736,7 @@ class I18n
             'янв' => 'Jan', 'фев' => 'Feb', 'мар' => 'Mar', 'апр' => 'Apr', 'июн' => 'Jun',
             'июл' => 'Jul', 'авг' => 'Aug', 'сен' => 'Sep', 'окт' => 'Oct', 'ноя' => 'Nov', 'дек' => 'Dec',
         ];
-        $out = strtr($core, $months);
+        $out = self::translateMonths($core, $months);
 
         // Динамические подписи: числа, возрасты, даты, счётчики.
         $dynamic = [
@@ -758,21 +806,13 @@ class I18n
         );
         if ($looksLikeName) {
             if ($latinizeNames) {
-                return $lead . self::latinize($out) . $trail;
+                return $lead . self::latinize($out, 'en') . $trail;
             }
             return $lead . $out . $trail;
         }
 
         // Заменяем длинные устойчивые подписи.
-        if (preg_match('/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/u', $out)) {
-            $replace = [];
-            foreach ($map as $k => $v) {
-                if (mb_strlen($k, 'UTF-8') >= 5) {
-                    $replace[$k] = $v;
-                }
-            }
-            $out = strtr($out, $replace);
-        }
+        $out = self::finishCyrillic($out, $map, $latinizeNames, 'en');
 
         return $lead . $out . $trail;
     }
@@ -808,7 +848,7 @@ class I18n
             'янв' => 'ene', 'фев' => 'feb', 'мар' => 'mar', 'апр' => 'abr', 'июн' => 'jun',
             'июл' => 'jul', 'авг' => 'ago', 'сен' => 'sep', 'окт' => 'oct', 'ноя' => 'nov', 'дек' => 'dic',
         ];
-        $out = strtr($core, $months);
+        $out = self::translateMonths($core, $months);
 
         // Динамические подписи: числа, возрасты, даты, счётчики.
         $dynamic = [
@@ -877,22 +917,50 @@ class I18n
         );
         if ($looksLikeName) {
             if ($latinizeNames) {
-                return $lead . self::latinize($out) . $trail;
+                return $lead . self::latinize($out, 'es') . $trail;
             }
             return $lead . $out . $trail;
         }
 
-        if (preg_match('/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/u', $out)) {
-            $replace = [];
-            foreach ($map as $k => $v) {
-                if (mb_strlen($k, 'UTF-8') >= 5) {
-                    $replace[$k] = $v;
-                }
-            }
-            $out = strtr($out, $replace);
-        }
+        $out = self::finishCyrillic($out, $map, $latinizeNames, 'es');
 
         return $lead . $out . $trail;
+    }
+
+    /**
+     * ALT-022: смешанный текст — заменяем целые слова из словаря, остаток кириллицы
+     * транслитерируем (en/es), чтобы на этих языках кириллица не оставалась.
+     */
+    private static function finishCyrillic(string $out, array $map, bool $latinizeNames, string $lang): string
+    {
+        $cyr = '/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/u';
+        if (!preg_match($cyr, $out)) {
+            return $out;
+        }
+        $keys = [];
+        foreach ($map as $k => $v) {
+            $k = (string)$k;
+            if (mb_strlen($k, 'UTF-8') >= 5 && str_contains($out, $k)) {
+                $keys[$k] = (string)$v;
+            }
+        }
+        // длинные фразы первыми; границы слов, чтобы «не указан» не ломал «не указана»
+        uksort($keys, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
+        foreach ($keys as $k => $v) {
+            $out = preg_replace_callback(
+                '/(?<![\p{L}])' . preg_quote($k, '/') . '(?![\p{L}])/u',
+                static fn(array $m): string => $v,
+                $out
+            ) ?? $out;
+        }
+        if ($latinizeNames && preg_match($cyr, $out)) {
+            $out = preg_replace_callback(
+                '/[\p{Cyrillic}]+(?:-[\p{Cyrillic}]+)*/u',
+                static fn(array $m): string => self::latinize($m[0], $lang),
+                $out
+            ) ?? $out;
+        }
+        return $out;
     }
 
     /**

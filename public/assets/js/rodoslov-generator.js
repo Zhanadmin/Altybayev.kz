@@ -88,8 +88,18 @@
         'ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'',
         'ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
     };
-    function latinize(text) {
-        return String(text == null ? '' : text).split('').map(function (ch) { return ch in LATIN_MAP ? LATIN_MAP[ch] : ch; }).join('');
+    // ALT-022: Ң→Ng; для 'es' (opts.latinizeNames === 'es') — Х/Һ→J, Щ→Sh, Ге/Ги→Gue/Gui.
+    LATIN_MAP['Ң'] = 'Ng'; LATIN_MAP['ң'] = 'ng';
+    var LATIN_MAP_ES = { 'Х':'J','х':'j','Һ':'J','һ':'j','Щ':'Sh','щ':'sh' };
+    function latinize(text, lang) {
+        var s = String(text == null ? '' : text);
+        var es = lang === 'es';
+        if (es) s = s.replace(/([ГгҒғ])(?=[еиэіЕИЭІ])/g, function (m, c) { return (c === 'Г' || c === 'Ғ') ? 'Gu' : 'gu'; });
+        s = s.replace(/([аеёиоуыэюяәіөұүАЕЁИОУЫЭЮЯӘІӨҰҮ])([Ее])/g, function (m, v, e) { return v + (e === 'Е' ? (v === v.toUpperCase() ? 'YE' : 'Ye') : 'ye'); });
+        return s.split('').map(function (ch) {
+            if (es && ch in LATIN_MAP_ES) return LATIN_MAP_ES[ch];
+            return ch in LATIN_MAP ? LATIN_MAP[ch] : ch;
+        }).join('');
     }
 
     var FEM_END = /(ова|ева|ёва|ина|ына|ая)$/i;
@@ -860,7 +870,7 @@
 
     function personRibbon(p, x, y, isFocal, opts) {
         var gold = p.deceased;
-        var name = (opts.latinizeNames ? latinize(p.first + ' ' + p.last) : (p.first + ' ' + p.last)).trim() || '—';
+        var name = (opts.latinizeNames ? latinize(p.first + ' ' + p.last, opts.latinizeNames) : (p.first + ' ' + p.last)).trim() || '—';
         var fs = nameFontSize(name);
         var ico = p.gender === 'F' ? (gold ? 'rs-icoFg' : 'rs-icoF') : (gold ? 'rs-icoMg' : 'rs-icoM');
         var out = '<g class="rs-p" data-person-id="' + p.id + '"' +
@@ -875,7 +885,7 @@
         var dl = datesLine(p);
         if (dl) out += '<text class="rs-dt" y="44">' + escapeXml(dl) + '</text>';
         if (p.gender === 'F' && p.maiden) {
-            out += '<text class="rs-mn" y="' + (dl ? 62 : 44) + '">' + escapeXml(opts.maidenPrefix + ' ' + (opts.latinizeNames ? latinize(p.maiden) : p.maiden)) + '</text>';
+            out += '<text class="rs-mn" y="' + (dl ? 62 : 44) + '">' + escapeXml(opts.maidenPrefix + ' ' + (opts.latinizeNames ? latinize(p.maiden, opts.latinizeNames) : p.maiden)) + '</text>';
         }
         out += '</g>';
         return out;
@@ -1167,14 +1177,14 @@
             var rootP = model.persons.get(t.rootId);
             var surname = t.surname;
             var clanLabel = surname ? ' · ' + clanPlural(surname).toUpperCase() : '';
-            if (opts.latinizeNames) clanLabel = latinize(clanLabel);
+            if (opts.latinizeNames) clanLabel = latinize(clanLabel, opts.latinizeNames);
             var label = (opts.labels[t.kind] || opts.labels.other) + clanLabel;
             marks.push('<text class="rs-lb" x="' + r1(p0[0]) + '" y="' + r1(grounded ? groundY + 82 : baseY + 52) + '">' + escapeXml(label) + '</text>');
             if (!grounded) return;
 
             // тамга рода на стволе (если ствол достаточно высок)
             var clan = t.kind === 'father' && opts.mainClan ? opts.mainClan : (rootP.clan && rootP.clan !== 'белгісіз' ? rootP.clan : opts.unknownClan);
-            if (opts.latinizeNames) clan = latinize(clan);
+            if (opts.latinizeNames) clan = latinize(clan, opts.latinizeNames);
             if (baseY - topY > 260) {
                 marks.push(medallion((p1[0] + p0[0]) / 2, baseY - Math.min(170, (baseY - topY) * 0.45), clan, opts));
             } else {

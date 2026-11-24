@@ -299,8 +299,15 @@
         'ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'',
         'ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
     };
+    // ALT-022: Ң→Ng; для es — Х/Һ→J, Щ→Sh, Ге/Ги→Gue/Gui (как I18n::latinize($t, 'es'))
+    LATIN_MAP['Ң'] = 'Ng'; LATIN_MAP['ң'] = 'ng';
+    const LATIN_MAP_ES = { 'Х':'J','х':'j','Һ':'J','һ':'j','Щ':'Sh','щ':'sh' };
     function latinize(text) {
-        return String(text == null ? '' : text).split('').map(ch => (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
+        let s = String(text == null ? '' : text);
+        const es = forestActiveLang === 'es';
+        if (es) s = s.replace(/([ГгҒғ])(?=[еиэіЕИЭІ])/g, (m, c) => (c === 'Г' || c === 'Ғ') ? 'Gu' : 'gu');
+        s = s.replace(/([аеёиоуыэюяәіөұүАЕЁИОУЫЭЮЯӘІӨҰҮ])([Ее])/g, (m, v, e) => v + (e === 'Е' ? (v === v.toUpperCase() ? 'YE' : 'Ye') : 'ye'));
+        return s.split('').map(ch => (es && ch in LATIN_MAP_ES) ? LATIN_MAP_ES[ch] : (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
     }
     // Текущий язык леса: имена людей в en выводятся латиницей.
     let forestActiveLang = 'kk';

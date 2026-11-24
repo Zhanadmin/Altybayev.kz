@@ -493,7 +493,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
     <script src="/assets/js/rodoslov-generator.js"></script>
     <script>
         const POSTER_LANG = '<?= $isKk ? 'kk' : ($isEn ? 'en' : ($isEs ? 'es' : 'ru')) ?>';
-        const POSTER_LATINIZE = <?= ($isEn || $isEs) ? 'true' : 'false' ?>;
+        const POSTER_LATINIZE = <?= $isEs ? "'es'" : ($isEn ? "'en'" : 'false') ?>;
         const POSTER_DATA = <?= json_encode($rodoslovData ?? ['persons' => [], 'marriages' => []], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '{"persons":[],"marriages":[]}' ?>;
         const POSTER_OPTS = <?= json_encode([
             'title'    => $isEn ? 'SHEZHIRE OF THE ALTYBAYEV FAMILY' : ($isEs ? 'SHEZHIRE DE LA FAMILIA ALTYBAYEV' : ($isKk ? 'АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ' : 'ШЕЖИРЕ РОДА АЛТЫБАЕВТАР')),

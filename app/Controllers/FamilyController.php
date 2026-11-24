@@ -90,7 +90,8 @@ class FamilyController
             }
 
             // TASK-028: отчество автоматически по отцу (ручное приоритетнее)
-            $patrLang = \App\Core\I18n::lang() === 'ru' ? 'ru' : 'kk';
+            // ALT-022: en/es — без отчества в строке имени
+            $patrLang = in_array(\App\Core\I18n::lang(), ['ru', 'en', 'es'], true) ? \App\Core\I18n::lang() : 'kk';
             $hPatr = $husband ? \App\Services\PatronymicService::resolve($husband, !empty($husband['father_id']) ? ($personsById[$husband['father_id']] ?? null) : null, $patrLang) : '';
             $wPatr = $wife ? \App\Services\PatronymicService::resolve($wife, !empty($wife['father_id']) ? ($personsById[$wife['father_id']] ?? null) : null, $patrLang) : '';
             $hName = $husband ? trim(($husband['last_name'] ?? '') . ' ' . $husband['first_name'] . ' ' . $hPatr) : 'Белгісіз';

@@ -306,7 +306,10 @@ class TreeController
             $pId = (int)$p['id'];
             $fatherForPatr = !empty($p['father_id']) ? ($personsById[$p['father_id']] ?? null) : null;
             $patr = \App\Services\PatronymicService::both($p, $fatherForPatr);
-            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . $patr['kk']);
+            // ALT-022: в en/es в строке имени только имя и фамилия (отчество не показываем)
+            $listLang = \App\Core\I18n::lang();
+            $listPatr = ($listLang === 'en' || $listLang === 'es') ? '' : ($listLang === 'ru' ? $patr['ru'] : $patr['kk']);
+            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . $listPatr);
 
             // Фильтр по поисковому запросу
             if ($q !== '') {
@@ -1500,7 +1503,7 @@ class TreeController
         foreach ($allData as $p) {
             $fatherForPatr = !empty($p['father_id']) ? ($allById[$p['father_id']] ?? null) : null;
             $patrBoth = \App\Services\PatronymicService::both($p, $fatherForPatr);
-            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($searchLang === 'ru' ? $patrBoth['ru'] : $patrBoth['kk']));
+            $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . (($searchLang === 'en' || $searchLang === 'es') ? '' : ($searchLang === 'ru' ? $patrBoth['ru'] : $patrBoth['kk'])));
             if (mb_stripos($fullName, $q) !== false || mb_stripos($patrBoth['kk'], $q) !== false || mb_stripos($patrBoth['ru'], $q) !== false || mb_stripos($p['clan_ru'] ?? '', $q) !== false) {
                 // Живые — только год рождения! Ушедшие — годы жизни
                 $years = $p['is_deceased'] 

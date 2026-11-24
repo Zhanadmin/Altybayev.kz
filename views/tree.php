@@ -4544,17 +4544,23 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         const LATIN_MAP = {
             'А':'A','Ә':'A','Б':'B','В':'V','Г':'G','Ғ':'G','Д':'D','Е':'E','Ё':'Yo',
             'Ж':'Zh','З':'Z','И':'I','Й':'Y','К':'K','Қ':'K','Л':'L','М':'M','Н':'N',
-            'Ң':'N','О':'O','Ө':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ұ':'U',
+            'Ң':'Ng','О':'O','Ө':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ұ':'U',
             'Ү':'U','Ф':'F','Х':'Kh','Һ':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'',
             'Ы':'Y','І':'I','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
             'а':'a','ә':'a','б':'b','в':'v','г':'g','ғ':'g','д':'d','е':'e','ё':'yo',
             'ж':'zh','з':'z','и':'i','й':'y','к':'k','қ':'k','л':'l','м':'m','н':'n',
-            'ң':'n','о':'o','ө':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ұ':'u',
+            'ң':'ng','о':'o','ө':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ұ':'u',
             'ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'',
             'ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
         };
-        function latinize(text) {
-            return String(text == null ? '' : text).split('').map(ch => (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
+        // ALT-022: испанская схема — Х/Һ→J, Щ→Sh, Ге/Ги→Gue/Gui (как I18n::latinize($t, 'es'))
+        const LATIN_MAP_ES = { 'Х':'J','х':'j','Һ':'J','һ':'j','Щ':'Sh','щ':'sh' };
+        function latinize(text, lang) {
+            let s = String(text == null ? '' : text);
+            const es = lang === 'es';
+            if (es) s = s.replace(/([ГгҒғ])(?=[еиэіЕИЭІ])/g, (m, c) => (c === 'Г' || c === 'Ғ') ? 'Gu' : 'gu');
+            s = s.replace(/([аеёиоуыэюяәіөұүАЕЁИОУЫЭЮЯӘІӨҰҮ])([Ее])/g, (m, v, e) => v + (e === 'Е' ? (v === v.toUpperCase() ? 'YE' : 'Ye') : 'ye'));
+            return s.split('').map(ch => (es && ch in LATIN_MAP_ES) ? LATIN_MAP_ES[ch] : (ch in LATIN_MAP ? LATIN_MAP[ch] : ch)).join('');
         }
 
         function enTreeText(value) {
@@ -4624,20 +4630,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             if ((m = core.match(/^(\d+)-е поколение$/))) return lead + 'Generación ' + m[1] + trail;
             if ((m = core.match(/^Дата рождения:\s*(.+)$/))) return lead + 'Fecha de nacimiento: ' + esTreeText(m[1]) + trail;
             if ((m = core.match(/^Дата ухода:\s*(.+)$/))) return lead + 'Fecha de fallecimiento: ' + esTreeText(m[1]) + trail;
-            if ((m = core.match(/^Вы — (.+)$/))) return lead + 'Usted es ' + latinize(m[1]) + trail;
+            if ((m = core.match(/^Вы — (.+)$/))) return lead + 'Usted es ' + latinize(m[1], 'es') + trail;
             if ((m = core.match(/^(.+?)\s*·\s*прожил(а)?\s+(≈?)(\d+)\s*(год|года|лет)$/))) {
                 return lead + esTreeText(m[1]) + ' · vivió ' + m[3] + m[4] + ' ' + (Number(m[4]) === 1 ? 'año' : 'años') + trail;
             }
             if ((m = core.match(/^(\d+)\s*лет со дня ухода$/))) return lead + m[1] + ' años desde su fallecimiento' + trail;
             if ((m = core.match(/^(\d+)\s*жас$/))) return lead + m[1] + ' años' + trail;
             if ((m = core.match(/^(\d+)\s*жыл$/))) return lead + m[1] + ' años' + trail;
-            if ((m = core.match(/^(.+?)\s*\(урожд\.\s*(.+)\)$/))) return lead + latinize(m[1]) + ' (de soltera ' + latinize(m[2]) + ')' + trail;
-            if ((m = core.match(/^\(урожд\.\s*(.+)\)$/))) return lead + '(de soltera ' + latinize(m[1]) + ')' + trail;
+            if ((m = core.match(/^(.+?)\s*\(урожд\.\s*(.+)\)$/))) return lead + latinize(m[1], 'es') + ' (de soltera ' + latinize(m[2], 'es') + ')' + trail;
+            if ((m = core.match(/^\(урожд\.\s*(.+)\)$/))) return lead + '(de soltera ' + latinize(m[1], 'es') + ')' + trail;
 
             const looksLikeName = /^[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*(?:\s+[А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі-]*){0,3}$/.test(core);
             let out = core;
             if (looksLikeName) {
-                return lead + latinize(core) + trail;
+                return lead + latinize(core, 'es') + trail;
             }
             if (/[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]/.test(core)) {
                 Object.keys(ES_TREE).sort((a, b) => b.length - a.length).forEach(k => {
@@ -5583,7 +5589,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 focalId: focalId,
                 title: isEn ? 'FAMILY TREE' : (isEs ? 'ÁRBOL GENEALÓGICO' : (isRu ? 'РОДОСЛОВНОЕ ДРЕВО' : 'ШЕЖІРЕ-АҒАШ')),
                 emptyText: isEn ? 'No data — import GEDCOM' : (isEs ? 'Sin datos — importe GEDCOM' : (isRu ? 'Данных нет — импортируйте GEDCOM' : 'Деректер жоқ — GEDCOM импорттаңыз')),
-                latinizeNames: (isEn || isEs),
+                latinizeNames: isEs ? 'es' : (isEn ? 'en' : false),
                 onPersonClick: function(id) {
                     rodoslovHighlight(id);
                     // id из БД может прийти строкой — отдаём selectPerson исходное значение
@@ -5992,11 +5998,28 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             updateAllKinshipBadges(id);
 
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
-            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${(currentLang === 'ru' ? (p.middle_name_ru || p.middle_name || '') : (p.middle_name_kk || p.middle_name || ''))}`.trim();
+            // ALT-022: в en/es отчества в строке имени нет; отец — отдельной строкой «Son of …» / «Hijo de …»
+            const isEnEs = (currentLang === 'en' || currentLang === 'es');
+            let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${isEnEs ? '' : (currentLang === 'ru' ? (p.middle_name_ru || p.middle_name || '') : (p.middle_name_kk || p.middle_name || ''))}`.trim();
             if (p.maiden_name) {
                 fullNameDisplay += ` (${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})`;
             }
-            document.getElementById('panelPersonName').innerText = fullNameDisplay;
+            let parentLine = '';
+            if (isEnEs && (p.gender === 'M' || p.gender === 'F')) {
+                const pm = String(p.middle_name_kk || p.middle_name || '').match(/^(.+?)\s+(ұлы|улы|қызы|кызы)$/i);
+                if (pm) {
+                    const fn = latinize(pm[1].trim(), currentLang);
+                    parentLine = currentLang === 'en'
+                        ? (p.gender === 'M' ? 'Son of ' : 'Daughter of ') + fn
+                        : (p.gender === 'M' ? 'Hijo de ' : 'Hija de ') + fn;
+                }
+            }
+            const panelNameEl = document.getElementById('panelPersonName');
+            if (parentLine) {
+                panelNameEl.innerText = fullNameDisplay + ' — ' + parentLine.charAt(0).toLowerCase() + parentLine.slice(1);
+            } else {
+                panelNameEl.innerText = fullNameDisplay;
+            }
             const clanDisplay = p.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'не указан' : 'белгісіз');
             document.getElementById('panelPersonClan').innerHTML = window.clanTamga(p.clan_ru) + uzEsc(clanDisplay);
             document.getElementById('panelGender').innerText = p.gender === 'M' ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Мужской' : 'Ер азамат') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Женский' : 'Әйел адам');

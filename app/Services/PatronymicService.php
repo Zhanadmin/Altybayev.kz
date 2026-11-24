@@ -58,6 +58,11 @@ class PatronymicService
      */
     public static function resolve(array $person, ?array $father, string $lang): string
     {
+        // ALT-022: в en/es отчества в строке имени нет (только имя и фамилия);
+        // отец показывается отдельной строкой parentLabel().
+        if ($lang === 'en' || $lang === 'es') {
+            return '';
+        }
         $manual = trim((string)($person['middle_name'] ?? ''));
         if ($manual !== '') {
             return $lang === 'ru' ? self::localizeManual($manual, (string)($person['gender'] ?? '')) : $manual;
@@ -98,6 +103,51 @@ class PatronymicService
         }
         $ru = self::russian(trim($m[1]), $male);
         return $ru ?? $manual;
+    }
+
+    /**
+     * ALT-022: имя отца (по-казахски/по-русски, как в базе) или '' если отец неизвестен.
+     * Ручное «X ұлы/қызы» даёт X; иначе имя отца из записи отца. БД не меняется.
+     * @param array<string,mixed> $person
+     * @param array<string,mixed>|null $father
+     */
+    public static function fatherName(array $person, ?array $father): string
+    {
+        $manual = trim((string)($person['middle_name'] ?? ''));
+        if ($manual !== '' && preg_match('/^(.+?)\s+(ұлы|улы|қызы|кызы)$/iu', $manual, $m)) {
+            return trim($m[1]);
+        }
+        if ($father) {
+            return trim((string)($father['first_name'] ?? ''));
+        }
+        return '';
+    }
+
+    /**
+     * ALT-022: строка карточки для en/es: «Son of Erlan» / «Daughter of Erlan»,
+     * «Hijo de Erlan» / «Hija de Erlan». '' — если отец неизвестен, пол не задан
+     * или язык не en/es. Имя отца — в той же транслитерации, что и имена людей.
+     * @param array<string,mixed> $person
+     * @param array<string,mixed>|null $father
+     */
+    public static function parentLabel(array $person, ?array $father, string $lang): string
+    {
+        if ($lang !== 'en' && $lang !== 'es') {
+            return '';
+        }
+        $g = strtoupper((string)($person['gender'] ?? ''));
+        if ($g !== 'M' && $g !== 'F') {
+            return '';
+        }
+        $name = self::fatherName($person, $father);
+        if ($name === '') {
+            return '';
+        }
+        $latin = \App\Core\I18n::latinize($name, $lang);
+        if ($lang === 'en') {
+            return ($g === 'M' ? 'Son of ' : 'Daughter of ') . $latin;
+        }
+        return ($g === 'M' ? 'Hijo de ' : 'Hija de ') . $latin;
     }
 
     /** Русская форма или null, если имя не кириллическое (латиница, цифры). */

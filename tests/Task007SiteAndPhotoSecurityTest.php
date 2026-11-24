@@ -284,7 +284,9 @@ assertCheck(mb_strlen($gabitBio) > 5000, "Текст биографии отца
 echo "\n8. Тестирование форматирования дат и семей Үш жұрт:\n";
 
 assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'kk') === '1985 жылғы 13 қараша', "Казахский формат даты: '1985 жылғы 13 қараша'");
-assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'ru') === '13 ноября 1985', "Русский формат даты: '13 ноября 1985'");
+assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'ru') === '13 ноября 1985 г.', "Русский формат даты: '13 ноября 1985 г.'");
+assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'en') === 'November 13, 1985', "Английский формат даты: 'November 13, 1985'");
+assertCheck(\App\Core\I18n::formatDate('1985-11-13', 'es') === '13 de noviembre de 1985', "Испанский формат даты: '13 de noviembre de 1985'");
 
 $kinService = new \App\Services\KinshipService();
 $zhurtRes = $kinService->getUshZhurtFamilies(6);

@@ -5,12 +5,27 @@ use App\Core\I18n;
 
 $lang = I18n::lang();
 // TASK-028: отчество автоматически по отцу (ручное значение приоритетнее); ru — по-русски, остальные языки — казахская форма
-$patrLang = ($lang === 'ru') ? 'ru' : 'kk';
+// ALT-022: en/es — в строке имени без отчества (resolve() вернёт ''), отец — отдельной строкой «Son of …».
+$patrLang = in_array($lang, ['ru', 'en', 'es'], true) ? $lang : 'kk';
+$parentLabel = \App\Services\PatronymicService::parentLabel($person, $father ?? null, $lang);
 $patrOf = static function (array $row, ?array $fatherRow) use ($patrLang): string {
     return \App\Services\PatronymicService::resolve($row, $fatherRow, $patrLang);
 };
 $fullName = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '') . ' ' . $patrOf($person, $father ?? null));
 $title = $fullName;
+// ALT-022 (13:30): в заголовке карточки отчество/отец через тире. kk: «Фамилия Имя — Сағали ұлы»,
+// en/es: «Zhandos Altybayev — son of Sagali» / «— hijo de Sagali». ru — как в ALT-021, без тире.
+$headLine = $fullName;
+if ($lang === 'en' || $lang === 'es') {
+    $fullName = trim(I18n::latinize(trim(($person['first_name'] ?? '') . ' ' . ($person['last_name'] ?? '')), $lang));
+    $title = $fullName;
+    $headLine = $parentLabel !== '' ? $fullName . ' — ' . lcfirst($parentLabel) : $fullName;
+} elseif ($lang === 'kk') {
+    $kkPatr = $patrOf($person, $father ?? null);
+    if ($kkPatr !== '') {
+        $headLine = trim(($person['last_name'] ?? '') . ' ' . ($person['first_name'] ?? '')) . ' — ' . $kkPatr;
+    }
+}
 $activeNav = 'persons';
 $dsThemeReady = true; // TASK-008: страница переведена на дизайн-систему (светлая и тёмная темы)
 
@@ -181,7 +196,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <circle cx="84" cy="190" r="4" fill="#f3b3bd"/><circle cx="84" cy="190" r="1.6" fill="#e3b343"/>
             </svg>
         </div>
-        <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg<?= $isDeceased ? ' gold' : '' ?>"><?= htmlspecialchars($fullName) ?></h1></div>
+        <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg<?= $isDeceased ? ' gold' : '' ?>"><?= htmlspecialchars($headLine) ?></h1></div>
         <div class="years"><b><?= htmlspecialchars($birthDisp) ?></b><?php if ($heroAge !== ''): ?> · <span class="pc-age"><?= htmlspecialchars($heroAge) ?></span><?php endif; ?></div>
         <?php if (!empty($person['birth_place'])): ?>
             <div class="place"><?= htmlspecialchars((string)$person['birth_place']) ?></div>
@@ -510,7 +525,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                             <div class="list-row">
                                 <?php if ($par['p']):
                                     $pp = $par['p'];
-                                    $ppName = trim(($pp['last_name'] ?? '') . ' ' . $pp['first_name'] . ' ' . ($pp['middle_name'] ?? ''));
+                                    $ppName = trim(($pp['last_name'] ?? '') . ' ' . $pp['first_name'] . ' ' . $patrOf($pp, null));
                                 ?>
                                     <a href="/person/<?= (int)$pp['id'] ?>" class="person pc-link">
                                         <span class="avatar<?= $pcG($pp, $pp === $father) ?><?= !empty($pp['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($pp)) ?></span>
@@ -542,7 +557,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         <div class="list">
                             <?php foreach ($spouses as $sp):
                                 $isDiv = (($sp['status'] ?? '') === 'divorced');
-                                $spName = trim(($sp['last_name'] ?? '') . ' ' . $sp['first_name'] . ' ' . ($sp['middle_name'] ?? ''));
+                                $spName = trim(($sp['last_name'] ?? '') . ' ' . $sp['first_name'] . ' ' . $patrOf($sp, null));
                                 $spDate = (string)(($sp['start_date'] ?? '') ?: ($sp['marriage_date'] ?? ''));
                             ?>
                                 <div class="list-row<?= $isDiv ? ' pc-divorced' : '' ?>">

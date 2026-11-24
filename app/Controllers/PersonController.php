@@ -115,7 +115,9 @@ class PersonController
         foreach ($allPersons as $p) {
             $patrFather = !empty($p['father_id']) ? ($allPersonsById[$p['father_id']] ?? null) : null;
             $patrBoth = \App\Services\PatronymicService::both($p, $patrFather);
-            $patrShown = \App\Core\I18n::lang() === 'ru' ? $patrBoth['ru'] : $patrBoth['kk'];
+            // ALT-022: en/es — без отчества в строке имени
+            $patrLangList = \App\Core\I18n::lang();
+            $patrShown = ($patrLangList === 'en' || $patrLangList === 'es') ? '' : ($patrLangList === 'ru' ? $patrBoth['ru'] : $patrBoth['kk']);
             $fullName = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . $patrShown);
             if ($q !== '') {
                 $match = mb_stripos($fullName, $q) !== false

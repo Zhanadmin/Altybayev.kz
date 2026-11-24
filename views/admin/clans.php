@@ -38,8 +38,9 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 .cl-tamga span { font-size: 10px; opacity: .55; }
 .cl-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .cl-table .cl-actions { flex-wrap: nowrap; }
-.cl-dlg { border: 1px solid var(--c-border, #ccc); border-radius: 10px; padding: 16px; width: min(560px, 94vw); background: var(--c-surface, #fff); color: inherit; }
-.cl-dlg::backdrop { background: rgba(0,0,0,.4); }
+.cl-dlg { border: 1px solid var(--c-border, #ccc); border-radius: 10px; padding: 16px; width: min(560px, 94vw); max-height: 90vh; max-height: 90dvh; overflow: auto; box-sizing: border-box; background: var(--c-surface, #fff); color: inherit; }
+.cl-dlg[open] { position: fixed; top: 0; right: 0; bottom: 0; left: 0; margin: auto; height: fit-content; z-index: 1000; }
+.cl-dlg::backdrop { background: rgba(0,0,0,.5); }
 .cl-dlg h3 { margin: 0 0 10px; }
 .cl-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cl-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
@@ -190,6 +191,11 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     }
     document.getElementById('clAdd').addEventListener('click', () => openDlg(null));
     document.getElementById('clCancel').addEventListener('click', () => dlg.close());
+    dlg.addEventListener('mousedown', (ev) => {
+        if (ev.target !== dlg) return;
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) dlg.close();
+    });
 
     fileInp.addEventListener('change', () => {
         const f = fileInp.files[0];

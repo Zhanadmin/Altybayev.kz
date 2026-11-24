@@ -554,6 +554,8 @@ p { margin: 0; }
 .pp-table .pp-w-rel { width: 12%; }
 .pp-table .pp-w-kin { width: 170px; }   /* ALT-023 (14:50): «Туыстығы» по содержимому ~170 px, остаток — имени */
 .pp-table .pp-w-person { min-width: 300px; }
+/* ALT-023 (15:01): на ПК «Тұлға» фиксированно ~320 px (ФИО в одну строку + запас), остаток поровну между «Ата-анасы» и «Жұбайы» */
+@media (min-width: 1181px) { .pp-table th.pp-w-person { width: 320px; } .pp-table th.pp-w-rel { width: auto; } }
 @media (max-width: 1180px) { .pp-table .pp-w-kin { width: 170px; } .pp-table .pp-w-person { min-width: 280px; } .pp-table th.pp-w-person { width: auto; } }
 @media (max-width: 900px) { .pp-table .pp-w-person { min-width: 0; } }
 .pp-table td.actions { padding-left: 0; padding-right: 8px; text-align: right; }

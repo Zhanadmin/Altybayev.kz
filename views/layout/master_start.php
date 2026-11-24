@@ -108,7 +108,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="preload" href="/assets/fonts/lora-400.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="/assets/fonts/lora-italic-700.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=25">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=26">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=11">

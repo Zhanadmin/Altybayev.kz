@@ -529,6 +529,9 @@ p { margin: 0; }
 .pp-table .person .name, .pp-table .pp-rel, .pp-table .pp-rel a, .pp-table .pp-term, .pp-table .pp-years, .pp-table .badge, .pp-table .pp-none { color: var(--c-text); }
 .pp-table .pp-lbl, .pp-table .person .meta { font-size: 13px; color: var(--c-text-2); }
 .pp-table td .person .name { font-size: 17px; font-weight: 400; }
+/* ALT-020: аватар в списке людей ~1,4× (32 → 44px), круглый, не сжимается */
+.pp-table .person .avatar { width: 44px; height: 44px; min-width: 44px; flex: 0 0 44px; aspect-ratio: 1 / 1; }
+.pp-table .person .avatar .ic { width: 20px; height: 20px; }
 .pp-table td:not(.actions) .pp-rel, .pp-table td.pp-rel, .pp-table td.pp-rel a, .pp-table .pp-term, .pp-table .pp-term *, .pp-table .pp-years, .pp-table .pp-years-sub, .pp-table .pp-none, .pp-table td .badge, .pp-table .pp-lbl, .pp-table td.clip { font-style: italic; }
 .pp-years-sub { font-size: var(--fs-xs); color: var(--c-text-3); margin-top: 2px; }
 .pp-gender-cell { text-align: center; }

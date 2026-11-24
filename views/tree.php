@@ -25,13 +25,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             } catch (e) {}
         })();
     </script>
-    <!-- ALT-020: шрифты локально — Pacifico (заголовки), Lora (текст) -->
-    <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=22">
+    <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=23">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=7">
+    <link rel="stylesheet" href="/assets/css/book.css?v=8">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
         :root {
@@ -2915,7 +2915,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             border-color: var(--c-border-strong);
             padding-bottom: 16px;
         }
-        .brand-title { font-family: var(--font-script); font-size: 18px; font-weight: 400; letter-spacing: 0; }
+        .brand-title { font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: italic; letter-spacing: 0; }
         header.tree-nav .mode-btn.active, header.tree-nav .scope-btn.active, header.tree-nav .lang-btn.active {
             background: var(--c-island);
             color: var(--c-accent-text);
@@ -3136,6 +3136,26 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         :is(#kinshipDictModal, #zhetiAtaModal, #addMediaModal) [style*="border:1px solid #334155"] { border-color: var(--c-border) !important; }
         #kinshipDictModal .modal-body [style*="font-weight:700; color:#fef08a"] { font-family: var(--font-book); font-size: 16px !important; }
         #kinshipDictModal .modal-body [style*="rgba(212,175,55,0.15)"] { background: var(--c-accent-soft) !important; border-color: transparent !important; font-family: var(--font-book); font-style: italic; }
+        /* ALT-020: крупно и читаемо для пожилых (панель, список, формы; узлы древа не трогаем — у них фиксированная раскладка) */
+        .side-name { font-size: 20px; }
+        .side-clan, .pm-meta, .pm-text, .pm-msg, .modal-sub, .lt-small, .lt-spouse-row, .uz-none, .uz-count, .audit-empty, .search-item .tf-sub { font-size: 15px; }
+        .lt-name { font-size: 17px; }
+        .lt-sub { font-size: 15px; }
+        .list-table { font-size: 16px; }
+        .uz-child-row, :is(#editPersonModal, #marriageModal, #addPersonModal) .checkbox-label { font-size: 16px; }
+        .side-sub-title { font-size: 15px; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) .form-group label { font-size: 15px; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select) { min-height: 44px; font-size: 17px; }
+        :is(#editPersonModal, #marriageModal, #addPersonModal, #kinshipDictModal, #zhetiAtaModal, #addMediaModal) textarea { font-size: 17px; }
+        .btn-modal-submit, .btn-modal-cancel, .btn-table-action, .btn-tool, .btn-empty-action { min-height: 44px; font-size: 16px; }
+        .tree-legend { font-size: 14px; }
+        /* ALT-020: подписи в узлах древа — умеренно крупнее (карточка фиксированной высоты, поэтому +1–1,5px, а не больше) */
+        .card-name { font-size: 15.5px; }
+        .card-maiden { font-size: 13px; }
+        .card-years { font-size: 14px; color: var(--c-text); }
+        .card-place { color: var(--c-text-2); }
+        .card-kinship-badge { font-size: 13px; }
+        .card-clan-tag, .zhurt-pill { font-size: 12.5px; }
     </style>
 </head>
 <body>

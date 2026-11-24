@@ -337,11 +337,9 @@ $renderTableHeader = function() use ($buildSortUrl, $canEdit) {
     </div>
 <?php endif; ?>
 
-<script src="/assets/js/person-delete.js?v=1"></script>
+<script src="/assets/js/person-delete.js?v=2"></script>
 <script>
-function pdDelete(id, btn) { // ALT-018
-    altDeletePerson(id, btn.dataset.name, { lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($csrfToken ?? '') ?>, onDone: function () { window.location.reload(); } });
-}
+window.__pcDelete = { lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($csrfToken ?? '') ?>, onDone: function () { window.location.reload(); } }; // ALT-018/061
 </script>
 <script>
 (function () { // ALT-023: клик по строке — карточка; «⋯» — меню действий
@@ -363,8 +361,8 @@ function pdDelete(id, btn) { // ALT-018
         var id = parseInt(btn.dataset.id, 10);
         menu.innerHTML = '';
         item(L.tree, '', null, '/tree?focus=' + id);
-        if (btn.dataset.edit === '1') item(L.edit, '', function () { openGlobalPersonEditModal(id); });
-        if (btn.dataset.del === '1') item(L.del, 'is-danger', function (b) { pdDelete(id, b); });
+        // ALT-061: «Удалить» из меню убрано — удаление теперь внутри окна правки
+        if (btn.dataset.edit === '1' || btn.dataset.del === '1') item(L.edit, '', function () { openGlobalPersonEditModal(id); });
         menu.hidden = false; cur = btn; btn.setAttribute('aria-expanded', 'true');
         var r = btn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
         var left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw));

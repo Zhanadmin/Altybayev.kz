@@ -31,7 +31,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
-    <script src="/assets/js/person-delete.js?v=1" defer></script>
+    <script src="/assets/js/person-delete.js?v=2" defer></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=9">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
@@ -2350,9 +2350,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         :is(#editPersonModal, #marriageModal, #ushZhurtModal, #addPersonModal) .btn-modal-submit:hover { opacity: .88; }
         /* ALT-018: кнопка «Удалить» целиком видна: подвал не сжимается, переносится на узких экранах, закреплён внизу окна */
         #editPersonModal .modal-footer { flex-shrink: 0; flex-wrap: wrap; gap: 10px; position: sticky; bottom: 0; z-index: 2; background: var(--c-island); }
-        #editPersonModal #btnDeletePerson { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 38px; padding: 8px 16px; white-space: nowrap; background: var(--c-danger); color: #fff; border: 1px solid var(--c-danger); font-weight: 700; }
-        #editPersonModal #btnDeletePerson .ic { stroke: #fff; flex-shrink: 0; }
-        #editPersonModal #btnDeletePerson:hover { background: var(--c-danger); opacity: .88; }
+        /* ALT-061: удаление — неброский блок «Опасное действие» в самом низу окна, не в подвале рядом с «Сақтау» */
+        #editPersonModal .danger-zone { margin-top: 24px; padding-top: 12px; border-top: 1px dashed var(--c-border); }
+        #editPersonModal .danger-zone-title { font-size: 13px; opacity: .7; margin-bottom: 8px; }
+        #editPersonModal #btnDeletePerson { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 38px; padding: 6px 14px; white-space: nowrap; background: transparent; color: var(--c-danger); border: 1px solid var(--c-danger); font-weight: 600; }
+        #editPersonModal #btnDeletePerson .ic { stroke: var(--c-danger); flex-shrink: 0; }
+        #editPersonModal #btnDeletePerson:hover { background: var(--c-danger-soft, transparent); }
         #editPersonModal .modal-footer .btn-modal-cancel, #editPersonModal .modal-footer .btn-modal-submit { min-height: 38px; white-space: nowrap; }
         @media (max-width: 600px) {
             #editPersonModal .modal-footer > div:first-child { width: 100%; }
@@ -3662,13 +3665,16 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <span class="audit-empty">Жүктелуде...</span>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
+
+                    <!-- ALT-061: удаление человека — внизу окна, с подтверждением -->
+                    <div class="danger-zone">
+                        <div class="danger-zone-title">Қауіпті әрекет / Опасное действие</div>
                         <button type="button" class="btn-modal-cancel" id="btnDeletePerson" onclick="handleDeleteCurrentPerson()" style="display:none;">
                             <svg class="ic" style="width:15px;height:15px;"><use href="#t-trash"/></svg> Жою / Удалить
                         </button>
                     </div>
+                </div>
+                <div class="modal-footer" style="display:flex; justify-content:flex-end; align-items:center;">
                     <div style="display:flex; gap:10px;">
                         <button type="button" class="btn-modal-cancel" onclick="closeEditPersonModal()" data-i18n="lbl_cancel">Болдырмау</button>
                         <button type="submit" class="btn-modal-submit" data-i18n="lbl_save">Сақтау</button>
@@ -6680,7 +6686,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 const btnDel = document.getElementById('btnDeletePerson');
                 if (btnDel) {
-                    btnDel.style.display = (data.can_delete || canDeletePersonUi(p.id)) ? 'inline-flex' : 'none';
+                    const delOk = !!(data.can_delete || canDeletePersonUi(p.id));
+                    btnDel.style.display = delOk ? 'inline-flex' : 'none';
+                    if (btnDel.parentElement) { btnDel.parentElement.style.display = delOk ? 'block' : 'none'; } // ALT-061: весь блок «Опасное действие»
                 }
 
                 const auditContainer = document.getElementById('editAuditLogContainer');
@@ -7014,7 +7022,6 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const clanLbl = p.clan_ru || 'белгісіз';
                 const tFocus = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Фокус в древе' : 'Шежіреде фокус';
                 const tEdit = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Редактировать' : 'Өңдеу';
-                const tDel = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Удалить' : 'Жою';
 
                 tr.innerHTML = `
                     <td class="lt-col-md" style="color:var(--c-text-3); font-size:11.5px;">${idx + 1}</td>
@@ -7056,7 +7063,6 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <button type="button" class="btn-table-action" onclick="focusPersonFromList(${p.id}); event.stopPropagation();" title="${tFocus}" aria-label="${tFocus}"><svg class="ic"><use href="#t-target"/></svg></button>
                             <button type="button" class="btn-table-action" onclick="togglePersonUshZhurt(${p.id}); event.stopPropagation();" title="Үш жұрт" aria-label="Үш жұрт"><svg class="ic"><use href="#t-users"/></svg></button>
                             ${canEditPersonUi(p.id) ? `<button type="button" class="btn-table-action" onclick="openEditPersonModal(${p.id}); event.stopPropagation();" title="${tEdit}" aria-label="${tEdit}"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
-                            ${canDeletePersonUi(p.id) ? `<button type="button" class="btn-table-action btn-table-danger" data-name="${encodeURIComponent([p.last_name, p.first_name].filter(Boolean).join(' '))}" onclick="deletePersonFlow(${p.id}, decodeURIComponent(this.dataset.name)); event.stopPropagation();" title="${tDel}" aria-label="${tDel}"><svg class="ic"><use href="#t-trash"/></svg></button>` : ''}
                         </div>
                     </td>
                 `;

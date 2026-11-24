@@ -153,6 +153,14 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         </div>
                     </details>
                     <?php require __DIR__ . '/person_contact_fields.php'; ?>
+                    <?php /* ALT-061: удаление — только здесь, в самом низу, неброским блоком; права как в ALT-018 (can_delete с сервера) */ ?>
+                    <div id="editModalDangerBlock" style="display:none;margin-top:28px;padding-top:14px;border-top:1px dashed var(--c-border);">
+                        <div style="font-size:13px;color:var(--c-text-muted,#7a7468);margin-bottom:8px;"><?= $__t('Қауіпті әрекет', 'Опасное действие') ?></div>
+                        <button type="button" class="btn btn-ghost btn-danger btn-sm" id="editModalDeleteBtn" onclick="handleGlobalPersonDelete()">
+                            <svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>
+                            <span><?= $__t('Жою', 'Удалить') ?></span>
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-foot">
                     <button type="button" class="btn" onclick="closeGlobalPersonEditModal()"><?= $__t('Бас тарту', 'Отмена') ?></button>
@@ -367,9 +375,24 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             }
         });
 
+        // ALT-061: удаление из окна «Өзгерту». Параметры (lang, csrf, onDone) задаёт страница в window.__pcDelete
+        function handleGlobalPersonDelete() {
+            const cfg = window.__pcDelete || {};
+            const id = document.getElementById('editModalPersonId').value;
+            if (!id || typeof altDeletePerson !== 'function') { return; }
+            const nm = (document.getElementById('editModalLastName').value + ' ' + document.getElementById('editModalFirstName').value).trim();
+            altDeletePerson(id, nm, {
+                lang: cfg.lang || (localStorage.getItem('shezhire_lang') || 'kk'),
+                csrf: cfg.csrf || '',
+                onDone: cfg.onDone || function () { window.location.reload(); }
+            });
+        }
+
         function openGlobalPersonEditModal(id) {
             const modal = document.getElementById('globalPersonEditModal');
             if (!modal) return;
+            const dangerBlock = document.getElementById('editModalDangerBlock');
+            if (dangerBlock) { dangerBlock.style.display = 'none'; }
             modal.style.display = 'flex';
             fetch(`/api/person?id=${id}`)
                 .then(r => r.json())
@@ -430,6 +453,11 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                             if (el.id !== 'editModalPersonId' && el.id !== 'editModalClanHint') { el.disabled = !data.can_edit; }
                         });
                         document.querySelectorAll('#editModalResBlock input, #editModalResBlock button').forEach(function (el) { el.disabled = !data.can_edit; });
+                        // ALT-061: блок удаления — только тем, кому удаление разрешено (ALT-018)
+                        const dgr = document.getElementById('editModalDangerBlock');
+                        const dgrBtn = document.getElementById('editModalDeleteBtn');
+                        if (dgrBtn) { dgrBtn.disabled = false; }
+                        if (dgr) { dgr.style.display = data.can_delete ? 'block' : 'none'; }
                     }
                 })
                 .catch(e => showAppToast('Қате / Ошибка: ' + e.message, 'error'));

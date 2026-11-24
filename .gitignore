@@ -30,6 +30,12 @@ Thumbs.db
 
 .claude/
 
+# Бэкапы БД (содержат данные — не выкладывать)
+*_backup*.sql
+*_backup*.sql.gz
+*.bak.sql
+/database/backups/
+
 # Временные файлы агента
 tmp_*
 /tmp/

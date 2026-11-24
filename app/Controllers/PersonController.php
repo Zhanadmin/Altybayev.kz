@@ -205,28 +205,72 @@ class PersonController
             }
             return 2;
         };
-        $genMemo = [];
-        $genOf = function (int $id, int $depth = 0) use (&$genOf, &$genMemo, $allPersonsById, $seniorityOf, $baseGenOf) {
-            if (isset($genMemo[$id])) {
-                return $genMemo[$id];
-            }
-            $row = $allPersonsById[$id] ?? null;
-            if (!$row) {
-                return 'ancestors';
-            }
-            $g = $baseGenOf($row, $seniorityOf($row));
-            if ($depth < 50) {
-                foreach (['father_id', 'mother_id'] as $pk) {
-                    $pid = (int)($row[$pk] ?? 0);
-                    if ($pid > 0 && $pid !== $id && isset($allPersonsById[$pid])) {
-                        $pg = $genOf($pid, $depth + 1);
-                        if (is_int($pg) && ($g === 'ancestors' || $pg + 1 > $g)) {
-                            $g = $pg + 1;
+        // ALT-032 (note): опорная точка — родители Жандоса (person 6) = 1-е поколение вместе с их братьями/сёстрами;
+        // дети +1; супруги наследуют поколение мужа/жены; всё выше — «Ата-бабалар».
+        $anchorId = 6;
+        $genMap = [];
+        $anchor = $allPersonsById[$anchorId] ?? null;
+        if ($anchor) {
+            foreach (['father_id', 'mother_id'] as $pk0) {
+                $pid0 = (int)($anchor[$pk0] ?? 0);
+                if ($pid0 > 0 && isset($allPersonsById[$pid0])) {
+                    $genMap[$pid0] = 1;
+                    foreach (['father_id', 'mother_id'] as $pk) {
+                        $gp = (int)($allPersonsById[$pid0][$pk] ?? 0);
+                        if ($gp > 0) {
+                            foreach ($allPersonsById as $oid => $o) {
+                                if ((int)($o[$pk] ?? 0) === $gp) {
+                                    $genMap[(int)$oid] = 1;
+                                }
+                            }
                         }
                     }
                 }
             }
-            return $genMemo[$id] = $g;
+        }
+        if ($genMap) {
+            do {
+                $changed = false;
+                do {
+                    $step = false;
+                    foreach ($allPersonsById as $oid => $o) {
+                        if (isset($genMap[(int)$oid])) {
+                            continue;
+                        }
+                        $best = 0;
+                        foreach (['father_id', 'mother_id'] as $pk) {
+                            $pid = (int)($o[$pk] ?? 0);
+                            if ($pid > 0 && isset($genMap[$pid])) {
+                                $best = max($best, $genMap[$pid] + 1);
+                            }
+                        }
+                        if ($best > 0) {
+                            $genMap[(int)$oid] = $best;
+                            $step = true;
+                            $changed = true;
+                        }
+                    }
+                } while ($step);
+                foreach ($marriagesMap as $mid => $mlist) {
+                    if (!isset($genMap[(int)$mid])) {
+                        continue;
+                    }
+                    foreach ($mlist as $mm) {
+                        $sid = (int)$mm['spouse_id'];
+                        if (!isset($genMap[$sid])) {
+                            $genMap[$sid] = $genMap[(int)$mid];
+                            $changed = true;
+                        }
+                    }
+                }
+            } while ($changed);
+        }
+        $genOf = function (int $id) use (&$genMap, $allPersonsById, $baseGenOf, $seniorityOf) {
+            if ($genMap) {
+                return $genMap[$id] ?? 'ancestors';
+            }
+            $row = $allPersonsById[$id] ?? null;
+            return $row ? $baseGenOf($row, $seniorityOf($row)) : 'ancestors';
         };
 
         foreach ($filtered as &$p) {

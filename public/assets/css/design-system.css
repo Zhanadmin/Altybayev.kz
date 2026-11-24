@@ -548,7 +548,7 @@ p { margin: 0; }
 .pp-table .pp-w-gender { width: 92px; padding-left: 8px; padding-right: 8px; }
 .pp-table th.pp-w-person { width: auto; }   /* ALT-023: без явной ширины — имя берёт весь остаток, «⋯» не растягивается */
 .pp-table th.pp-w-act { width: 48px; }
-.pp-table .pp-w-clan { width: 120px; }
+.pp-table .pp-w-clan { width: 96px; }   /* ALT-023 (14:58): «Руы» по ширине бейджа */
 .pp-table .pp-w-years { width: 112px; }
 .pp-table .num { width: 48px; }
 .pp-table .pp-w-rel { width: 12%; }

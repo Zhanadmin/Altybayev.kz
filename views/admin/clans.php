@@ -26,23 +26,31 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 ?>
 <style>
 .cl-wrap { display: flex; flex-direction: column; gap: var(--sp-5, 20px); }
-.cl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.cl-card { display: flex; flex-direction: column; gap: 8px; }
-.cl-top { display: flex; gap: 12px; align-items: center; }
-.cl-tamga { width: 56px; height: 56px; flex: 0 0 56px; border: 1px solid var(--c-border, #ddd); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 12px 12px; overflow: hidden; }
+.cl-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.cl-bar h3 { margin: 0; }
+.cl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cl-table th, .cl-table td { padding: 6px 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
+.cl-table th { opacity: .7; white-space: nowrap; }
+.cl-table .fit { width: 1%; white-space: nowrap; }
+.cl-table .cl-sum { opacity: .8; }
+.cl-tamga { width: 32px; height: 32px; border: 1px solid var(--c-border, #ddd); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 8px 8px; overflow: hidden; }
 .cl-tamga img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.cl-tamga span { font-size: 11px; opacity: .55; text-align: center; }
-.cl-name { font-weight: 600; }
-.cl-sub { font-size: 13px; opacity: .75; }
-.cl-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.cl-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.cl-tamga span { font-size: 10px; opacity: .55; }
+.cl-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cl-table .cl-actions { flex-wrap: nowrap; }
+.cl-dlg { border: 1px solid var(--c-border, #ccc); border-radius: 10px; padding: 16px; width: min(560px, 94vw); background: var(--c-surface, #fff); color: inherit; }
+.cl-dlg::backdrop { background: rgba(0,0,0,.4); }
+.cl-dlg h3 { margin: 0 0 10px; }
+.cl-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cl-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
-.cl-draw { display: none; flex-direction: column; gap: 8px; }
+.cl-form .full { grid-column: 1 / -1; }
+.cl-draw { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
 .cl-draw.open { display: flex; }
 .cl-canvas { width: 256px; height: 256px; border: 1px solid var(--c-border, #ccc); border-radius: 8px; touch-action: none; cursor: crosshair; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 16px 16px; }
 .cl-msg { font-size: 13px; min-height: 18px; }
 .cl-msg.err { color: #c0392b; }
 .cl-msg.ok { color: #2e7d32; }
+@media (max-width: 560px) { .cl-form { grid-template-columns: 1fr; } }
 </style>
 
 <div class="cl-wrap">
@@ -61,7 +69,43 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <?php else: ?>
 
     <div class="island">
-        <div class="island-head"><h3 id="clFormTitle"><?= $ru ? 'Новый ру' : 'Жаңа ру' ?></h3></div>
+        <div class="cl-bar" style="margin-bottom:10px">
+            <button type="button" class="btn btn-primary btn-sm" id="clAdd">+ <?= $ru ? 'Добавить' : 'Қосу' ?></button>
+            <h3><?= $ru ? 'Список ру' : 'Ру тізімі' ?> (<span id="clCount"><?= count($clans) ?></span>)</h3>
+            <input class="input" id="clSearch" type="search" placeholder="<?= $ru ? 'Поиск…' : 'Іздеу…' ?>" style="max-width:240px;margin-left:auto">
+        </div>
+        <div class="cl-msg" id="clListMsg" role="status"></div>
+        <table class="cl-table">
+            <thead><tr>
+                <th class="fit"><?= $ru ? 'Знак' : 'Таңба' ?></th>
+                <th class="fit"><?= $ru ? 'Название' : 'Атауы' ?></th>
+                <th class="fit"><?= $ru ? 'Жуз' : 'Жүз' ?></th>
+                <th><?= $ru ? 'Описание' : 'Сипаттама' ?></th>
+                <th class="fit"><?= $ru ? 'Чел.' : 'Адам' ?></th>
+                <th class="fit"></th>
+            </tr></thead>
+            <tbody id="clList">
+            <?php foreach ($clans as $c): ?>
+                <tr class="cl-row" data-id="<?= (int)$c['id'] ?>"
+                    data-search="<?= $e(mb_strtolower($c['name'] . ' ' . ($c['name_ru'] ?? ''))) ?>"
+                    data-json="<?= $e(json_encode(['id' => (int)$c['id'], 'name' => $c['name'], 'name_ru' => $c['name_ru'] ?? '', 'zhuz' => $c['zhuz'], 'summary' => $c['summary'] ?? '', 'tamga_url' => $c['tamga_url'] ?? ''], JSON_UNESCAPED_UNICODE)) ?>">
+                    <td class="fit"><div class="cl-tamga"><?php if (!empty($c['tamga_url'])): ?><img src="<?= $e($c['tamga_url']) ?>" alt="" loading="lazy"><?php else: ?><span>—</span><?php endif; ?></div></td>
+                    <td class="fit"><?= $e($c['name']) ?><?= !empty($c['name_ru']) ? ' · ' . $e($c['name_ru']) : '' ?></td>
+                    <td class="fit"><?= $e($zhuzLabels[$c['zhuz']] ?? '') ?><?= !empty($c['parent_name']) ? ' → ' . $e($c['parent_name']) : '' ?></td>
+                    <td class="cl-sum"><?= $e($c['summary'] ?? '') ?></td>
+                    <td class="fit"><?= (int)$c['persons_count'] ?></td>
+                    <td class="fit"><div class="cl-actions">
+                        <button type="button" class="btn btn-sm" data-act="edit"><?= $ru ? 'Изменить' : 'Өзгерту' ?></button>
+                        <button type="button" class="btn btn-sm" data-act="delete"><?= $ru ? 'Удалить' : 'Өшіру' ?></button>
+                    </div></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <dialog class="cl-dlg" id="clDlg">
+        <h3 id="clFormTitle"><?= $ru ? 'Новый ру' : 'Жаңа ру' ?></h3>
         <form id="clForm" class="cl-form" autocomplete="off">
             <input type="hidden" name="id" value="0">
             <label><?= $ru ? 'Название (қаз)' : 'Атауы (қаз)' ?>
@@ -72,61 +116,37 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                 <select class="input" name="zhuz">
                     <?php foreach ($zhuzLabels as $k => $v): ?><option value="<?= $e($k) ?>"><?= $e($v) ?></option><?php endforeach; ?>
                 </select></label>
-            <label style="grid-column: 1 / -1"><?= $ru ? 'Краткое описание' : 'Қысқаша сипаттама' ?>
+            <div class="full">
+                <div style="font-size:13px;margin-bottom:4px"><?= $ru ? 'Знак (таңба)' : 'Таңба' ?></div>
+                <div class="cl-actions">
+                    <div class="cl-tamga" style="width:48px;height:48px" id="clPrev"></div>
+                    <label class="btn btn-sm" style="cursor:pointer"><?= $ru ? 'Загрузить' : 'Жүктеу' ?>
+                        <input type="file" id="clFile" accept=".svg,.png,image/svg+xml,image/png" hidden></label>
+                    <button type="button" class="btn btn-sm" id="clDrawBtn"><?= $ru ? 'Нарисовать' : 'Салу' ?></button>
+                    <button type="button" class="btn btn-sm" id="clRmTamga"><?= $ru ? 'Убрать знак' : 'Таңбаны алу' ?></button>
+                    <span id="clFileName" style="font-size:12px;opacity:.7"></span>
+                </div>
+            </div>
+            <label class="full"><?= $ru ? 'Описание' : 'Сипаттама' ?>
                 <input class="input" name="summary" maxlength="255"></label>
-            <div class="cl-actions" style="grid-column: 1 / -1">
-                <button type="submit" class="btn btn-primary"><?= $ru ? 'Сохранить' : 'Сақтау' ?></button>
-                <button type="button" class="btn" id="clReset"><?= $ru ? 'Новый' : 'Жаңа' ?></button>
+            <div class="cl-actions full">
+                <button type="submit" class="btn btn-primary btn-sm"><?= $ru ? 'Сохранить' : 'Сақтау' ?></button>
+                <button type="button" class="btn btn-sm" id="clCancel"><?= $ru ? 'Отмена' : 'Бас тарту' ?></button>
             </div>
         </form>
         <div class="cl-msg" id="clMsg" role="status"></div>
-    </div>
 
-    <div class="island">
-        <div class="island-head" style="gap:10px;flex-wrap:wrap">
-            <h3><?= $ru ? 'Список ру' : 'Ру тізімі' ?> (<span id="clCount"><?= count($clans) ?></span>)</h3>
-            <input class="input" id="clSearch" type="search" placeholder="<?= $ru ? 'Поиск…' : 'Іздеу…' ?>" style="max-width:240px;margin-left:auto">
-        </div>
-        <div class="cl-grid" id="clList">
-        <?php foreach ($clans as $c): ?>
-            <div class="island-sub cl-card" data-id="<?= (int)$c['id'] ?>"
-                 data-search="<?= $e(mb_strtolower($c['name'] . ' ' . ($c['name_ru'] ?? ''))) ?>"
-                 data-json="<?= $e(json_encode(['id' => (int)$c['id'], 'name' => $c['name'], 'name_ru' => $c['name_ru'] ?? '', 'zhuz' => $c['zhuz'], 'summary' => $c['summary'] ?? ''], JSON_UNESCAPED_UNICODE)) ?>">
-                <div class="cl-top">
-                    <div class="cl-tamga">
-                        <?php if (!empty($c['tamga_url'])): ?><img src="<?= $e($c['tamga_url']) ?>" alt="" loading="lazy"><?php else: ?><span><?= $ru ? 'нет знака' : 'таңба жоқ' ?></span><?php endif; ?>
-                    </div>
-                    <div>
-                        <div class="cl-name"><?= $e($c['name']) ?><?= !empty($c['name_ru']) ? ' · ' . $e($c['name_ru']) : '' ?></div>
-                        <div class="cl-sub"><?= $e($zhuzLabels[$c['zhuz']] ?? '') ?><?= !empty($c['parent_name']) ? ' → ' . $e($c['parent_name']) : '' ?> · <?= (int)$c['persons_count'] ?> <?= $ru ? 'чел.' : 'адам' ?></div>
-                    </div>
-                </div>
-                <?php if (!empty($c['summary'])): ?><div class="cl-sub"><?= $e($c['summary']) ?></div><?php endif; ?>
-                <div class="cl-actions">
-                    <button type="button" class="btn" data-act="edit"><?= $ru ? 'Изменить' : 'Өзгерту' ?></button>
-                    <label class="btn" style="cursor:pointer"><?= $ru ? 'Загрузить знак' : 'Таңба жүктеу' ?>
-                        <input type="file" accept=".svg,.png,image/svg+xml,image/png" data-act="upload" hidden></label>
-                    <button type="button" class="btn" data-act="draw"><?= $ru ? 'Нарисовать' : 'Салу' ?></button>
-                    <?php if (!empty($c['tamga_url'])): ?><button type="button" class="btn" data-act="rmtamga"><?= $ru ? 'Убрать знак' : 'Таңбаны алу' ?></button><?php endif; ?>
-                    <button type="button" class="btn" data-act="delete"><?= $ru ? 'Удалить' : 'Өшіру' ?></button>
-                </div>
+        <div class="cl-draw" id="clDraw">
+            <canvas id="clCanvas" class="cl-canvas" width="256" height="256"></canvas>
+            <div class="cl-actions">
+                <label><?= $ru ? 'Толщина' : 'Қалыңдығы' ?> <input type="range" id="clWidth" min="2" max="24" value="8"></label>
+                <button type="button" class="btn btn-sm" id="clPen"><?= $ru ? 'Кисть' : 'Қылқалам' ?></button>
+                <button type="button" class="btn btn-sm" id="clEraser"><?= $ru ? 'Ластик' : 'Өшіргіш' ?></button>
+                <button type="button" class="btn btn-sm" id="clClear"><?= $ru ? 'Очистить' : 'Тазалау' ?></button>
+                <button type="button" class="btn btn-primary btn-sm" id="clSaveDraw"><?= $ru ? 'Сохранить рисунок как таңба' : 'Таңба ретінде сақтау' ?></button>
             </div>
-        <?php endforeach; ?>
         </div>
-    </div>
-
-    <div class="island cl-draw" id="clDraw">
-        <div class="island-head"><h3><?= $ru ? 'Рисование таңба' : 'Таңба салу' ?>: <span id="clDrawFor"></span></h3></div>
-        <canvas id="clCanvas" class="cl-canvas" width="256" height="256"></canvas>
-        <div class="cl-actions">
-            <label><?= $ru ? 'Толщина' : 'Қалыңдығы' ?> <input type="range" id="clWidth" min="2" max="24" value="8"></label>
-            <button type="button" class="btn" id="clPen"><?= $ru ? 'Кисть' : 'Қылқалам' ?></button>
-            <button type="button" class="btn" id="clEraser"><?= $ru ? 'Ластик' : 'Өшіргіш' ?></button>
-            <button type="button" class="btn" id="clClear"><?= $ru ? 'Очистить' : 'Тазалау' ?></button>
-            <button type="button" class="btn btn-primary" id="clSaveDraw"><?= $ru ? 'Сохранить как таңба' : 'Таңба ретінде сақтау' ?></button>
-            <button type="button" class="btn" id="clCancelDraw"><?= $ru ? 'Закрыть' : 'Жабу' ?></button>
-        </div>
-    </div>
+    </dialog>
     <?php endif; ?>
 </div>
 
@@ -137,40 +157,74 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     const RU = <?= $ru ? 'true' : 'false' ?>;
     const msg = document.getElementById('clMsg');
     const form = document.getElementById('clForm');
+    const dlg = document.getElementById('clDlg');
+    const prev = document.getElementById('clPrev');
+    const fileInp = document.getElementById('clFile');
+    const draw = document.getElementById('clDraw'), cv = document.getElementById('clCanvas'), ctx = cv.getContext('2d');
+    let cur = null; // редактируемый ру или null (новый)
     function say(t, ok) { msg.textContent = t || ''; msg.className = 'cl-msg ' + (ok ? 'ok' : 'err'); }
     async function post(url, fd) {
         fd.append('csrf_token', CSRF);
         try {
             const r = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
-            const j = await r.json().catch(() => ({ success: false, error: 'HTTP ' + r.status }));
-            return j;
+            return await r.json().catch(() => ({ success: false, error: 'HTTP ' + r.status }));
         } catch (e) { return { success: false, error: String(e) }; }
     }
     function fdOf(obj) { const f = new FormData(); Object.keys(obj).forEach(k => f.append(k, obj[k])); return f; }
-    function done(j, okText) {
-        if (j.success) { say(okText, true); setTimeout(() => location.reload(), 500); }
-        else say(j.error || 'Error', false);
+    function reloadSoon() { setTimeout(() => location.reload(), 400); }
+    function showPrev(url) {
+        prev.innerHTML = '';
+        if (url) { const i = document.createElement('img'); i.src = url; i.alt = ''; prev.appendChild(i); }
+        else { const s = document.createElement('span'); s.textContent = '—'; prev.appendChild(s); }
     }
+    function openDlg(d) {
+        cur = d; form.reset(); say('', true); draw.classList.remove('open'); fileInp.value = '';
+        document.getElementById('clFileName').textContent = '';
+        form.id.value = d ? d.id : 0;
+        if (d) { form.name.value = d.name; form.name_ru.value = d.name_ru; form.zhuz.value = d.zhuz; form.summary.value = d.summary; }
+        document.getElementById('clFormTitle').textContent = d ? (RU ? 'Изменить: ' : 'Өзгерту: ') + d.name : (RU ? 'Новый ру' : 'Жаңа ру');
+        document.getElementById('clRmTamga').style.display = d && d.tamga_url ? '' : 'none';
+        document.getElementById('clDrawBtn').style.display = d ? '' : 'none';
+        showPrev(d ? d.tamga_url : '');
+        dlg.showModal();
+    }
+    document.getElementById('clAdd').addEventListener('click', () => openDlg(null));
+    document.getElementById('clCancel').addEventListener('click', () => dlg.close());
+
+    fileInp.addEventListener('change', () => {
+        const f = fileInp.files[0];
+        document.getElementById('clFileName').textContent = f ? f.name : '';
+        if (f) showPrev(URL.createObjectURL(f));
+    });
 
     form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
-        done(await post('/api/clans/save', new FormData(form)), RU ? 'Сохранено' : 'Сақталды');
+        const j = await post('/api/clans/save', new FormData(form));
+        if (!j.success) return say(j.error || 'Error', false);
+        const id = j.clan && j.clan.id ? j.clan.id : form.id.value;
+        if (fileInp.files[0]) {
+            const fd = fdOf({ id: id }); fd.append('tamga', fileInp.files[0]);
+            const u = await post('/api/clans/tamga/upload', fd);
+            if (!u.success) return say(u.error || 'Error', false);
+        }
+        say(RU ? 'Сохранено' : 'Сақталды', true); reloadSoon();
     });
-    document.getElementById('clReset').addEventListener('click', () => {
-        form.reset(); form.id.value = 0;
-        document.getElementById('clFormTitle').textContent = RU ? 'Новый ру' : 'Жаңа ру';
+    document.getElementById('clRmTamga').addEventListener('click', async () => {
+        if (!cur || !confirm(RU ? 'Убрать знак у «' + cur.name + '»?' : '«' + cur.name + '» таңбасын алу?')) return;
+        const j = await post('/api/clans/tamga/delete', fdOf({ id: cur.id }));
+        if (j.success) { say(RU ? 'Знак убран' : 'Таңба алынды', true); reloadSoon(); } else say(j.error || 'Error', false);
     });
+
     document.getElementById('clSearch').addEventListener('input', (e) => {
         const q = e.target.value.trim().toLowerCase(); let n = 0;
-        document.querySelectorAll('#clList .cl-card').forEach(c => {
+        document.querySelectorAll('#clList .cl-row').forEach(c => {
             const show = !q || c.dataset.search.includes(q); c.style.display = show ? '' : 'none'; if (show) n++;
         });
         document.getElementById('clCount').textContent = n;
     });
 
     // рисование
-    const draw = document.getElementById('clDraw'), cv = document.getElementById('clCanvas'), ctx = cv.getContext('2d');
-    let drawId = 0, erasing = false, down = false, last = null;
+    let erasing = false, down = false, last = null;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     function pos(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; }
     cv.addEventListener('pointerdown', (e) => { down = true; last = pos(e); cv.setPointerCapture(e.pointerId); stroke(last, last); });
@@ -181,39 +235,30 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         ctx.strokeStyle = '#1b1b1b'; ctx.lineWidth = +document.getElementById('clWidth').value;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
+    document.getElementById('clDrawBtn').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); erasing = false; draw.classList.toggle('open'); };
     document.getElementById('clPen').onclick = () => { erasing = false; };
     document.getElementById('clEraser').onclick = () => { erasing = true; };
     document.getElementById('clClear').onclick = () => ctx.clearRect(0, 0, cv.width, cv.height);
-    document.getElementById('clCancelDraw').onclick = () => draw.classList.remove('open');
     document.getElementById('clSaveDraw').onclick = () => {
+        if (!cur) return;
         cv.toBlob(async (blob) => {
             if (!blob) return say(RU ? 'Не удалось получить рисунок' : 'Сурет алынбады', false);
-            const fd = fdOf({ id: drawId }); fd.append('tamga', blob, 'tamga.png');
-            done(await post('/api/clans/tamga/upload', fd), RU ? 'Знак сохранён' : 'Таңба сақталды');
+            const fd = fdOf({ id: cur.id }); fd.append('tamga', blob, 'tamga.png');
+            const j = await post('/api/clans/tamga/upload', fd);
+            if (j.success) { say(RU ? 'Знак сохранён' : 'Таңба сақталды', true); reloadSoon(); } else say(j.error || 'Error', false);
         }, 'image/png');
     };
 
     document.getElementById('clList').addEventListener('click', async (ev) => {
-        const t = ev.target.closest('[data-act]'); if (!t || t.tagName === 'INPUT') return;
-        const card = t.closest('.cl-card'); const d = JSON.parse(card.dataset.json); const act = t.dataset.act;
-        if (act === 'edit') {
-            form.id.value = d.id; form.name.value = d.name; form.name_ru.value = d.name_ru; form.zhuz.value = d.zhuz; form.summary.value = d.summary;
-            document.getElementById('clFormTitle').textContent = (RU ? 'Изменить: ' : 'Өзгерту: ') + d.name;
-            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (act === 'draw') {
-            drawId = d.id; ctx.clearRect(0, 0, cv.width, cv.height); erasing = false;
-            document.getElementById('clDrawFor').textContent = d.name; draw.classList.add('open'); draw.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (act === 'rmtamga') {
-            if (confirm(RU ? 'Убрать знак у «' + d.name + '»?' : '«' + d.name + '» таңбасын алу?')) done(await post('/api/clans/tamga/delete', fdOf({ id: d.id })), RU ? 'Знак убран' : 'Таңба алынды');
-        } else if (act === 'delete') {
-            if (confirm(RU ? 'Удалить ру «' + d.name + '»?' : '«' + d.name + '» руын өшіру?')) done(await post('/api/clans/delete', fdOf({ id: d.id })), RU ? 'Удалено' : 'Өшірілді');
+        const t = ev.target.closest('[data-act]'); if (!t) return;
+        const d = JSON.parse(t.closest('.cl-row').dataset.json);
+        if (t.dataset.act === 'edit') openDlg(d);
+        else if (t.dataset.act === 'delete' && confirm(RU ? 'Удалить ру «' + d.name + '»?' : '«' + d.name + '» руын өшіру?')) {
+            const j = await post('/api/clans/delete', fdOf({ id: d.id }));
+            const lm = document.getElementById('clListMsg');
+            if (j.success) { lm.textContent = RU ? 'Удалено' : 'Өшірілді'; lm.className = 'cl-msg ok'; reloadSoon(); }
+            else { lm.textContent = j.error || 'Error'; lm.className = 'cl-msg err'; }
         }
-    });
-    document.getElementById('clList').addEventListener('change', async (ev) => {
-        const inp = ev.target.closest('input[data-act="upload"]'); if (!inp || !inp.files[0]) return;
-        const d = JSON.parse(inp.closest('.cl-card').dataset.json);
-        const fd = fdOf({ id: d.id }); fd.append('tamga', inp.files[0]);
-        done(await post('/api/clans/tamga/upload', fd), RU ? 'Знак загружен' : 'Таңба жүктелді');
     });
 })();
 </script>

@@ -27,7 +27,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     </script>
     <!-- ALT-020: шрифты локально — Pacifico (заголовки), Lora (текст) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=17">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=20">
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=3" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
@@ -599,9 +599,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .card-name {
             font-size: 13.5px;
             font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            line-height: 1.3;
             color: #0f172a;
         }
         .card-maiden {
@@ -2133,7 +2133,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .person-card.female .card-avatar { background: var(--c-island-2); color: var(--c-female); border-color: var(--c-female); }
         .person-card.deceased .card-avatar { background: var(--c-accent-soft); color: var(--c-accent-text); border-color: var(--c-accent); }
         .card-name { color: var(--c-text); font-weight: 600; }
-        .card-maiden { color: var(--c-female); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-maiden { color: var(--c-female); font-style: normal; white-space: normal; overflow-wrap: anywhere; }
         .card-years { color: var(--c-text-2); }
         .card-place { color: var(--c-text-3); }
         .card-clan-tag {
@@ -2494,12 +2494,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .list-msg.is-error { color: var(--c-danger); }
         .lt-person { display: flex; align-items: center; min-width: 0; }
         .lt-person > div:last-child { min-width: 0; }
-        .lt-name { font-weight: 600; color: var(--c-text); font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .lt-sub { font-size: 11.5px; color: var(--c-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lt-name { font-weight: 600; color: var(--c-text); font-size: 13.5px; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
+        .lt-sub { font-size: 11.5px; color: var(--c-text-2); white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
         .lt-sub.is-maiden { color: var(--c-female); }
         .lt-sub-opt { display: none; }
         .lt-small { font-size: 12px; color: var(--c-text-2); }
-        .lt-spouse-row { display: block; font-size: 12px; color: var(--c-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lt-spouse-row { display: block; font-size: 12px; color: var(--c-text); white-space: normal; overflow-wrap: anywhere; }
         .lt-spouse-row.is-divorced { color: var(--c-text-3); text-decoration: line-through; }
         .list-avatar { width: 32px; height: 32px; font-weight: 600; font-size: 11.5px; margin-right: 10px; border-width: 1.5px; }
         .list-avatar.male { background: var(--c-island-2); color: var(--c-male); border-color: var(--c-male); }
@@ -2835,9 +2835,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             font-weight: 600;
             color: var(--c-text);
             font-size: 12px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            line-height: 1.3;
         }
         .lt-ush-years-text {
             font-size: 11.5px;

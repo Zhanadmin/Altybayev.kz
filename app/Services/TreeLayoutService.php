@@ -572,6 +572,22 @@ class TreeLayoutService
         foreach ($sortedPersons as $mId) {
             if (isset($processed[$mId])) continue;
 
+            // ALT-055: если у супруга этого человека несколько мужей/жён (3+ брака у женщины),
+            // юнит строим вокруг неё — иначе лишний супруг остаётся отдельным юнитом далеко в стороне.
+            if (($personsById[$mId]['gender'] ?? '') === 'M') {
+                foreach ($spousesMap[$mId] ?? [] as $spId) {
+                    if (!in_array($spId, $visibleIds, true) || isset($processed[$spId])) continue;
+                    $cnt = 0;
+                    foreach ($spousesMap[$spId] ?? [] as $s2) {
+                        if (in_array($s2, $visibleIds, true) && !isset($processed[$s2])) $cnt++;
+                    }
+                    if ($cnt > 1) {
+                        $mId = $spId;
+                        break;
+                    }
+                }
+            }
+
             $p = $personsById[$mId];
             $gen = $normalizedGen[$mId];
 
@@ -581,6 +597,17 @@ class TreeLayoutService
                 if (in_array($spId, $visibleIds, true) && !isset($processed[$spId])) {
                     $spousesInGen[] = $spId;
                 }
+            }
+
+            // ALT-055: порядок супругов — нынешний (без развода) ближе всех, бывшие — по порядку браков.
+            if (count($spousesInGen) > 1) {
+                $rank = function ($sId) use ($mId, $marriageDetails) {
+                    $md = $marriageDetails["{$mId}_{$sId}"] ?? $marriageDetails["{$sId}_{$mId}"] ?? null;
+                    $isEx = $md && ((($md['status'] ?? '') === 'divorced') || !empty($md['divorce_date']) || !empty($md['end_date']));
+                    $start = $md ? (string)($md['start_date'] ?? $md['marriage_date'] ?? '') : '';
+                    return [$isEx ? 1 : 0, $start === '' ? '9999' : $start, $sId];
+                };
+                usort($spousesInGen, fn($a, $b) => $rank($a) <=> $rank($b));
             }
 
             $unitMembers = [];
@@ -1124,6 +1151,10 @@ class TreeLayoutService
 
                 $midX = ($x1 + $x2) / 2;
                 $midY = ($y1 + $y2) / 2;
+                // ALT-055: не соседние карточки (3+ брака) — значок в зазоре у правой карточки, а не поверх средней
+                if ($x2 - $x1 > self::GAP_SPOUSE + 1 && abs($y1 - $y2) < 1) {
+                    $midX = $x2 - self::GAP_SPOUSE / 2;
+                }
 
                 $mDetail = $marriageDetails["{$leftNode['id']}_{$rightNode['id']}"] ?? null;
                 $isDivorced = false;
@@ -1159,18 +1190,33 @@ class TreeLayoutService
         // 2. Родительско-детские ортогональные шины связей
         $processedFamilies = [];
         foreach ($visibleIds as $id) {
-            $children = array_filter($childrenMap[$id] ?? [], fn($cId) => isset($nodes[$cId]));
-            if (empty($children)) continue;
+            $allChildren = array_filter($childrenMap[$id] ?? [], fn($cId) => isset($nodes[$cId]));
+            if (empty($allChildren)) continue;
 
+            // ALT-055: дети привязываются к своему браку — группируем по второму родителю
+            $groups = [];
+            foreach ($allChildren as $cId) {
+                $pp = $parentsMap[$cId] ?? [];
+                $other = ($pp['father'] ?? null) === $id ? ($pp['mother'] ?? null) : ($pp['father'] ?? null);
+                if ($other !== null && !isset($nodes[$other])) $other = null;
+                $groups[$other === null ? 'n' : (int)$other][] = $cId;
+            }
+
+            foreach ($groups as $gKey => $children) {
             $spouseId = null;
-            foreach ($spousesMap[$id] ?? [] as $spId) {
-                if (isset($nodes[$spId])) {
-                    $spouseId = $spId;
-                    break;
+            if ($gKey !== 'n') {
+                $spouseId = (int)$gKey;
+            } else {
+                foreach ($spousesMap[$id] ?? [] as $spId) {
+                    if (isset($nodes[$spId])) {
+                        $spouseId = $spId;
+                        break;
+                    }
                 }
             }
 
             $famKey = $spouseId ? min($id, $spouseId) . '_' . max($id, $spouseId) : (string)$id;
+            if ($gKey === 'n') $famKey = 'n' . $famKey . '_' . $id;
             if (isset($processedFamilies[$famKey])) continue;
             $processedFamilies[$famKey] = true;
 
@@ -1216,6 +1262,7 @@ class TreeLayoutService
                 'bus_max_x' => $maxBusX,
                 'children' => $childDropPoints,
             ];
+            }
         }
 
         return [

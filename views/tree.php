@@ -5783,6 +5783,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             switchMode('editing');
             if (selectedPersonId) {
                 flyToPerson(selectedPersonId);
+                updateAllKinshipBadges(selectedPersonId); // ALT-056
             }
         }
 
@@ -6057,7 +6058,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             if (!p) return;
 
             // БАРЛЫҚ КАРТОЧКАЛАРДЫҢ ТУЫСТЫҚ БЕЙДЖИКТЕРІН ЛЕЗДЕ ЖАҢАРТУ (МГНОВЕННО)
-            updateAllKinshipBadges(id);
+            // ALT-056: ждём пересчёта родства от нового фокуса, иначе панель берёт старые подписи
+            await updateAllKinshipBadges(id);
+            if (selectedPersonId !== id) return; // фокус уже сменили на другого
 
             // БҮЙІРЛІК ПАНЕЛЬДІ ТОЛТЫРУ
             // ALT-022: в en/es отчества в строке имени нет; отец — отдельной строкой «Son of …» / «Hijo de …»
@@ -6162,6 +6165,27 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
 
             treeData.persons.forEach(p => {
+                // ALT-056: плашка «жұрт» на карточке — тоже от текущего фокуса
+                const zhurtTag = document.querySelector(`#card-${p.id} .card-zhurt-tag`);
+                const kinZ = activeKinships[p.id];
+                if (kinZ && kinZ.zhurt) {
+                    let zCls = 'zhurt-oz';
+                    if (kinZ.zhurt.includes('Нағашы')) zCls = 'zhurt-nagashy';
+                    else if (kinZ.zhurt.includes('Қайын')) zCls = 'zhurt-kaiyn';
+                    else if (kinZ.zhurt.includes('Төркін')) zCls = 'zhurt-torkin';
+                    else if (kinZ.zhurt.includes('Күйеу')) zCls = 'zhurt-kuyeui';
+                    else if (kinZ.zhurt.includes('Құда')) zCls = 'zhurt-quda';
+                    const holder = zhurtTag || (document.querySelector(`#card-${p.id} .card-clan-tag`) || {}).parentNode;
+                    if (holder) {
+                        let tag = zhurtTag;
+                        if (!tag) { tag = document.createElement('span'); holder.appendChild(tag); }
+                        tag.className = `card-zhurt-tag zhurt-pill ${zCls}`;
+                        tag.textContent = kinZ.zhurt;
+                    }
+                } else if (zhurtTag) {
+                    zhurtTag.remove();
+                }
+
                 const badge = document.getElementById(`kin-badge-${p.id}`);
                 if (!badge) return;
 

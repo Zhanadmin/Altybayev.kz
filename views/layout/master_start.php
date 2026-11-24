@@ -25,7 +25,8 @@ if (!empty($userPersonId)) {
         $stmtP->execute([(int)$userPersonId]);
         $cp = $stmtP->fetch(PDO::FETCH_ASSOC);
         if ($cp) {
-            $connectedPersonName = trim(($cp['last_name'] ?? '') . ' ' . ($cp['first_name'] ?? '') . ' ' . ($cp['middle_name'] ?? ''));
+            // ALT-062: имя кириллицей из шежіре — «Жандос Алтыбаев»
+            $connectedPersonName = trim(($cp['first_name'] ?? '') . ' ' . ($cp['last_name'] ?? ''));
         }
     } catch (\Throwable $e) {}
 }
@@ -34,7 +35,7 @@ $youAreText = '';
 if ($connectedPersonName) {
     $youAreText = (($lang === 'ru' || $lang === 'en' || $lang === 'es'))
         ? "Вы — {$connectedPersonName}"
-        : I18n::kazakhYouAre($connectedPersonName);
+        : "Сіз — {$connectedPersonName}";
 } else {
     $userName = $user['name'] ?? 'Қонақ';
     $youAreText = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "Вы — {$userName}" : I18n::kazakhYouAre($userName);
@@ -108,7 +109,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="preload" href="/assets/fonts/lora-400.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="/assets/fonts/lora-italic-700.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
-    <link rel="stylesheet" href="/assets/css/design-system.css?v=33">
+    <link rel="stylesheet" href="/assets/css/design-system.css?v=34">
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>

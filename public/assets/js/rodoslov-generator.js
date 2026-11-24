@@ -744,16 +744,16 @@
         return '' +
             '<defs>' +
             '<style>' +
-            '.rs-nm{font-family:Georgia,\'Times New Roman\',serif;font-style:italic;font-size:18px;fill:#3b2914;text-anchor:middle}' +
+            '.rs-nm{font-family:Lora,Georgia,serif;font-style:italic;font-size:18px;fill:#3b2914;text-anchor:middle}' +
             '.rs-nmB{font-weight:bold}' +
-            '.rs-dt{font-family:Georgia,\'Times New Roman\',serif;font-size:13.5px;fill:#5a4128;text-anchor:middle;paint-order:stroke;stroke:#fbf7ee;stroke-width:4px;stroke-linejoin:round}' +
-            '.rs-mn{font-family:Georgia,\'Times New Roman\',serif;font-style:italic;font-size:12.5px;fill:#7a5733;text-anchor:middle;paint-order:stroke;stroke:#fbf7ee;stroke-width:4px;stroke-linejoin:round}' +
-            '.rs-sm{font-family:Georgia,\'Times New Roman\',serif;font-style:italic;font-size:12px;fill:#4a3419;text-anchor:middle}' +
-            '.rs-ttl{font-family:Georgia,\'Times New Roman\',serif;font-size:34px;letter-spacing:5px;fill:#3b2914;text-anchor:middle}' +
-            '.rs-sub{font-family:Georgia,\'Times New Roman\',serif;font-style:italic;font-size:19px;fill:#6b4c2a;text-anchor:middle}' +
-            '.rs-lb{font-family:Georgia,\'Times New Roman\',serif;font-size:15px;letter-spacing:2px;fill:#5b4024;text-anchor:middle;paint-order:stroke;stroke:#f3f1df;stroke-width:4px}' +
-            '.rs-lg{font-family:Georgia,\'Times New Roman\',serif;font-size:15px;fill:#4a3419}' +
-            '.rs-md{font-family:Georgia,\'Times New Roman\',serif;fill:#6b4a1e;text-anchor:middle}' +
+            '.rs-dt{font-family:Lora,Georgia,serif;font-size:13.5px;fill:#5a4128;text-anchor:middle;paint-order:stroke;stroke:#fbf7ee;stroke-width:4px;stroke-linejoin:round}' +
+            '.rs-mn{font-family:Lora,Georgia,serif;font-style:italic;font-size:12.5px;fill:#7a5733;text-anchor:middle;paint-order:stroke;stroke:#fbf7ee;stroke-width:4px;stroke-linejoin:round}' +
+            '.rs-sm{font-family:Lora,Georgia,serif;font-style:italic;font-size:12px;fill:#4a3419;text-anchor:middle}' +
+            '.rs-ttl{font-family:Lora,Georgia,serif;font-size:34px;letter-spacing:5px;fill:#3b2914;text-anchor:middle}' +
+            '.rs-sub{font-family:Lora,Georgia,serif;font-style:italic;font-size:19px;fill:#6b4c2a;text-anchor:middle}' +
+            '.rs-lb{font-family:Lora,Georgia,serif;font-size:15px;letter-spacing:2px;fill:#5b4024;text-anchor:middle;paint-order:stroke;stroke:#f3f1df;stroke-width:4px}' +
+            '.rs-lg{font-family:Lora,Georgia,serif;font-size:15px;fill:#4a3419}' +
+            '.rs-md{font-family:Lora,Georgia,serif;fill:#6b4a1e;text-anchor:middle}' +
             '.rs-p{cursor:pointer}' +
             '.rs-p:hover .rs-hl,.rs-p:focus .rs-hl{opacity:1}' +
             '.rs-p:focus{outline:none}' +
@@ -943,7 +943,7 @@
         if (!model.persons.size) {
             var emptySvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" width="800" height="300">' +
                 '<rect width="800" height="300" fill="#fbf7ee"/>' +
-                '<text x="400" y="155" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#5a4128">' +
+                '<text x="400" y="155" text-anchor="middle" font-family="Lora,Georgia,serif" font-size="20" fill="#5a4128">' +
                 escapeXml(opts.emptyText || 'Деректер жоқ') + '</text></svg>';
             return { svg: emptySvg, width: 800, height: 300, positions: {}, focalId: 0, stats: { persons: 0, placed: 0, trees: 0, levels: 0 } };
         }

@@ -24,6 +24,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($isKk ? "Шежіре-плакат: «{$rootName}» ұрпақтары" : "Плакат шежире: потомки «{$rootName}»") ?> — Altybayev.kz</title>
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -31,7 +32,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
             padding: 0;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, serif;
+            font-family: "Lora", Georgia, serif;
             background-color: #0b131f;
             color: #f8fafc;
             min-height: 100vh;
@@ -152,7 +153,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
             letter-spacing: 6px;
         }
         .poster-main-title {
-            font-family: Georgia, "Times New Roman", serif;
+            font-family: "Lora", Georgia, serif;
             font-size: 32px;
             font-weight: 700;
             color: #fef08a;
@@ -272,7 +273,7 @@ $rootName = $posterData['root_name'] ?? 'Алтыбай';
             padding: 60px 20px;
             text-align: center;
             color: #5a4128;
-            font-family: Georgia, "Times New Roman", serif;
+            font-family: "Lora", Georgia, serif;
             font-size: 18px;
         }
         body.view-rodoslov .poster-sheet { display: none; }

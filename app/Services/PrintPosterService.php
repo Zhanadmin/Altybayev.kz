@@ -354,10 +354,10 @@ class PrintPosterService
 
         // Заголовок плаката
         $title = ($language === 'ru') ? "ШЕЖИРЕ РОДА АЛТЫБАЕВТАР" : "АЛТЫБАЕВТАР ӘУЛЕТІНІҢ ШЕЖІРЕСІ";
-        $svg[] = "<text x=\"" . ($width / 2) . "\" y=\"110\" fill=\"#fef08a\" font-size=\"36\" font-weight=\"bold\" font-family=\"Georgia, serif\" text-anchor=\"middle\" letter-spacing=\"3\" filter=\"url(#glow)\">{$title}</text>";
+        $svg[] = "<text x=\"" . ($width / 2) . "\" y=\"110\" fill=\"#fef08a\" font-size=\"36\" font-weight=\"bold\" font-family=\"Lora, Georgia, serif\" text-anchor=\"middle\" letter-spacing=\"3\" filter=\"url(#glow)\">{$title}</text>";
         
         $subTitle = $data['title_kk'] . " • " . ($data['clan'] ?: 'Керей');
-        $svg[] = "<text x=\"" . ($width / 2) . "\" y=\"145\" fill=\"#cbd5e1\" font-size=\"18\" font-family=\"sans-serif\" text-anchor=\"middle\">{$subTitle}</text>";
+        $svg[] = "<text x=\"" . ($width / 2) . "\" y=\"145\" fill=\"#cbd5e1\" font-size=\"18\" font-family=\"Lora, Georgia, serif\" text-anchor=\"middle\">{$subTitle}</text>";
 
         // Размещение поколений по вертикали
         $genCount = count($levels);
@@ -375,7 +375,7 @@ class PrintPosterService
 
             // Метка поколения слева
             $genTitle = ($language === 'ru') ? "{$genNum}-е колено" : "{$genNum}-буын";
-            $svg[] = "<text x=\"60\" y=\"" . ($y + 35) . "\" fill=\"#d4af37\" font-size=\"14\" font-weight=\"bold\" font-family=\"sans-serif\" opacity=\"0.7\">{$genTitle}</text>";
+            $svg[] = "<text x=\"60\" y=\"" . ($y + 35) . "\" fill=\"#d4af37\" font-size=\"14\" font-weight=\"bold\" font-family=\"Lora, Georgia, serif\" opacity=\"0.7\">{$genTitle}</text>";
 
             foreach ($personsInGen as $pIdx => $p) {
                 $x = ($pIdx + 1) * $xStep - ($cardW / 2);
@@ -393,7 +393,7 @@ class PrintPosterService
 
                 // Имя
                 $displayName = htmlspecialchars($p['first_name'] . ' ' . ($p['last_name'] ?? ''));
-                $svg[] = "<text x=\"" . ($x + $cardW / 2) . "\" y=\"" . ($y + 26) . "\" fill=\"#ffffff\" font-size=\"13\" font-weight=\"bold\" font-family=\"sans-serif\" text-anchor=\"middle\">{$displayName}</text>";
+                $svg[] = "<text x=\"" . ($x + $cardW / 2) . "\" y=\"" . ($y + 26) . "\" fill=\"#ffffff\" font-size=\"13\" font-weight=\"bold\" font-family=\"Lora, Georgia, serif\" text-anchor=\"middle\">{$displayName}</text>";
 
                 // Годы жизни
                 $years = $p['birth_year'] ?: '';
@@ -401,13 +401,13 @@ class PrintPosterService
                     $years .= ' – ' . $p['death_year'];
                 }
                 if ($years) {
-                    $svg[] = "<text x=\"" . ($x + $cardW / 2) . "\" y=\"" . ($y + 45) . "\" fill=\"#94a3b8\" font-size=\"11\" font-family=\"sans-serif\" text-anchor=\"middle\">{$years}</text>";
+                    $svg[] = "<text x=\"" . ($x + $cardW / 2) . "\" y=\"" . ($y + 45) . "\" fill=\"#94a3b8\" font-size=\"11\" font-family=\"Lora, Georgia, serif\" text-anchor=\"middle\">{$years}</text>";
                 }
 
                 // Супруга (если есть)
                 if (!empty($p['spouses'])) {
                     $spName = htmlspecialchars($p['spouses'][0]['name']);
-                    $svg[] = "<text x=\"" . ($x + $cardW / 2) . "\" y=\"" . ($y + 58) . "\" fill=\"#fbcfe8\" font-size=\"9\" font-style=\"italic\" font-family=\"sans-serif\" text-anchor=\"middle\">♡ {$spName}</text>";
+                    $svg[] = "<text x=\"" . ($x + $cardW / 2) . "\" y=\"" . ($y + 58) . "\" fill=\"#fbcfe8\" font-size=\"9\" font-style=\"italic\" font-family=\"Lora, Georgia, serif\" text-anchor=\"middle\">♡ {$spName}</text>";
                 }
 
                 $svg[] = "</g>";
@@ -440,7 +440,7 @@ class PrintPosterService
         // Подвал плаката
         $curDate = date('d.m.Y');
         $footerText = "altybayev.kz • Қазақстан • Басып шығарылған күні: {$curDate}";
-        $svg[] = "<text x=\"" . ($width / 2) . "\" y=\"" . ($height - 50) . "\" fill=\"#64748b\" font-size=\"13\" font-family=\"sans-serif\" text-anchor=\"middle\">{$footerText}</text>";
+        $svg[] = "<text x=\"" . ($width / 2) . "\" y=\"" . ($height - 50) . "\" fill=\"#64748b\" font-size=\"13\" font-family=\"Lora, Georgia, serif\" text-anchor=\"middle\">{$footerText}</text>";
 
         $svg[] = "</svg>";
 

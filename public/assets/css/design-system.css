@@ -7,7 +7,7 @@
 
 /* ---------- 1. Токены ---------- */
 :root {
-    --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --font-sans: "Lora", Georgia, "Times New Roman", serif;
 
     /* Светлая тема */
     --c-bg: #f2f2f0;            /* фон страницы, светло-серый с тёплым оттенком */

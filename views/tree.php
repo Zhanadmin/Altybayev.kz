@@ -1681,7 +1681,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             left: 16px;
             bottom: 16px;
             z-index: 30;
-            font: 12px Georgia, 'Times New Roman', serif;
+            font: 12px var(--font-book);
             color: #5a4128;
             background: rgba(251, 247, 238, 0.9);
             border: 1px solid #d9c49a;
@@ -1714,7 +1714,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         .rodoslov-title-text {
-            font-family: 'Georgia', 'Playfair Display', serif;
+            font-family: var(--font-book);
             font-size: 32px;
             font-weight: 700;
             letter-spacing: 3px;
@@ -1724,7 +1724,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         .rodoslov-title-sub {
-            font-family: 'Georgia', serif;
+            font-family: var(--font-book);
             font-size: 15px;
             font-style: italic;
             color: #78350f;
@@ -1763,7 +1763,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         .rodoslov-tamga-title {
-            font-family: 'Georgia', serif;
+            font-family: var(--font-book);
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 1.5px;
@@ -1791,7 +1791,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             font-weight: 900;
             color: #b45309;
             line-height: 1;
-            font-family: 'Georgia', serif;
+            font-family: var(--font-book);
         }
 
         .rodoslov-tamga-name {
@@ -1815,7 +1815,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             padding: 7px 16px;
             border-radius: 4px;
             cursor: pointer;
-            font-family: 'Georgia', 'Times New Roman', serif;
+            font-family: var(--font-book);
             font-size: 13.5px;
             color: #2b180d;
             box-shadow: 0 4px 14px rgba(60, 35, 15, 0.14);
@@ -1872,7 +1872,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         .rodoslov-marriage-date {
-            font-family: 'Georgia', serif;
+            font-family: var(--font-book);
             font-size: 10.5px;
             font-weight: 600;
             color: #854d0e;
@@ -1888,7 +1888,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .rodoslov-tier-label {
             position: absolute;
             left: 35px;
-            font-family: 'Georgia', serif;
+            font-family: var(--font-book);
             font-size: 12px;
             font-weight: 700;
             color: #78350f;

@@ -18,18 +18,53 @@ $activeNav = $activeNav ?? 'home';
 
 // Получаем имя связанной персоны для приветствия «Сіз — ...»
 $connectedPersonName = null;
+$connectedFirstName = null;   // ALT-062: только имя — для приветствия
+$greetingName = null;         // ALT-062: как обращаться (на русском старшим — имя и отчество)
 if (!empty($userPersonId)) {
     try {
         $db = Database::getConnection();
-        $stmtP = $db->prepare("SELECT id, first_name, last_name, middle_name FROM persons WHERE id = ?");
+        $stmtP = $db->prepare("SELECT id, first_name, last_name, middle_name, gender, birth_year, is_deceased, father_id FROM persons WHERE id = ?");
         $stmtP->execute([(int)$userPersonId]);
         $cp = $stmtP->fetch(PDO::FETCH_ASSOC);
         if ($cp) {
             // ALT-062: имя кириллицей из шежіре — «Жандос Алтыбаев»
             $connectedPersonName = trim(($cp['first_name'] ?? '') . ' ' . ($cp['last_name'] ?? ''));
+            $connectedFirstName = trim((string)($cp['first_name'] ?? ''));
+            $greetingName = $connectedFirstName;
+            // Старшее поколение (предки и 1-е поколение по ALT-032: умершие или родившиеся до 1975) — по-русски имя и отчество
+            $by = (int)($cp['birth_year'] ?? 0);
+            $isSenior = !empty($cp['is_deceased']) || ($by > 0 && $by < 1975);
+            if ($isSenior && ($lang === 'ru')) {
+                $fatherRow = null;
+                if (!empty($cp['father_id'])) {
+                    $stF = $db->prepare("SELECT first_name FROM persons WHERE id = ?");
+                    $stF->execute([(int)$cp['father_id']]);
+                    $fatherRow = $stF->fetch(PDO::FETCH_ASSOC) ?: null;
+                }
+                $patr = \App\Services\PatronymicService::resolve($cp, $fatherRow, 'ru');
+                if ($patr !== '') {
+                    $greetingName = $connectedFirstName . ' ' . $patr;
+                }
+            }
         }
     } catch (\Throwable $e) {}
 }
+
+// ALT-062: имя из Google-аккаунта на сайте не показываем — только имя из шежіре
+$userName = $connectedPersonName ?: (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Гость' : 'Қонақ');
+$user['name'] = $userName;
+
+// ALT-062: приветствие по времени суток (Asia/Almaty, +05:00)
+try {
+    $almHour = (int)(new \DateTimeImmutable('now', new \DateTimeZone('Asia/Almaty')))->format('G');
+} catch (\Throwable $e) {
+    $almHour = (int)date('G');
+}
+$dayPart = $almHour >= 5 && $almHour < 12 ? 0 : ($almHour >= 12 && $almHour < 18 ? 1 : ($almHour >= 18 && $almHour < 23 ? 2 : 3));
+$greetingWord = ($lang === 'ru' || $lang === 'en' || $lang === 'es')
+    ? ['Доброе утро', 'Добрый день', 'Добрый вечер', 'Доброй ночи'][$dayPart]
+    : ['Қайырлы таң', 'Қайырлы күн', 'Қайырлы кеш', 'Қайырлы түн'][$dayPart];
+$greetingText = $greetingWord . ', ' . ($greetingName ?: $userName) . '!';
 
 $youAreText = '';
 if ($connectedPersonName) {
@@ -37,7 +72,6 @@ if ($connectedPersonName) {
         ? "Вы — {$connectedPersonName}"
         : "Сіз — {$connectedPersonName}";
 } else {
-    $userName = $user['name'] ?? 'Қонақ';
     $youAreText = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "Вы — {$userName}" : I18n::kazakhYouAre($userName);
 }
 

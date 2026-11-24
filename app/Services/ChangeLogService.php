@@ -109,8 +109,9 @@ class ChangeLogService
     public function users(): array
     {
         $st = $this->db->query(
-            "SELECT a.user_id, COALESCE(MAX(u.name), MAX(a.user_name), CONCAT('#', a.user_id)) AS name
+            "SELECT a.user_id, COALESCE(NULLIF(TRIM(CONCAT_WS(' ', MAX(up.first_name), MAX(up.last_name))), ''), CONCAT('#', a.user_id)) AS name
                FROM audit_logs a LEFT JOIN users u ON u.id = a.user_id
+               LEFT JOIN persons up ON up.id = u.person_id
               WHERE a.user_id IS NOT NULL GROUP BY a.user_id ORDER BY name"
         );
         return $st->fetchAll(PDO::FETCH_ASSOC);
@@ -130,7 +131,8 @@ class ChangeLogService
 
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
-        $sql = "SELECT a.*, COALESCE(u.name, a.user_name) AS who,
+        // ALT-062: «кто» — имя человека из шежіре, а не имя Google-аккаунта
+        $sql = "SELECT a.*, COALESCE(NULLIF(TRIM(CONCAT_WS(' ', up.first_name, up.last_name)), ''), IF(a.user_id IS NULL, NULL, CONCAT('#', a.user_id))) AS who,
                        TRIM(CONCAT_WS(' ', p.last_name, p.first_name, p.middle_name)) AS person_name,
                        p.is_deleted AS person_is_deleted,
                        m.husband_id, m.wife_id,
@@ -237,7 +239,7 @@ class ChangeLogService
         $q = trim((string)($f['q'] ?? ''));
         if ($q !== '') {
             $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr($q, 0, 80)) . '%';
-            $where[] = "(COALESCE(u.name, a.user_name) LIKE ?
+            $where[] = "(CONCAT_WS(' ', up.first_name, up.last_name) LIKE ?
                      OR CONCAT_WS(' ', p.last_name, p.first_name, p.middle_name) LIKE ?
                      OR CONCAT_WS(' ', hp.last_name, hp.first_name) LIKE ?
                      OR CONCAT_WS(' ', wp.last_name, wp.first_name) LIKE ?
@@ -247,6 +249,7 @@ class ChangeLogService
 
         $from = "FROM audit_logs a
                  LEFT JOIN users u ON u.id = a.user_id
+                 LEFT JOIN persons up ON up.id = u.person_id
                  LEFT JOIN persons p ON a.entity_table = 'persons' AND p.id = a.entity_id
                  LEFT JOIN marriages m ON a.entity_table = 'marriages' AND m.id = a.entity_id
                  LEFT JOIN persons hp ON hp.id = m.husband_id

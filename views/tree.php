@@ -6,7 +6,7 @@ declare(strict_types=1);
  * @var array $kinshipTerms
  * @var string $conceptArtUrl
  */
-$userName = $user['name'] ?? 'Жандос Алтыбаев';
+$userName = 'Туысқан'; // ALT-062: имя из Google-аккаунта не показываем
 $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 ?>
 <!DOCTYPE html>

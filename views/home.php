@@ -8,7 +8,7 @@ $title = I18n::t('nav_home');
 $activeNav = 'home';
 $dsThemeReady = true; // TASK-008: страница на цветах дизайн-системы — доступна тёмная тема
 
-$userName = $user['name'] ?? 'Туысқан';
+$userName = 'Туысқан'; // ALT-062: имя из Google не используем; итоговое имя из шежіре задаёт master_start.php
 $userEmail = $user['email'] ?? '';
 $userRole = $user['role'] ?? 'viewer';
 $birthdays = $birthdays ?? [];
@@ -56,7 +56,7 @@ require __DIR__ . '/layout/master_start.php';
             <use href="#o-tulip" x="172" y="0" width="34" height="68"/><use href="#o-tulip" x="243" y="-8" width="34" height="68"/><use href="#o-tulip" x="314" y="0" width="34" height="68"/>
         </svg>
         <div class="ribbon-wrap"><h1 class="ribbon ribbon-lg"><?= htmlspecialchars($siteTitle) ?></h1></div>
-        <p class="lead"><?= htmlspecialchars(rtrim(I18n::t('welcome_heading'), '!')) ?>, <?= htmlspecialchars($connectedPersonName ?: $userName) ?>!</p>
+        <p class="lead"><?= htmlspecialchars($greetingText) ?></p>
         <p class="hm-intro">
             <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es')
                 ? 'Добро пожаловать в закрытую систему родословной. Здесь бережно сохраняется преемственность поколений, история семьи, памятные даты и воспоминания.'

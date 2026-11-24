@@ -52,8 +52,25 @@ if (!function_exists('clan_tamga_map')) {
 }
 $__clanMap = clan_tamga_map();
 $__clanNames = clan_registry_names();
+// ALT-050: призыв выбрать род вместо примера (на всех языках сайта)
+$__clanLang = \App\Core\I18n::lang();
+$__clanPh = [
+    'kk' => 'Руды таңдаңыз',
+    'ru' => 'Выберите род',
+    'en' => 'Choose a clan',
+    'es' => 'Elija un clan',
+][$__clanLang] ?? 'Руды таңдаңыз';
 ?>
 <style>
+#editClanRu, #formClanRu, #editModalClanRu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23999' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 8px;
+    padding-right: 34px;
+    color: inherit;
+}
+#editClanRu::placeholder, #formClanRu::placeholder, #editModalClanRu::placeholder { color: #9a9a9a; opacity: 1; font-style: normal; }
 .clan-tamga { height: 1.15em; width: auto; max-width: 1.6em; object-fit: contain; vertical-align: -0.2em; margin-right: .2em; }
 </style>
 <script>
@@ -74,6 +91,13 @@ document.addEventListener('DOMContentLoaded', function () {
     ['editClanRu', 'formClanRu', 'editModalClanRu'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) { el.setAttribute('list', 'clanRegistryList'); el.setAttribute('autocomplete', 'off'); }
+    });
+});
+document.addEventListener('DOMContentLoaded', function () {
+    var ph = <?= json_encode($__clanPh, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    ['editClanRu', 'formClanRu', 'editModalClanRu'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.setAttribute('placeholder', ph);
     });
 });
 </script>

@@ -28,6 +28,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=25">
+    <script src="/assets/js/tooltip.js?v=1" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <script src="/assets/js/person-delete.js?v=1" defer></script>
@@ -674,6 +675,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         .radial-btn::after {
+            display: none; /* ALT-049: подсказка теперь общая (tooltip.js, data-tip) */
             content: attr(data-tooltip);
             position: absolute;
             background: #0f172a;
@@ -690,6 +692,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
         .radial-btn:hover::after {
             opacity: 1;
+            display: none;
         }
 
         .radial-top-father { top: -14px; left: 25%; transform: translate(-50%, -50%); }
@@ -5140,12 +5143,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                     <!-- Карточканың айналасындағы жылдам қосу радиалды батырмалары -->
                     <div class="radial-action-wrap">
-                        <button class="radial-btn radial-top-father" data-tooltip="${tFather}" onclick="event.stopPropagation(); openAddModal('father', ${node.id})">+</button>
-                        <button class="radial-btn radial-top-mother" data-tooltip="${tMother}" onclick="event.stopPropagation(); openAddModal('mother', ${node.id})">+</button>
-                        <button class="radial-btn radial-left-spouse" data-tooltip="${tSpouse}" onclick="event.stopPropagation(); openAddModal('spouse', ${node.id})">+</button>
-                        <button class="radial-btn radial-right-sibling" data-tooltip="${tSibling}" onclick="event.stopPropagation(); openAddModal('sibling', ${node.id})">+</button>
-                        <button class="radial-btn radial-bottom-son" data-tooltip="${tSon}" onclick="event.stopPropagation(); openAddModal('son', ${node.id})">+</button>
-                        <button class="radial-btn radial-bottom-daughter" data-tooltip="${tDaughter}" onclick="event.stopPropagation(); openAddModal('daughter', ${node.id})">+</button>
+                        <button class="radial-btn radial-top-father" data-tip="${tFather}" onclick="event.stopPropagation(); openAddModal('father', ${node.id})">+</button>
+                        <button class="radial-btn radial-top-mother" data-tip="${tMother}" onclick="event.stopPropagation(); openAddModal('mother', ${node.id})">+</button>
+                        <button class="radial-btn radial-left-spouse" data-tip="${tSpouse}" onclick="event.stopPropagation(); openAddModal('spouse', ${node.id})">+</button>
+                        <button class="radial-btn radial-right-sibling" data-tip="${tSibling}" onclick="event.stopPropagation(); openAddModal('sibling', ${node.id})">+</button>
+                        <button class="radial-btn radial-bottom-son" data-tip="${tSon}" onclick="event.stopPropagation(); openAddModal('son', ${node.id})">+</button>
+                        <button class="radial-btn radial-bottom-daughter" data-tip="${tDaughter}" onclick="event.stopPropagation(); openAddModal('daughter', ${node.id})">+</button>
                     </div>
                     ${expandBottomHtml}
                 `;

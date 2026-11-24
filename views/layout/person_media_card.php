@@ -12,7 +12,7 @@ $pmeE = static fn(string $k): string => htmlspecialchars(I18n::t($k), ENT_QUOTES
 $pmeJs = static fn(string $k): string => (string)json_encode(I18n::t($k), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $pmeAccept = 'image/jpeg,image/png,image/webp';
 ?>
-<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=3">
+<link rel="stylesheet" href="/assets/css/person-media-edit.css?v=4">
 <input type="file" id="pmeAvatarInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeAvatarFile(this)">
 <input type="file" id="pmeCoverInput" accept="<?= $pmeAccept ?>" hidden onchange="pmeCoverFile(this)">
 
@@ -50,7 +50,7 @@ $pmeAccept = 'image/jpeg,image/png,image/webp';
         </div>
         <div id="pmeCropPane" style="display:none; text-align:center;">
             <div class="pme-sub" style="margin-bottom:8px;"><?= $pmeE('pme_crop_hint') ?></div>
-            <canvas id="pmeCropCanvas" class="pme-canvas" width="300" height="300"></canvas>
+            <div class="pme-cropwrap"><canvas id="pmeCropCanvas" class="pme-canvas" width="300" height="300"></canvas></div>
             <label class="pme-slider" style="max-width:300px; margin:10px auto 0;"><span><?= $pmeE('pme_zoom') ?></span>
                 <input type="range" id="pmeZoom" min="100" max="400" value="100" oninput="pmeZoom()"></label>
             <div class="pme-actions" style="justify-content:center; margin-top:12px;">
@@ -77,4 +77,4 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/assets/js/person-media-edit.js?v=2" defer></script>
+<script src="/assets/js/person-media-edit.js?v=3" defer></script>

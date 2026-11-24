@@ -60,4 +60,9 @@
 .pme-thumb:hover, .pme-thumb:focus-visible { border-color: var(--c-accent, #2f6f5e); }
 .pme-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pme-canvas { width: 300px; max-width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; cursor: grab; touch-action: none; background: #000; }
+/* ALT-043: круглая рамка поверх холста обрезки */
+.pme-cropwrap { position: relative; width: 300px; max-width: 100%; margin: 0 auto; }
+.pme-cropwrap .pme-canvas { display: block; width: 100%; }
+.pme-cropwrap::after { content: ""; position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
+    background: radial-gradient(circle at center, transparent 0, transparent calc(50% - 1px), rgba(255,255,255,.9) calc(50% - 1px), rgba(255,255,255,.9) 50%, rgba(0,0,0,.55) 50%); }
 @media (max-width: 480px) { .pme-slider span { min-width: 100px; } }

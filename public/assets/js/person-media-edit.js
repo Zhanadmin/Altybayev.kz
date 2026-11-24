@@ -322,19 +322,45 @@
         var cv = $('pmeCropCanvas');
         if (!cv || cv.dataset.pmeBound) return;
         cv.dataset.pmeBound = '1';
-        var last = null;
-        cv.addEventListener('pointerdown', function (e) { last = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); });
+        var pts = {}, pinch = 0; // ALT-043: активные касания, расстояние между двумя пальцами
+        function setZoom(z) {
+            crop.zoom = Math.max(1, Math.min(4, z));
+            $('pmeZoom').value = Math.round(crop.zoom * 100);
+            drawCrop();
+        }
+        function dist() {
+            var k = Object.keys(pts);
+            if (k.length < 2) return 0;
+            return Math.hypot(pts[k[0]].x - pts[k[1]].x, pts[k[0]].y - pts[k[1]].y);
+        }
+        cv.addEventListener('pointerdown', function (e) {
+            pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+            cv.setPointerCapture(e.pointerId);
+            pinch = dist();
+        });
         cv.addEventListener('pointermove', function (e) {
-            if (!last || !crop) return;
+            if (!crop || !pts[e.pointerId]) return;
+            var prev = pts[e.pointerId];
+            pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+            if (Object.keys(pts).length >= 2) {
+                var d = dist();
+                if (pinch > 0 && d > 0) { setZoom(crop.zoom * d / pinch); }
+                pinch = d;
+                return;
+            }
             var k = cropGeom().side / cv.getBoundingClientRect().width;
-            crop.cx -= (e.clientX - last.x) * k;
-            crop.cy -= (e.clientY - last.y) * k;
-            last = { x: e.clientX, y: e.clientY };
+            crop.cx -= (e.clientX - prev.x) * k;
+            crop.cy -= (e.clientY - prev.y) * k;
             drawCrop();
         });
-        var end = function () { last = null; };
+        var end = function (e) { delete pts[e.pointerId]; pinch = dist(); };
         cv.addEventListener('pointerup', end);
         cv.addEventListener('pointercancel', end);
+        cv.addEventListener('wheel', function (e) {
+            if (!crop) return;
+            e.preventDefault();
+            setZoom(crop.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+        }, { passive: false });
     }
 
     window.pmeCropApply = function () {

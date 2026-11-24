@@ -125,7 +125,7 @@ $actions = [
                                 }
                             ?>
                             <tr class="hs-row" data-log-id="<?= (int)$l['id'] ?>" tabindex="0" aria-expanded="false">
-                                <td class="hs-c-time muted"><?= htmlspecialchars(date('d.m.Y H:i', strtotime((string)$l['created_at']))) ?></td>
+                                <td class="hs-c-time muted"><?= htmlspecialchars(date('H:i · d.m.Y', strtotime((string)$l['created_at']))) ?></td>
                                 <td class="hs-c-who" title="<?= htmlspecialchars($who) ?>"><b><?= htmlspecialchars($who) ?></b></td>
                                 <td class="hs-c-act"><span class="badge <?= $actClass ?>"><?= htmlspecialchars($l['verb']) ?></span></td>
                                 <td title="<?= htmlspecialchars($l['object_label'] . ': ' . $l['object_name']) ?>">

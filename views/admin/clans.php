@@ -39,18 +39,22 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 .cl-wrap { display: flex; flex-direction: column; gap: var(--sp-5, 20px); }
 .cl-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .cl-bar h3 { margin: 0; }
-.cl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.cl-table th, .cl-table td { padding: 6px 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
+.cl-wrap, .cl-dlg { font-family: var(--font-sans); font-size: var(--fs-lg, 16px); line-height: 1.5; }
+.cl-wrap .btn, .cl-dlg .btn { font-family: inherit; font-size: var(--fs-lg, 16px); height: 42px; padding: 0 16px; }
+.cl-wrap .input, .cl-dlg .input { font-family: inherit; font-size: var(--fs-lg, 16px); height: 44px; }
+.cl-dlg input[type=range] { width: 160px; height: 28px; }
+.cl-table { width: 100%; border-collapse: collapse; font-size: var(--fs-lg, 16px); }
+.cl-table th, .cl-table td { padding: 10px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
 .cl-table th { opacity: .7; white-space: nowrap; }
 .cl-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .cl-fbtn.active { background: var(--c-accent, #2a6df4); color: #fff; border-color: transparent; }
 .cl-fn { opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
-.cl-group th { opacity: 1; font-weight: 600; font-size: 14px; padding-top: 14px; background: rgba(128,128,128,.08); }
+.cl-group th { opacity: 1; font-weight: 600; font-size: 18px; padding-top: 14px; background: rgba(128,128,128,.08); }
 .cl-table .fit { width: 1%; white-space: nowrap; }
 .cl-table .cl-sum { opacity: .8; }
 .cl-tamga { width: 64px; height: 64px; flex: 0 0 auto; border: 1px solid var(--c-border, #ddd); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 8px 8px; overflow: hidden; }
 .cl-tamga img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.cl-tamga span { font-size: 10px; opacity: .55; }
+.cl-tamga span { font-size: 16px; opacity: .55; }
 .cl-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .cl-table .cl-actions { flex-wrap: nowrap; }
 .cl-dlg { border: 1px solid var(--c-border, #ccc); border-radius: 10px; padding: 16px; width: min(560px, 94vw); max-height: 90vh; max-height: 90dvh; overflow: auto; box-sizing: border-box; background: var(--c-surface, #fff); color: inherit; }
@@ -58,15 +62,15 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 .cl-dlg::backdrop { background: rgba(0,0,0,.5); }
 .cl-dlg h3 { margin: 0 0 10px; }
 .cl-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cl-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.cl-form label { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-lg, 16px); }
 .cl-form .full { grid-column: 1 / -1; }
 .cl-draw { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
 .cl-draw.open { display: flex; }
 .cl-canvas { width: 256px; height: 256px; border: 1px solid var(--c-border, #ccc); border-radius: 8px; touch-action: none; cursor: crosshair; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 16px 16px; }
-.cl-msg { font-size: 13px; min-height: 18px; }
+.cl-msg { font-size: var(--fs-lg, 16px); min-height: 22px; }
 .cl-msg.err { color: #c0392b; }
 .cl-msg.ok { color: #2e7d32; }
-@media (max-width: 560px) { .cl-form { grid-template-columns: 1fr; } .cl-tamga { width: 52px; height: 52px; } }
+@media (max-width: 560px) { .cl-bar #clSearch { max-width: none !important; width: 100%; margin-left: 0 !important; } .cl-table { display: block; overflow-x: auto; } .cl-form { grid-template-columns: 1fr; } .cl-tamga { width: 52px; height: 52px; } }
 </style>
 
 <div class="cl-wrap">
@@ -88,7 +92,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         <div class="cl-bar" style="margin-bottom:10px">
             <button type="button" class="btn btn-primary btn-sm" id="clAdd">+ <?= $ru ? 'Добавить' : 'Қосу' ?></button>
             <h3><?= $ru ? 'Список ру' : 'Ру тізімі' ?> (<span id="clCount"><?= count($clans) ?></span>)</h3>
-            <input class="input" id="clSearch" type="search" placeholder="<?= $ru ? 'Поиск…' : 'Іздеу…' ?>" style="max-width:240px;margin-left:auto">
+            <input class="input" id="clSearch" type="search" placeholder="<?= $ru ? 'Поиск…' : 'Іздеу…' ?>" style="max-width:280px;margin-left:auto">
         </div>
         <div class="cl-filter" id="clFilter" role="group" aria-label="<?= $ru ? 'Фильтр по жузу' : 'Жүз бойынша сүзгі' ?>">
             <button type="button" class="btn btn-sm cl-fbtn active" data-z="all"><?= $ru ? 'Все' : 'Барлығы' ?> <span class="cl-fn" data-n="all"><?= count($clans) ?></span></button>
@@ -143,14 +147,14 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                     <?php foreach ($zhuzLabels as $k => $v): ?><option value="<?= $e($k) ?>"><?= $e($v) ?></option><?php endforeach; ?>
                 </select></label>
             <div class="full">
-                <div style="font-size:13px;margin-bottom:4px"><?= $ru ? 'Знак (таңба)' : 'Таңба' ?></div>
+                <div style="font-size:var(--fs-lg,16px);margin-bottom:4px"><?= $ru ? 'Знак (таңба)' : 'Таңба' ?></div>
                 <div class="cl-actions">
                     <div class="cl-tamga" style="width:120px;height:120px" id="clPrev"></div>
                     <label class="btn btn-sm" style="cursor:pointer"><?= $ru ? 'Загрузить' : 'Жүктеу' ?>
                         <input type="file" id="clFile" accept=".svg,.png,image/svg+xml,image/png" hidden></label>
                     <button type="button" class="btn btn-sm" id="clDrawBtn"><?= $ru ? 'Нарисовать' : 'Салу' ?></button>
                     <button type="button" class="btn btn-sm" id="clRmTamga"><?= $ru ? 'Убрать знак' : 'Таңбаны алу' ?></button>
-                    <span id="clFileName" style="font-size:12px;opacity:.7"></span>
+                    <span id="clFileName" style="font-size:var(--fs-md,14px);opacity:.7"></span>
                 </div>
             </div>
             <label class="full"><?= $ru ? 'Описание' : 'Сипаттама' ?>

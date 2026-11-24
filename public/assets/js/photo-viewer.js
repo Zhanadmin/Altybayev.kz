@@ -24,7 +24,8 @@
         box.setAttribute('role', 'dialog');
         box.setAttribute('aria-modal', 'true');
         box.hidden = true;
-        box.innerHTML = '<button type="button" class="pv-btn pv-close" aria-label="Закрыть / Close">&times;</button>' +
+        box.innerHTML = '<a class="pv-btn pv-dl" href="#" download aria-label="Жүктеу / Скачать" title="Жүктеу / Скачать"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg></a>' +
+            '<button type="button" class="pv-btn pv-close" aria-label="Закрыть / Close">&times;</button>' +
             '<button type="button" class="pv-btn pv-prev" aria-label="&larr;">&#8249;</button>' +
             '<img class="pv-img" alt="">' +
             '<button type="button" class="pv-btn pv-next" aria-label="&rarr;">&#8250;</button>';
@@ -34,6 +35,7 @@
             '.pv-img{max-width:100vw;max-height:100vh;width:auto;height:auto;object-fit:contain;user-select:none;-webkit-user-drag:none}' +
             '.pv-btn{position:absolute;background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:50%;width:48px;height:48px;font-size:32px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}' +
             '.pv-btn:hover,.pv-btn:focus-visible{background:rgba(255,255,255,.35)}' +
+            '.pv-dl{top:12px;right:72px;text-decoration:none}' +
             '.pv-close{top:12px;right:12px}.pv-prev{left:12px;top:50%;margin-top:-24px}.pv-next{right:12px;top:50%;margin-top:-24px}' +
             '.pv-single .pv-prev,.pv-single .pv-next{display:none}' +
             '.pc-book .photo-frame .oval img,.pc-book .photo-frame{cursor:zoom-in}';
@@ -62,6 +64,19 @@
         img.src = it.src;
         img.alt = it.alt;
         box.classList.toggle('pv-single', items.length < 2);
+        var dl = box.querySelector('.pv-dl');
+        dl.href = it.src;
+        dl.setAttribute('download', fileName(it));
+    }
+    function fileName(it) {
+        var m = /\.([a-z0-9]{2,5})(?:[?#]|$)/i.exec(it.src);
+        var ext = m ? m[1].toLowerCase() : 'jpg';
+        var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+        var date = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        var name = (it.alt || document.title || 'foto').replace(/[\\\/:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'foto';
+        var n = 1;
+        for (var i = 0; i < items.length; i++) { if (items[i] === it) { n = i + 1; } }
+        return name + '_' + (it.kind === 'cover' ? 'oblozhka' : 'foto') + '_' + n + '_' + date + '.' + ext;
     }
     function step(d) { idx = (idx + d + items.length) % items.length; show(); }
     function open(kind) {

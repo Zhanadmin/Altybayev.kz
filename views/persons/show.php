@@ -900,7 +900,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                             <?php foreach ($auditLogs as $l): ?>
                                 <li data-log-id="<?= (int)$l['id'] ?>">
                                     <div class="small">
-                                        <span class="muted"><?= htmlspecialchars(date('d.m.Y H:i', strtotime((string)$l['created_at']))) ?></span>
+                                        <span class="muted"><?= htmlspecialchars(date('H:i · d.m.Y', strtotime((string)$l['created_at']))) ?></span>
                                         · <b><?= htmlspecialchars((string)($l['who'] ?: '—')) ?></b>
                                         · <span class="badge"><?= htmlspecialchars($l['verb']) ?></span>
                                         <?php if ($l['entity_table'] !== 'persons'): ?><span class="muted">(<?= htmlspecialchars($l['object_label']) ?>)</span><?php endif; ?>
@@ -1264,7 +1264,7 @@ window.FR_PERSON = <?= json_encode([
 <script src="/assets/js/face-recognition.js?v=2" defer></script>
 <?php endif; ?>
 
-<script src="/assets/js/photo-viewer.js?v=1" defer></script>
+<script src="/assets/js/photo-viewer.js?v=2" defer></script>
 
 <?php
 require __DIR__ . '/../layout/master_end.php';

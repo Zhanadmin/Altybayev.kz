@@ -97,7 +97,7 @@ require __DIR__ . '/layout/master_start.php';
             <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
             <div class="value hm-value-text">Жеті ата</div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_dates')) ?></div>
-            <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дни рождения, годовщины, Жеті ата' : 'Туған күндер, ас беру, Жеті ата' ?></div>
+            <div class="note"><?= htmlspecialchars(I18n::t('home_zheti_note')) ?></div>
         </a>
     </div>
 

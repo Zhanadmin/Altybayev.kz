@@ -7979,7 +7979,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         window.addEventListener('DOMContentLoaded', () => {
             // старые ссылки /tree?zheti=1 ведут на страницу «Жеті ата»
             if (urlParams.get('zheti')) { openZhetiAtaPage(); return; }
-            initTree();
+            // ALT-098: /tree?focus=ID&edit=ID — сразу открыть окно «Өзгерту» (из страницы «Что не заполнено»)
+            const editFromUrl = parseInt(urlParams.get('edit') || '0', 10);
+            Promise.resolve(initTree()).then(() => {
+                if (editFromUrl > 0) setTimeout(() => openEditPersonModal(editFromUrl), 300);
+            });
         });
     </script>
     <script>

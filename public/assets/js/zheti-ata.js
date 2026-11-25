@@ -48,7 +48,7 @@
     const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
     /* Рисует табличку в box для человека personId. onPerson(id) — клик по имени в цепочке (необязательно). */
-    async function render(resBox, id, currentLang, onPerson) {
+    async function render(resBox, id, currentLang, onPerson, opts) {
         const L = labels(currentLang);
         if (!id) return;
         resBox.style.display = 'block';
@@ -132,13 +132,31 @@
             </svg>`;
 
             window.zhetiAtaFileName = 'Жеті ата — ' + (String(self.first_name || '').trim() || 'person');
-            resBox.innerHTML = `
+            const btnsHtml = `
+                    <button type="button" class="btn-modal-submit btn btn-primary" data-za-act="png">⬇ ${esc(L.download)}</button>
+                    <button type="button" class="btn-modal-cancel btn" data-za-act="pdf">📄 ${esc(L.pdf)}</button>
+                    <button type="button" class="btn-modal-cancel btn" data-za-act="print">🖨 ${esc(L.print)}</button>`;
+            const ext = opts || {};
+            if (ext.actionsBox) {
+                // кнопки и сведения о человеке — в боковой панели, справа только табличка
+                resBox.innerHTML = svg;
+                ext.actionsBox.innerHTML = btnsHtml;
+                ext.actionsBox.onclick = (ev) => {
+                    const b = ev.target.closest ? ev.target.closest('[data-za-act]') : null;
+                    if (!b) return;
+                    if (b.getAttribute('data-za-act') === 'png') downloadPng(); else printPdf();
+                };
+                if (ext.infoBox) {
+                    const nm = esc(`${self.first_name || ''} ${self.last_name || ''}`.trim());
+                    ext.infoBox.innerHTML = `<div class="za-info-name">${nm}</div>`
+                        + (clanName ? `<div class="za-info-row">${esc(L.clan)}: <b>${esc(clanName)}</b></div>` : '')
+                        + (zhuzLabel ? `<div class="za-info-row">${esc(zhuzLabel)}</div>` : '');
+                }
+            } else {
+                resBox.innerHTML = `
                 ${svg}
-                <div style="text-align:center; margin-top:12px;">
-                    <button type="button" class="btn-modal-submit btn btn-primary" data-za-act="png" style="padding:8px 22px; font-size:13px;">⬇ ${esc(L.download)}</button>
-                    <button type="button" class="btn-modal-cancel btn" data-za-act="pdf" style="padding:8px 22px; font-size:13px; margin-left:8px;">📄 ${esc(L.pdf)}</button>
-                    <button type="button" class="btn-modal-cancel btn" data-za-act="print" style="padding:8px 22px; font-size:13px; margin-left:8px;">🖨 ${esc(L.print)}</button>
-                </div>`;
+                <div style="text-align:center; margin-top:12px;">${btnsHtml}</div>`;
+            }
             resBox.onclick = (ev) => {
                 const t = ev.target.closest ? ev.target.closest('[data-za-act],.za-name') : null;
                 if (!t) return;

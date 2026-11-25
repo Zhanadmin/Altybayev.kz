@@ -1192,6 +1192,8 @@ class I18n
                 'kk' => 'Есте қаларлық күндер',
                 'ru' => 'Памятные даты',
             ],
+            // ALT-094: подпись под кнопкой «Жеті ата» на главной
+            'home_zheti_note' => ['kk' => 'Өз жеті атаңды біл', 'ru' => 'Знай своих семь предков', 'en' => 'Know your seven ancestors', 'es' => 'Conoce a tus siete antepasados'],
             'nav_history' => [
                 'kk' => 'Тарих',
                 'ru' => 'История правок',

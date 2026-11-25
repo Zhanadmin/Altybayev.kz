@@ -519,7 +519,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
     <?php if ($hasMusic): ?>
     <?php /* ALT-014: кнопка ♪ и музыка — общий скрипт bgm.js (на всех страницах) */ ?>
     <script src="/assets/js/tooltip.js?v=4" defer></script>
-    <script src="/assets/js/bgm.js?v=5" defer></script>
+    <script src="/assets/js/bgm.js?v=8" defer></script>
     <?php endif; ?>
     <script>
         /* TASK-027 п.6: плавное появление карточек при прокрутке */

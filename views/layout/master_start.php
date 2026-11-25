@@ -154,7 +154,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <script src="/assets/js/layout-fix.js?v=1"></script>
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
-    <script src="/assets/js/bgm.js?v=6" defer></script>
+    <script src="/assets/js/bgm.js?v=8" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
     <script src="/assets/js/app-dialog.js?v=1"></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=15">
@@ -183,9 +183,6 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-sidebar-tools .seg button:hover { background: var(--c-hover); color: var(--c-text); }
         .ds-sidebar-tools .seg button.active { background: var(--c-island); color: var(--c-text); box-shadow: var(--shadow-island); }
         .ds-sidebar-tools .user-chip { min-width: 0; border: 0; border-radius: var(--r-sm); padding: 6px var(--sp-3); gap: var(--sp-3); }
-        .ds-sidebar-tools #bgmToggle { background: transparent !important; border-color: transparent !important; color: var(--c-text-2) !important; }
-        .ds-sidebar-tools #bgmToggle:hover { background: var(--c-hover) !important; color: var(--c-text) !important; }
-        .ds-sidebar-tools #bgmToggle[aria-pressed="true"] { color: var(--c-accent) !important; }
         /* ALT-086 (замечание 2): имя и роль — в две строки, без наложения */
         .ds-sidebar-tools .user-chip .avatar { flex: 0 0 auto; }
         .ds-sidebar-tools .user-chip .user-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.25; }
@@ -206,19 +203,52 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-sidebar .ds-sidebar-tools .user-chip { padding: 2px var(--sp-3); }
         .ds-sidebar .ds-sidebar-tools .user-chip .avatar { width: 26px; height: 26px; font-size: 12px; }
         .ds-sidebar .ds-sidebar-foot { padding: 2px var(--sp-3) 0; font-size: 11px; line-height: 1.3; }
-        /* ALT-115: три кнопки (музыка, тема, выход) делят ширину поровну */
-        .ds-tools-row { display: flex; align-items: stretch; gap: 4px; padding: 0; }
-        .ds-tools-row > .btn, .ds-tools-row > #bgmToggle { flex: 1 1 0 !important; width: auto !important; min-width: 0 !important; height: 34px !important; margin: 0 !important; padding: 0 !important; border-radius: var(--r-sm) !important; display: inline-flex !important; flex-direction: row; align-items: center; justify-content: center; box-sizing: border-box; }
-        .ds-tools-row .ds-tools-logout { font-size: 12px; font-weight: 500; white-space: nowrap; }
-        .ds-tools-row #bgmToggle { overflow: visible; gap: 4px; }
+        /* ALT-115: три кнопки внизу панели — тема | музыка (посередине, шире) | выход */
+        .ds-tools-row { display: flex; align-items: stretch; gap: 6px; padding: 0; }
+        .ds-tools-row > .btn, .ds-tools-row #bgmToggle {
+            flex: 1 1 0 !important; width: auto !important; min-width: 0 !important; height: 34px !important; min-height: 34px !important;
+            margin: 0 !important; padding: 0 !important; border-radius: var(--r-sm) !important;
+            display: inline-flex !important; flex-direction: row; align-items: center; justify-content: center;
+            box-sizing: border-box;
+        }
+        .ds-tools-row .ds-tools-logout { font-size: 12px; font-weight: 500; white-space: nowrap; letter-spacing: -.01em; }
+        .ds-tools-row #bgmToggle { flex: 2 1 0 !important; position: relative; overflow: visible; }
         .ds-tools-row #bgmToggle > * { pointer-events: none; }
-        .ds-tools-row #bgmToggle[aria-pressed="true"]::before { content: ""; position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); border-radius: var(--r-sm); box-shadow: 0 0 10px 3px var(--c-accent); opacity: .25; pointer-events: none; }
-        .ds-tools-row #bgmToggle { flex: 2 1 0 !important; padding: 0 8px !important; }
-        .ds-tools-row #bgmToggle .bgm-note { flex: 0 0 auto; }
-        .ds-tools-row #bgmToggle .bgm-bars { flex: 1 1 auto; align-items: center; justify-content: space-between; height: 16px; gap: 3px; min-width: 0; }
-        .ds-tools-row #bgmToggle .bgm-bars i { flex: 0 0 auto; width: 3px; }
-        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i { animation-name: bgmBarWide; }
-        @keyframes bgmBarWide { 0%, 100% { height: 3px; } 50% { height: 16px; } }
+        /* Музыка выключена: плашка play в цветах сайта, без перечёркивания и без нот */
+        .ds-tools-row #bgmToggle.off { background: var(--c-accent) !important; border-color: var(--c-accent) !important; color: var(--c-island) !important; opacity: 1 !important; }
+        .ds-tools-row #bgmToggle.off:hover { background: var(--c-accent-text) !important; border-color: var(--c-accent-text) !important; }
+        .ds-tools-row #bgmToggle.off::after { content: none !important; display: none !important; }
+        .ds-tools-row #bgmToggle .bgm-play { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%; line-height: 1; }
+        .ds-tools-row #bgmToggle .bgm-play svg { display: block; width: 19px; height: 19px; fill: currentColor; }
+        /* Музыка играет: крупный эквалайзер на всю ширину кнопки + мягкий ореол наружу */
+        .ds-tools-row #bgmToggle[aria-pressed="true"] { background: var(--c-accent-soft) !important; border-color: transparent !important; color: var(--c-accent-text) !important; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-play { display: none; }
+        .ds-tools-row #bgmToggle .bgm-bars { display: none; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; height: 28px; gap: 2px; padding: 0 2px; box-sizing: border-box;
+        }
+        .ds-tools-row #bgmToggle .bgm-bars i { flex: 0 0 auto; width: 4px; height: 4px; border-radius: 2px; background: currentColor; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i { animation: bgmBarWide .9s ease-in-out infinite; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(2) { animation-delay: .15s; animation-duration: .75s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(3) { animation-delay: .32s; animation-duration: .95s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(4) { animation-delay: .08s; animation-duration: .8s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(5) { animation-delay: .44s; animation-duration: 1s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(6) { animation-delay: .22s; animation-duration: .7s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(7) { animation-delay: .5s; animation-duration: .9s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(8) { animation-delay: .05s; animation-duration: .85s; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(9) { animation-delay: .38s; animation-duration: .78s; }
+        @keyframes bgmBarWide { 0%, 100% { height: 4px; } 50% { height: 26px; } }
+        .ds-tools-row #bgmToggle[aria-pressed="true"]::before {
+            content: ""; position: absolute; inset: -3px; border-radius: calc(var(--r-sm) + 3px);
+            box-shadow: 0 0 14px 5px var(--c-accent); opacity: .35; pointer-events: none;
+            animation: bgmHalo 1.8s ease-in-out infinite;
+        }
+        @keyframes bgmHalo { 0%, 100% { opacity: .28; } 50% { opacity: .52; } }
+        @media (prefers-reduced-motion: reduce) {
+            .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i { animation: none; height: 14px; }
+            .ds-tools-row #bgmToggle[aria-pressed="true"]::before { animation: none; }
+        }
         .ds-content > .ds-crumbs { margin-bottom: calc(-1 * var(--sp-2)); }
         .ds-page { min-width: 0; }
         /* Сброс отступов, как в прежнем каркасе (страницы со встроенными стилями на него рассчитаны).
@@ -403,7 +433,7 @@ $dsThemeReady = !empty($dsThemeReady);
                     <?php endif; ?>
                     <?php /* кнопку музыки (#bgmToggle) сюда вставляет bgm.js: порядок — тема, музыка (шире), выход */ ?>
                     <span id="bgmSlot" style="display:contents"></span>
-                    <a href="/logout" class="btn btn-ghost btn-icon ds-tools-logout" aria-label="<?= htmlspecialchars(I18n::t('nav_logout')) ?>" data-tip="<?= htmlspecialchars(I18n::t('nav_logout')) ?>">
+                    <a href="/logout" class="btn btn-ghost ds-tools-logout" aria-label="<?= htmlspecialchars(I18n::t('nav_logout')) ?>" data-tip="<?= htmlspecialchars(I18n::t('nav_logout')) ?>">
                         <span class="ds-tools-logout-text"><?= htmlspecialchars(I18n::t('nav_logout')) ?></span>
                     </a>
                 </div>

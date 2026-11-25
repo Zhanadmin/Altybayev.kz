@@ -61,28 +61,30 @@
         b.type = 'button';
         b.id = 'bgmToggle';
         b.className = 'off';
-        // значок: ноты + «звуковые полоски» (эквалайзер); когда выключено — полоски стоят, значок перечёркнут
-        b.innerHTML = '<span class="bgm-note">♫</span><span class="bgm-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
+        // ALT-115: выключено — плашка play, включено — эквалайзер; перечёркивания нет
+        b.innerHTML = '<span class="bgm-play" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>' +
+            '<span class="bgm-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
         if (!headless) {
             var st = document.createElement('style');
             // ALT-014: компактная круглая кнопка в верхней панели рядом с переключателем языка
             st.textContent = '#bgmToggle{position:relative;flex:0 0 auto;box-sizing:border-box;width:36px;height:36px;min-width:36px;border-radius:50%;margin:0 8px 0 0;padding:0;' +
                 'border:1px solid var(--c-border-strong,#475569);background:var(--c-island,rgba(15,23,42,.85));color:var(--c-text,inherit);' +
-                'cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}' +
+                'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1}' +
                 '#bgmToggle:hover,#bgmToggle:focus-visible{border-color:var(--c-accent,#d4af37)}' +
-                '#bgmToggle .bgm-note{font-size:14px;line-height:1}' +
-                '#bgmToggle .bgm-bars{display:flex;align-items:flex-end;gap:2px;height:9px}' +
+                '#bgmToggle .bgm-play{display:inline-flex;align-items:center;justify-content:center;line-height:1}' +
+                '#bgmToggle .bgm-play svg{display:block;width:15px;height:15px;fill:currentColor}' +
+                '#bgmToggle .bgm-bars{display:none;align-items:center;gap:2px;height:11px}' +
                 '#bgmToggle .bgm-bars i{display:block;width:2px;height:2px;border-radius:1px;background:currentColor}' +
                 '#bgmToggle[aria-pressed="true"]{border-color:var(--c-accent,#d4af37);color:var(--c-accent,#d4af37)}' +
+                '#bgmToggle[aria-pressed="true"] .bgm-play{display:none}' +
+                '#bgmToggle[aria-pressed="true"] .bgm-bars{display:flex}' +
                 '#bgmToggle[aria-pressed="true"] .bgm-bars i{animation:bgmBar .9s ease-in-out infinite}' +
                 '#bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(2){animation-delay:.2s}' +
                 '#bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(3){animation-delay:.45s}' +
                 '#bgmToggle[aria-pressed="true"] .bgm-bars i:nth-child(4){animation-delay:.1s}' +
-                '@keyframes bgmBar{0%,100%{height:2px}50%{height:9px}}' +
-                '#bgmToggle.off{opacity:.85}' +
-                '#bgmToggle.off::after{content:"";position:absolute;left:7px;right:7px;top:50%;border-top:2px solid currentColor;transform:rotate(-45deg)}' +
+                '@keyframes bgmBar{0%,100%{height:2px}50%{height:11px}}' +
                 '#bgmToggle.floating{position:fixed;right:10px;top:10px;z-index:900;margin:0}' +
-                '@media (prefers-reduced-motion:reduce){#bgmToggle .bgm-bars i{animation:none!important}#bgmToggle[aria-pressed="true"] .bgm-bars i{height:6px}}' +
+                '@media (prefers-reduced-motion:reduce){#bgmToggle .bgm-bars i{animation:none!important}#bgmToggle[aria-pressed="true"] .bgm-bars i{height:7px}}' +
                 '@media print{#bgmToggle{display:none}}';
             document.head.appendChild(st);
             // ALT-086: в каркасе сайта кнопка живёт в боковой панели (#bgmSlot), на остальных страницах — рядом с переключателем языка

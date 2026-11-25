@@ -35,7 +35,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/kk-genitive.js?v=1"></script>
     <script src="/assets/js/ru-genitive.js?v=1"></script>
-    <script src="/assets/js/bgm.js?v=5" defer></script>
+    <script src="/assets/js/bgm.js?v=8" defer></script>
     <script src="/assets/js/person-delete.js?v=2" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
     <script src="/assets/js/app-dialog.js?v=1"></script>

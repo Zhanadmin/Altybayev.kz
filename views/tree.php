@@ -3919,7 +3919,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 </div>
                 <button class="close-panel-btn" onclick="closeZhetiAtaTreeModal()">✕</button>
             </div>
-            <div class="modal-body" style="max-height:75vh;">
+            <div class="modal-body" style="max-height:75vh; overflow-y:auto; flex-shrink:0;">
                 <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
                     <div class="form-group" style="flex:1; min-width:220px; margin:0;">
                         <label id="zhetiAtaPersonLabel" for="zhetiAtaPersonA"></label>
@@ -8135,8 +8135,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         inner = `<text x="200" y="${y + 40}" text-anchor="middle" font-size="17" font-style="italic" fill="#9a8466">${esc(L.unknown)}</text>`;
                     } else {
                         const full = `${p.first_name || ''}`.trim(); // ALT-089: только имя, без фамилии
-                        const years = (p.birth_year || p.death_year)
-                            ? `${p.birth_year || '…'}–${(p.is_deceased || p.death_year) ? (p.death_year || '…') : ''}`
+                        const yOnly = (v) => { const m = String(v == null ? '' : v).match(/\d{4}/); return m ? m[0] : ''; };
+                        const by = yOnly(p.birth_year), dy = yOnly(p.death_year);
+                        const years = (by || dy)
+                            ? `${by || '…'}–${(p.is_deceased || dy) ? (dy || '…') : ''}`
                             : '';
                         inner = `<text class="za-name" x="200" y="${y + 38}" text-anchor="middle" font-size="${fitSize(full, 20, 22)}" font-weight="700" fill="#3b1a12" style="cursor:pointer" onclick="openZhetiAtaPerson(${parseInt(p.id, 10)})">${esc(full)}</text>`
                             + (years ? `<text x="200" y="${y + 55}" text-anchor="middle" font-size="12" fill="#6b4a2e">${esc(years)}</text>` : '');
@@ -8151,11 +8153,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <circle cx="200" cy="115" r="92" fill="#3f1510" stroke="#c9a24b" stroke-width="3"/>
                     ${ring}
                     <circle cx="200" cy="115" r="70" fill="#f3e6c8" stroke="#b28a3c" stroke-width="2"/>
-                    <text x="200" y="${zhuzLabel ? 84 : 92}" text-anchor="middle" font-size="12" fill="#6b4a2e">${esc(zhuzLabel)}</text>
-                    <text x="200" y="${tamgaData ? 104 : 120}" text-anchor="middle" font-size="${fitSize(clanName.toUpperCase(), 24, 12)}" font-weight="700" fill="#3b1a12">${esc(clanName.toUpperCase())}</text>
-                    ${tamgaData ? `<image href="${tamgaData}" x="176" y="112" width="48" height="48" preserveAspectRatio="xMidYMid meet"/>` : ''}
-                    ${uranText ? `<text x="200" y="${PLANK_Y - 42}" text-anchor="middle" font-size="${fitSize(uranText, 14, 28)}" font-style="italic" fill="#e8c97a">${esc(L.uran + ': ' + uranText)}</text>` : ''}
-                    <text x="200" y="${PLANK_Y - 18}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
+                    ${zhuzLabel ? `<text x="200" y="${tamgaData ? 78 : 92}" text-anchor="middle" font-size="11" fill="#6b4a2e">${esc(zhuzLabel)}</text>` : ''}
+                    ${tamgaData ? `<image href="${tamgaData}" x="178" y="88" width="44" height="44" preserveAspectRatio="xMidYMid meet"/>` : ''}
+                    <text x="200" y="${tamgaData ? 160 : 122}" text-anchor="middle" font-size="${Math.max(10, Math.min(tamgaData ? 18 : 22, Math.floor(92 / (0.72 * Math.max(1, clanName.length)))))}" font-weight="700" font-style="normal" fill="#3b1a12">${esc(clanName.toUpperCase())}</text>
+                    ${uranText ? `<text x="200" y="${PLANK_Y - 42}" text-anchor="middle" font-size="${fitSize(uranText, 14, 28)}" font-style="normal" fill="#e8c97a">${esc(L.uran + ': ' + uranText)}</text>` : ''}
+                    <text x="200" y="${PLANK_Y - 18}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" font-style="normal" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
                     ${side(38)}${side(362)}
                     ${plankSvg}
                     <rect x="52" y="${bottomY + 2}" width="296" height="30" rx="4" fill="#3f1510" stroke="#c9a24b" stroke-width="1.5"/>
@@ -8167,7 +8169,6 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 window.zhetiAtaFileName = 'Жеті ата — ' + (String(self.first_name || '').trim() || 'person');
                 resBox.innerHTML = `
-                    <div style="font-size:13px; color:#cbd5e1; margin-bottom:10px;">${esc(L.known(known))}</div>
                     ${svg}
                     <div style="text-align:center; margin-top:12px;">
                         <button type="button" class="btn-modal-submit" onclick="downloadZhetiAtaPng()" style="padding:8px 22px; font-size:13px;">⬇ ${esc(L.download)}</button>

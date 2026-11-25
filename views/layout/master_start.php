@@ -213,7 +213,12 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-tools-row #bgmToggle { overflow: visible; gap: 4px; }
         .ds-tools-row #bgmToggle > * { pointer-events: none; }
         .ds-tools-row #bgmToggle[aria-pressed="true"]::before { content: ""; position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); border-radius: var(--r-sm); box-shadow: 0 0 10px 3px var(--c-accent); opacity: .25; pointer-events: none; }
-        .ds-tools-row #bgmToggle .bgm-bars { align-items: center; height: 14px; }
+        .ds-tools-row #bgmToggle { flex: 2 1 0 !important; padding: 0 8px !important; }
+        .ds-tools-row #bgmToggle .bgm-note { flex: 0 0 auto; }
+        .ds-tools-row #bgmToggle .bgm-bars { flex: 1 1 auto; align-items: center; justify-content: space-between; height: 16px; gap: 3px; min-width: 0; }
+        .ds-tools-row #bgmToggle .bgm-bars i { flex: 0 0 auto; width: 3px; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"] .bgm-bars i { animation-name: bgmBarWide; }
+        @keyframes bgmBarWide { 0%, 100% { height: 3px; } 50% { height: 16px; } }
         .ds-content > .ds-crumbs { margin-bottom: calc(-1 * var(--sp-2)); }
         .ds-page { min-width: 0; }
         /* Сброс отступов, как в прежнем каркасе (страницы со встроенными стилями на него рассчитаны).
@@ -389,8 +394,6 @@ $dsThemeReady = !empty($dsThemeReady);
                 </div>
 
                 <div class="ds-tools-row">
-                    <?php /* кнопку музыки (#bgmToggle) сюда вставляет bgm.js */ ?>
-                    <span id="bgmSlot" style="display:contents"></span>
                     <?php if ($dsThemeReady): ?>
                     <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAppTheme()"
                             aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>"
@@ -398,6 +401,8 @@ $dsThemeReady = !empty($dsThemeReady);
                         <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
                     </button>
                     <?php endif; ?>
+                    <?php /* кнопку музыки (#bgmToggle) сюда вставляет bgm.js: порядок — тема, музыка (шире), выход */ ?>
+                    <span id="bgmSlot" style="display:contents"></span>
                     <a href="/logout" class="btn btn-ghost btn-icon ds-tools-logout" aria-label="<?= htmlspecialchars(I18n::t('nav_logout')) ?>" data-tip="<?= htmlspecialchars(I18n::t('nav_logout')) ?>">
                         <span class="ds-tools-logout-text"><?= htmlspecialchars(I18n::t('nav_logout')) ?></span>
                     </a>

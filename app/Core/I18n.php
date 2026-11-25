@@ -126,6 +126,28 @@ class I18n
     }
 
     /**
+     * ALT-083: подпись семьи («Жандостың отбасы» / «Семья Жандоса» / «Zhandos's family» / «Familia de Zhandos»).
+     * Те же склонения (KinshipService) и шаблоны «tree_family_label», что в древе. Пустое имя — пустая строка.
+     */
+    public static function familyLabel(string $firstName, ?string $lang = null): string
+    {
+        $first = preg_split('/\s+/u', trim($firstName), -1, PREG_SPLIT_NO_EMPTY)[0] ?? '';
+        if ($first === '') {
+            return '';
+        }
+        $lang = $lang ?? self::lang();
+        if ($lang === 'ru') {
+            $name = \App\Services\KinshipService::ruGenitive($first);
+        } elseif ($lang === 'en' || $lang === 'es') {
+            $name = self::latinize($first, $lang);
+        } else {
+            $name = \App\Services\KinshipService::kkGenitive($first);
+        }
+        $tpl = self::getDictionary()['tree_family_label'][$lang] ?? self::getDictionary()['tree_family_label']['kk'];
+        return str_replace('{name}', $name, $tpl);
+    }
+
+    /**
      * Склонение казахского предиката 2-го лица вежливого обращения («Сіз — ...сыз / ...сіз»)
      * на основе гармонии гласных (сингармонизм) и конечного звука
      */

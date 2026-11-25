@@ -100,6 +100,11 @@ require __DIR__ . '/../layout/master_start.php';
                         $children = $f['children'];
                     ?>
                         <article class="island fm-card<?= $isAncestors ? ' fm-ancestors' : '' ?>" id="fam-<?= (int)$m['id'] ?>">
+                            <?php /* ALT-083: подпись семьи по мужу, как в древе; без мужа — не показываем */
+                                $famLabel = $h ? I18n::familyLabel((string)($h['first_name'] ?? ''), $lang) : '';
+                                if ($famLabel !== ''): ?>
+                                <div class="fm-family-label"><?= htmlspecialchars($famLabel) ?></div>
+                            <?php endif; ?>
                             <div class="fm-card-head">
                                 <?php
                                     /* TASK-020: служебное «#N (ID)» скрыто; главное — «N лет вместе» */

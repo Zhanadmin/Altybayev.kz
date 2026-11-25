@@ -112,9 +112,12 @@ class GenerationService
         if (!$level) {
             return [];
         }
+        // ALT-085: уровень 0 = бабушки/дедушки опоры (их братья, сёстры, супруги) = 1-е поколение.
+        // Всё выше (уровень < 0) — «Предки». Автосдвиг: если на уровнях >= 0 первые уровни без живых,
+        // первым становится самый старший уровень (>= 0), где есть живой.
         $minAlive = null;
         foreach ($level as $id => $lv) {
-            if (isset($byId[$id]) && self::isAlive($byId[$id])) {
+            if ($lv >= 0 && isset($byId[$id]) && self::isAlive($byId[$id])) {
                 $minAlive = $minAlive === null ? $lv : min($minAlive, $lv);
             }
         }

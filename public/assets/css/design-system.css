@@ -728,6 +728,8 @@ p { margin: 0; }
 .fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: var(--sp-4); align-items: start; }
 .fm-card { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
 .fm-ancestors { border-color: var(--c-accent); }
+/* ALT-083: плашка «…отбасы» — как в древе (ALT-082) */
+.fm-family-label { align-self: flex-start; box-sizing: border-box; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 9px; font-size: 13px; line-height: 18px; font-weight: 400; font-style: normal; color: var(--c-text, #2b2b2b); background: var(--c-island, #fbf6ea); border: 1px solid var(--c-accent, #a87b3a); border-radius: 9px; font-family: var(--font-book, 'Lora', serif); }
 .fm-card-head { display: flex; align-items: center; gap: var(--sp-2); }
 .fm-card-head .small { margin-right: auto; }
 .fm-together { margin: 0; font-size: var(--fs-xs); font-weight: 400; line-height: 1.2; text-align: center; white-space: nowrap; }

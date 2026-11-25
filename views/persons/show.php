@@ -240,12 +240,16 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         $spActiveJs[] = ['id' => $am['id'], 'name' => $am['name']];
                     }
                 ?>
-                <span class="pc-spouse-btn-wrap"<?= $spBlock !== null && !$spActiveJs ? ' title="' . htmlspecialchars($spBlock) . '"' : '' ?>>
-                    <button type="button" class="btn" id="addSpouseBtn" <?= $spActiveJs ? 'onclick="goEditActiveMarriage()"' : ($spBlock !== null ? 'disabled aria-disabled="true"' : 'onclick="openAddSpouseModal()"') ?>>
+                <?php /* ALT-102: есть действующий брак — кнопки нет вообще (правило SpouseController::activeMarriages) */ ?>
+                <?php if (!$spActiveJs): ?>
+                <span class="pc-spouse-btn-wrap"<?= $spBlock !== null ? ' title="' . htmlspecialchars($spBlock) . '"' : '' ?>>
+                    <button type="button" class="btn" id="addSpouseBtn" <?= $spBlock !== null ? 'disabled aria-disabled="true"' : 'onclick="openAddSpouseModal()"' ?>>
                         <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
                         <span><?= htmlspecialchars($spLabel) ?></span>
                     </button>
                 </span>
+                <?php endif; ?>
+                <?php /* ALT-102 */ ?>
                 <?php /* ALT-060: добавить отца/мать, пока не указаны */ ?>
                 <?php if (empty($person['father_id'])): ?>
                 <button type="button" class="btn" id="addFatherBtn" onclick="openAddParentModal('father')">
@@ -313,15 +317,18 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <!-- TASK-037: фото и обложка меняются кнопками прямо на карточке (подсказка в окне «Өңдеу» убрана) -->
             </div>
 
-            <!-- Краткая информация о роде -->
+            <!-- Краткая информация о роде (ALT-103: только для казахов или если национальность не указана) -->
+            <?php $__natRaw = trim((string)($person['nationality'] ?? '')); $__showClan = ($__natRaw === '' || \App\Config\Nationalities::isKazakh($__natRaw)); ?>
             <div class="island">
                 <div class="island-head pc-kin-head"><svg class="orn orn-horn pc-horn-sm" aria-hidden="true"><use href="#o-horn"/></svg><h3><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Родовая принадлежность (Ру)' : 'Рулық мәліметі' ?></h3></div>
                 <dl class="props pc-props-tight">
+                    <?php if ($__showClan): ?>
                     <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Род (Ру)' : 'Руы' ?></dt>
                     <dd><?= clan_tamga_html($person['clan_ru'] ?? '') ?><?= htmlspecialchars((string)($person['clan_ru'] ?:(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'не указан' : 'белгісіз'))) ?></dd>
                     <?php if (!empty($person['clan_subru'])): ?>
                         <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Подрод' : 'Тармағы' ?></dt>
                         <dd><?= htmlspecialchars((string)$person['clan_subru']) ?></dd>
+                    <?php endif; ?>
                     <?php endif; ?>
                     <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Пол' : 'Жынысы' ?></dt>
                     <dd><?= $isMale ? (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Мужской' : 'Ер') : (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Женский' : 'Әйел') ?></dd>
@@ -483,7 +490,9 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     ] as $pcKey => $pcLbl):
                         if (!empty($person[$pcKey])): ?>
                             <dt><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? $pcLbl[1] : $pcLbl[0] ?></dt>
-                            <dd><?= htmlspecialchars((string)$person[$pcKey]) ?></dd>
+                            <dd><?= htmlspecialchars($pcKey === 'nationality'
+                                ? \App\Config\Nationalities::label((string)$person[$pcKey], (string)$lang, (string)($person['gender'] ?? 'M'))
+                                : (string)$person[$pcKey]) ?></dd>
                         <?php endif;
                     endforeach; ?>
                     <?php if ($isDeceased): ?>

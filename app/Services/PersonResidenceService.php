@@ -72,6 +72,9 @@ final class PersonResidenceService
         $vals = [];
         foreach (self::PROFILE_FIELDS as $f => $max) {
             $v = trim((string)($in[$f] ?? ''));
+            if ($f === 'nationality') {
+                $v = \App\Config\Nationalities::normalize($v); // ALT-103: в базе — код списка или свой текст
+            }
             $vals[] = $v === '' ? null : mb_substr($v, 0, $max);
         }
         $vals[] = $personId;

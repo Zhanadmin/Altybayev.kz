@@ -91,7 +91,7 @@ class ZhetiAtaController
             'person_id' => $personId,
             'ancestors' => $chain,
             'fathers'   => $this->service->getSevenFathers($personId), // ALT-089
-            'clan'      => $this->lookupClan((string)($this->service->getPerson($personId)['clan_ru'] ?? '')),
+            'clan'      => $this->clanForPerson($this->service->getPerson($personId) ?? []),
         ]);
     }
 
@@ -106,6 +106,16 @@ class ZhetiAtaController
             return;
         }
         Response::json(['success' => true, 'clan' => $clan]);
+    }
+
+    /** ALT-103: ру/таңба показываются только казахам (пустая национальность — как раньше). */
+    protected function clanForPerson(array $person): ?array
+    {
+        $nat = trim((string)($person['nationality'] ?? ''));
+        if ($nat !== '' && !\App\Config\Nationalities::isKazakh($nat)) {
+            return null;
+        }
+        return $this->lookupClan((string)($person['clan_ru'] ?? ''));
     }
 
     /**

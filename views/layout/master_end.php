@@ -50,7 +50,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                     <div class="form-row">
                         <div class="field">
                             <label for="editModalGender"><?= $__t('Жынысы', 'Пол') ?></label>
-                            <select id="editModalGender" class="select" onchange="syncEditModalMaiden()">
+                            <select id="editModalGender" class="select" onchange="syncEditModalMaiden(); if (typeof natRelabel === 'function') { natRelabel(); }">
                                 <option value="M"><?= $__t('Ер', 'Мужской') ?></option>
                                 <option value="F"><?= $__t('Әйел', 'Женский') ?></option>
                             </select>
@@ -89,7 +89,9 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         </div>
                         <div class="field">
                             <label for="editModalNationality"><?= $__t('Ұлты', 'Национальность') ?></label>
-                            <input type="text" id="editModalNationality" class="input" maxlength="150">
+                            <?php /* ALT-103: список + «свой вариант»; в базе — код */ ?>
+                            <select id="editModalNationality" class="select" onchange="syncEditModalNationality()"></select>
+                            <input type="text" id="editModalNationalityOther" class="input" maxlength="150" style="display:none;margin-top:6px;" placeholder="<?= $__t('Өз нұсқаңызды жазыңыз', 'Введите свой вариант') ?>">
                         </div>
                     </div>
                     <div class="field">
@@ -418,6 +420,62 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             });
         }
 
+        // ALT-103: национальность — список по языку сайта и полу; «Руы» только для казахов
+        window.__natList = <?= json_encode(\App\Config\Nationalities::all(), JSON_UNESCAPED_UNICODE) ?>;
+        window.__natLang = <?= json_encode(\App\Core\I18n::lang()) ?>;
+        window.__natTexts = <?= json_encode([$__t('— таңдаңыз —', '— выберите —'), $__t('Басқа…', 'Другая…')], JSON_UNESCAPED_UNICODE) ?>;
+        function natLabel(code, female) {
+            const l = window.__natList[code]; if (!l) return code;
+            const lg = window.__natLang;
+            return lg === 'ru' ? (female ? l[2] : l[1]) : (lg === 'en' ? l[3] : (lg === 'es' ? l[4] : l[0]));
+        }
+        function natSet(value) {
+            const sel = document.getElementById('editModalNationality');
+            const oth = document.getElementById('editModalNationalityOther');
+            const female = document.getElementById('editModalGender').value === 'F';
+            const low = String(value || '').trim().toLowerCase();
+            let code = '';
+            if (low) {
+                for (const k in window.__natList) {
+                    if (k === low || window.__natList[k].some(function (x) { return x.toLowerCase() === low; })) { code = k; break; }
+                }
+            }
+            sel.innerHTML = '<option value="">' + window.__natTexts[0] + '</option>';
+            for (const k in window.__natList) {
+                const o = document.createElement('option'); o.value = k; o.textContent = natLabel(k, female); sel.appendChild(o);
+            }
+            const other = document.createElement('option'); other.value = '__other'; other.textContent = window.__natTexts[1]; sel.appendChild(other);
+            if (code) { sel.value = code; oth.value = ''; }
+            else if (low) { sel.value = '__other'; oth.value = String(value).trim(); }
+            else { sel.value = ''; oth.value = ''; }
+            syncEditModalNationality();
+        }
+        function natRelabel() {
+            const sel = document.getElementById('editModalNationality');
+            const female = document.getElementById('editModalGender').value === 'F';
+            for (let i = 0; i < sel.options.length; i++) {
+                const k = sel.options[i].value;
+                if (window.__natList[k]) { sel.options[i].textContent = natLabel(k, female); }
+            }
+        }
+        function natGet() {
+            const v = document.getElementById('editModalNationality').value;
+            return v === '__other' ? document.getElementById('editModalNationalityOther').value.trim() : v;
+        }
+        function syncEditModalNationality() {
+            const v = document.getElementById('editModalNationality').value;
+            document.getElementById('editModalNationalityOther').style.display = (v === '__other') ? '' : 'none';
+            // «Руы» — только у казахов (или пока национальность не выбрана)
+            const clanField = document.getElementById('editModalClanRu').closest('.field');
+            const show = (v === '' || v === 'kazakh');
+            if (clanField) { clanField.style.display = show ? '' : 'none'; }
+            const hint = document.getElementById('editModalClanHint');
+            if (hint && !show && hint.dataset.natHint) { hint.textContent = ''; delete hint.dataset.natHint; }
+            if (hint && show && v === 'kazakh' && !document.getElementById('editModalClanRu').value.trim() && !document.getElementById('editModalClanRu').readOnly) {
+                hint.textContent = <?= json_encode($__t('Руды таңдаңыз', 'Выберите род'), JSON_UNESCAPED_UNICODE) ?>;
+                hint.dataset.natHint = '1';
+            }
+        }
         function openGlobalPersonEditModal(id) {
             const modal = document.getElementById('globalPersonEditModal');
             if (!modal) return;
@@ -454,7 +512,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.getElementById('editModalBirthPlace').value = p.birth_place || '';
                         // TASK-036
                         document.getElementById('editModalReligion').value = p.religion || '';
-                        document.getElementById('editModalNationality').value = p.nationality || '';
+                        natSet(p.nationality || '');
                         document.getElementById('editModalEducation').value = p.education || '';
                         window.__pcProfileReady = !!data.profile_ready;
                         window.__pcResReady = !!data.residences_ready;
@@ -519,7 +577,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             if (window.__pcProfileReady) {
                 formData.append('profile_present', '1');
                 formData.append('religion', document.getElementById('editModalReligion').value.trim());
-                formData.append('nationality', document.getElementById('editModalNationality').value.trim());
+                formData.append('nationality', natGet());
                 formData.append('education', document.getElementById('editModalEducation').value.trim());
             }
             if (window.__pcResReady) { formData.append('residences', JSON.stringify(resCollect())); }

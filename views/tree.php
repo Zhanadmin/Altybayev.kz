@@ -7419,8 +7419,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     ? (tableData.empty_ru || 'Пока никого не добавили')
                     : (tableData.empty_kk || 'Әзірге ешкім қосылмаған');
                 const addLbl = (currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Добавить' : 'Қосу';
-                const addBtn = true // TASK-032: добавлять новых людей может любой вошедший
-                    ? ` <button type="button" class="btn-table-action lt-ush-add-btn" onclick="event.stopPropagation(); openAddModal('${ushZhurtAddRelation(zhurtKey, !!isFemale)}', ${parseInt(basePersonId, 10)})">${addLbl}</button>`
+                // ALT-102: «Добавить супруга» не показываем, если уже есть действующий брак
+                const hideSpouseAdd = ushZhurtAddRelation(zhurtKey, !!isFemale) === 'spouse' && !!(currentUshZhurtData && currentUshZhurtData.has_active_marriage);
+                const addBtn = !hideSpouseAdd // TASK-032: добавлять новых людей может любой вошедший
+                    ?` <button type="button" class="btn-table-action lt-ush-add-btn" onclick="event.stopPropagation(); openAddModal('${ushZhurtAddRelation(zhurtKey, !!isFemale)}', ${parseInt(basePersonId, 10)})">${addLbl}</button>`
                     : '';
                 rowsHtml = `<tr><td colspan="3" class="lt-ush-empty-cell">${uzEsc(emptyText)}${addBtn}</td></tr>`;
             } else {
@@ -7655,8 +7657,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     ? (group.empty_ru || 'Пока никого не добавили')
                     : (group.empty_kk || 'Әзірге ешкім қосылмаған');
                 const baseId = currentUshZhurtData.base_id || selectedPersonId;
-                const addBtn = true // TASK-032
-                    ? ` <button type="button" class="btn btn-profile-action" onclick="closeUshZhurtModal(); openAddModal('${ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female)}', ${parseInt(baseId, 10)})">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Добавить' : 'Қосу'}</button>`
+                const hideSpouseAdd = ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female) === 'spouse' && !!currentUshZhurtData.has_active_marriage; // ALT-102
+                const addBtn = !hideSpouseAdd // TASK-032
+                    ?` <button type="button" class="btn btn-profile-action" onclick="closeUshZhurtModal(); openAddModal('${ushZhurtAddRelation(tabKey, !!currentUshZhurtData.is_female)}', ${parseInt(baseId, 10)})">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Добавить' : 'Қосу'}</button>`
                     : '';
                 container.innerHTML = `<div class="uz-msg" style="font-style:italic;">${uzEsc(emptyText)}${addBtn}</div>`;
                 return;

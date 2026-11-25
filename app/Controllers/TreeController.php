@@ -1484,6 +1484,8 @@ class TreeController
             'tables' => $tablesData['tables'] ?? [],
             'ush_zhurt' => $familiesData,
             'own_family' => $tablesData['own_family'] ?? [],
+            // ALT-102: единое правило «есть действующий брак» — то же, что в карточке и в окне правки
+            'has_active_marriage' => (bool)SpouseController::activeMarriages(Database::getConnection(), $id),
         ]);
     }
 

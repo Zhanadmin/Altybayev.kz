@@ -41,31 +41,31 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
 .ms-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ms-filters select { height: 42px; font: inherit; }
 /* ALT-110: настоящая таблица — сетка, шапка, чередование строк, всё по центру */
-.ms-table { width: 100%; min-width: 1960px; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--c-border, #cfcfcf); }
-.ms-table th, .ms-table td { padding: 8px 10px; text-align: left; vertical-align: middle; border: 1px solid var(--c-border, #cfcfcf); font-weight: 400; }
-.ms-table th { font-weight: 600; font-size: 14px; line-height: 1.25; background: rgba(128,128,128,.14); white-space: normal; overflow-wrap: anywhere; }
-.ms-table tbody tr { height: 64px; }
+.ms-table { width: 100%; min-width: 1040px; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--c-border, #cfcfcf); font-size: 12px; }
+.ms-table th, .ms-table td { padding: 4px 5px; text-align: left; vertical-align: middle; border: 1px solid var(--c-border, #cfcfcf); font-weight: 400; overflow-wrap: anywhere; }
+.ms-table th { font-weight: 600; font-size: 11px; line-height: 1.2; background: rgba(128,128,128,.14); white-space: normal; }
+.ms-table tbody tr { height: 48px; }
 .ms-table tbody tr:nth-child(even) { background: rgba(128,128,128,.07); }
 .ms-table tbody tr:hover { background: rgba(128,128,128,.14); }
-.ms-chip { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; white-space: nowrap; background: rgba(128,128,128,.08); }
-.ms-table .ms-c-name { width: 190px; overflow-wrap: anywhere; }
-.ms-table .ms-c-gen { width: 130px; }
-.ms-table .ms-c-photo { width: 170px; }
-.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 150px; }
-.ms-table .ms-c-nationality { width: 180px; }
-.ms-table .ms-c-clan { width: 150px; }
-.ms-table .ms-c-marriage { width: 160px; }
-.ms-table .ms-c-parents { width: 210px; }
-.ms-table .ms-c-contacts { width: 130px; }
-.ms-table .ms-c-other { width: 180px; }
-.ms-table .ms-c-zheti { width: 120px; }
-.ms-table .ms-c-edit { width: 120px; text-align: center; }
+.ms-chip { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 11px; line-height: 1.15; white-space: normal; background: rgba(128,128,128,.08); }
+.ms-table .ms-c-name { width: 9.5%; }
+.ms-table .ms-c-gen { width: 6%; }
+.ms-table .ms-c-photo { width: 8%; }
+.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 8.5%; }
+.ms-table .ms-c-nationality { width: 8.5%; }
+.ms-table .ms-c-clan { width: 7%; }
+.ms-table .ms-c-marriage { width: 8.5%; }
+.ms-table .ms-c-parents { width: 11%; }
+.ms-table .ms-c-contacts { width: 5.5%; }
+.ms-table .ms-c-other { width: 8%; }
+.ms-table .ms-c-zheti { width: 5.5%; }
+.ms-table .ms-c-edit { width: 5%; text-align: center; }
 /* ALT-107: поля прямо в ячейках */
-.ms-stack { display: flex; flex-direction: column; gap: 6px; }
+.ms-stack { display: flex; flex-direction: column; gap: 3px; }
 .ms-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ms-note { display: block; font-size: 11px; line-height: 14px; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ms-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; height: 34px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
-.ms-in { width: 100%; box-sizing: border-box; height: 34px; min-height: 34px; padding: 4px 8px; font: inherit; font-size: 14px; border: 1px solid var(--c-border, #ccc); border-radius: 6px; background: var(--c-surface, transparent); color: inherit; text-overflow: clip; }
+.ms-note { display: block; font-size: 10px; line-height: 12px; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; min-height: 26px; padding: 2px 4px; font-size: 11px; line-height: 1.15; white-space: normal; text-align: center; }
+.ms-in { width: 100%; box-sizing: border-box; height: 26px; min-height: 26px; padding: 2px 5px; font: inherit; font-size: 12px; border: 1px solid var(--c-border, #ccc); border-radius: 6px; background: var(--c-surface, transparent); color: inherit; text-overflow: clip; }
 .ms-ro { display: block; text-decoration: none; }
 .ms-ro .ms-in { cursor: pointer; }
 @media (max-width: 900px) {
@@ -84,7 +84,7 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
 .ms-in:focus { outline: 2px solid var(--c-accent, #2a6df4); outline-offset: 1px; }
 .ms-in.busy { opacity: .6; }
 .ms-in.err { border-color: #c0392b; }
-.ms-msg { font-size: 13px; min-height: 0; }
+.ms-msg { font-size: 11px; min-height: 0; }
 .ms-msg.err { color: #c0392b; }
 .ms-msg.ok { color: #1e8449; }
 .ms-find { position: relative; }

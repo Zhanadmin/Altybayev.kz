@@ -78,7 +78,7 @@ img, video { height: auto; }
     .check input[type="checkbox"], .check input[type="radio"] { width: 22px; height: 22px; flex: 0 0 auto; }
     .ds-nav a { min-height: 44px; }
     .seg a, .seg button { min-height: 40px; }
-    .ds-topbar .seg button { min-height: 40px; padding: 4px 9px; }
+    .ds-sidebar-tools .seg button { min-height: 40px; }
     .ds-crumbs a { display: inline-flex; align-items: center; min-height: 32px; }
     #bgmToggle { width: 44px !important; height: 44px !important; min-width: 44px !important; margin-right: 4px !important; }
     .pp-table .actions .btn-icon { width: 44px; height: 44px; }
@@ -91,8 +91,7 @@ img, video { height: auto; }
 
 /* ---------- Узкие телефоны (≤420px) ---------- */
 @media (max-width: 420px) {
-    .ds-topbar .user-chip { display: none; }          /* аватар не нужен: меню и выход остаются */
-    .ds-topbar .seg button { padding: 4px 7px; font-size: 11px; }
+    .ds-sidebar-tools .seg button { padding: 4px 4px; font-size: 11px; } /* ALT-086 */
     .ds-page-head h1 { font-size: var(--fs-xl, 22px); }
     .ds-page-head .actions .btn { flex: 1 1 auto; }
 }

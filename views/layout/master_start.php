@@ -146,7 +146,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="stylesheet" href="/assets/css/design-system.css?v=34">
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
-    <script src="/assets/js/bgm.js?v=5" defer></script>
+    <script src="/assets/js/bgm.js?v=6" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
     <script src="/assets/js/app-dialog.js?v=1"></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=14">
@@ -159,8 +159,23 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-brand-title { font-weight: 400; font-size: var(--fs-md); }
         .ds-you-are { font-size: var(--fs-sm); color: var(--c-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         .ds-you-are b { color: var(--c-text); font-weight: 600; }
-        .ds-topbar .seg button { padding: 4px 11px; font-size: var(--fs-xs); font-weight: 600; }
-        .user-chip .badge { margin-left: 2px; }
+        /* ALT-086: блок управления в боковой панели — прижат к низу и всегда виден */
+        .ds-sidebar-tools {
+            margin-top: auto; position: sticky; bottom: 0; z-index: 2;
+            display: flex; flex-direction: column; gap: var(--sp-2);
+            padding: var(--sp-3);
+            background: var(--c-island); border: 1px solid var(--c-border);
+            border-radius: var(--r-md); box-shadow: var(--shadow-island);
+        }
+        .ds-sidebar-tools + .ds-sidebar-foot { margin-top: 0; }
+        .ds-sidebar-tools .seg { display: flex; width: 100%; }
+        .ds-sidebar-tools .seg button { flex: 1 1 0; padding: 4px 6px; font-size: var(--fs-xs); font-weight: 600; }
+        .ds-sidebar-tools .user-chip { min-width: 0; }
+        .ds-sidebar-tools .user-chip b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ds-sidebar-tools .user-chip .badge { margin-left: auto; flex: 0 0 auto; }
+        .ds-tools-row { display: flex; align-items: center; gap: var(--sp-2); }
+        .ds-tools-row #bgmToggle { margin: 0 !important; }
+        .ds-tools-logout { margin-left: auto; }
         .ds-content > .ds-crumbs { margin-bottom: calc(-1 * var(--sp-2)); }
         .ds-page { min-width: 0; }
         /* Сброс отступов, как в прежнем каркасе (страницы со встроенными стилями на него рассчитаны).
@@ -309,6 +324,45 @@ $dsThemeReady = !empty($dsThemeReady);
                 <?php endforeach; ?>
             </nav>
 
+            <?php /* ALT-086: компактный блок управления — всегда виден (панель не прокручивается вместе со страницей; на телефоне — внутри выезжающего меню) */ ?>
+            <div class="ds-sidebar-tools" id="sidebarTools">
+                <!-- Пользователь -->
+                <div class="user-chip">
+                    <span class="avatar">
+                        <?php if (!empty($user['avatar_url'])): ?>
+                            <img src="<?= htmlspecialchars((string)$user['avatar_url']) ?>" alt="">
+                        <?php else: ?>
+                            <?= htmlspecialchars($userInitial) ?>
+                        <?php endif; ?>
+                    </span>
+                    <b><?= htmlspecialchars((string)($user['name'] ?? 'Туысқан')) ?></b>
+                    <span class="badge <?= $userRole === 'admin' ? 'badge-accent' : '' ?>"><?= htmlspecialchars($roleBadgeText) ?></span>
+                </div>
+
+                <!-- ALT-007: переключатель языка ҚАЗ / РУС / ENG / ESP -->
+                <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Язык' : 'Тіл' ?>">
+                    <button type="button" class="<?= $lang === 'kk' ? 'active' : '' ?>" onclick="switchAppLanguage('kk')">ҚАЗ</button>
+                    <button type="button" class="<?= $lang === 'ru' ? 'active' : '' ?>" onclick="switchAppLanguage('ru')">РУС</button>
+                    <button type="button" class="<?= $lang === 'en' ? 'active' : '' ?>" onclick="switchAppLanguage('en')">ENG</button>
+                    <button type="button" class="<?= $lang === 'es' ? 'active' : '' ?>" onclick="switchAppLanguage('es')">ESP</button>
+                </div>
+
+                <div class="ds-tools-row">
+                    <?php /* кнопку музыки (#bgmToggle) сюда вставляет bgm.js */ ?>
+                    <span id="bgmSlot" style="display:contents"></span>
+                    <?php if ($dsThemeReady): ?>
+                    <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAppTheme()"
+                            aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>"
+                            data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная' : 'Жарық / қараңғы' ?>">
+                        <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
+                    </button>
+                    <?php endif; ?>
+                    <a href="/logout" class="btn btn-ghost btn-icon ds-tools-logout" aria-label="<?= htmlspecialchars(I18n::t('nav_logout')) ?>" data-tip="<?= htmlspecialchars(I18n::t('nav_logout')) ?>">
+                        <svg class="ic"><use href="#i-logout"/></svg>
+                    </a>
+                </div>
+            </div>
+
             <div class="ds-sidebar-foot">
                 <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
                 <span>altybayev.kz · 2026</span>
@@ -329,41 +383,7 @@ $dsThemeReady = !empty($dsThemeReady);
                 </button>
                 <div class="ds-you-are desktop-only"><?= htmlspecialchars($youAreText) ?></div>
                 <div class="spacer"></div>
-
-                <!-- ALT-007: переключатель языка ҚАЗ / РУС / ENG -->
-                <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Язык' : 'Тіл' ?>">
-                    <button type="button" class="<?= $lang === 'kk' ? 'active' : '' ?>" onclick="switchAppLanguage('kk')">ҚАЗ</button>
-                    <button type="button" class="<?= $lang === 'ru' ? 'active' : '' ?>" onclick="switchAppLanguage('ru')">РУС</button>
-                    <button type="button" class="<?= $lang === 'en' ? 'active' : '' ?>" onclick="switchAppLanguage('en')">ENG</button>
-                    <button type="button" class="<?= $lang === 'es' ? 'active' : '' ?>" onclick="switchAppLanguage('es')">ESP</button>
-                </div>
-
-                <!-- Переключатель темы (появляется на страницах, переведённых на дизайн-систему) -->
-                <?php if ($dsThemeReady): ?>
-                <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAppTheme()"
-                        aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>"
-                        data-tip="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная' : 'Жарық / қараңғы' ?>">
-                    <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
-                </button>
-                <?php endif; ?>
-
-                <!-- Пользователь -->
-                <div class="user-chip">
-                    <span class="avatar">
-                        <?php if (!empty($user['avatar_url'])): ?>
-                            <img src="<?= htmlspecialchars((string)$user['avatar_url']) ?>" alt="">
-                        <?php else: ?>
-                            <?= htmlspecialchars($userInitial) ?>
-                        <?php endif; ?>
-                    </span>
-                    <b class="desktop-only"><?= htmlspecialchars((string)($user['name'] ?? 'Туысқан')) ?></b>
-                    <span class="badge <?= $userRole === 'admin' ? 'badge-accent' : '' ?> desktop-only"><?= htmlspecialchars($roleBadgeText) ?></span>
-                </div>
-
-                <!-- Выход -->
-                <a href="/logout" class="btn btn-ghost btn-icon" aria-label="<?= htmlspecialchars(I18n::t('nav_logout')) ?>" data-tip="<?= htmlspecialchars(I18n::t('nav_logout')) ?>">
-                    <svg class="ic"><use href="#i-logout"/></svg>
-                </a>
+                <?php /* ALT-086: язык, музыка, тема, пользователь и выход перенесены в боковую панель (#sidebarTools) */ ?>
             </header>
 
             <!-- Рабочая область контента -->

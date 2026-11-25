@@ -85,8 +85,12 @@
                 '@media (prefers-reduced-motion:reduce){#bgmToggle .bgm-bars i{animation:none!important}#bgmToggle[aria-pressed="true"] .bgm-bars i{height:6px}}' +
                 '@media print{#bgmToggle{display:none}}';
             document.head.appendChild(st);
+            // ALT-086: в каркасе сайта кнопка живёт в боковой панели (#bgmSlot), на остальных страницах — рядом с переключателем языка
+            var slot = document.getElementById('bgmSlot');
             var sw = document.querySelector('.lang-switcher, .ds-topbar .seg, .au-top .seg');
-            if (sw && sw.parentNode) {
+            if (slot) {
+                slot.appendChild(b);
+            } else if (sw && sw.parentNode) {
                 sw.parentNode.insertBefore(b, sw);
             } else {
                 b.classList.add('floating');

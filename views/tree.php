@@ -8134,7 +8134,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     if (!p) {
                         inner = `<text x="200" y="${y + 40}" text-anchor="middle" font-size="17" font-style="italic" fill="#9a8466">${esc(L.unknown)}</text>`;
                     } else {
-                        const full = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+                        const full = `${p.first_name || ''}`.trim(); // ALT-089: только имя, без фамилии
                         const years = (p.birth_year || p.death_year)
                             ? `${p.birth_year || '…'}–${(p.is_deceased || p.death_year) ? (p.death_year || '…') : ''}`
                             : '';
@@ -8165,6 +8165,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <path d="M160 ${bottomY + 110} h20 l-3 34 h-14 z M220 ${bottomY + 110} h20 l-3 34 h-14 z" fill="#8a2b22" stroke="#c9a24b" stroke-width="1.5"/>
                 </svg>`;
 
+                window.zhetiAtaFileName = 'Жеті ата — ' + (String(self.first_name || '').trim() || 'person');
                 resBox.innerHTML = `
                     <div style="font-size:13px; color:#cbd5e1; margin-bottom:10px;">${esc(L.known(known))}</div>
                     ${svg}
@@ -8198,7 +8199,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     if (!blob) return;
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
-                    a.download = 'zheti-ata.png';
+                    a.download = (window.zhetiAtaFileName || 'Жеті ата') + '.png';
                     document.body.appendChild(a);
                     a.click();
                     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -8219,7 +8220,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             document.body.appendChild(frame);
             const d = frame.contentWindow.document;
             d.open();
-            d.write('<!doctype html><html><head><meta charset="utf-8"><title>Жеті ата</title><style>@page{margin:10mm}body{margin:0}svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' + new XMLSerializer().serializeToString(clone) + '</body></html>');
+            d.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (window.zhetiAtaFileName || 'Жеті ата').replace(/[<&]/g, '') + '</title><style>@page{margin:10mm}body{margin:0}svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' + new XMLSerializer().serializeToString(clone) + '</body></html>');
             d.close();
             setTimeout(() => {
                 frame.contentWindow.focus();

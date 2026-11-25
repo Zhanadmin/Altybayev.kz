@@ -27,7 +27,7 @@ class FamilyController
 
         // 1. Получаем все персоны в ассоциативный массив
         $personsById = [];
-        $pStmt = $db->query("SELECT id, first_name, last_name, maiden_name, middle_name, gender, father_id, birth_year, birth_date, death_year, death_date, is_deceased, clan_ru, avatar_path FROM persons WHERE is_deleted = 0");
+        $pStmt = $db->query("SELECT id, first_name, last_name, maiden_name, middle_name, gender, father_id, mother_id, birth_year, birth_date, death_year, death_date, is_deceased, clan_ru, avatar_path FROM persons WHERE is_deleted = 0");
         foreach ($pStmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
             $personsById[$p['id']] = $p;
         }
@@ -66,6 +66,18 @@ class FamilyController
                     : trim((string)($hp['clan_ru'] ?? '')),
             ];
         }
+
+        // ALT-084: поколения от живых (общий расчёт с разделом «Люди»)
+        $spouseLists = [];
+        foreach ($marriages as $mm) {
+            $mh = (int)($mm['husband_id'] ?? 0);
+            $mw = (int)($mm['wife_id'] ?? 0);
+            if ($mh && $mw) {
+                $spouseLists[$mh][] = ['spouse_id' => $mw];
+                $spouseLists[$mw][] = ['spouse_id' => $mh];
+            }
+        }
+        $genMap = \App\Services\GenerationService::generationMap($personsById, $spouseLists, 6);
 
         $families = [];
         $totalMarried = 0;
@@ -160,7 +172,13 @@ class FamilyController
             $bothDec = $hDec && $wDec;
 
             // Определение поколения (0 = Ата-бабалар, 1 = 1-ұрпақ, 2 = 2-ұрпақ, 3 = 3-ұрпақ)
-            if ($bothDec || ($seniorityYear > 0 && $seniorityYear < 1945)) {
+            if ($genMap && isset($genMap[$hId])) {
+                $genKey = $genMap[$hId];
+            } elseif ($genMap && isset($genMap[$wId])) {
+                $genKey = $genMap[$wId];
+            } elseif ($genMap) {
+                $genKey = 'ancestors';
+            } elseif ($bothDec || ($seniorityYear > 0 && $seniorityYear < 1945)) {
                 $genKey = 'ancestors';
             } elseif ($seniorityYear >= 1945 && $seniorityYear < 1975) {
                 $genKey = 1;
@@ -220,10 +238,14 @@ class FamilyController
 
         foreach ($families as $f) {
             $gK = $f['generation_key'];
-            if (isset($generationGroups[$gK])) {
-                $generationGroups[$gK]['families'][] = $f;
+            if (!isset($generationGroups[$gK])) {
+                $generationGroups[$gK] = \App\Services\GenerationService::group($gK) + ['families' => []];
             }
+            $generationGroups[$gK]['families'][] = $f;
         }
+        uksort($generationGroups, function ($a, $b) {
+            return ($a === 'ancestors' ? 0 : (int)$a) <=> ($b === 'ancestors' ? 0 : (int)$b);
+        });
 
         // Внутри каждого поколения сортируем семьи строго по старшинству (старшие сверху)
         foreach ($generationGroups as $gKey => &$group) {

@@ -209,6 +209,7 @@ $dsThemeReady = !empty($dsThemeReady);
         /* ALT-115: три кнопки (музыка, тема, выход) делят ширину поровну */
         .ds-tools-row { display: flex; align-items: stretch; gap: 4px; padding: 0; }
         .ds-tools-row > .btn, .ds-tools-row > #bgmToggle { flex: 1 1 0 !important; width: auto !important; min-width: 0 !important; height: 34px !important; margin: 0 !important; padding: 0 !important; border-radius: var(--r-sm) !important; display: inline-flex !important; flex-direction: row; align-items: center; justify-content: center; box-sizing: border-box; }
+        .ds-tools-row .ds-tools-logout { font-size: 12px; font-weight: 500; white-space: nowrap; }
         .ds-tools-row #bgmToggle { overflow: visible; gap: 4px; }
         .ds-tools-row #bgmToggle > * { pointer-events: none; }
         .ds-tools-row #bgmToggle[aria-pressed="true"]::before { content: ""; position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); border-radius: var(--r-sm); box-shadow: 0 0 10px 3px var(--c-accent); opacity: .25; pointer-events: none; }
@@ -398,7 +399,7 @@ $dsThemeReady = !empty($dsThemeReady);
                     </button>
                     <?php endif; ?>
                     <a href="/logout" class="btn btn-ghost btn-icon ds-tools-logout" aria-label="<?= htmlspecialchars(I18n::t('nav_logout')) ?>" data-tip="<?= htmlspecialchars(I18n::t('nav_logout')) ?>">
-                        <svg class="ic"><use href="#i-logout"/></svg>
+                        <span class="ds-tools-logout-text"><?= htmlspecialchars(I18n::t('nav_logout')) ?></span>
                     </a>
                 </div>
             </div>

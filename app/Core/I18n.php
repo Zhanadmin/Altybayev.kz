@@ -1208,6 +1208,8 @@ class I18n
             'nav_logout' => [
                 'kk' => 'Шығу',
                 'ru' => 'Выход',
+                'en' => 'Log out',
+                'es' => 'Salir',
             ],
             'nav_login' => [
                 'kk' => 'Кіру',

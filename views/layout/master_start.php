@@ -99,6 +99,9 @@ if ($canEdit) {
     $navItems['clans'] = ['href' => '/admin/clans', 'icon' => 'i-tree', 'label' => 'Ру таңбалары', 'count' => null, 'group' => 3]; // TASK-030
     // ALT-098: «Что не заполнено» — только админ и редактор
     $navItems['missing'] = ['href' => '/admin/missing', 'icon' => 'i-users', 'label' => match ($lang) { 'ru' => 'Что не заполнено', 'en' => 'Missing data', 'es' => 'Datos faltantes', default => 'Толтырылмаған' }, 'count' => null, 'group' => 3];
+} elseif ($user) {
+    // ALT-116: обычным пользователям доступен просмотр справочника ру
+    $navItems['clans'] = ['href' => '/admin/clans', 'icon' => 'i-tree', 'label' => 'Ру таңбалары', 'count' => null, 'group' => 2];
 }
 if ($isAdmin) {
     // ALT-104: запросы на доступ — счётчик ожидающих в боковой панели

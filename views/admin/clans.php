@@ -6,7 +6,9 @@ use App\Core\Session;
 
 /** @var array $clans */
 /** @var bool $registryReady */
+/** @var bool|null $canEdit */
 
+$canEdit = !empty($canEdit);
 $lang = I18n::lang();
 $ru = (($lang === 'ru' || $lang === 'en' || $lang === 'es'));
 $title = $ru ? 'Ру таңбалары' : 'Ру таңбалары';
@@ -51,6 +53,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 .cl-fn { opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
 .cl-group th { opacity: 1; font-weight: 600; font-size: 18px; padding-top: 14px; background: rgba(128,128,128,.08); }
 .cl-table .fit { width: 1%; white-space: nowrap; }
+.cl-table .cl-uran { white-space: nowrap; }
 .cl-table .cl-sum { opacity: .8; }
 .cl-tamga { width: 64px; height: 64px; flex: 0 0 auto; border: 1px solid var(--c-border, #ddd); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 8px 8px; overflow: hidden; }
 .cl-tamga img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -90,7 +93,9 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 
     <div class="island">
         <div class="cl-bar" style="margin-bottom:10px">
-            <button type="button" class="btn btn-primary btn-sm" id="clAdd">+ <?= $ru ? 'Добавить' : 'Қосу' ?></button>
+            <?php if ($canEdit): ?>
+                <button type="button" class="btn btn-primary btn-sm" id="clAdd">+ <?= $ru ? 'Добавить' : 'Қосу' ?></button>
+            <?php endif; ?>
             <h3><?= $ru ? 'Список ру' : 'Ру тізімі' ?> (<span id="clCount"><?= count($clans) ?></span>)</h3>
             <input class="input" id="clSearch" type="search" placeholder="<?= $ru ? 'Поиск…' : 'Іздеу…' ?>" style="max-width:280px;margin-left:auto">
         </div>
@@ -106,34 +111,48 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                 <th class="fit"><?= $ru ? 'Знак' : 'Таңба' ?></th>
                 <th class="fit"><?= $ru ? 'Название' : 'Атауы' ?></th>
                 <th class="fit"><?= $ru ? 'Жуз' : 'Жүз' ?></th>
+                <th class="fit"><?= $ru ? 'Уран' : 'Ұран' ?></th>
                 <th><?= $ru ? 'Описание' : 'Сипаттама' ?></th>
                 <th class="fit"><?= $ru ? 'Чел.' : 'Адам' ?></th>
-                <th class="fit"></th>
+                <?php if ($canEdit): ?><th class="fit"></th><?php endif; ?>
             </tr></thead>
             <tbody id="clList">
             <?php $prevZ = null; foreach ($clans as $c): ?>
                 <?php $zk = in_array($c['zhuz'], ['senior', 'middle', 'junior'], true) ? $c['zhuz'] : 'other'; ?>
                 <?php if ($zk !== $prevZ): $prevZ = $zk; ?>
-                <tr class="cl-group" data-z="<?= $e($zk) ?>"><th colspan="6"><?= $e($zhuzFilterLabels[$zk]) ?> (<span class="cl-gn"><?= (int)($zhuzCounts[$zk] ?? 0) ?></span>)</th></tr>
+                <tr class="cl-group" data-z="<?= $e($zk) ?>"><th colspan="<?= $canEdit ? 7 : 6 ?>"><?= $e($zhuzFilterLabels[$zk]) ?> (<span class="cl-gn"><?= (int)($zhuzCounts[$zk] ?? 0) ?></span>)</th></tr>
                 <?php endif; ?>
                 <tr class="cl-row" data-z="<?= $e($zk) ?>" data-id="<?= (int)$c['id'] ?>"
-                    data-search="<?= $e(mb_strtolower($c['name'] . ' ' . ($c['name_ru'] ?? ''))) ?>"
-                    data-json="<?= $e(json_encode(['id' => (int)$c['id'], 'name' => $c['name'], 'name_ru' => $c['name_ru'] ?? '', 'zhuz' => $c['zhuz'], 'summary' => $c['summary'] ?? '', 'tamga_url' => $c['tamga_url'] ?? ''], JSON_UNESCAPED_UNICODE)) ?>">
+                    data-search="<?= $e(mb_strtolower($c['name'] . ' ' . ($c['name_ru'] ?? '') . ' ' . ($c['uran'] ?? '') . ' ' . ($c['summary'] ?? '') . ' ' . ($c['description'] ?? ''))) ?>"
+                    data-json="<?= $e(json_encode([
+                        'id' => (int)$c['id'],
+                        'name' => $c['name'],
+                        'name_ru' => $c['name_ru'] ?? '',
+                        'zhuz' => $c['zhuz'],
+                        'uran' => $c['uran'] ?? '',
+                        'summary' => $c['summary'] ?? '',
+                        'description' => $c['description'] ?? '',
+                        'tamga_url' => $c['tamga_url'] ?? '',
+                    ], JSON_UNESCAPED_UNICODE)) ?>">
                     <td class="fit"><div class="cl-tamga" data-clan-coat="<?= $e($c['name']) ?>" title="<?= $ru ? 'Показать герб' : 'Елтаңбаны көрсету' ?>" style="cursor:pointer"><?php if (!empty($c['tamga_url'])): ?><img src="<?= $e($c['tamga_url']) ?>" alt="" loading="lazy"><?php else: ?><span>—</span><?php endif; ?></div></td>
                     <td class="fit"><a href="#" data-clan-coat="<?= $e($c['name']) ?>" style="color:inherit;text-decoration:underline dotted"><?= $e($c['name']) ?></a><?= !empty($c['name_ru']) ? ' · ' . $e($c['name_ru']) : '' ?></td>
                     <td class="fit"><?= $e($zhuzLabels[$c['zhuz']] ?? '') ?><?= !empty($c['parent_name']) ? ' → ' . $e($c['parent_name']) : '' ?></td>
-                    <td class="cl-sum"><?= $e($c['summary'] ?? '') ?></td>
+                    <td class="fit cl-uran"><?php if (!empty($c['uran'])): ?><strong><?= $e($c['uran']) ?></strong><?php else: ?><span style="opacity:.45">—</span><?php endif; ?></td>
+                    <td class="cl-sum"><?= $e($c['summary'] ?? ($c['description'] ?? '')) ?></td>
                     <td class="fit"><?= (int)$c['persons_count'] ?></td>
+                    <?php if ($canEdit): ?>
                     <td class="fit"><div class="cl-actions">
                         <button type="button" class="btn btn-sm" data-act="edit"><?= $ru ? 'Изменить' : 'Өзгерту' ?></button>
                         <button type="button" class="btn btn-sm" data-act="delete"><?= $ru ? 'Удалить' : 'Өшіру' ?></button>
                     </div></td>
+                    <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 
+    <?php if ($canEdit): ?>
     <dialog class="cl-dlg" id="clDlg">
         <h3 id="clFormTitle"><?= $ru ? 'Новый ру' : 'Жаңа ру' ?></h3>
         <form id="clForm" class="cl-form" autocomplete="off">
@@ -146,6 +165,8 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                 <select class="input" name="zhuz">
                     <?php foreach ($zhuzLabels as $k => $v): ?><option value="<?= $e($k) ?>"><?= $e($v) ?></option><?php endforeach; ?>
                 </select></label>
+            <label><?= $ru ? 'Уран (боевой клич)' : 'Ұран (ұраны)' ?>
+                <input class="input" name="uran" maxlength="100" placeholder="<?= $ru ? 'Например: Ақжол!' : 'Мысалы: Ошыбай!' ?>"></label>
             <div class="full">
                 <div style="font-size:var(--fs-lg,16px);margin-bottom:4px"><?= $ru ? 'Знак (таңба)' : 'Таңба' ?></div>
                 <div class="cl-actions">
@@ -157,8 +178,10 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                     <span id="clFileName" style="font-size:var(--fs-md,14px);opacity:.7"></span>
                 </div>
             </div>
-            <label class="full"><?= $ru ? 'Описание' : 'Сипаттама' ?>
-                <input class="input" name="summary" maxlength="255"></label>
+            <label class="full"><?= $ru ? 'Краткое описание / источник' : 'Қысқаша сипаттама / дереккөз' ?>
+                <input class="input" name="summary" maxlength="255" placeholder="<?= $ru ? 'Например: Источник: el.kz...' : 'Мысалы: Дереккөз: el.kz...' ?>"></label>
+            <label class="full"><?= $ru ? 'Описание / история рода' : 'Сипаттамасы / ру тарихы' ?>
+                <textarea class="input" name="description" rows="3" style="height:auto;padding:8px 12px;font-family:inherit;font-size:inherit" placeholder="<?= $ru ? 'Исторические сведения, шежіре...' : 'Тарихы, шежірелік жазбалар...' ?>"></textarea></label>
             <div class="cl-actions full">
                 <button type="submit" class="btn btn-primary btn-sm"><?= $ru ? 'Сохранить' : 'Сақтау' ?></button>
                 <button type="button" class="btn btn-sm" id="clCancel"><?= $ru ? 'Отмена' : 'Бас тарту' ?></button>
@@ -178,6 +201,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         </div>
     </dialog>
     <?php endif; ?>
+    <?php endif; ?>
 </div>
 
 <?php if ($registryReady): ?>
@@ -187,14 +211,15 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 (function () {
     const CSRF = <?= json_encode($csrf) ?>;
     const RU = <?= $ru ? 'true' : 'false' ?>;
+    const CAN_EDIT = <?= $canEdit ? 'true' : 'false' ?>;
     const msg = document.getElementById('clMsg');
     const form = document.getElementById('clForm');
     const dlg = document.getElementById('clDlg');
     const prev = document.getElementById('clPrev');
     const fileInp = document.getElementById('clFile');
-    const draw = document.getElementById('clDraw'), cv = document.getElementById('clCanvas'), ctx = cv.getContext('2d');
+    const draw = document.getElementById('clDraw'), cv = document.getElementById('clCanvas'), ctx = cv ? cv.getContext('2d') : null;
     let cur = null; // редактируемый ру или null (новый)
-    function say(t, ok) { msg.textContent = t || ''; msg.className = 'cl-msg ' + (ok ? 'ok' : 'err'); }
+    function say(t, ok) { if (msg) { msg.textContent = t || ''; msg.className = 'cl-msg ' + (ok ? 'ok' : 'err'); } }
     async function post(url, fd) {
         fd.append('csrf_token', CSRF);
         try {
@@ -205,52 +230,73 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     function fdOf(obj) { const f = new FormData(); Object.keys(obj).forEach(k => f.append(k, obj[k])); return f; }
     function reloadSoon() { setTimeout(() => location.reload(), 400); }
     function showPrev(url) {
+        if (!prev) return;
         prev.innerHTML = '';
         if (url) { const i = document.createElement('img'); i.src = url; i.alt = ''; prev.appendChild(i); }
         else { const s = document.createElement('span'); s.textContent = '—'; prev.appendChild(s); }
     }
     function openDlg(d) {
-        cur = d; form.reset(); say('', true); draw.classList.remove('open'); fileInp.value = '';
-        document.getElementById('clFileName').textContent = '';
+        if (!dlg || !form) return;
+        cur = d; form.reset(); say('', true); if (draw) draw.classList.remove('open'); if (fileInp) fileInp.value = '';
+        const fn = document.getElementById('clFileName'); if (fn) fn.textContent = '';
         form.id.value = d ? d.id : 0;
-        if (d) { form.name.value = d.name; form.name_ru.value = d.name_ru; form.zhuz.value = d.zhuz; form.summary.value = d.summary; }
+        if (d) {
+            form.name.value = d.name || '';
+            form.name_ru.value = d.name_ru || '';
+            form.zhuz.value = d.zhuz || 'other';
+            if (form.uran) form.uran.value = d.uran || '';
+            if (form.summary) form.summary.value = d.summary || '';
+            if (form.description) form.description.value = d.description || '';
+        }
         document.getElementById('clFormTitle').textContent = d ? (RU ? 'Изменить: ' : 'Өзгерту: ') + d.name : (RU ? 'Новый ру' : 'Жаңа ру');
-        document.getElementById('clRmTamga').style.display = d && d.tamga_url ? '' : 'none';
-        document.getElementById('clDrawBtn').style.display = d ? '' : 'none';
+        const rm = document.getElementById('clRmTamga'); if (rm) rm.style.display = d && d.tamga_url ? '' : 'none';
+        const dr = document.getElementById('clDrawBtn'); if (dr) dr.style.display = d ? '' : 'none';
         showPrev(d ? d.tamga_url : '');
         dlg.showModal();
     }
-    document.getElementById('clAdd').addEventListener('click', () => openDlg(null));
-    document.getElementById('clCancel').addEventListener('click', () => dlg.close());
-    dlg.addEventListener('mousedown', (ev) => {
-        if (ev.target !== dlg) return;
-        const r = dlg.getBoundingClientRect();
-        if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) dlg.close();
-    });
+    const addBtn = document.getElementById('clAdd');
+    if (addBtn) addBtn.addEventListener('click', () => openDlg(null));
+    const cancelBtn = document.getElementById('clCancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => dlg && dlg.close());
+    if (dlg) {
+        dlg.addEventListener('mousedown', (ev) => {
+            if (ev.target !== dlg) return;
+            const r = dlg.getBoundingClientRect();
+            if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) dlg.close();
+        });
+    }
 
-    fileInp.addEventListener('change', () => {
-        const f = fileInp.files[0];
-        document.getElementById('clFileName').textContent = f ? f.name : '';
-        if (f) showPrev(URL.createObjectURL(f));
-    });
+    if (fileInp) {
+        fileInp.addEventListener('change', () => {
+            const f = fileInp.files[0];
+            const fn = document.getElementById('clFileName');
+            if (fn) fn.textContent = f ? f.name : '';
+            if (f) showPrev(URL.createObjectURL(f));
+        });
+    }
 
-    form.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const j = await post('/api/clans/save', new FormData(form));
-        if (!j.success) return say(j.error || 'Error', false);
-        const id = j.clan && j.clan.id ? j.clan.id : form.id.value;
-        if (fileInp.files[0]) {
-            const fd = fdOf({ id: id }); fd.append('tamga', fileInp.files[0]);
-            const u = await post('/api/clans/tamga/upload', fd);
-            if (!u.success) return say(u.error || 'Error', false);
-        }
-        say(RU ? 'Сохранено' : 'Сақталды', true); reloadSoon();
-    });
-    document.getElementById('clRmTamga').addEventListener('click', async () => {
-        if (!cur || !(await appConfirm(RU ? 'Убрать знак у «' + cur.name + '»?' : '«' + cur.name + '» таңбасын алу?'))) return;
-        const j = await post('/api/clans/tamga/delete', fdOf({ id: cur.id }));
-        if (j.success) { say(RU ? 'Знак убран' : 'Таңба алынды', true); reloadSoon(); } else say(j.error || 'Error', false);
-    });
+    if (form) {
+        form.addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const j = await post('/api/clans/save', new FormData(form));
+            if (!j.success) return say(j.error || 'Error', false);
+            const id = j.clan && j.clan.id ? j.clan.id : form.id.value;
+            if (fileInp && fileInp.files[0]) {
+                const fd = fdOf({ id: id }); fd.append('tamga', fileInp.files[0]);
+                const u = await post('/api/clans/tamga/upload', fd);
+                if (!u.success) return say(u.error || 'Error', false);
+            }
+            say(RU ? 'Сохранено' : 'Сақталды', true); reloadSoon();
+        });
+    }
+    const rmTamgaBtn = document.getElementById('clRmTamga');
+    if (rmTamgaBtn) {
+        rmTamgaBtn.addEventListener('click', async () => {
+            if (!cur || !(await appConfirm(RU ? 'Убрать знак у «' + cur.name + '»?' : '«' + cur.name + '» таңбасын алу?'))) return;
+            const j = await post('/api/clans/tamga/delete', fdOf({ id: cur.id }));
+            if (j.success) { say(RU ? 'Знак убран' : 'Таңба алынды', true); reloadSoon(); } else say(j.error || 'Error', false);
+        });
+    }
 
     let zf = 'all';
     function applyFilter() {
@@ -277,31 +323,38 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         applyFilter();
     });
 
-    // рисование
-    let erasing = false, down = false, last = null;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    function pos(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; }
-    cv.addEventListener('pointerdown', (e) => { down = true; last = pos(e); cv.setPointerCapture(e.pointerId); stroke(last, last); });
-    cv.addEventListener('pointermove', (e) => { if (!down) return; const p = pos(e); stroke(last, p); last = p; });
-    ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, () => { down = false; }));
-    function stroke(a, b) {
-        ctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
-        ctx.strokeStyle = '#1b1b1b'; ctx.lineWidth = +document.getElementById('clWidth').value;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    if (cv && ctx) {
+        // рисование
+        let erasing = false, down = false, last = null;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        function pos(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; }
+        cv.addEventListener('pointerdown', (e) => { down = true; last = pos(e); cv.setPointerCapture(e.pointerId); stroke(last, last); });
+        cv.addEventListener('pointermove', (e) => { if (!down) return; const p = pos(e); stroke(last, p); last = p; });
+        ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, () => { down = false; }));
+        function stroke(a, b) {
+            ctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+            ctx.strokeStyle = '#1b1b1b'; ctx.lineWidth = +document.getElementById('clWidth').value;
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+        const drawBtn = document.getElementById('clDrawBtn');
+        if (drawBtn) drawBtn.onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); erasing = false; draw.classList.toggle('open'); };
+        const penBtn = document.getElementById('clPen');
+        if (penBtn) penBtn.onclick = () => { erasing = false; };
+        const eraserBtn = document.getElementById('clEraser');
+        if (eraserBtn) eraserBtn.onclick = () => { erasing = true; };
+        const clearBtn = document.getElementById('clClear');
+        if (clearBtn) clearBtn.onclick = () => ctx.clearRect(0, 0, cv.width, cv.height);
+        const saveDrawBtn = document.getElementById('clSaveDraw');
+        if (saveDrawBtn) saveDrawBtn.onclick = () => {
+            if (!cur) return;
+            cv.toBlob(async (blob) => {
+                if (!blob) return say(RU ? 'Не удалось получить рисунок' : 'Сурет алынбады', false);
+                const fd = fdOf({ id: cur.id }); fd.append('tamga', blob, 'tamga.png');
+                const j = await post('/api/clans/tamga/upload', fd);
+                if (j.success) { say(RU ? 'Знак сохранён' : 'Таңба сақталды', true); reloadSoon(); } else say(j.error || 'Error', false);
+            }, 'image/png');
+        };
     }
-    document.getElementById('clDrawBtn').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); erasing = false; draw.classList.toggle('open'); };
-    document.getElementById('clPen').onclick = () => { erasing = false; };
-    document.getElementById('clEraser').onclick = () => { erasing = true; };
-    document.getElementById('clClear').onclick = () => ctx.clearRect(0, 0, cv.width, cv.height);
-    document.getElementById('clSaveDraw').onclick = () => {
-        if (!cur) return;
-        cv.toBlob(async (blob) => {
-            if (!blob) return say(RU ? 'Не удалось получить рисунок' : 'Сурет алынбады', false);
-            const fd = fdOf({ id: cur.id }); fd.append('tamga', blob, 'tamga.png');
-            const j = await post('/api/clans/tamga/upload', fd);
-            if (j.success) { say(RU ? 'Знак сохранён' : 'Таңба сақталды', true); reloadSoon(); } else say(j.error || 'Error', false);
-        }, 'image/png');
-    };
 
     document.getElementById('clList').addEventListener('click', async (ev) => {
         const t = ev.target.closest('[data-act]'); if (!t) return;

@@ -25,14 +25,15 @@ class ClanController
 {
     public function index(Request $request): void
     {
-        if (!Auth::isEditor()) {
-            Response::redirect('/?error=forbidden');
+        if (!Auth::check()) {
+            Response::redirect('/login');
         }
         $svc = new ClanService();
         $ready = $svc->hasRegistry();
         Response::view('admin/clans', [
             'clans' => $ready ? $svc->all() : [],
             'registryReady' => $ready,
+            'canEdit' => Auth::isEditor(),
         ]);
     }
 
@@ -49,6 +50,7 @@ class ClanController
                 'name' => $c['name'],
                 'name_ru' => $c['name_ru'] ?? null,
                 'zhuz' => $c['zhuz'],
+                'uran' => $c['uran'] ?? null,
                 'tamga_url' => $c['tamga_url'],
             ];
         }
@@ -90,7 +92,7 @@ class ClanController
 
     private static function brief(?array $c): ?array
     {
-        return $c ? array_intersect_key($c, array_flip(['name', 'name_ru', 'zhuz', 'summary', 'tamga_file'])) : null;
+        return $c ? array_intersect_key($c, array_flip(['name', 'name_ru', 'zhuz', 'uran', 'summary', 'description', 'tamga_file'])) : null;
     }
 
     public function save(Request $request): void
@@ -103,7 +105,9 @@ class ClanController
                 'name' => $request->post('name', ''),
                 'name_ru' => $request->post('name_ru', ''),
                 'zhuz' => $request->post('zhuz', 'other'),
+                'uran' => $request->post('uran', ''),
                 'summary' => $request->post('summary', ''),
+                'description' => $request->post('description', ''),
             ]);
         } catch (\RuntimeException $e) {
             Response::json(['success' => false, 'error' => $e->getMessage()], 422);

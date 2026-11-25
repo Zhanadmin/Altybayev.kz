@@ -138,7 +138,9 @@ class ClanService
         $name = trim((string)($in['name'] ?? ''));
         $nameRu = trim((string)($in['name_ru'] ?? ''));
         $zhuz = (string)($in['zhuz'] ?? 'other');
+        $uran = trim((string)($in['uran'] ?? ''));
         $summary = trim((string)($in['summary'] ?? ''));
+        $description = trim((string)($in['description'] ?? ''));
         if ($name === '' || mb_strlen($name) > 100) {
             throw new RuntimeException('Ру атауы міндетті (≤100) / Название ру обязательно (≤100)');
         }
@@ -148,11 +150,16 @@ class ClanService
         if (!in_array($zhuz, self::ZHUZ, true)) {
             $zhuz = 'other';
         }
+        if (mb_strlen($uran) > 100) {
+            $uran = mb_substr($uran, 0, 100);
+        }
         if (mb_strlen($summary) > 255) {
             $summary = mb_substr($summary, 0, 255);
         }
         $nameRu = $nameRu !== '' ? $nameRu : null;
+        $uran = $uran !== '' ? $uran : null;
         $summary = $summary !== '' ? $summary : null;
+        $description = $description !== '' ? $description : null;
 
         $dup = $this->db->prepare('SELECT id FROM clans WHERE LOWER(name) = LOWER(?) AND id <> ? LIMIT 1');
         $dup->execute([$name, $id]);
@@ -164,12 +171,12 @@ class ClanService
             if (!$this->find($id)) {
                 throw new RuntimeException('Ру табылмады / Ру не найден');
             }
-            $this->db->prepare('UPDATE clans SET name = ?, name_ru = ?, zhuz = ?, summary = ? WHERE id = ?')
-                ->execute([$name, $nameRu, $zhuz, $summary, $id]);
+            $this->db->prepare('UPDATE clans SET name = ?, name_ru = ?, zhuz = ?, uran = ?, summary = ?, description = ? WHERE id = ?')
+                ->execute([$name, $nameRu, $zhuz, $uran, $summary, $description, $id]);
             return $id;
         }
-        $this->db->prepare('INSERT INTO clans (name, name_ru, zhuz, summary) VALUES (?, ?, ?, ?)')
-            ->execute([$name, $nameRu, $zhuz, $summary]);
+        $this->db->prepare('INSERT INTO clans (name, name_ru, zhuz, uran, summary, description) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$name, $nameRu, $zhuz, $uran, $summary, $description]);
         return (int)$this->db->lastInsertId();
     }
 

@@ -62,7 +62,8 @@ $router->get('/tree', 'App\Controllers\TreeController@index', ['auth']);
 $router->get('/persons', 'App\Controllers\PersonController@index', ['auth']);
 $router->get('/person/{id}', 'App\Controllers\PersonController@show', ['auth']);
 $router->get('/families', 'App\Controllers\FamilyController@index', ['auth']);
-$router->get('/dates', 'App\Controllers\MemorialController@index', ['auth']);
+$router->get('/zheti-ata', 'App\Controllers\ZhetiAtaController@page', ['auth']); // ALT-092
+$router->get('/dates','App\Controllers\MemorialController@index', ['auth']);
 $router->get('/history', 'App\Controllers\HistoryController@index', ['auth', 'admin']); // ALT-004: журнал изменений — только админ
 $router->get('/admin', 'App\Controllers\AdminController@index', ['auth', 'admin']);
 $router->get('/lang/{code}', 'App\Controllers\AuthController@switchLanguage');

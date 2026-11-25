@@ -39,7 +39,7 @@ require __DIR__ . '/../layout/master_start.php';
                 <a href="/dates?days=365" class="<?= $daysAhead === 365 ? 'active' : '' ?>">1 <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'год' : 'жыл' ?></a>
             </nav>
             <!-- Быстрая кнопка проверки Жеті ата -->
-            <a href="/tree?zheti=1" class="btn btn-primary">
+            <a href="/zheti-ata" class="btn btn-primary">
                 <svg class="ic" aria-hidden="true"><use href="#i-tamga"/></svg>
                 <?= $lang === 'ru' ? 'Жеті ата' : ($lang === 'en' ? 'Zheti ata' : ($lang === 'es' ? 'Zheti ata' : 'Жеті ата')) ?>
             </a>

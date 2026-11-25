@@ -88,7 +88,7 @@ $navItems = [
     'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => (string)\App\Services\PeopleCountService::families(), 'group' => 1],
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
-    'zheti'    => ['href' => '/tree?zheti=1', 'icon' => 'i-tree', 'label' => 'Жеті ата', 'count' => null, 'group' => 2], // ALT-091: прямой вход, без «Памятных дат»
+    'zheti'    => ['href' => '/zheti-ata', 'icon' => 'i-tree', 'label' => 'Жеті ата', 'count' => null, 'group' => 2], // ALT-092: отдельная страница
     'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
 ];
 if ($isAdmin) {
@@ -185,6 +185,20 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-sidebar-tools .user-chip b { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ds-sidebar-tools .user-chip .user-role { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--c-text-2); }
         .ds-sidebar-tools .user-chip .user-role.is-admin { color: var(--c-accent); }
+        /* ALT-093: компактная боковая панель — помещается без прокрутки на экране ноутбука (стиль прежний, меньше шрифт и отступы) */
+        .ds-sidebar { gap: var(--sp-2); }
+        .ds-sidebar .ds-clan-switch { padding: 6px var(--sp-3); }
+        .ds-sidebar .ds-tamga { width: 30px; height: 30px; border-radius: 8px; }
+        .ds-sidebar .ds-nav { gap: 1px; }
+        .ds-sidebar .ds-nav a { padding: 5px var(--sp-3); font-size: var(--fs-sm); gap: var(--sp-2); }
+        .ds-sidebar .ds-nav a .ic { width: 16px; height: 16px; }
+        .ds-sidebar .ds-nav-label { padding: var(--sp-2) var(--sp-3) 2px; font-size: 10px; }
+        .ds-sidebar .ds-divider { margin: 2px var(--sp-3); }
+        .ds-sidebar .ds-sidebar-tools { gap: 2px; padding-top: 4px; }
+        .ds-sidebar .ds-sidebar-tools .seg button { padding: 4px 2px; font-size: 12px; }
+        .ds-sidebar .ds-sidebar-tools .user-chip { padding: 2px var(--sp-3); }
+        .ds-sidebar .ds-sidebar-tools .user-chip .avatar { width: 26px; height: 26px; font-size: 12px; }
+        .ds-sidebar .ds-sidebar-foot { padding: 2px var(--sp-3) 0; font-size: 11px; line-height: 1.3; }
         .ds-tools-row { display: flex; align-items: center; gap: 2px; padding: 0; }
         .ds-tools-row #bgmToggle { margin: 0 !important; }
         .ds-tools-logout { margin-left: auto; }

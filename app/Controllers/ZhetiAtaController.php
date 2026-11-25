@@ -24,6 +24,32 @@ class ZhetiAtaController
     }
 
     /**
+     * ALT-092: страница «Жеті ата» — GET /zheti-ata[?id=ID]
+     * По умолчанию выбран тот, кто вошёл (или человек из ?id=).
+     */
+    public function page(Request $request): void
+    {
+        $user = Auth::user();
+        $defaultId = !empty($user['person_id']) ? (int)$user['person_id'] : 0;
+        $reqId = (int)$request->get('id', 0);
+
+        $persons = Database::getConnection()
+            ->query('SELECT id, first_name, last_name, maiden_name, birth_year FROM persons WHERE is_deleted = 0 ORDER BY first_name, last_name')
+            ->fetchAll(\PDO::FETCH_ASSOC);
+
+        $ids = array_map(static fn ($p) => (int)$p['id'], $persons);
+        $selectedId = in_array($reqId, $ids, true) ? $reqId : (in_array($defaultId, $ids, true) ? $defaultId : 0);
+
+        Response::view('zheti_ata', [
+            'user'       => $user,
+            'persons'    => $persons,
+            'selectedId' => $selectedId,
+            'canEdit'    => Auth::canEdit(),
+            'isAdmin'    => Auth::isAdmin(),
+        ]);
+    }
+
+    /**
      * API: Проверка Жеті ата между двумя персонами
      * GET/POST /api/zheti-ata?a=ID&b=ID
      */

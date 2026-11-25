@@ -163,17 +163,24 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-sidebar-tools {
             margin-top: auto; position: sticky; bottom: 0; z-index: 2;
             display: flex; flex-direction: column; gap: var(--sp-2);
-            padding: var(--sp-3);
-            background: var(--c-island); border: 1px solid var(--c-border);
-            border-radius: var(--r-md); box-shadow: var(--shadow-island);
+            /* ALT-086 (замечание): не карточка — ещё одна секция меню: фон панели, без рамки и тени, отступы как у пунктов */
+            padding: var(--sp-2) var(--sp-1) 0;
+            background: var(--c-bg); border: 0; border-radius: 0; box-shadow: none;
+            border-top: 1px solid var(--c-border);
         }
+        @media (max-width: 900px) { .ds-sidebar-tools { background: var(--c-sidebar); } }
         .ds-sidebar-tools + .ds-sidebar-foot { margin-top: 0; }
-        .ds-sidebar-tools .seg { display: flex; width: 100%; }
-        .ds-sidebar-tools .seg button { flex: 1 1 0; padding: 4px 6px; font-size: var(--fs-xs); font-weight: 600; }
-        .ds-sidebar-tools .user-chip { min-width: 0; }
+        .ds-sidebar-tools .seg { display: flex; width: 100%; background: transparent; border: 0; padding: 0; gap: 2px; box-shadow: none; }
+        .ds-sidebar-tools .seg button { flex: 1 1 0; padding: 9px 4px; border-radius: var(--r-sm); border: 0; background: transparent; box-shadow: none; font-family: inherit; font-size: var(--fs-sm); font-weight: 500; color: var(--c-text-2); }
+        .ds-sidebar-tools .seg button:hover { background: var(--c-hover); color: var(--c-text); }
+        .ds-sidebar-tools .seg button.active { background: var(--c-island); color: var(--c-text); box-shadow: var(--shadow-island); }
+        .ds-sidebar-tools .user-chip { min-width: 0; border: 0; border-radius: var(--r-sm); padding: 6px var(--sp-3); gap: var(--sp-3); }
+        .ds-sidebar-tools #bgmToggle { background: transparent !important; border-color: transparent !important; color: var(--c-text-2) !important; }
+        .ds-sidebar-tools #bgmToggle:hover { background: var(--c-hover) !important; color: var(--c-text) !important; }
+        .ds-sidebar-tools #bgmToggle[aria-pressed="true"] { color: var(--c-accent) !important; }
         .ds-sidebar-tools .user-chip b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ds-sidebar-tools .user-chip .badge { margin-left: auto; flex: 0 0 auto; }
-        .ds-tools-row { display: flex; align-items: center; gap: var(--sp-2); }
+        .ds-tools-row { display: flex; align-items: center; gap: 2px; padding: 0; }
         .ds-tools-row #bgmToggle { margin: 0 !important; }
         .ds-tools-logout { margin-left: auto; }
         .ds-content > .ds-crumbs { margin-bottom: calc(-1 * var(--sp-2)); }

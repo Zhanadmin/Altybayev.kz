@@ -1157,6 +1157,9 @@ class I18n
             'wl_info' => ['kk' => 'Мәліметтер', 'ru' => 'Сведения', 'en' => 'Information', 'es' => 'Información'],
             'wl_err_auth_t' => ['kk' => 'Кіру сәтсіз аяқталды:', 'ru' => 'Ошибка входа:', 'en' => 'Sign-in failed:', 'es' => 'Error de inicio de sesión:'],
             'wl_err_auth' => ['kk' => 'Google арқылы кіру кезінде қате орын алды. Қайталап көріңіз.', 'ru' => 'При авторизации через Google произошла ошибка. Попробуйте снова.', 'en' => 'An error occurred while signing in with Google. Please try again.', 'es' => 'Se produjo un error al iniciar sesión con Google. Inténtalo de nuevo.'],
+            // ALT-104: ограничение частоты попыток входа
+            'wl_err_rate_t' => ['kk' => 'Тым жиі әрекет:', 'ru' => 'Слишком много попыток:', 'en' => 'Too many attempts:', 'es' => 'Demasiados intentos:'],
+            'wl_err_rate' => ['kk' => 'Бірнеше минуттан кейін қайталап көріңіз.', 'ru' => 'Подождите несколько минут и попробуйте снова.', 'en' => 'Please wait a few minutes and try again.', 'es' => 'Espera unos minutos e inténtalo de nuevo.'],
             'wl_err_state_t' => ['kk' => 'Қауіпсіздік қатесі:', 'ru' => 'Ошибка сессии:', 'en' => 'Session error:', 'es' => 'Error de sesión:'],
             'wl_err_state' => ['kk' => 'Сессия мерзімі өтіп кетті. Бетті жаңартып, қайта кіріңіз.', 'ru' => 'Сессия устарела. Обновите страницу и попробуйте снова.', 'en' => 'The session has expired. Refresh the page and try again.', 'es' => 'La sesión ha caducado. Actualiza la página e inténtalo de nuevo.'],
             'wl_err_forbidden_t' => ['kk' => 'Рұқсат жоқ:', 'ru' => 'Доступ запрещен:', 'en' => 'Access denied:', 'es' => 'Acceso denegado:'],

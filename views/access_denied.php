@@ -11,6 +11,15 @@ $lang = I18n::lang();
 $siteTitle = I18n::siteTitle();
 $pageTitle = (($lang === 'ru' || $lang === 'en' || $lang === 'es')) ? "{$siteTitle} — Доступ ограничен" : "{$siteTitle} — Қолжетімділік шектелген";
 $isBlocked = (($reason ?? '') === 'account_blocked');
+// ALT-104: запрос на доступ — «ждите одобрения» / «запрос заблокирован»
+$isPending = (($reason ?? '') === 'request_pending');
+$isReqBlocked = (($reason ?? '') === 'request_blocked');
+$isBlocked = $isBlocked || $isReqBlocked;
+$T = static fn(array $t): string => $t[$lang] ?? $t['ru'];
+$e = static fn($v): string => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+if ($isPending) {
+    $pageTitle = $siteTitle . ' — ' . $T(['kk' => 'Сұраныс жіберілді', 'ru' => 'Запрос отправлен', 'en' => 'Request sent', 'es' => 'Solicitud enviada']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($lang) ?>">
@@ -47,10 +56,10 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
     <!-- Язык и тема -->
     <div class="au-top">
         <div class="seg" role="group" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Язык' : 'Тіл' ?>">
-            <a href="/lang/kk?ref=/access-denied" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
-            <a href="/lang/ru?ref=/access-denied" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
-            <a href="/lang/en?ref=/access-denied" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
-            <a href="/lang/es?ref=/access-denied" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
+            <a href="/lang/kk?ref=/access-request" class="<?= $lang === 'kk' ? 'active' : '' ?>">ҚАЗ</a>
+            <a href="/lang/ru?ref=/access-request" class="<?= $lang === 'ru' ? 'active' : '' ?>">РУС</a>
+            <a href="/lang/en?ref=/access-request" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
+            <a href="/lang/es?ref=/access-request" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
                 aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Светлая / тёмная тема' : 'Жарық / қараңғы тақырып' ?>">
@@ -63,7 +72,11 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
             <svg class="ic"><use href="#<?= $isBlocked ? 'i-block' : 'i-mail' ?>"/></svg>
         </div>
 
-        <?php if ($isBlocked): ?>
+        <?php if ($isReqBlocked): ?>
+            <h1><?= $e($T(['kk' => 'Сұраныс қабылданбады', 'ru' => 'Запрос не принят', 'en' => 'Request not accepted', 'es' => 'Solicitud no aceptada'])) ?></h1>
+        <?php elseif ($isPending): ?>
+            <h1><?= $e($T(['kk' => 'Сұраныс жіберілді — мақұлдауды күтіңіз', 'ru' => 'Запрос отправлен — ждите одобрения', 'en' => 'Request sent — please wait for approval', 'es' => 'Solicitud enviada: espera la aprobación'])) ?></h1>
+        <?php elseif ($isBlocked): ?>
             <h1><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Аккаунт заблокирован' : 'Аккаунт бұғатталған' ?></h1>
         <?php else: ?>
             <h1><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Доступ только по приглашению' : 'Тек шақыру бойынша қолжетімді' ?></h1>
@@ -75,7 +88,31 @@ $isBlocked = (($reason ?? '') === 'account_blocked');
         <?php endif; ?>
 
         <div class="alert au-message">
-            <?php if ($isBlocked): ?>
+            <?php if ($isReqBlocked): ?>
+                <p><?= $e($T([
+                    'kk' => 'Бұл поштаға қолжетімділік сұранысы әкімшімен қабылданбаған.',
+                    'ru' => 'Запрос на доступ с этой почты не принят администратором.',
+                    'en' => 'The access request from this email was not accepted by the administrator.',
+                    'es' => 'La solicitud de acceso desde este correo no fue aceptada por el administrador.',
+                ])) ?></p>
+            <?php elseif ($isPending): ?>
+                <p><?= $e($T([
+                    'kk' => 'Сіздің сұранысыңыз әкімшіге жіберілді. Мақұлданған соң осы Google аккаунтымен қайта кіріңіз — шежіре ашылады. Ол уақытқа дейін шежіре деректері көрсетілмейді.',
+                    'ru' => 'Ваш запрос отправлен администратору. После одобрения войдите снова с этим же аккаунтом Google — шежіре откроется. До этого данные шежіре не показываются.',
+                    'en' => 'Your request has been sent to the administrator. After approval, sign in again with the same Google account and the shezhire will open. Until then no family data is shown.',
+                    'es' => 'Tu solicitud fue enviada al administrador. Tras la aprobación, vuelve a entrar con la misma cuenta de Google y se abrirá el shezhire. Hasta entonces no se muestran datos de la familia.',
+                ])) ?></p>
+                <?php if (!empty($saved)): ?>
+                    <p><strong><?= $e($T(['kk' => 'Хабарлама жіберілді, рахмет.', 'ru' => 'Сообщение отправлено, спасибо.', 'en' => 'Message sent, thank you.', 'es' => 'Mensaje enviado, gracias.'])) ?></strong></p>
+                <?php endif; ?>
+                <form method="post" action="/api/access-request/message" style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf ?? '') ?>">
+                    <label for="ar-msg"><?= $e($T(['kk' => 'Сіз кімсіз? (міндетті емес)', 'ru' => 'Кто вы нам? (необязательно)', 'en' => 'Who are you to us? (optional)', 'es' => '¿Quién eres para nosotros? (opcional)'])) ?></label>
+                    <textarea id="ar-msg" name="message" class="input" rows="3" maxlength="500"
+                              placeholder="<?= $e($T(['kk' => 'Мысалы: Алтыбаев Жандостың немере інісімін', 'ru' => 'Например: я двоюродный брат Жандоса', 'en' => 'For example: I am Zhandos\'s cousin', 'es' => 'Por ejemplo: soy primo de Zhandos'])) ?>"></textarea>
+                    <button type="submit" class="btn"><?= $e($T(['kk' => 'Жіберу', 'ru' => 'Отправить', 'en' => 'Send', 'es' => 'Enviar'])) ?></button>
+                </form>
+            <?php elseif ($isBlocked): ?>
                 <p>
                     <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es')
                         ? 'Ваша учетная запись временно приостановлена. Для восстановления доступа обратитесь к администратору портала.'

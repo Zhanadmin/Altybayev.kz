@@ -29,7 +29,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate, private');
         return;
     }
     $path = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
-    if (preg_match('#^/(api|auth|media|album/media|uploads|assets|login|logout|lang|__test-login|tree/print|admin/import)(/|$)#', $path)) {
+    if (preg_match('#^/(api|auth|media|album/media|uploads|assets|login|logout|lang|__test-login|tree/print|admin/import|access-request)(/|$)#', $path)) {
         return;
     }
     if (preg_match('#\.[a-z0-9]{2,5}$#i', $path)) {
@@ -88,6 +88,11 @@ $router->post('/api/clans/tamga/delete', 'App\Controllers\ClanController@tamgaDe
 $router->get('/login', 'App\Controllers\AuthController@showLogin');
 $router->get('/logout', 'App\Controllers\AuthController@logout');
 $router->get('/__test-login', 'App\Controllers\TestLoginController@login'); // TASK-009: только altybayev.st.int + флаг в .env, иначе 404
+// ALT-104: вход только по одобрению — страница ожидания (без доступа к данным) и админ-раздел запросов
+$router->get('/access-request', 'App\Controllers\AuthController@showAccessRequest');
+$router->post('/api/access-request/message', 'App\Controllers\AuthController@saveAccessMessage');
+$router->get('/admin/access-requests', 'App\Controllers\AccessRequestController@index', ['auth', 'admin']);
+$router->post('/api/admin/access-requests/decide', 'App\Controllers\AccessRequestController@decide', ['auth', 'admin']);
 $router->get('/auth/google','App\Controllers\AuthController@redirectToGoogle');
 $router->get('/auth/google/callback', 'App\Controllers\AuthController@handleGoogleCallback');
 

@@ -288,6 +288,8 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
                         <strong><?= $T('wl_err_auth_t') ?></strong><br><?= $T('wl_err_auth') ?>
                     <?php elseif ($error === 'invalid_state'): ?>
                         <strong><?= $T('wl_err_state_t') ?></strong><br><?= $T('wl_err_state') ?>
+                    <?php elseif ($error === 'rate_limited'): ?>
+                        <strong><?= $T('wl_err_rate_t') ?></strong><br><?= $T('wl_err_rate') ?>
                     <?php elseif ($error === 'forbidden'): ?>
                         <strong><?= $T('wl_err_forbidden_t') ?></strong><br><?= $T('wl_err_forbidden') ?>
                     <?php elseif ($error === 'admin_only'): ?>

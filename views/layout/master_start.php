@@ -101,6 +101,9 @@ if ($canEdit) {
     $navItems['missing'] = ['href' => '/admin/missing', 'icon' => 'i-users', 'label' => match ($lang) { 'ru' => 'Что не заполнено', 'en' => 'Missing data', 'es' => 'Datos faltantes', default => 'Толтырылмаған' }, 'count' => null, 'group' => 3];
 }
 if ($isAdmin) {
+    // ALT-104: запросы на доступ — счётчик ожидающих в боковой панели
+    $arPending = \App\Services\AccessRequestService::pendingCount(Database::getConnection());
+    $navItems['access'] = ['href' => '/admin/access-requests', 'icon' => 'i-users', 'label' => match ($lang) { 'ru' => 'Запросы на доступ', 'en' => 'Access requests', 'es' => 'Solicitudes de acceso', default => 'Қолжетімділік сұраныстары' }, 'count' => $arPending > 0 ? (string)$arPending : null, 'group' => 3];
     $navItems['admin'] = ['href' => '/admin', 'icon' => 'i-settings', 'label' => I18n::t('nav_admin'), 'count' => null, 'group' => 3];
 }
 $navGroupLabels = [

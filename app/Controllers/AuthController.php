@@ -10,6 +10,7 @@ use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Services\AccessRequestService;
 use App\Services\GoogleOAuthService;
 use PDO;
 use Throwable;
@@ -35,6 +36,10 @@ class AuthController
      */
     public function redirectToGoogle(Request $request): void
     {
+        // ALT-104: ограничение частоты попыток входа с одного IP
+        if (!$this->attemptAllowed('oauth_start')) {
+            Response::redirect('/login?error=rate_limited');
+        }
         $state = bin2hex(random_bytes(16));
         Session::set('oauth_state', $state);
 
@@ -49,6 +54,9 @@ class AuthController
      */
     public function handleGoogleCallback(Request $request): void
     {
+        if (!$this->attemptAllowed(null)) {
+            Response::redirect('/login?error=rate_limited');
+        }
         $code = $request->query('code');
         $state = $request->query('state');
         $savedState = Session::get('oauth_state');
@@ -122,10 +130,16 @@ class AuthController
 
             // Если инвайта нет и не супер-админ — доступ закрыт
             if (!$assignedRole) {
-                Response::view('access_denied', [
-                    'email'  => $email,
-                    'reason' => 'no_invitation'
-                ]);
+                // ALT-104: незнакомый человек → запрос на подключение админу (повторные попытки обновляют тот же запрос)
+                $svc = new AccessRequestService($db);
+                $req = $svc->submit($email, (string)($googleUser['name'] ?? ''), $googleUser['google_id'] ?? null, $googleUser['avatar_url'] ?? null);
+                $svc->logAttempt($email, $req['status'] === 'blocked' ? 'blocked' : 'request');
+                if ($req['is_new']) {
+                    $svc->notifyAdmin($req['row']);
+                }
+                Session::set('access_request_id', $req['id']);
+                Session::set('access_request_email', $email);
+                Response::redirect('/access-request');
             }
 
             // 4. Создаем нового пользователя
@@ -191,6 +205,84 @@ class AuthController
             }
             Response::redirect('/login?error=auth_failed');
         }
+    }
+
+    /**
+     * ALT-104: лимит попыток входа с IP. $logAs — записать попытку в журнал (null — только проверить).
+     * Ошибка БД не должна ломать вход, поэтому в этом случае пропускаем.
+     */
+    private function attemptAllowed(?string $logAs): bool
+    {
+        try {
+            $svc = new AccessRequestService(Database::getConnection());
+            if (!$svc->underLimit(AccessRequestService::clientIp())) {
+                if ($logAs !== null) {
+                    $svc->logAttempt('', 'rate_limited');
+                }
+                return false;
+            }
+            if ($logAs !== null) {
+                $svc->logAttempt('', $logAs);
+            }
+        } catch (Throwable $e) {
+            return true;
+        }
+        return true;
+    }
+
+    /**
+     * ALT-104: страница «Запрос отправлен, ждите одобрения» (данных шежіре не показывает, вход не выдаётся).
+     */
+    public function showAccessRequest(Request $request): void
+    {
+        $id = (int)Session::get('access_request_id', 0);
+        $row = null;
+        if ($id > 0) {
+            try {
+                $row = (new AccessRequestService(Database::getConnection()))->find($id);
+            } catch (Throwable $e) {
+                $row = null;
+            }
+        }
+        if (!$row) {
+            Response::redirect('/login');
+        }
+        Response::view('access_denied', [
+            'email'   => (string)$row['email'],
+            'reason'  => $row['status'] === 'blocked' ? 'request_blocked' : 'request_pending',
+            'hasMsg'  => !empty($row['message']),
+            'saved'   => $request->query('saved') === '1',
+            'csrf'    => Session::csrfToken(),
+        ]);
+    }
+
+    /**
+     * ALT-104: человек дописывает «кто я вам» (необязательно). POST /api/access-request/message
+     */
+    public function saveAccessMessage(Request $request): void
+    {
+        if (!Session::validateCsrf((string)$request->post('csrf_token', ''))) {
+            Response::redirect('/access-request');
+        }
+        $id = (int)Session::get('access_request_id', 0);
+        $message = (string)$request->post('message', '');
+        $tries = (int)Session::get('access_request_msg_tries', 0);
+        if ($id > 0 && trim($message) !== '' && $tries < 5) {
+            Session::set('access_request_msg_tries', $tries + 1);
+            try {
+                $svc = new AccessRequestService(Database::getConnection());
+                if ($svc->saveMessage($id, $message)) {
+                    $row = $svc->find($id);
+                    if ($row && $row['status'] === 'pending') {
+                        $svc->notifyAdmin($row); // дополненный запрос уходит админу ещё раз, уже с сообщением
+                    }
+                    Response::redirect('/access-request?saved=1');
+                }
+            } catch (Throwable $e) {
+                // сообщение необязательное — не ломаем страницу
+            }
+        }
+        Response::redirect('/access-request');
     }
 
     /**

@@ -3082,9 +3082,23 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         .person-card .card-maiden { white-space: normal; overflow-wrap: anywhere; }
         .person-card .card-name { white-space: normal; overflow-wrap: anywhere; }
         .radial-action-wrap { display: none !important; } /* в древе ничего не добавляем: только фокус */
-        .person-card.in-couple.selected,
-        .person-card.in-couple.is-self { background: var(--c-accent-soft, rgba(0,0,0,.04)); }
         .person-card.in-couple:hover { background: rgba(0,0,0,.03); }
+        /* ALT-064: фокус — только заметная рамка, цвет карточки не меняется */
+        .person-card.selected { box-shadow: 0 0 0 4px var(--c-accent), 0 0 18px 4px var(--c-focus, rgba(212,175,55,.45)), var(--shadow-pop); z-index: 40; }
+        .person-card.deceased.selected { box-shadow: 0 0 0 4px var(--c-accent), 0 0 18px 4px var(--c-focus, rgba(212,175,55,.45)), var(--shadow-island); }
+        /* ALT-065: карандаш «Өзгерту / Изменить» — только у человека в фокусе */
+        .card-edit-pencil { display: none; position: absolute; top: -16px; right: -16px; width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 1px solid var(--c-border-strong, #999); background: var(--c-island, #fff); color: var(--c-text, #222); cursor: pointer; align-items: center; justify-content: center; box-shadow: var(--shadow-pop, 0 2px 8px rgba(0,0,0,.3)); z-index: 50; }
+        .card-edit-pencil .ic { width: 16px; height: 16px; }
+        .card-edit-pencil:hover, .card-edit-pencil:focus-visible { background: var(--c-accent, #d4af37); }
+        .person-card.selected .card-edit-pencil { display: inline-flex; }
+        /* половина общей плашки: рамка только вокруг человека в фокусе */
+        .person-card.in-couple.selected {
+            box-shadow: 0 0 0 4px var(--c-accent), 0 0 14px 3px var(--c-focus, rgba(212,175,55,.45));
+            border-radius: var(--r-md, 12px);
+            z-index: 40;
+        }
+        /* плашка «Мен» — без жёлтой заливки */
+        .card-kinship-badge.active-rel { background: transparent; color: var(--c-text-2); border-color: var(--c-border-strong); }
 
         /* кнопки на холсте */
         .btn-branch-expand { font-family: var(--font-book); font-size: 13px; border-color: var(--c-accent); color: var(--c-accent-text); }
@@ -4983,7 +4997,27 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             }
         }
 
-        // РЕЖИМДЕРДІ АУЫСТЫРУ («ӨҢДЕУ» <-> «ШЕЖІРЕ-ОРМАН» <-> «ТІЗІМ»)
+        // ALT-065: обновить данные древа на месте — камера (положение, масштаб) и фокус не сбрасываются
+        async function refreshTreeKeepView(focusId) {
+            const keepX = posX, keepY = posY, keepScale = scale;
+            try {
+                const expParam = expandedBranches.length > 0 ? `&expanded=${expandedBranches.join(',')}` : '';
+                const res = await fetch(`/api/tree?mode=${currentScope}&focal_id=${selectedPersonId || userPersonId || 0}${expParam}`);
+                const data = await res.json();
+                if (!data || !data.persons) { throw new Error('tree'); }
+                treeData = data;
+                selectedPersonId = focusId;
+                renderEditingView();
+                posX = keepX; posY = keepY; scale = keepScale;
+                updateTransform();
+                await selectPerson(focusId);
+            } catch (e) {
+                await initTree();
+                selectPerson(focusId);
+            }
+        }
+
+        // РЕЖИМДЕРДІ АУЫСТЫРУ («ӨҢДЕУ» <->«ШЕЖІРЕ-ОРМАН» <-> «ТІЗІМ»)
         function switchMode(mode) {
             currentMode = mode;
             const btnEditing = document.getElementById('btnModeEditing');
@@ -5197,6 +5231,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <!-- Карточканың айналасындағы жылдам қосу радиалды батырмалары -->
                     <!-- ALT-059: кнопки «+» убраны: в древе только фокус, добавление — из «Адамдар» и карточки человека -->
                     ${expandBottomHtml}
+                    ${canEditPersonUi(node.id) ? `<button type="button" class="card-edit-pencil" onmousedown="event.stopPropagation()" onclick="event.stopPropagation(); openEditPersonModal(${Number(node.id)})" title="Өзгерту / Изменить" aria-label="Өзгерту / Изменить"><svg class="ic"><use href="#t-edit"/></svg></button>` : ''}
                 `;
 
                 card.onclick = (e) => {
@@ -6803,8 +6838,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         await proposeClanPropagation(id, newRu);
                     }
                     alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Данные успешно обновлены и сохранены в истории!' : 'Өзгерістер сәтті сақталды!');
-                    await initTree();
-                    selectPerson(parseInt(id));
+                    if (currentMode === 'editing') {
+                        await refreshTreeKeepView(parseInt(id)); // ALT-065: без перезагрузки древа, положение и фокус те же
+                    } else {
+                        await initTree();
+                        selectPerson(parseInt(id));
+                    }
                     if (currentMode === 'list') {
                         loadListViewData();
                     }

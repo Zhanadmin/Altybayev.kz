@@ -113,14 +113,30 @@ require __DIR__ . '/layout/master_start.php';
     function fold(s) { return String(s).toLocaleLowerCase('kk').replace(/ё/g, 'е'); }
     let cur = [], act = -1;
     function openList(v) {
-        const q = fold(v).trim();
-        const words = q ? q.split(/\s+/) : [];
-        cur = items.filter(it => words.every(w => it.key.includes(w))).slice(0, 50);
+        const match = (it, s) => {
+            const q = fold(s).trim();
+            const words = q ? q.split(/\s+/) : [];
+            return words.every(w => it.key.includes(w));
+        };
+        // ALT-114: если по введённому пусто — пробуем исправить раскладку («;fyljc» → «Жандос»)
+        const found = window.LayoutFix ? window.LayoutFix.pickCandidate(v, items, match) : { results: items.filter(it => match(it, v)), hint: '' };
+        cur = found.results.slice(0, 50);
         act = cur.length ? 0 : -1;
-        list.innerHTML = cur.length
+        list.innerHTML = (found.hint ? '<li class="za-empty lf-hint"></li>' : '') + (cur.length
             ? cur.map((it, i) => '<li role="option" data-i="' + i + '"' + (i === 0 ? ' class="active"' : '') + '></li>').join('')
-            : '<li class="za-empty">—</li>';
-        cur.forEach((it, i) => { list.children[i].textContent = it.label; });
+            : '<li class="za-empty">—</li>');
+        const off = found.hint ? 1 : 0;
+        if (found.hint) {
+            const hl = list.children[0];
+            const parts = window.LayoutFix.hintText('\u0000', document.documentElement.lang).split('\u0000');
+            hl.appendChild(document.createTextNode(parts[0]));
+            const a = document.createElement('a');
+            a.href = '#'; a.textContent = found.hint;
+            a.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); inp.value = found.hint; openList(found.hint); });
+            hl.appendChild(a);
+            hl.appendChild(document.createTextNode(parts[1] || ''));
+        }
+        cur.forEach((it, i) => { list.children[i + off].textContent = it.label; });
         list.hidden = false; inp.setAttribute('aria-expanded', 'true');
     }
     function closeList() { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); }
@@ -131,8 +147,9 @@ require __DIR__ . '/layout/master_start.php';
     function mark(n) {
         if (!cur.length) return;
         act = (n + cur.length) % cur.length;
-        Array.from(list.children).forEach((li, i) => li.classList.toggle('active', i === act));
-        list.children[act].scrollIntoView({ block: 'nearest' });
+        const opts = Array.from(list.querySelectorAll('li[data-i]'));
+        opts.forEach((li, i) => li.classList.toggle('active', i === act));
+        if (opts[act]) opts[act].scrollIntoView({ block: 'nearest' });
     }
     inp.addEventListener('input', () => openList(inp.value));
     inp.addEventListener('focus', () => { inp.select(); openList(''); });

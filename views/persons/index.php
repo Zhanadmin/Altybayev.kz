@@ -500,6 +500,8 @@ window.__pcDelete = { lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($cs
         searchInput.addEventListener('input', function() {
             const val = this.value.trim().toLowerCase();
             if (val === '') {
+                const oldHint = document.getElementById('ppLayoutHint');
+                if (oldHint) oldHint.textContent = '';
                 applySavedState();
                 document.querySelectorAll('.pp-table tbody tr').forEach(function(tr) {
                     tr.style.display = '';
@@ -520,13 +522,39 @@ window.__pcDelete = { lang: <?= json_encode($lang) ?>, csrf: <?= json_encode($cs
                 return;
             }
 
+            // ALT-114: если по введённому никого нет — пробуем исправить раскладку («;fyljc» → «Жандос»)
+            const LF = window.LayoutFix;
+            const rowMatches = function(tr, s) { return (LF ? LF.fold(tr.textContent) : tr.textContent.toLowerCase()).includes(LF ? LF.fold(s) : s); };
+            let effVal = val, hintFixed = '';
+            if (LF) {
+                const found = LF.pickCandidate(val, Array.from(document.querySelectorAll('.pp-table tbody tr')), rowMatches);
+                effVal = found.used || val;
+                hintFixed = found.hint;
+            }
+            let hintEl = document.getElementById('ppLayoutHint');
+            if (!hintEl) {
+                hintEl = document.createElement('div');
+                hintEl.id = 'ppLayoutHint';
+                hintEl.style.cssText = 'font-size:0.85em; margin:4px 0;';
+                searchInput.insertAdjacentElement('afterend', hintEl);
+            }
+            hintEl.textContent = '';
+            if (hintFixed) {
+                const parts = LF.hintText('\u0000', document.documentElement.lang).split('\u0000');
+                hintEl.appendChild(document.createTextNode(parts[0]));
+                const ha = document.createElement('a');
+                ha.href = '#'; ha.textContent = hintFixed;
+                ha.addEventListener('click', function(ev) { ev.preventDefault(); searchInput.value = hintFixed; searchInput.dispatchEvent(new Event('input')); searchInput.focus(); });
+                hintEl.appendChild(ha);
+                hintEl.appendChild(document.createTextNode(parts[1] || ''));
+            }
+
             let grandTotal = 0;
             document.querySelectorAll('.pp-group[data-gen-key]').forEach(function(group) {
                 const rows = group.querySelectorAll('.pp-table tbody tr');
                 let groupMatch = 0;
                 rows.forEach(function(tr) {
-                    const txt = tr.textContent.toLowerCase();
-                    if (txt.includes(val)) {
+                    if (rowMatches(tr, effVal)) {
                         tr.style.display = '';
                         groupMatch++;
                         grandTotal++;

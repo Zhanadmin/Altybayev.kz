@@ -177,5 +177,6 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
     </div>
 </div>
 <?php include __DIR__ . '/../layout/person_avatar_edit.php'; // обрезка фото овалом: та же, что в окне «Өңдеу» ?>
-<script src="/assets/js/missing-inline.js?v=1" defer></script>
+<script src="/assets/js/layout-fix.js?v=1"></script>
+<script src="/assets/js/missing-inline.js?v=2" defer></script>
 <?php require __DIR__ . '/../layout/master_end.php'; ?>

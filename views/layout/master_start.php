@@ -151,6 +151,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="preload" href="/assets/fonts/lora-italic-700.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=34">
+    <script src="/assets/js/layout-fix.js?v=1"></script>
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=6" defer></script>
@@ -205,9 +206,13 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-sidebar .ds-sidebar-tools .user-chip { padding: 2px var(--sp-3); }
         .ds-sidebar .ds-sidebar-tools .user-chip .avatar { width: 26px; height: 26px; font-size: 12px; }
         .ds-sidebar .ds-sidebar-foot { padding: 2px var(--sp-3) 0; font-size: 11px; line-height: 1.3; }
-        .ds-tools-row { display: flex; align-items: center; gap: 2px; padding: 0; }
-        .ds-tools-row #bgmToggle { margin: 0 !important; }
-        .ds-tools-logout { margin-left: auto; }
+        /* ALT-115: три кнопки (музыка, тема, выход) делят ширину поровну */
+        .ds-tools-row { display: flex; align-items: stretch; gap: 4px; padding: 0; }
+        .ds-tools-row > .btn, .ds-tools-row > #bgmToggle { flex: 1 1 0 !important; width: auto !important; min-width: 0 !important; height: 34px !important; margin: 0 !important; padding: 0 !important; border-radius: var(--r-sm) !important; display: inline-flex !important; flex-direction: row; align-items: center; justify-content: center; box-sizing: border-box; }
+        .ds-tools-row #bgmToggle { overflow: visible; gap: 4px; }
+        .ds-tools-row #bgmToggle > * { pointer-events: none; }
+        .ds-tools-row #bgmToggle[aria-pressed="true"]::before { content: ""; position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); border-radius: var(--r-sm); box-shadow: 0 0 10px 3px var(--c-accent); opacity: .25; pointer-events: none; }
+        .ds-tools-row #bgmToggle .bgm-bars { align-items: center; height: 14px; }
         .ds-content > .ds-crumbs { margin-bottom: calc(-1 * var(--sp-2)); }
         .ds-page { min-width: 0; }
         /* Сброс отступов, как в прежнем каркасе (страницы со встроенными стилями на него рассчитаны).

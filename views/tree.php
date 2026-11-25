@@ -30,6 +30,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <!-- ALT-020: шрифты локально — только Lora (заголовки — Bold Italic) -->
     <link rel="stylesheet" href="/assets/css/fonts.css?v=2">
     <link rel="stylesheet" href="/assets/css/design-system.css?v=27">
+    <script src="/assets/js/layout-fix.js?v=1"></script>
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/kk-genitive.js?v=1"></script>
@@ -6566,10 +6567,28 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 }
 
                 try {
-                    const res = await fetch(`/api/tree/search?q=${encodeURIComponent(q)}`);
-                    const data = await res.json();
+                    const fetchRows = async (qq) => {
+                        const res = await fetch(`/api/tree/search?q=${encodeURIComponent(qq)}`);
+                        const d = await res.json();
+                        return (d && d.results) || [];
+                    };
+                    // ALT-114: исправление раскладки («;fyljc» → «Жандос»)
+                    const found = window.LayoutFix ? await window.LayoutFix.smartSearch(q, fetchRows) : { results: await fetchRows(q), hint: '' };
+                    const data = { results: found.results };
                     if (data && data.results && data.results.length > 0) {
                         searchDropdown.innerHTML = '';
+                        if (found.hint) {
+                            const hintRow = document.createElement('div');
+                            hintRow.className = 'search-item lf-hint';
+                            const parts = window.LayoutFix.hintText('\u0000', document.documentElement.lang).split('\u0000');
+                            hintRow.appendChild(document.createTextNode(parts[0]));
+                            const ha = document.createElement('a');
+                            ha.href = '#'; ha.textContent = found.hint;
+                            ha.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); searchInput.value = found.hint; searchInput.dispatchEvent(new Event('input')); searchInput.focus(); });
+                            hintRow.appendChild(ha);
+                            hintRow.appendChild(document.createTextNode(parts[1] || ''));
+                            searchDropdown.appendChild(hintRow);
+                        }
                         data.results.forEach(item => {
                             const row = document.createElement('div');
                             row.className = 'search-item';

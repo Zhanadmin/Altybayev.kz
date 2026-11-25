@@ -141,9 +141,28 @@
         if (ul) { ul.hidden = true; ul.innerHTML = ''; }
         input.setAttribute('aria-expanded', 'false');
     }
-    function showResults(input, results) {
+    function showResults(input, results, hint) {
         var ul = listOf(input);
         ul.innerHTML = '';
+        if (hint && window.LayoutFix) {
+            // ALT-114: «Может, вы имели в виду: Жандос?» — клик подставляет исправленный текст
+            var lh = document.createElement('li');
+            lh.className = 'none lf-hint';
+            var t = window.LayoutFix.hintText('\u0000', document.documentElement.lang).split('\u0000');
+            lh.appendChild(document.createTextNode(t[0]));
+            var a = document.createElement('a');
+            a.href = '#';
+            a.textContent = hint;
+            a.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                input.value = hint;
+                search(input);
+            });
+            a.addEventListener('click', function (e) { e.preventDefault(); });
+            lh.appendChild(a);
+            lh.appendChild(document.createTextNode(t[1] || ''));
+            ul.appendChild(lh);
+        }
         if (!results.length) {
             var li0 = document.createElement('li');
             li0.className = 'none';
@@ -167,13 +186,19 @@
         input.setAttribute('aria-expanded', 'true');
     }
     function search(input) {
-        var url = '/api/person/parent-search?target_id=' + personOf(input) + '&kind=' + encodeURIComponent(input.dataset.parent)
-            + '&q=' + encodeURIComponent(input.value.trim());
+        var base = '/api/person/parent-search?target_id=' + personOf(input) + '&kind=' + encodeURIComponent(input.dataset.parent) + '&q=';
         var seq = (input._seq = (input._seq || 0) + 1);
-        fetch(url, { credentials: 'same-origin' }).then(readJson).then(function (d) {
+        var fetchRows = function (q) {
+            return fetch(base + encodeURIComponent(q), { credentials: 'same-origin' }).then(readJson).then(function (d) { return d.results || []; });
+        };
+        // ALT-114: если по введённому пусто — пробуем исправить раскладку
+        var run = window.LayoutFix
+            ? window.LayoutFix.smartSearch(input.value.trim(), fetchRows)
+            : fetchRows(input.value.trim()).then(function (r) { return { results: r, hint: '' }; });
+        run.then(function (d) {
             // устаревший ответ, строка уже перерисована или поле потеряло фокус — список не открываем
             if (seq !== input._seq || !input.isConnected || !(document.activeElement === input || listOf(input).contains(document.activeElement))) { return; }
-            showResults(input, d.results || []);
+            showResults(input, d.results || [], d.hint);
         }).catch(function (err) { fail(input, err.message); });
     }
     function addParent(input, parentId) {

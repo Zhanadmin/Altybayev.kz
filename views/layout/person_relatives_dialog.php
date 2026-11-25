@@ -61,4 +61,5 @@ $inp = $h($relInputCls);
         onDone: async function (id) { <?= $relOnDoneJs ?> }
     };
 </script>
-<script src="/assets/js/person-relatives.js?v=2"></script>
+<script src="/assets/js/layout-fix.js?v=1"></script>
+<script src="/assets/js/person-relatives.js?v=3"></script>

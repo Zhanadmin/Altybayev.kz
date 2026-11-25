@@ -120,10 +120,21 @@
     async function relSearch(q) {
         var box = $('relResults');
         try {
-            var res = await fetch(SEARCH_URL[st.kind] + st.id + '&q=' + encodeURIComponent(q));
-            var data = await res.json();
+            var fetchRows = async function (qq) {
+                var res = await fetch(SEARCH_URL[st.kind] + st.id + '&q=' + encodeURIComponent(qq));
+                var data = await res.json();
+                return data.results || [];
+            };
+            // ALT-114: неверная раскладка («;fyljc» → «Жандос»)
+            var found = window.LayoutFix ? await window.LayoutFix.smartSearch(q, fetchRows) : { results: await fetchRows(q), hint: '' };
             box.textContent = '';
-            (data.results || []).forEach(function (p) {
+            if (window.LayoutFix) {
+                window.LayoutFix.showHint(box, found.hint, function (fixed) {
+                    var s = $('relSearch'); if (s) { s.value = fixed; }
+                    relSearch(fixed);
+                });
+            }
+            (found.results || []).forEach(function (p) {
                 var row = document.createElement('button');
                 row.type = 'button';
                 row.className = cfg().btnGhost || 'btn btn-ghost';

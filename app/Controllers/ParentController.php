@@ -177,7 +177,7 @@ class ParentController
                 $ins->execute([
                     $first,
                     $last,
-                    trim((string)$request->post('maiden_name', '')) ?: null,
+                    $gender === 'F' ? (trim((string)$request->post('maiden_name', '')) ?: null) : null,
                     $gender,
                     $by,
                     $user['id'] ?? null,

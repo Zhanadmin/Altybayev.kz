@@ -94,4 +94,4 @@ window.PME_T = {
     imgError: <?= $pmeJs('pme_img_error') ?>
 };
 </script>
-<script src="/assets/js/person-media-edit.js?v=6" defer></script>
+<script src="/assets/js/person-media-edit.js?v=7" defer></script>

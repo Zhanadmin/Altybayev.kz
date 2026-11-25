@@ -42,7 +42,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                             <label for="editModalMiddleName"><?= $__t('Әкесінің аты', 'Отчество') ?></label>
                             <input type="text" id="editModalMiddleName" class="input">
                         </div>
-                        <div class="field">
+                        <div class="field" id="editModalMaidenGroup">
                             <label for="editModalMaidenName"><?= $__t('Қыз кезіндегі тегі', 'Девичья фамилия') ?></label>
                             <input type="text" id="editModalMaidenName" class="input">
                         </div>
@@ -50,7 +50,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                     <div class="form-row">
                         <div class="field">
                             <label for="editModalGender"><?= $__t('Жынысы', 'Пол') ?></label>
-                            <select id="editModalGender" class="select">
+                            <select id="editModalGender" class="select" onchange="syncEditModalMaiden()">
                                 <option value="M"><?= $__t('Ер', 'Мужской') ?></option>
                                 <option value="F"><?= $__t('Әйел', 'Женский') ?></option>
                             </select>
@@ -182,6 +182,18 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
     <div class="toast-stack" id="appToastStack" aria-live="polite"></div>
 
     <script>
+        // Девичья фамилия — только при женском поле
+        function syncEditModalMaiden() {
+            const g = document.getElementById('editModalGender');
+            const grp = document.getElementById('editModalMaidenGroup');
+            if (!g || !grp) return;
+            if (g.value === 'F') {
+                grp.style.display = '';
+            } else {
+                grp.style.display = 'none';
+                document.getElementById('editModalMaidenName').value = '';
+            }
+        }
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('appSidebar');
             const overlay = document.getElementById('sidebarOverlay');
@@ -425,6 +437,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.getElementById('editModalMiddleName').placeholder = (localStorage.getItem('shezhire_lang') === 'ru' ? p.middle_name_ru : p.middle_name_kk) || '';
                         document.getElementById('editModalMaidenName').value = p.maiden_name || '';
                         document.getElementById('editModalGender').value = p.gender || 'M';
+                        syncEditModalMaiden();
 
                         const clanInput = document.getElementById('editModalClanRu');
                         const clanHint = document.getElementById('editModalClanHint');

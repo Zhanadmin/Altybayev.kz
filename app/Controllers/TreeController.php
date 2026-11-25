@@ -698,6 +698,9 @@ class TreeController
             $maidenName = trim((string)$request->get('maiden_name', '')) ?: null;
             $middleName = trim((string)$request->get('middle_name', '')) ?: null;
             $gender = trim((string)$request->get('gender', 'M'));
+            if ($gender !== 'F') {
+                $maidenName = null; // девичья фамилия только у женщин
+            }
 
             $rawBirthDate = trim((string)$request->get('birth_date', ''));
             $birthDate = $this->normalizeSqlDate($rawBirthDate);
@@ -996,6 +999,11 @@ class TreeController
                     $fatherId = $target['father_id'];
                     $motherId = $target['mother_id'];
                     break;
+            }
+
+            // Девичья фамилия бывает только у женщин
+            if ($gender !== 'F') {
+                $maidenName = null;
             }
 
             // Вставка новой персоны

@@ -145,6 +145,22 @@
         box.style.display = 'block';
     };
 
+    // ALT-077: только фото (аватарка) в окне правки шежіре; data = media_edit или null (нет прав)
+    window.pmeAvatarLoad = function (personId, data) {
+        var box = $('pmeAvBox');
+        if (!box) return;
+        if (!data || !personId) { box.style.display = 'none'; st.personId = 0; return; }
+        st.personId = personId;
+        st.csrf = data.csrf_token || '';
+        renderAvatar(data.avatar || '');
+        setAvatarBtn(!!data.avatar);
+        box.style.display = 'block';
+    };
+    function setAvatarBtn(has) {
+        var b = $('pmeAvatarBtn');
+        if (b && T.upload) { b.textContent = has ? T.replace : T.upload; }
+    }
+
     // Сохранить положение/затемнение (вызывается кнопкой «Сақтау»). Promise<boolean>
     window.pmeSave = function () {
         if (!st.personId || !st.coverReady || !st.cover.url) { return Promise.resolve(true); }
@@ -220,7 +236,7 @@
         return o;
     }
     function showPane(name) { // grid | crop
-        $('pmeGridPane').style.display = name === 'grid' ? 'block' : 'none';
+        if ($('pmeGridPane')) { $('pmeGridPane').style.display = name === 'grid' ? 'block' : 'none'; }
         $('pmeCropPane').style.display = name === 'crop' ? 'block' : 'none';
     }
     window.pmeClose = function () {
@@ -396,9 +412,12 @@
         var done = function () { btn.disabled = false; };
         var ok = function (url) {
             renderAvatar(url);
+            setAvatarBtn(true);
             markDirty();
             toast(T.saved, 'success');
             window.pmeClose();
+            // ALT-077: древо/список обновляются на месте, без перезагрузки страницы
+            if (typeof window.pmeOnAvatarSaved === 'function') { window.pmeOnAvatarSaved(url); }
             if (src.objectUrl) { URL.revokeObjectURL(src.objectUrl); }
         };
         if (src.mediaId) {

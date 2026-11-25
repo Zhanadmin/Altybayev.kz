@@ -30,6 +30,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <link rel="stylesheet" href="/assets/css/design-system.css?v=27">
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
+    <script src="/assets/js/kk-genitive.js?v=1"></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <script src="/assets/js/person-delete.js?v=2" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
@@ -3063,6 +3064,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             border: 1px solid var(--c-border);
             box-shadow: var(--shadow-island);
         }
+        /* ALT-075: подпись семьи над плашкой пары */
+        .couple-family-label { position: absolute; font-size: 12px; line-height: 16px; letter-spacing: .02em; color: var(--c-text-2, #777); pointer-events: none; white-space: nowrap; font-family: inherit; }
         /* половины плашки: без собственных фона, рамки и тени; нажимаются отдельно */
         .person-card.in-couple,
         .person-card.in-couple:hover,
@@ -3580,7 +3583,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             <form id="editPersonForm" onsubmit="handleSavePersonEdit(event)">
                 <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
                     <input type="hidden" id="editPersonId" value="">
-                    <?php /* TASK-037: аватарка и обложка убраны из окна — меняются на карточке человека */ ?>
+                    <?php /* ALT-077: фото (аватарка) — снова в окне правки; обложка меняется на карточке человека */ ?>
+                    <?php include __DIR__ . '/layout/person_avatar_edit.php'; ?>
 
                     <div class="form-row-2">
                         <div class="form-group">
@@ -3607,7 +3611,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_gender">Жынысы *</label>
-                            <select class="form-select" id="editGender" required>
+                            <select class="form-select" id="editGender" required onchange="syncMaidenField('editGender','editMaidenNameGroup','editMaidenName')">
                                 <option value="M" data-i18n="gender_male">Ер азамат</option>
                                 <option value="F" data-i18n="gender_female">Әйел адам</option>
                             </select>
@@ -3820,7 +3824,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <div class="form-row-2">
                         <div class="form-group">
                             <label data-i18n="form_gender">Жынысы *</label>
-                            <select class="form-select" id="formGender" required>
+                            <select class="form-select" id="formGender" required onchange="syncMaidenField('formGender','maidenNameGroup','formMaidenName')">
                                 <option value="M" data-i18n="gender_male">Ер азамат</option>
                                 <option value="F" data-i18n="gender_female">Әйел адам</option>
                             </select>
@@ -5159,6 +5163,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     plateEl.style.width = `${cp.width}px`;
                     plateEl.style.height = `${cp.height}px`;
                     container.appendChild(plateEl);
+
+                    // ALT-075: подпись над плашкой — «<Имя мужа>ның отбасы»; без мужчины в паре подписи нет
+                    const famNodes = (treeData.layout.nodes || []);
+                    const famHusband = (cp.member_ids || [cp.husband_id, cp.wife_id])
+                        .map(mid => famNodes.find(n => Number(n.id) === Number(mid)))
+                        .find(n => n && n.gender === 'M' && n.first_name);
+                    if (famHusband && typeof window.kkGenitive === 'function') {
+                        const famLbl = document.createElement('div');
+                        famLbl.className = 'couple-family-label';
+                        famLbl.textContent = window.kkGenitive(String(famHusband.first_name).trim().split(/\s+/)[0]) + ' отбасы';
+                        famLbl.style.left = `${cp.x + 6}px`;
+                        famLbl.style.top = `${cp.y - 20}px`;
+                        container.appendChild(famLbl);
+                    }
                 });
             }
 
@@ -5219,7 +5237,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div class="card-avatar">${(typeof node.avatar_path === 'string' && /^\/uploads\/[A-Za-z0-9._\/-]+$/.test(node.avatar_path)) ? `<img class="card-avatar-img" src="${node.avatar_path}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode(this.dataset.i))" data-i="${initials}">` : initials}</div>
                         <div class="card-info">
                             <div class="card-name" title="${node.first_name} ${node.last_name || ''}">${node.first_name} ${node.last_name || ''}</div>
-                            ${node.maiden_name ? `<div class="card-maiden" title="${node.maiden_name}">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name}</div>` : ''}
+                            ${(node.maiden_name && node.gender !== 'M') ? `<div class="card-maiden" title="${node.maiden_name}">${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${node.maiden_name}</div>` : ''}
                             <div class="card-years">${lifeHtml(node, '—')}</div>
                         </div>
                     </div>
@@ -6205,7 +6223,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const isEnEs = (currentLang === 'en' || currentLang === 'es');
             let fullNameDisplay = `${p.first_name} ${p.last_name || ''} ${isEnEs ? '' : (currentLang === 'ru' ? (p.middle_name_ru || p.middle_name || '') : (p.middle_name_kk || p.middle_name || ''))}`.trim();
             let maidenPart = '';
-            if (p.maiden_name) {
+            if (p.maiden_name && p.gender !== 'M') {
                 maidenPart = ` (${currentLang === 'en' ? 'née' : (currentLang === 'es' ? 'de soltera' : (currentLang === 'ru' ? 'урожд.' : 'қыз кезіндегі —'))} ${p.maiden_name})`;
             }
             let parentLine = '';
@@ -6592,6 +6610,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             document.getElementById('kinshipDictModal').classList.remove('active');
         }
 
+        // Девичья фамилия — только при женском поле; при мужском поле скрывается и очищается
+        function syncMaidenField(genderId, groupId, inputId) {
+            const g = document.getElementById(genderId);
+            const grp = document.getElementById(groupId);
+            if (!g || !grp) return;
+            if (g.value === 'F') {
+                grp.style.display = '';
+            } else {
+                grp.style.display = 'none';
+                const inp = document.getElementById(inputId);
+                if (inp) inp.value = '';
+            }
+        }
+
         function openAddModal(relationType, baseId = null) {
             const basePerson = treeData ? treeData.persons.find(x => x.id === (baseId || selectedPersonId)) : null;
             const baseName = basePerson ? `${basePerson.first_name} ${basePerson.last_name || ''}` : '';
@@ -6631,6 +6663,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             } else {
                 document.getElementById('maidenNameGroup').style.display = 'block';
             }
+            syncMaidenField('formGender', 'maidenNameGroup', 'formMaidenName');
 
             document.getElementById('addPersonModal').classList.add('active');
         }
@@ -6743,6 +6776,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 document.getElementById('editMiddleName').placeholder = (currentLang === 'ru' ? p.middle_name_ru : p.middle_name_kk) || '';
                 document.getElementById('editMaidenName').value = p.maiden_name || '';
                 document.getElementById('editGender').value = p.gender || 'M';
+                syncMaidenField('editGender', 'editMaidenNameGroup', 'editMaidenName');
 
                 const clanInput = document.getElementById('editClanRu');
                 const clanHint = document.getElementById('editClanHint');
@@ -6771,7 +6805,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 document.getElementById('editDeathPlace').value = p.death_place || '';
                 document.getElementById('editBiography').value = p.biography || '';
                 if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
-                if (typeof pmeLoad === 'function') { pmeLoad(p.id, data.media_edit || null); } // TASK-022: фото и обложка
+                if (typeof pmeAvatarLoad === 'function') { pmeAvatarLoad(p.id, data.media_edit || null); } // ALT-077: фото в окне правки
                 if (typeof relLoad === 'function') { relLoad(p.id); } // ALT-067: блок «Туыстар»
 
                 const btnDel = document.getElementById('btnDeletePerson');
@@ -6921,6 +6955,17 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtnText; }
             }
         }
+
+        // ALT-077: фото сохранено в окне правки — сразу обновить древо/список на месте
+        window.pmeOnAvatarSaved = async function () {
+            const pid = parseInt(document.getElementById('editPersonId').value, 10);
+            if (!pid) return;
+            try {
+                if (currentMode === 'editing') { await refreshTreeKeepView(pid); }
+                else if (currentMode === 'list') { loadListViewData(); }
+                else { await initTree(); }
+            } catch (e) { /* фото уже сохранено; древо обновится при следующей загрузке */ }
+        };
 
         // ALT-071: короткое уведомление «Сақталды» (в древе нет общего стека тостов)
         function altSavedToast(msg) {
@@ -7164,7 +7209,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                             <div class="list-avatar ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${initials}</div>
                             <div>
                                 <div class="lt-name" title="${p.full_name}">${p.full_name}</div>
-                                ${p.maiden_name ? `<div class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
+                                ${(p.maiden_name && p.gender !== 'M') ? `<div class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${p.maiden_name})</div>` : ''}
                                 <div class="lt-sub lt-sub-opt xl">${clanLbl}</div>
                                 <div class="lt-sub lt-sub-opt lg">${genderLbl}</div>
                                 <div class="lt-sub lt-sub-opt md">${lifeHtml(p, p.years_display || '—')}</div>
@@ -7311,7 +7356,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <div>
                             <div class="lt-ush-title-name">
                                 <strong>${uzEsc(p.full_name || ((p.first_name || '') + ' ' + (p.last_name || '')))}</strong>
-                                ${p.maiden_name ? `<span class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${uzEsc(p.maiden_name)})</span>` : ''}
+                                ${(p.maiden_name && p.gender !== 'M') ? `<span class="lt-sub is-maiden">(${(currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'урожд.' : 'қыз кезіндегі —'} ${uzEsc(p.maiden_name)})</span>` : ''}
                                 <span class="${isM ? 'gender-badge-m' : 'gender-badge-f'}">${isM ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Мужчина' : 'Ер') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Женщина' : 'Әйел')}</span>
                                 <span class="clan-pill">${window.clanTamga(p.clan_ru)}${uzEsc(p.clan_ru || 'белгісіз')}</span>
                             </div>
@@ -7409,7 +7454,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                                     <span class="uz-avatar-mini ${isDeceased ? 'deceased' : (isM ? 'male' : 'female')}">${uzEsc(initials)}</span>
                                     <div class="lt-ush-person-text">
                                         <span class="lt-ush-person-name" title="${uzEsc(p.full_name)}">${uzEsc(p.full_name)}</span>
-                                        ${p.maiden_name ? `<span class="lt-sub is-maiden">(${uzEsc(p.maiden_name)})</span>` : ''}
+                                        ${(p.maiden_name && p.gender !== 'M') ? `<span class="lt-sub is-maiden">(${uzEsc(p.maiden_name)})</span>` : ''}
                                         <span class="lt-sub">${window.clanTamga(p.clan_ru)}${uzEsc(p.clan_ru || 'белгісіз')}</span>
                                     </div>
                                 </div>

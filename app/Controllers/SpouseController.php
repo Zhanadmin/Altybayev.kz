@@ -189,7 +189,7 @@ class SpouseController
                 $ins->execute([
                     $first,
                     $last,
-                    trim((string)$request->post('maiden_name', '')) ?: null,
+                    $want === 'F' ? (trim((string)$request->post('maiden_name', '')) ?: null) : null,
                     $want,
                     $by,
                     $user['id'] ?? null,

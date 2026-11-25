@@ -203,7 +203,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             <div class="place"><?= htmlspecialchars((string)$person['birth_place']) ?></div>
         <?php endif; ?>
         <div class="chips">
-            <?php if (!empty($person['maiden_name'])): ?>
+            <?php if (!empty($person['maiden_name']) && ($person['gender'] ?? '') === 'F'): ?>
                 <span class="badge maiden-it"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі тегі:' ?> <?= htmlspecialchars((string)$person['maiden_name']) ?></span>
             <?php endif; ?>
         </div>
@@ -613,7 +613,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                         <span class="avatar<?= $pcG($sp, !$isMale) ?><?= !empty($sp['is_deceased']) ? ' deceased' : '' ?>"><?= htmlspecialchars($pcInitials($sp)) ?></span>
                                         <span>
                                             <span class="name"><?= htmlspecialchars($spName) ?></span>
-                                            <?php if (!empty($sp['maiden_name'])): ?>
+                                            <?php if (!empty($sp['maiden_name']) && ($sp['gender'] ?? '') === 'F'): ?>
                                                 <span class="meta maiden-it"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд.' : 'қыз кезіндегі:' ?> <?= htmlspecialchars((string)$sp['maiden_name']) ?></span>
                                             <?php endif; ?>
                                         </span>
@@ -1073,7 +1073,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             <div id="spPaneNew" style="display:none;">
                 <div class="field"><label for="spFirst">Аты / Имя *</label><input type="text" id="spFirst" class="input"></div>
                 <div class="field"><label for="spLast">Тегі / Фамилия</label><input type="text" id="spLast" class="input"></div>
-                <div class="field"><label for="spMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="spMaiden" class="input"></div>
+                <div class="field" id="spMaidenWrap"><label for="spMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="spMaiden" class="input"></div>
                 <div class="field"><label for="spYear">Туған жылы / Год</label><input type="text" id="spYear" class="input"></div>
             </div>
             <div id="spError" class="muted" style="color:var(--c-danger); margin-top:8px;"></div>
@@ -1109,6 +1109,9 @@ window.addEventListener('resize', (function () { var t; return function () { cle
     }
     function openAddSpouseModal() {
         spPicked = 0;
+        // девичья фамилия — только если новый супруг женщина (текущая персона — мужчина)
+        document.getElementById('spMaidenWrap').style.display = <?= json_encode(($person['gender'] ?? '') === 'M') ?> ? '' : 'none';
+        if (<?= json_encode(($person['gender'] ?? '') !== 'M') ?>) { document.getElementById('spMaiden').value = ''; }
         document.getElementById('spError').textContent = '';
         document.getElementById('addSpouseModal').style.display = 'flex';
         spSetMode('existing');
@@ -1211,7 +1214,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             <div id="apPaneNew" style="display:none;">
                 <div class="field"><label for="apFirst">Аты / Имя *</label><input type="text" id="apFirst" class="input"></div>
                 <div class="field"><label for="apLast">Тегі / Фамилия</label><input type="text" id="apLast" class="input"></div>
-                <div class="field"><label for="apMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="apMaiden" class="input"></div>
+                <div class="field" id="apMaidenWrap"><label for="apMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="apMaiden" class="input"></div>
                 <div class="field"><label for="apYear">Туған жылы / Год</label><input type="text" id="apYear" class="input"></div>
             </div>
             <div id="apError" class="muted" style="color:var(--c-danger); margin-top:8px;"></div>
@@ -1227,6 +1230,8 @@ window.addEventListener('resize', (function () { var t; return function () { cle
     let apMode = 'existing', apKind = 'father', apPicked = 0, apTimer = null;
     function openAddParentModal(kind) {
         apKind = kind; apPicked = 0;
+        document.getElementById('apMaidenWrap').style.display = kind === 'mother' ? '' : 'none';
+        if (kind !== 'mother') { document.getElementById('apMaiden').value = ''; }
         document.getElementById('addParentTitle').textContent = kind === 'father' ? 'Әкесін қосу / Добавить отца' : 'Анасын қосу / Добавить мать';
         document.getElementById('apError').textContent = '';
         document.getElementById('addParentModal').style.display = 'flex';

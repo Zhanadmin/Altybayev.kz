@@ -145,7 +145,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
         // Строка-подпись под именем: на узких экранах сюда попадают скрытые колонки
         $metaParts = [];
         $maidenHtml = '';
-        if (!empty($p['maiden_name'])) {
+        if (!empty($p['maiden_name']) && ($p['gender'] ?? '') === 'F') {
             $maidenLbl = (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'урожд. ' : 'қыз кезіндегі: ') . $p['maiden_name'];
             $metaParts[] = $maidenLbl;
             $maidenHtml = '<em class="maiden-it">' . htmlspecialchars($maidenLbl) . '</em>';

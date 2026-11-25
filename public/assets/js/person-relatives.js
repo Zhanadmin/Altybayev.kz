@@ -67,7 +67,8 @@
         ['relFirst', 'relLast', 'relMaiden', 'relYear', 'relSearch'].forEach(function (i) { $(i).value = ''; });
         // пол нужен только новому ребёнку; у супруга он определяется, у родителей задан видом
         show('relGenderWrap', kind === 'child');
-        show('relMaidenWrap', kind !== 'child');
+        // девичья фамилия — только у женщины: мать или супруга мужчины
+        show('relMaidenWrap', kind === 'mother' || (kind === 'spouse' && st.gender === 'M'));
         var g = document.querySelector('input[name="relGender"]:checked');
         if (g) { g.checked = false; }
         // выбор брака — только если действующих браков больше одного

@@ -87,4 +87,4 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/assets/js/person-media-edit.js?v=6" defer></script>
+<script src="/assets/js/person-media-edit.js?v=7" defer></script>

@@ -147,6 +147,8 @@ $dsThemeReady = !empty($dsThemeReady);
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
+    <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
+    <script src="/assets/js/app-dialog.js?v=1"></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=14">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>

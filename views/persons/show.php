@@ -266,6 +266,13 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                     <span><?= $pcRu ? 'Добавить мать' : 'Анасын қосу' ?></span>
                 </button>
                 <?php endif; ?>
+                <?php /* ALT-067: добавить ребёнка (существующего или нового; от какого брака — в диалоге) */ ?>
+                <?php if (in_array($person['gender'] ?? '', ['M', 'F'], true)): ?>
+                <button type="button" class="btn" id="addChildBtn" onclick="relOpenFor(<?= (int)$person['id'] ?>, 'child')">
+                    <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
+                    <span><?= $pcRu ? 'Добавить ребёнка' : 'Баласын қосу' ?></span>
+                </button>
+                <?php endif; ?>
                 <button type="button" class="btn btn-primary" onclick="openGlobalPersonEditModal(<?= (int)$person['id'] ?>)">
                     <svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>
                     <span><?= htmlspecialchars(I18n::t('btn_edit')) ?></span>
@@ -927,7 +934,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
             <?php endif; ?>
 
             <!-- Служебное (только для администратора, свёрнуто) -->
-            <?php if ($isAdmin): /* ALT-004: история изменений этого человека */ ?>
+            <?php if ($isAdmin || (class_exists('App\Core\Auth') && \App\Core\Auth::isEditor())): /* ALT-004/ALT-069: история изменений — админ и редактор */ ?>
                 <details class="island-sub pc-tech" id="personHistory">
                     <summary>
                         <svg class="ic" aria-hidden="true"><use href="#i-history"/></svg>
@@ -946,7 +953,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                         <?php if ($l['entity_table'] !== 'persons'): ?><span class="muted">(<?= htmlspecialchars($l['object_label']) ?>)</span><?php endif; ?>
                                         <?php if (!empty($l['rolled_back'])): ?>
                                             <span class="badge"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'откачено' : 'қайтарылды' ?></span>
-                                        <?php elseif (!empty($l['can_rollback'])): ?>
+                                        <?php elseif (!empty($l['can_rollback']) && $isAdmin): /* откат — только админ (маршрут admin) */ ?>
                                             <button type="button" class="btn btn-sm" onclick="pcRollback(<?= (int)$l['id'] ?>)"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Откатить' : 'Қайтару' ?></button>
                                         <?php endif; ?>
                                     </div>
@@ -954,12 +961,12 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                                 </li>
                             <?php endforeach; ?>
                         </ul>
-                        <p class="small"><a href="/history?person=<?= (int)$person['id'] ?>"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Открыть в журнале изменений →' : 'Өзгерістер журналында ашу →' ?></a></p>
+                        <?php if ($isAdmin): ?><p class="small"><a href="/history?person=<?= (int)$person['id'] ?>"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Открыть в журнале изменений →' : 'Өзгерістер журналында ашу →' ?></a></p><?php endif; ?>
                     <?php endif; ?>
                 </details>
                 <script>
                     async function pcRollback(logId) {
-                        if (!confirm('<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вернуть прежние значения?' : 'Бұрынғы мәндерді қайтару керек пе?' ?>')) return;
+                        if (!(await appConfirm('<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Вернуть прежние значения?' : 'Бұрынғы мәндерді қайтару керек пе?' ?>'))) return;
                         try {
                             const res = await fetch('/api/history/rollback', {
                                 method: 'POST',
@@ -972,6 +979,8 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                         } catch (e) { alert(e.message); }
                     }
                 </script>
+            <?php endif; ?>
+            <?php if ($isAdmin): ?>
                 <details class="island-sub pc-tech">
                     <summary>
                         <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
@@ -1082,12 +1091,12 @@ window.addEventListener('resize', (function () { var t; return function () { cle
     const SP_CSRF = <?= json_encode(\App\Core\Session::csrfToken()) ?>;
     // ALT-051: действующие браки; идём править выбранный
     const SP_ACTIVE = <?= json_encode($spActiveJs ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-    function goEditActiveMarriage() {
+    async function goEditActiveMarriage() {
         if (!SP_ACTIVE.length) { return; }
         let pick = SP_ACTIVE[0];
         if (SP_ACTIVE.length > 1) {
             const list = SP_ACTIVE.map(function (m, i) { return (i + 1) + ' — ' + (m.name || '№' + m.id); }).join('\n');
-            const n = parseInt(window.prompt('Бірнеше әрекеттегі неке / Несколько действующих браков. Какой открыть? Введите номер:\n' + list, '1'), 10);
+            const n = parseInt(await appPrompt('Бірнеше әрекеттегі неке / Несколько действующих браков. Какой открыть? Введите номер:\n' + list, '1'), 10);
             if (!n || n < 1 || n > SP_ACTIVE.length) { return; }
             pick = SP_ACTIVE[n - 1];
         }
@@ -1533,7 +1542,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
 
     async function deletePersonFaceData(personId) {
         const msg = <?= json_encode(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Удалить все отпечатки лица этого человека? Ручные отметки на фото останутся.' : 'Бұл адамның барлық бет бейнелерін өшіру керек пе?', JSON_UNESCAPED_UNICODE) ?>;
-        if (!window.confirm(msg)) return;
+        if (!(await appConfirm(msg))) return;
         try {
             const res = await fetch('/api/face/delete-person', {
                 method: 'POST',

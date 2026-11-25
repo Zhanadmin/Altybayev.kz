@@ -411,8 +411,10 @@ class TreeLayoutService
             $generations[$focalId] = 0;
         }
 
-        // Итеративная релаксация до сходимости
-        for ($iter = 0; $iter < 25; $iter++) {
+        // ALT-070: релаксация вынесена в замыкание — после подъёма корней (родителей жены) её нужно
+        // прогнать заново, иначе братья/сёстры жены остаются на старом (более высоком) ряду.
+        $propagate = function () use (&$generations, $visibleIds, $parentsMap, $spousesMap) {
+        for ($iter = 0; $iter < 40; $iter++) {
             $changed = false;
 
             foreach ($visibleIds as $id) {
@@ -443,8 +445,13 @@ class TreeLayoutService
                     foreach ($spousesMap[$id] ?? [] as $spId) {
                         if (in_array($spId, $visibleIds, true)) {
                             $spGen = $generations[$spId] ?? null;
-                            if ($spGen === null || $spGen !== $effectiveGen) {
+                            if ($spGen === null || $spGen < $effectiveGen) {
                                 $generations[$spId] = $effectiveGen;
+                                $changed = true;
+                            } elseif ($spGen > $effectiveGen) {
+                                // ALT-070: супруги в одном ряду — выравниваем по более глубокому (монотонно, без качелей)
+                                $generations[$id] = $spGen;
+                                $effectiveGen = $spGen;
                                 $changed = true;
                             }
                         }
@@ -454,6 +461,8 @@ class TreeLayoutService
 
             if (!$changed) break;
         }
+        };
+        $propagate();
 
         foreach ($visibleIds as $id) {
             if (!isset($generations[$id])) {
@@ -489,7 +498,9 @@ class TreeLayoutService
                 foreach ($group as $gId) {
                     foreach ($childrenMap[$gId] ?? [] as $cId) {
                         if (isset($visibleSet[$cId])) {
-                            $minChild = ($minChild === null) ? $generations[$cId] : min($minChild, $generations[$cId]);
+                            // ALT-070: берём самого глубокого ребёнка (max), затем пересчитываем вниз —
+                            // все дети пары оказываются в одном ряду, никто не «перепрыгивает» выше
+                            $minChild = ($minChild === null) ? $generations[$cId] : max($minChild, $generations[$cId]);
                         }
                     }
                 }
@@ -504,6 +515,7 @@ class TreeLayoutService
                 }
             }
             if (!$changed) break;
+            $propagate();
         }
 
         return $generations;
@@ -647,23 +659,25 @@ class TreeLayoutService
                     $processed[$spId] = true;
                 }
             } else {
-                // В паре: муж слева, жена справа
-                if ($p['gender'] === 'M') {
-                    $unitMembers = array_merge([$mId], $spousesInGen);
+                // В паре: муж слева, жена справа (ALT-068: всегда, в т.ч. для наших дочерей и сестёр).
+                // Муж определяется по полу; если пол не решает (оба одного пола / не указан) — по записи брака.
+                $sId = $spousesInGen[0];
+                $gP = (string)($p['gender'] ?? '');
+                $gS = (string)($personsById[$sId]['gender'] ?? '');
+                if ($gP === 'M' && $gS !== 'M') {
+                    $unitMembers = [$mId, $sId];
+                } elseif ($gS === 'M' && $gP !== 'M') {
+                    $unitMembers = [$sId, $mId];
+                } elseif ($gP === 'F' && $gS !== 'F') {
+                    $unitMembers = [$sId, $mId];
+                } elseif ($gS === 'F' && $gP !== 'F') {
+                    $unitMembers = [$mId, $sId];
                 } else {
-                    $husbandFirst = null;
-                    $otherSpouses = [];
-                    foreach ($spousesInGen as $sId) {
-                        if (($personsById[$sId]['gender'] ?? 'M') === 'M' && $husbandFirst === null) {
-                            $husbandFirst = $sId;
-                        } else {
-                            $otherSpouses[] = $sId;
-                        }
-                    }
-                    if ($husbandFirst !== null) {
-                        $unitMembers = array_merge([$husbandFirst, $mId], $otherSpouses);
+                    $md0 = $marriageDetails["{$mId}_{$sId}"] ?? null;
+                    if ($md0 && (int)($md0['wife_id'] ?? 0) === $mId && (int)($md0['husband_id'] ?? 0) === $sId) {
+                        $unitMembers = [$sId, $mId];
                     } else {
-                        $unitMembers = array_merge([$mId], $spousesInGen);
+                        $unitMembers = [$mId, $sId];
                     }
                 }
                 $processed[$mId] = true;

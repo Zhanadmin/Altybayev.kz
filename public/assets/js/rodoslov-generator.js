@@ -296,7 +296,9 @@
         } else if (sp.length >= 2) {
             members = [sp[0], pid].concat(sp.slice(1));
         } else {
-            members = [pid, sp[0]];
+            // ALT-068: муж всегда первым
+            var sp0 = model.persons.get(sp[0]);
+            members = (sp0 && sp0.gender === 'M' && p.gender !== 'M') ? [sp[0], pid] : [pid, sp[0]];
         }
 
         var unit = {

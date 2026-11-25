@@ -514,7 +514,7 @@ $adRoleLabels = [
         const msg = AD_RU
             ? 'Отключить доступ? Если человек уже входил, его аккаунт будет заблокирован (данные не удаляются). Потом можно пригласить снова.'
             : 'Қолжетімділікті өшіру керек пе? Егер ол кірген болса, аккаунты бұғатталады (деректер өшірілмейді).';
-        if (!window.confirm(msg)) return;
+        if (!(await appConfirm(msg))) return;
         try {
             await adPost('/api/admin/invitations/revoke', { id });
             showAppToast(AD_RU ? 'Доступ отключён' : 'Қолжетімділік өшірілді', 'success');
@@ -529,7 +529,7 @@ $adRoleLabels = [
         const msg = AD_RU
             ? 'Отвязать аккаунт? Сбросятся привязка к карточке и Google-ID; роль и правки сохранятся. Человек сможет войти заново.'
             : 'Аккаунтты ажырату керек пе? Карточкаға байлану мен Google-ID тазаланады; рөл мен өзгерістер сақталады.';
-        if (!window.confirm(msg)) return;
+        if (!(await appConfirm(msg))) return;
         try {
             await adPost('/api/admin/user/unlink', { user_id: id });
             showAppToast(AD_RU ? 'Аккаунт отвязан' : 'Аккаунт ажыратылды', 'success');
@@ -543,7 +543,7 @@ $adRoleLabels = [
         const msg = AD_RU
             ? 'Удалить пользователя? Запись входа будет удалена, люди в дереве и их данные останутся. При новом входе через Google будет создан новый ID.'
             : 'Пайдаланушыны өшіру керек пе? Кіру жазбасы өшеді, шежіредегі адамдар сақталады.';
-        if (!window.confirm(msg)) return;
+        if (!(await appConfirm(msg))) return;
         try {
             await adPost('/api/admin/user/delete', { user_id: id });
             showAppToast(AD_RU ? 'Пользователь удалён' : 'Пайдаланушы өшірілді', 'success');
@@ -573,7 +573,7 @@ $adRoleLabels = [
             await navigator.clipboard.writeText(text);
             showAppToast(AD_RU ? 'Текст приглашения скопирован — отправьте его человеку' : 'Шақыру мәтіні көшірілді — адамға жіберіңіз', 'success');
         } catch (e) {
-            window.prompt(AD_RU ? 'Скопируйте текст приглашения:' : 'Шақыру мәтінін көшіріңіз:', text);
+            appPrompt(AD_RU ? 'Скопируйте текст приглашения:' : 'Шақыру мәтінін көшіріңіз:', text);
         }
     }
 

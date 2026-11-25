@@ -459,8 +459,8 @@ class PersonController
 
         // 9. Аудит логи
         $auditLogs = [];
-        // ALT-004: вкладка «История изменений» человека — только для администратора
-        if (Auth::isAdmin()) {
+        // ALT-004/ALT-069: вкладка «История изменений» человека — только администратор и редактор (проверка на сервере)
+        if (Auth::isEditor()) {
             try {
                 $clSvc = new \App\Services\ChangeLogService($db, I18n::lang());
                 if ($clSvc->isReady()) {

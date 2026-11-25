@@ -32,6 +32,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <script src="/assets/js/person-delete.js?v=2" defer></script>
+    <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
+    <script src="/assets/js/app-dialog.js?v=1"></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=9">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
@@ -3664,6 +3666,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         <textarea class="form-textarea" id="editBiography" rows="3"></textarea>
                     </div>
 
+                    <?php $relBtnCls = 'btn-modal-cancel'; require __DIR__ . '/layout/person_relatives.php'; /* ALT-067 */ ?>
                     <?php
                     // TASK-022: телефон(ы), email, приглашение
                     $pcfInputCls = 'form-input';
@@ -3697,6 +3700,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             </form>
         </div>
     </div>
+
+    <?php
+    // ALT-067: диалог добавления родственника из окна «Өзгерту»; после сохранения древо обновляется на месте
+    $relBtnCls = 'btn-modal-cancel'; $relBtnPrimaryCls = 'btn-modal-submit'; $relInputCls = 'form-input';
+    $relOnDoneJs = "if (currentMode === 'editing') { await refreshTreeKeepView(parseInt(id)); } else { await initTree(); selectPerson(parseInt(id)); } if (currentMode === 'list') { loadListViewData(); }";
+    require __DIR__ . '/layout/person_relatives_dialog.php';
+    ?>
 
     <!-- МОДАЛЬДЫ ТЕРЕЗЕ: НЕКЕ ЖӘНЕ АЖЫРАСУ ДЕРЕКТЕРІН ӨҢДЕУ -->
     <div class="modal-overlay" id="marriageModal">
@@ -5280,7 +5290,17 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     badge.style.left = `${m.mid_x}px`;
                     badge.style.top = `${m.mid_y}px`;
                     badge.innerHTML = '<svg class="ic"><use href="#t-rings"/></svg>';
-                    badge.title = ruLang ? 'Супружеский союз' : 'Некелік одақ';
+                    badge.title = ruLang ? 'Супружеский союз (двойное нажатие — изменить)' : 'Некелік одақ (екі рет басу — өзгерту)';
+                    badge.style.touchAction = 'manipulation';
+                    // ALT-065: двойное нажатие / двойной тап на кольца — окно правки брака поверх древа
+                    const openThis = (ev) => { ev.stopPropagation(); ev.preventDefault(); openMarriageForEdge(m); };
+                    badge.addEventListener('mousedown', (ev) => ev.stopPropagation());
+                    badge.addEventListener('dblclick', openThis);
+                    let lastTap = 0;
+                    badge.addEventListener('touchend', (ev) => {
+                        const now = Date.now();
+                        if (now - lastTap < 400) { lastTap = 0; openThis(ev); } else { lastTap = now; }
+                    });
                     container.appendChild(badge);
                 });
 
@@ -6718,6 +6738,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 document.getElementById('editBiography').value = p.biography || '';
                 if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
                 if (typeof pmeLoad === 'function') { pmeLoad(p.id, data.media_edit || null); } // TASK-022: фото и обложка
+                if (typeof relLoad === 'function') { relLoad(p.id); } // ALT-067: блок «Туыстар»
 
                 const btnDel = document.getElementById('btnDeletePerson');
                 if (btnDel) {
@@ -6772,11 +6793,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         ? `\n\n⚠ У ${prev.conflict_count} чел. уже указан другой ру (${names}). По умолчанию они НЕ изменятся.`
                         : `\n\n⚠ ${prev.conflict_count} адамда басқа ру көрсетілген (${names}). Әдепкіде ӨЗГЕРМЕЙДІ.`;
                 }
-                if (!confirm(msg)) return;
+                if (!(await appConfirm(msg))) return;
                 if (prev.conflict_count > 0) {
-                    overwrite = confirm(ruLang
+                    overwrite = (await appConfirm(ruLang
                         ? 'Перезаписать и конфликтующие ру тоже? ОК — перезаписать, Отмена — только пустые.'
-                        : 'Қайшы руларды да қайта жазу керек пе? ОК — қайта жазу, Бас тарту — тек бос руларды.') ? 1 : 0;
+                        : 'Қайшы руларды да қайта жазу керек пе? ОК — қайта жазу, Бас тарту — тек бос руларды.')) ? 1 : 0;
                 }
                 const body = new URLSearchParams();
                 body.append('id', id);
@@ -6878,6 +6899,20 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // ========================================================
         // НЕКЕ МӘЛІМЕТТЕРІН ӨҢДЕУ (НЕКЕ / АЖЫРАСУ / МЕРЗІМІ)
         // ========================================================
+        // ALT-065: найти запись брака по ребру древа и открыть окно правки (права как у правки семьи; сервер проверяет ещё раз)
+        function openMarriageForEdge(edge) {
+            const list = (treeData && treeData.marriages) || [];
+            const a = parseInt(edge.husband_id, 10), b = parseInt(edge.wife_id, 10);
+            const found = list.filter(x => {
+                const h = parseInt(x.husband_id, 10), w = parseInt(x.wife_id, 10);
+                return (h === a && w === b) || (h === b && w === a);
+            });
+            if (!found.length) return;
+            const m = found.find(x => String(x.is_current) === '1') || found[0];
+            if (!(canEdit || canEditPersonUi(a) || canEditPersonUi(b))) return;
+            openMarriageModal(m);
+        }
+
         function openMarriageModal(m) {
             document.getElementById('marriageId').value = m.id;
             document.getElementById('marriageStatus').value = m.status || (m.is_current ? 'married' : 'divorced');
@@ -6920,8 +6955,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 const data = await res.json();
                 if (data.status === 'success') {
                     closeMarriageModal();
-                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Данные брака успешно сохранены!' : 'Неке мәліметтері сақталды!');
-                    await initTree();
+                    // ALT-065: древо обновляется на месте (камера и фокус сохраняются); разведённые раскладываются заново
+                    if (currentMode === 'editing' && selectedPersonId) {
+                        await refreshTreeKeepView(selectedPersonId);
+                    } else {
+                        await initTree();
+                    }
                 } else {
                     alert('Қате: ' + (data.error || 'Белгісіз қате'));
                 }

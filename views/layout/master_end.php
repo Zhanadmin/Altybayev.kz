@@ -152,6 +152,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                             <div class="hint" id="editModalBurialNotReady" style="display:none;"><?= $__t('Зират пен карта өрістері дерекқор жаңартылғаннан кейін қосылады', 'Поля кладбища и карты появятся после обновления базы данных') ?></div>
                         </div>
                     </details>
+                    <?php $relBtnCls = 'btn btn-sm'; require __DIR__ . '/person_relatives.php'; /* ALT-067 */ ?>
                     <?php require __DIR__ . '/person_contact_fields.php'; ?>
                     <?php /* ALT-061: удаление — только здесь, в самом низу, неброским блоком; права как в ALT-018 (can_delete с сервера) */ ?>
                     <div id="editModalDangerBlock" style="display:none;margin-top:28px;padding-top:14px;border-top:1px dashed var(--c-border);">
@@ -169,6 +170,13 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             </form>
         </div>
     </div>
+
+    <?php
+    // ALT-067: диалог добавления родственника; если окно правки закрыто (кнопка в карточке) — страница перезагружается
+    $relBtnCls = 'btn'; $relBtnPrimaryCls = 'btn btn-primary'; $relInputCls = 'input';
+    $relOnDoneJs = "var m = document.getElementById('globalPersonEditModal'); if (!m || m.style.display === 'none') { window.location.reload(); }";
+    require __DIR__ . '/person_relatives_dialog.php';
+    ?>
 
     <!-- Уведомления -->
     <div class="toast-stack" id="appToastStack" aria-live="polite"></div>
@@ -447,6 +455,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                         document.getElementById('editModalDeathYear').value = p.death_year || '';
                         if (typeof pcfLoad === 'function') { pcfLoad(p.id, data.contacts || null); } // TASK-022
                         if (typeof pmeLoad === 'function') { pmeLoad(p.id, data.media_edit || null); } // TASK-022: фото и обложка
+                        if (typeof relLoad === 'function') { relLoad(p.id); } // ALT-067: блок «Туыстар»
                         // TASK-022: сам человек (не editor) правит только фото, обложку и контакты; основные поля — только чтение
                         window.__pcFullEdit = !!data.can_edit;
                         document.querySelectorAll('#globalPersonEditForm [id^="editModal"]').forEach(function (el) {

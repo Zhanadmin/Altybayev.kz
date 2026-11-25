@@ -74,8 +74,10 @@
                     } else if (act === 'unassign') {
                         post('/api/face/cluster/unassign', { cluster_id: clusterId }).then(function () { reloadSoon(); }).catch(function (e) { toast(e.message, 'error'); });
                     } else if (act === 'delete-person') {
-                        if (!window.confirm(t('confirm_delete'))) { return; }
-                        post('/api/face/delete-person', { person_id: personId }).then(function () { toast(t('removed')); reloadSoon(); }).catch(function (e) { toast(e.message, 'error'); });
+                        appConfirm(t('confirm_delete'), { danger: true }).then(function (yes) {
+                            if (!yes) { return; }
+                            post('/api/face/delete-person', { person_id: personId }).then(function () { toast(t('removed')); reloadSoon(); }).catch(function (e) { toast(e.message, 'error'); });
+                        });
                     }
                 });
             });

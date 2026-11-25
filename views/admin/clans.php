@@ -245,7 +245,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         say(RU ? 'Сохранено' : 'Сақталды', true); reloadSoon();
     });
     document.getElementById('clRmTamga').addEventListener('click', async () => {
-        if (!cur || !confirm(RU ? 'Убрать знак у «' + cur.name + '»?' : '«' + cur.name + '» таңбасын алу?')) return;
+        if (!cur || !(await appConfirm(RU ? 'Убрать знак у «' + cur.name + '»?' : '«' + cur.name + '» таңбасын алу?'))) return;
         const j = await post('/api/clans/tamga/delete', fdOf({ id: cur.id }));
         if (j.success) { say(RU ? 'Знак убран' : 'Таңба алынды', true); reloadSoon(); } else say(j.error || 'Error', false);
     });
@@ -305,7 +305,7 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         const t = ev.target.closest('[data-act]'); if (!t) return;
         const d = JSON.parse(t.closest('.cl-row').dataset.json);
         if (t.dataset.act === 'edit') openDlg(d);
-        else if (t.dataset.act === 'delete' && confirm(RU ? 'Удалить ру «' + d.name + '»?' : '«' + d.name + '» руын өшіру?')) {
+        else if (t.dataset.act === 'delete' && await appConfirm(RU ? 'Удалить ру «' + d.name + '»?' : '«' + d.name + '» руын өшіру?')) {
             const j = await post('/api/clans/delete', fdOf({ id: d.id }));
             const lm = document.getElementById('clListMsg');
             if (j.success) { lm.textContent = RU ? 'Удалено' : 'Өшірілді'; lm.className = 'cl-msg ok'; reloadSoon(); }

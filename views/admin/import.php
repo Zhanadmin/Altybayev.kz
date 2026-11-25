@@ -151,7 +151,7 @@ require __DIR__ . '/../layout/master_start.php';
                 </p>
             </div>
 
-            <form action="/admin/import/execute" method="POST" onsubmit="return confirm('Шежірені базаға жазуды растайсыз ба? (Барлығы <?= (int)($preview['stats']['total_persons'] ?? 0) ?> адам қосылады/жаңартылады)');">
+            <form action="/admin/import/execute" method="POST" data-app-confirm="Шежірені базаға жазуды растайсыз ба? (Барлығы <?= (int)($preview['stats']['total_persons'] ?? 0) ?> адам қосылады/жаңартылады)">
                 <input type="hidden" name="file" value="<?= htmlspecialchars($preview['file_name'] ?? '') ?>">
                 <button type="submit" class="btn btn-accent ad-exec-btn">
                     <svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg><span>Дерекқорға импорттау / Импортировать</span>
@@ -409,7 +409,7 @@ require __DIR__ . '/../layout/master_start.php';
                                 <td class="small"><?= htmlspecialchars($h['summary']) ?></td>
                                 <td class="actions">
                                     <?php if ($h['action'] === 'IMPORT_GEDCOM' && !empty($h['payload']['batch_id'])): ?>
-                                        <form action="/admin/import/rollback" method="POST" onsubmit="return confirm('<?= htmlspecialchars($h['payload']['batch_id']) ?> импортын кері қайтаруды (откат) растайсыз ба? Қосылған персондар базадан жойылады.');">
+                                        <form action="/admin/import/rollback" method="POST" data-app-confirm="<?= htmlspecialchars($h['payload']['batch_id']) ?> импортын кері қайтаруды (откат) растайсыз ба? Қосылған персондар базадан жойылады.">
                                             <input type="hidden" name="batch_id" value="<?= htmlspecialchars($h['payload']['batch_id']) ?>">
                                             <button type="submit" class="btn btn-sm btn-danger" aria-label="Откатить импорт">
                                                 <svg class="ic" aria-hidden="true"><use href="#i-history"/></svg><span>Откатить импорт</span>

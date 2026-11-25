@@ -124,10 +124,12 @@
     });
     document.querySelectorAll('[data-delete-api]').forEach(function (b) {
         b.addEventListener('click', function () {
-            if (!confirm(b.getAttribute('data-confirm') || t('confirm_delete'))) return;
-            post(b.getAttribute('data-delete-api'), { id: b.getAttribute('data-id') }).then(function (res) {
-                window.location.href = res.url || '/';
-            }).catch(function (err) { toast(err.message); });
+            appConfirm(b.getAttribute('data-confirm') || t('confirm_delete'), { danger: true }).then(function (yes) {
+                if (!yes) return;
+                post(b.getAttribute('data-delete-api'), { id: b.getAttribute('data-id') }).then(function (res) {
+                    window.location.href = res.url || '/';
+                }).catch(function (err) { toast(err.message); });
+            });
         });
     });
     document.querySelectorAll('[data-open-modal]').forEach(function (b) {
@@ -507,15 +509,18 @@
 
     function delCur() {
         var it = items[cur];
-        if (!it || !confirm(t('confirm_delete_media'))) return;
-        post('/api/album/media/delete', { id: it.id }).then(function () {
-            items.splice(cur, 1);
-            renderGrid();
-            if (!items.length) { closeLb(); return; }
-            if (cur >= items.length) cur = items.length - 1;
-            showCur();
-            toast(t('deleted'), 'success');
-        }).catch(function (err) { toast(err.message); });
+        if (!it) return;
+        appConfirm(t('confirm_delete_media'), { danger: true }).then(function (yes) {
+            if (!yes) return;
+            post('/api/album/media/delete', { id: it.id }).then(function () {
+                items.splice(cur, 1);
+                renderGrid();
+                if (!items.length) { closeLb(); return; }
+                if (cur >= items.length) cur = items.length - 1;
+                showCur();
+                toast(t('deleted'), 'success');
+            }).catch(function (err) { toast(err.message); });
+        });
     }
 
     var editForm = document.getElementById('alEditForm');

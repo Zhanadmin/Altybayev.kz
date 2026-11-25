@@ -151,6 +151,13 @@ class SpouseController
             }
             $want = $target['gender'] === 'M' ? 'F' : 'M';
 
+            // ALT-078: необязательная дата заключения брака
+            $marriageDate = TreeController::normalizeMarriageDate((string)$request->post('marriage_date', ''));
+            if ($marriageDate === false) {
+                Response::json(['error' => 'Күні дұрыс емес / Неверная дата брака'], 422);
+                return;
+            }
+
             if ($mode === 'existing') {
                 $spouseId = (int)$request->post('spouse_id', 0);
                 $spouse = $spouseId > 0 && $spouseId !== $targetId ? $this->loadTarget($db, $spouseId) : null;
@@ -202,8 +209,8 @@ class SpouseController
 
             $husbandId = $target['gender'] === 'M' ? $targetId : $newId;
             $wifeId = $target['gender'] === 'M' ? $newId : $targetId;
-            $db->prepare("INSERT INTO marriages (husband_id, wife_id, is_current, status, created_at) VALUES (?, ?, 1, 'married', NOW())")
-                ->execute([$husbandId, $wifeId]);
+            $db->prepare("INSERT INTO marriages (husband_id, wife_id, marriage_date, start_date, is_current, status, created_at) VALUES (?, ?, ?, ?, 1, 'married', NOW())")
+                ->execute([$husbandId, $wifeId, $marriageDate, $marriageDate]);
             $marriageId = (int)$db->lastInsertId();
 
             try {

@@ -42,6 +42,10 @@ $inp = $h($relInputCls);
             </div>
             <div style="margin-bottom:8px;"><label for="relYear" style="display:block; margin-bottom:4px;">Туған жылы / Год</label><input type="text" id="relYear" class="<?= $inp ?>"></div>
         </div>
+        <div id="relMarriageDateWrap" style="display:none; margin-top:8px;">
+            <label for="relMarriageDate" style="display:block; margin-bottom:4px;">Неке күні / Дата заключения брака (міндетті емес / необязательно)</label>
+            <input type="date" id="relMarriageDate" class="<?= $inp ?>">
+        </div>
         <div id="relError" style="color:var(--c-danger, #c0392b); margin-top:8px;"></div>
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
             <button type="button" class="<?= $h($relBtnCls) ?>" onclick="relClose()">Бас тарту / Отмена</button>
@@ -57,4 +61,4 @@ $inp = $h($relInputCls);
         onDone: async function (id) { <?= $relOnDoneJs ?> }
     };
 </script>
-<script src="/assets/js/person-relatives.js?v=1"></script>
+<script src="/assets/js/person-relatives.js?v=2"></script>

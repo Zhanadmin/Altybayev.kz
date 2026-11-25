@@ -1076,6 +1076,10 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <div class="field" id="spMaidenWrap"><label for="spMaiden">Қыз кезіндегі тегі / Девичья фамилия</label><input type="text" id="spMaiden" class="input"></div>
                 <div class="field"><label for="spYear">Туған жылы / Год</label><input type="text" id="spYear" class="input"></div>
             </div>
+            <div class="field" style="margin-top:8px;">
+                <label for="spMarriageDate">Неке күні / Дата заключения брака (міндетті емес / необязательно)</label>
+                <input type="date" id="spMarriageDate" class="input">
+            </div>
             <div id="spError" class="muted" style="color:var(--c-danger); margin-top:8px;"></div>
         </div>
         <div class="modal-foot">
@@ -1113,6 +1117,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
         document.getElementById('spMaidenWrap').style.display = <?= json_encode(($person['gender'] ?? '') === 'M') ?> ? '' : 'none';
         if (<?= json_encode(($person['gender'] ?? '') !== 'M') ?>) { document.getElementById('spMaiden').value = ''; }
         document.getElementById('spError').textContent = '';
+        document.getElementById('spMarriageDate').value = '';
         document.getElementById('addSpouseModal').style.display = 'flex';
         spSetMode('existing');
         spLoad('');
@@ -1168,6 +1173,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
         f.append('csrf_token', SP_CSRF);
         f.append('target_id', SP_TARGET);
         f.append('mode', spMode);
+        f.append('marriage_date', document.getElementById('spMarriageDate').value);
         if (spMode === 'existing') {
             if (!spPicked) { err.textContent = 'Тізімнен таңдаңыз / Выберите человека из списка'; return; }
             f.append('spouse_id', spPicked);

@@ -67,6 +67,9 @@
         ['relFirst', 'relLast', 'relMaiden', 'relYear', 'relSearch'].forEach(function (i) { $(i).value = ''; });
         // пол нужен только новому ребёнку; у супруга он определяется, у родителей задан видом
         show('relGenderWrap', kind === 'child');
+        // ALT-078: дата заключения брака — только при добавлении супруга
+        show('relMarriageDateWrap', kind === 'spouse');
+        if ($('relMarriageDate')) { $('relMarriageDate').value = ''; }
         // девичья фамилия — только у женщины: мать или супруга мужчины
         show('relMaidenWrap', kind === 'mother' || (kind === 'spouse' && st.gender === 'M'));
         var g = document.querySelector('input[name="relGender"]:checked');
@@ -167,6 +170,7 @@
         } else if (st.kind === 'spouse') {
             url = '/api/person/add-spouse';
             if (st.mode === 'existing') { f.append('spouse_id', st.picked); }
+            f.append('marriage_date', $('relMarriageDate') ? $('relMarriageDate').value : '');
         } else {
             url = '/api/person/add-child';
             if (st.mode === 'existing') { f.append('child_id', st.picked); }

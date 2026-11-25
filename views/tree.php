@@ -35,6 +35,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <script src="/assets/js/person-delete.js?v=2" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
     <script src="/assets/js/app-dialog.js?v=1"></script>
+    <script src="/assets/js/marriage-date.js?v=1"></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=9">
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <style>
@@ -3742,12 +3743,12 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                     <div class="form-row-2">
                         <div class="form-group">
-                            <label>Неке басталған жылы/күні</label>
-                            <input type="text" class="form-input" id="marriageStartDate">
+                            <label for="marriageStartDate">Неке күні / Дата заключения</label>
+                            <input type="date" class="form-input" id="marriageStartDate">
                         </div>
                         <div class="form-group">
-                            <label>Аяқталған / Ажырасқан жылы</label>
-                            <input type="text" class="form-input" id="marriageEndDate">
+                            <label for="marriageEndDate">Ажырасқан күні / Дата развода</label>
+                            <input type="date" class="form-input" id="marriageEndDate">
                         </div>
                     </div>
 
@@ -7017,8 +7018,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         function openMarriageModal(m) {
             document.getElementById('marriageId').value = m.id;
             document.getElementById('marriageStatus').value = m.status || (m.is_current ? 'married' : 'divorced');
-            document.getElementById('marriageStartDate').value = m.start_date || m.marriage_date || '';
-            document.getElementById('marriageEndDate').value = m.end_date || m.divorce_date || '';
+            mdSet(document.getElementById('marriageStartDate'), m.start_date || m.marriage_date || '');
+            mdSet(document.getElementById('marriageEndDate'), m.end_date || m.divorce_date || '');
             document.getElementById('marriageNotes').value = m.notes || '';
 
             let husbandName = 'Күйеуі';
@@ -7043,8 +7044,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             const formData = new URLSearchParams();
             formData.append('id', id);
             formData.append('status', document.getElementById('marriageStatus').value);
-            formData.append('start_date', document.getElementById('marriageStartDate').value.trim());
-            formData.append('end_date', document.getElementById('marriageEndDate').value.trim());
+            formData.append('start_date', mdGet(document.getElementById('marriageStartDate')));
+            formData.append('end_date', mdGet(document.getElementById('marriageEndDate')));
             formData.append('notes', document.getElementById('marriageNotes').value.trim());
 
             try {

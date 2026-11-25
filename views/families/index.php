@@ -354,11 +354,11 @@ document.addEventListener('click', function (e) {
                 <div class="form-row">
                     <div class="field">
                         <label for="editMarriageStartDate"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата брака' : 'Неке күні' ?></label>
-                        <input type="text" id="editMarriageStartDate" class="input">
+                        <input type="date" id="editMarriageStartDate" class="input">
                     </div>
                     <div class="field" id="editMarriageEndField" style="display:none">
                         <label for="editMarriageEndDate"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Дата развода' : 'Ажырасқан күні' ?></label>
-                        <input type="text" id="editMarriageEndDate" class="input">
+                        <input type="date" id="editMarriageEndDate" class="input">
                     </div>
                 </div>
                 <div class="field">
@@ -374,12 +374,13 @@ document.addEventListener('click', function (e) {
     </div>
 </div>
 
+<script src="/assets/js/marriage-date.js?v=1"></script>
 <script>
     function openMarriageEditModal(id, status, startDate, endDate, notes) {
         document.getElementById('editMarriageId').value = id;
         document.getElementById('editMarriageDivorced').checked = (status === 'divorced' || !!endDate);
-        document.getElementById('editMarriageStartDate').value = startDate || '';
-        document.getElementById('editMarriageEndDate').value = endDate || '';
+        mdSet(document.getElementById('editMarriageStartDate'), startDate);
+        mdSet(document.getElementById('editMarriageEndDate'), endDate);
         toggleMarriageDivorce();
         document.getElementById('editMarriageNotes').value = notes || '';
         document.getElementById('marriageEditModal').style.display = 'flex';
@@ -405,7 +406,7 @@ document.addEventListener('click', function (e) {
     function toggleMarriageDivorce() {
         const on = document.getElementById('editMarriageDivorced').checked;
         document.getElementById('editMarriageEndField').style.display = on ? '' : 'none';
-        if (!on) { document.getElementById('editMarriageEndDate').value = ''; }
+        if (!on) { mdClear(document.getElementById('editMarriageEndDate')); }
     }
 
     function closeMarriageEditModal() {
@@ -423,8 +424,8 @@ document.addEventListener('click', function (e) {
         formData.append('id', id);
         const divorced = document.getElementById('editMarriageDivorced').checked;
         formData.append('status', divorced ? 'divorced' : 'married');
-        formData.append('start_date', document.getElementById('editMarriageStartDate').value.trim());
-        formData.append('end_date', divorced ? document.getElementById('editMarriageEndDate').value.trim() : '');
+        formData.append('start_date', mdGet(document.getElementById('editMarriageStartDate')));
+        formData.append('end_date', divorced ? mdGet(document.getElementById('editMarriageEndDate')) : '');
         formData.append('notes', document.getElementById('editMarriageNotes').value.trim());
 
         try {

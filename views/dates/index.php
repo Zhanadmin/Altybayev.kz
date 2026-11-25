@@ -146,7 +146,8 @@ require __DIR__ . '/../layout/master_start.php';
                                 <?php elseif ($type === 'death_anniversary'): ?>
                                     <span class="pc-accent"><?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($ev['memorial_label_ru'] ?? '') : ($ev['memorial_label_kk'] ?? '')) ?></span>
                                 <?php elseif ($type === 'wedding'): ?>
-                                    <?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($ev['jubilee_ru'] ?? '') : ($ev['jubilee_kk'] ?? '')) ?>
+                                    <?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($ev['anniversary_text_ru'] ?? '') : ($ev['anniversary_text_kk'] ?? '')) ?>
+                                    <div class="meta"><?= htmlspecialchars(($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($ev['jubilee_ru'] ?? '') : ($ev['jubilee_kk'] ?? '')) ?></div>
                                 <?php endif; ?>
                             </div>
                         </div>

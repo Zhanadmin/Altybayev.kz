@@ -470,13 +470,20 @@ class MemorialService
         $currentYear = (int)$today->format('Y');
 
         foreach ($mRows as $m) {
-            $rawDate = $m['marriage_date'] ?: $m['start_date'];
+            // ALT-078: только действующие браки (нет развода/окончания)
+            if (($m['status'] ?? 'married') !== 'married'
+                || trim((string)($m['divorce_date'] ?? '')) !== ''
+                || trim((string)($m['end_date'] ?? '')) !== '') {
+                continue;
+            }
+            $rawDate = ($m['marriage_date'] ?? '') ?: ($m['start_date'] ?? '');
             if (!$rawDate) {
                 continue;
             }
 
+            // ALT-078: известен только год (нет дня и месяца) — годовщину не показываем
             $parsed = $this->parseFlexibleDate($rawDate);
-            if (!$parsed || empty($parsed['month']) || empty($parsed['day'])) {
+            if (!$parsed || empty($parsed['month']) || empty($parsed['day']) || empty($parsed['year'])) {
                 continue;
             }
 
@@ -484,8 +491,14 @@ class MemorialService
             $wId = (int)($m['wife_id'] ?? 0);
             $husband = $this->allPersonsMapCache[$hId] ?? null;
             $wife = $this->allPersonsMapCache[$wId] ?? null;
-            if (!$husband && !$wife) {
+            if (!$husband || !$wife) {
                 continue;
+            }
+            // ALT-078: оба супруга должны быть живы
+            foreach ([$husband, $wife] as $sp) {
+                if (!empty($sp['is_deceased']) || trim((string)($sp['death_date'] ?? '')) !== '') {
+                    continue 2;
+                }
             }
 
             $mMonth = $parsed['month'];
@@ -508,7 +521,10 @@ class MemorialService
                 continue;
             }
 
-            $yearsMarried = $mYear ? ((int)$nextW->format('Y') - $mYear) : 0;
+            $yearsMarried = (int)$nextW->format('Y') - (int)$mYear;
+            if ($yearsMarried < 1) {
+                continue; // дата в будущем или год заключения ещё не прошёл
+            }
             $jubilee = $this->getWeddingJubilee($yearsMarried);
             $dayMonth = $this->formatDayMonth($mDay, $mMonth);
 
@@ -559,6 +575,8 @@ class MemorialService
                 'is_today'            => ($daysUntil === 0),
                 'is_tomorrow'         => ($daysUntil === 1),
                 'years_married'       => $yearsMarried,
+                'anniversary_text_ru' => $coupleNameRu . ' — ' . $yearsMarried . ' ' . $this->pluralRu($yearsMarried, 'год', 'года', 'лет') . ' со дня свадьбы',
+                'anniversary_text_kk' => $coupleNameKk . ' — үйленгеніне ' . $yearsMarried . ' жыл',
                 'jubilee_kk'          => $jubilee['kk'],
                 'jubilee_ru'          => $jubilee['ru'],
                 'kinship_kk'          => $kinshipKk,
@@ -570,6 +588,20 @@ class MemorialService
 
         usort($events, fn($a, $b) => $a['days_until'] <=> $b['days_until']);
         return $events;
+    }
+
+    /** ALT-078: русское склонение числительного (1 год, 2 года, 5 лет) */
+    protected function pluralRu(int $n, string $one, string $few, string $many): string
+    {
+        $n = abs($n) % 100;
+        $d = $n % 10;
+        if ($n > 10 && $n < 20) {
+            return $many;
+        }
+        if ($d === 1) {
+            return $one;
+        }
+        return ($d >= 2 && $d <= 4) ? $few : $many;
     }
 
     /**

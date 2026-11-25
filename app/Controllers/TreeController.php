@@ -1265,6 +1265,29 @@ class TreeController
     }
 
     /**
+     * ALT-078: дата брака/развода. '' → null; ГГГГ-ММ-ДД и ДД.ММ.ГГГГ → ГГГГ-ММ-ДД (проверяется календарём);
+     * ГГГГ и прежний произвольный текст — как есть; false — дата в полном формате, но несуществующая.
+     */
+    public static function normalizeMarriageDate(string $raw): string|false|null
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return null;
+        }
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $raw, $m)) {
+            [$y, $mo, $d] = [(int)$m[1], (int)$m[2], (int)$m[3]];
+        } elseif (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $raw, $m)) {
+            [$y, $mo, $d] = [(int)$m[3], (int)$m[2], (int)$m[1]];
+        } else {
+            return mb_substr($raw, 0, 50);
+        }
+        if ($y < 1000 || !checkdate($mo, $d, $y)) {
+            return false;
+        }
+        return sprintf('%04d-%02d-%02d', $y, $mo, $d);
+    }
+
+    /**
      * API: Редактирование брака / развода
      */
     public function apiMarriageUpdate(Request $request): void
@@ -1281,8 +1304,17 @@ class TreeController
         }
 
         $status = trim((string)$request->get('status', 'married'));
-        $startDate = trim((string)$request->get('start_date', '')) ?: null;
-        $endDate = trim((string)$request->get('end_date', '')) ?: null;
+        // ALT-078: полная дата хранится как ГГГГ-ММ-ДД; только год и прежний текст остаются как есть
+        $startDate = self::normalizeMarriageDate((string)$request->get('start_date', ''));
+        $endDate = self::normalizeMarriageDate((string)$request->get('end_date', ''));
+        if ($startDate === false || $endDate === false) {
+            Response::json(['error' => 'Күні дұрыс емес / Неверная дата'], 422);
+            return;
+        }
+        if ($startDate !== null && $endDate !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate) && $endDate < $startDate) {
+            Response::json(['error' => 'Ажырасу күні неке күнінен ерте болмауы керек / Развод не может быть раньше брака'], 422);
+            return;
+        }
         $notes = trim((string)$request->get('notes', '')) ?: null;
         $isCurrent = ($status === 'divorced' || $status === 'widowed' || $endDate !== null) ? 0 : 1;
 

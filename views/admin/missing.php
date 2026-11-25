@@ -40,34 +40,42 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
 .ms-counter.active { background: var(--c-accent, #2a6df4); color: #fff; border-color: transparent; }
 .ms-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ms-filters select { height: 42px; font: inherit; }
-/* ALT-109: ровные колонки по видам данных */
-.ms-table { width: 100%; min-width: 1380px; border-collapse: collapse; table-layout: fixed; }
-.ms-table th, .ms-table td { padding: 12px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
-.ms-table th { opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ms-table tbody tr:hover { background: rgba(128,128,128,.05); }
-.ms-chip { display: inline-flex; align-items: center; height: 38px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; white-space: nowrap; background: rgba(128,128,128,.08); }
-.ms-table .ms-c-name, .ms-table .ms-c-gen, .ms-table .ms-c-edit { vertical-align: middle; }
-.ms-table .ms-c-name { width: 17%; overflow-wrap: anywhere; }
-.ms-table .ms-c-gen { width: 8%; }
-.ms-table .ms-c-photo, .ms-table .ms-c-zheti { width: 9%; }
-.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 9%; min-width: 120px; }
-.ms-table .ms-c-nationality, .ms-table .ms-c-clan { width: 10%; }
-.ms-table .ms-c-marriage { width: 13%; }
-.ms-table .ms-c-other { width: 12%; }
-.ms-table .ms-c-edit { width: 8%; text-align: center; }
+/* ALT-110: настоящая таблица — сетка, шапка, чередование строк, всё по центру */
+.ms-table { width: 100%; min-width: 1960px; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--c-border, #cfcfcf); }
+.ms-table th, .ms-table td { padding: 8px 10px; text-align: left; vertical-align: middle; border: 1px solid var(--c-border, #cfcfcf); font-weight: 400; }
+.ms-table th { font-weight: 600; font-size: 14px; line-height: 1.25; background: rgba(128,128,128,.14); white-space: normal; overflow-wrap: anywhere; }
+.ms-table tbody tr { height: 64px; }
+.ms-table tbody tr:nth-child(even) { background: rgba(128,128,128,.07); }
+.ms-table tbody tr:hover { background: rgba(128,128,128,.14); }
+.ms-chip { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; white-space: nowrap; background: rgba(128,128,128,.08); }
+.ms-table .ms-c-name { width: 190px; overflow-wrap: anywhere; }
+.ms-table .ms-c-gen { width: 130px; }
+.ms-table .ms-c-photo { width: 170px; }
+.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 150px; }
+.ms-table .ms-c-nationality { width: 180px; }
+.ms-table .ms-c-clan { width: 150px; }
+.ms-table .ms-c-marriage { width: 160px; }
+.ms-table .ms-c-parents { width: 210px; }
+.ms-table .ms-c-contacts { width: 130px; }
+.ms-table .ms-c-other { width: 180px; }
+.ms-table .ms-c-zheti { width: 120px; }
+.ms-table .ms-c-edit { width: 120px; text-align: center; }
 /* ALT-107: поля прямо в ячейках */
-.ms-stack { display: flex; flex-direction: column; gap: 8px; }
-.ms-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.ms-lab { display: block; font-size: 13px; line-height: 18px; height: 18px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ms-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; height: 38px; white-space: nowrap; }
-.ms-in { width: 100%; box-sizing: border-box; height: 38px; min-height: 38px; padding: 6px 10px; font: inherit; font-size: 15px; border: 1px solid var(--c-border, #ccc); border-radius: 8px; background: var(--c-surface, transparent); color: inherit; text-overflow: ellipsis; }
+.ms-stack { display: flex; flex-direction: column; gap: 6px; }
+.ms-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ms-note { display: block; font-size: 11px; line-height: 14px; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; height: 34px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+.ms-in { width: 100%; box-sizing: border-box; height: 34px; min-height: 34px; padding: 4px 8px; font: inherit; font-size: 14px; border: 1px solid var(--c-border, #ccc); border-radius: 6px; background: var(--c-surface, transparent); color: inherit; text-overflow: clip; }
+.ms-ro { display: block; text-decoration: none; }
+.ms-ro .ms-in { cursor: pointer; }
 @media (max-width: 900px) {
-    .ms-table { min-width: 0; display: block; }
+    .ms-table { min-width: 0; display: block; border: 0; }
     .ms-table thead { display: none; }
     .ms-table tbody { display: flex; flex-direction: column; gap: 12px; }
-    .ms-table tbody tr { display: flex; flex-wrap: wrap; gap: 10px 14px; padding: 12px; border: 1px solid var(--c-border, #e3e3e3); border-radius: 10px; }
+    .ms-table tbody tr { display: flex; flex-wrap: wrap; gap: 10px 14px; padding: 12px; height: auto; border: 1px solid var(--c-border, #e3e3e3); border-radius: 10px; }
     .ms-table td { display: block; border: 0; padding: 0; width: auto; min-width: 0; flex: 1 1 160px; }
     .ms-table td:empty { display: none; }
+    .ms-table td[data-label]:not(:empty)::before { content: attr(data-label); display: block; font-size: 12px; opacity: .7; margin-bottom: 2px; }
     .ms-table .ms-c-name { flex-basis: 100%; font-weight: 600; }
     .ms-table .ms-c-gen { flex-basis: 100%; opacity: .7; }
     .ms-table .ms-c-edit { flex-basis: 100%; text-align: left; }
@@ -153,11 +161,13 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
                 <th class="ms-c-name"><?= $e($T(['kk' => 'Адам', 'ru' => 'Человек', 'en' => 'Person', 'es' => 'Persona'])) ?></th>
                 <th class="ms-c-gen"><?= $e($T(['kk' => 'Ұрпақ', 'ru' => 'Поколение', 'en' => 'Generation', 'es' => 'Generación'])) ?></th>
                 <th class="ms-c-photo"><?= $e($T($gapLabels['photo'])) ?></th>
-                <th class="ms-c-birth"><?= $e($T(['kk' => 'Туған күні', 'ru' => 'Дата рожд.', 'en' => 'Birth', 'es' => 'Nacimiento'])) ?></th>
+                <th class="ms-c-birth"><?= $e($T($gapLabels['birth'])) ?></th>
                 <th class="ms-c-nationality"><?= $e($T($gapLabels['nationality'])) ?></th>
                 <th class="ms-c-clan"><?= $e($T(['kk' => 'Ру', 'ru' => 'Ру', 'en' => 'Clan', 'es' => 'Clan'])) ?></th>
                 <th class="ms-c-marriage"><?= $e($T($gapLabels['marriage'])) ?></th>
-                <th class="ms-c-death"><?= $e($T(['kk' => 'Қайтыс болған', 'ru' => 'Дата смерти', 'en' => 'Death', 'es' => 'Muerte'])) ?></th>
+                <th class="ms-c-death"><?= $e($T($gapLabels['death'])) ?></th>
+                <th class="ms-c-parents"><?= $e($T(['kk' => 'Ата-ана', 'ru' => 'Родители', 'en' => 'Parents', 'es' => 'Padres'])) ?></th>
+                <th class="ms-c-contacts"><?= $e($T($gapLabels['contacts'])) ?></th>
                 <th class="ms-c-other"><?= $e($T(['kk' => 'Басқа', 'ru' => 'Другое', 'en' => 'Other', 'es' => 'Otros'])) ?></th>
                 <th class="ms-c-zheti"><?= $e($T(['kk' => 'Жеті ата', 'ru' => 'Жеті ата', 'en' => 'Seven fathers', 'es' => 'Siete padres'])) ?></th>
                 <th class="ms-c-edit"></th>

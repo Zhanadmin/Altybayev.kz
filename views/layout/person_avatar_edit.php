@@ -51,4 +51,4 @@ window.PME_T = {
     replace: <?= $paJs('pme_replace_photo') ?>
 };
 </script>
-<script src="/assets/js/person-media-edit.js?v=7" defer></script>
+<script src="/assets/js/person-media-edit.js?v=8" defer></script>

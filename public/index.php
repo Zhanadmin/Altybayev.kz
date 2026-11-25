@@ -78,6 +78,8 @@ $router->post('/api/history/rollback', 'App\Controllers\HistoryController@rollba
 // TASK-030: справочник ру с таңба-знаками (editor и admin)
 $router->get('/admin/clans', 'App\Controllers\ClanController@index', ['auth', 'editor']);
 $router->get('/admin/missing', 'App\Controllers\MissingDataController@index', ['auth', 'editor']); // ALT-098: что не заполнено
+$router->post('/api/admin/missing/save', 'App\Controllers\MissingDataController@save', ['auth', 'editor']); // ALT-107: заполнить поле прямо в таблице
+$router->get('/api/admin/missing/state', 'App\Controllers\MissingDataController@state', ['auth', 'editor']); // ALT-107: свежая строка
 $router->get('/api/clans','App\Controllers\ClanController@list', ['auth']);
 $router->post('/api/clans/save', 'App\Controllers\ClanController@save', ['auth', 'editor']);
 $router->post('/api/clans/delete', 'App\Controllers\ClanController@delete', ['auth', 'editor']);

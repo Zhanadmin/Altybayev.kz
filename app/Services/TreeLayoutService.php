@@ -790,7 +790,15 @@ class TreeLayoutService
                 return empty($idxs) ? 0.0 : array_sum($idxs) / count($idxs);
             };
             $multi = count($parentMembers) > 2;
-            usort($childrenUnitList, function ($cuA, $cuB) use ($childOfParent, $anchorIdx, $multi) {
+            usort($childrenUnitList, function ($cuA, $cuB) use ($childOfParent, $anchorIdx, $multi, $units, $parentMembers, $parentsMap, $marriageDetails) {
+                // ALT-108: дети от прошлых браков (второй родитель вне юнита) — левее общих детей пары
+                // (правее, если пара распалась)
+                $sA = !$multi && $this->isStepChildUnit($parentMembers, $units[$cuA], $parentsMap);
+                $sB = !$multi && $this->isStepChildUnit($parentMembers, $units[$cuB], $parentsMap);
+                if ($sA !== $sB) {
+                    $left = $this->hasActivePair($parentMembers, $marriageDetails);
+                    return ($sA === $left) ? -1 : 1;
+                }
                 $a = $childOfParent($cuA);
                 $b = $childOfParent($cuB);
                 if ($multi) {
@@ -847,7 +855,7 @@ class TreeLayoutService
         $firstRoot = true;
         foreach ($rootUnits as $rId) {
             if (isset($claimed[$rId])) continue;
-            $sub = $this->packUnitSubtree($rId, $units, $claimed);
+            $sub = $this->packUnitSubtree($rId, $units, $claimed, $parentsMap, $marriageDetails);
             $shift = $prevRootX;
             if (!$firstRoot) {
                 $need = null;
@@ -1025,29 +1033,36 @@ class TreeLayoutService
             // бывшие мужья и дети прошлых браков не попадают в рамку действующей семьи.
             if (!empty($u['children_units']) && count($u['members']) > 2) {
                 $mem = $u['members'];
+                // ALT-108: группа = действующая пара (обе карточки) или один бывший муж/жена (только его карточка)
                 $pairKids = [];
+                $groupCards = []; // ключ группы => [индексы карточек]
                 foreach ($u['children_units'] as $cuId) {
-                    $pairIdx = null;
+                    $key = null;
                     foreach ($units[$cuId]['members'] as $cMem) {
                         $pf = $parentsMap[$cMem]['father'] ?? null;
                         $pm = $parentsMap[$cMem]['mother'] ?? null;
                         $kf = $pf !== null ? array_search($pf, $mem, true) : false;
                         $km = $pm !== null ? array_search($pm, $mem, true) : false;
                         if ($kf === false && $km === false) continue;
-                        if ($kf !== false && $km !== false) {
-                            $pairIdx = min($kf, $km);
+                        if ($kf !== false && $km !== false
+                            && self::isActiveMarriage($marriageDetails["{$pf}_{$pm}"] ?? $marriageDetails["{$pm}_{$pf}"] ?? null)) {
+                            $key = 'p' . min($kf, $km);
+                            $groupCards[$key] = [min($kf, $km), max($kf, $km)];
                         } else {
                             $k1 = $kf !== false ? $kf : $km;
-                            $pairIdx = ($k1 < count($mem) - 1) ? $k1 : $k1 - 1;
+                            $key = 'e' . $k1;
+                            $groupCards[$key] = [$k1];
                         }
                         break;
                     }
-                    if ($pairIdx === null) continue;
-                    $pairKids[$pairIdx][] = $cuId;
+                    if ($key === null) continue;
+                    $pairKids[$key][] = $cuId;
                 }
-                foreach ($pairKids as $pIdx => $kids) {
-                    $pa = $u['x'] + $u['offsets'][$pIdx];
-                    $pb = $u['x'] + $u['offsets'][$pIdx + 1] + self::CARD_WIDTH;
+                foreach ($pairKids as $key => $kids) {
+                    $cardIdxs = $groupCards[$key];
+                    $pIdx = $cardIdxs[0];
+                    $pa = $u['x'] + $u['offsets'][$cardIdxs[0]];
+                    $pb = $u['x'] + $u['offsets'][end($cardIdxs)] + self::CARD_WIDTH;
                     $minX = $pa;
                     $maxX = $pb;
                     $maxY = $u['y'] + self::CARD_HEIGHT;
@@ -1058,14 +1073,14 @@ class TreeLayoutService
                         $maxY = max($maxY, $cu['y'] + self::CARD_HEIGHT);
                     }
                     $auras[] = [
-                        'id' => "aura_{$uId}_{$pIdx}",
+                        'id' => "aura_{$uId}_{$key}",
                         'name' => 'Отбасы',
                         'x' => $minX - 25,
                         'y' => $u['y'] - 20,
                         'width' => ($maxX + 25) - ($minX - 25),
                         'height' => ($maxY + 20) - ($u['y'] - 20),
-                        'is_focal' => in_array($focalId, [$mem[$pIdx], $mem[$pIdx + 1]], true),
-                        'member_ids' => [$mem[$pIdx], $mem[$pIdx + 1]],
+                        'is_focal' => in_array($focalId, array_map(fn($i) => $mem[$i], $cardIdxs), true),
+                        'member_ids' => array_map(fn($i) => $mem[$i], $cardIdxs),
                     ];
                 }
             } elseif (!empty($u['children_units'])) {
@@ -1075,11 +1090,14 @@ class TreeLayoutService
 
                 foreach ($u['children_units'] as $cuId) {
                     $cu = $units[$cuId];
+                    // ALT-108: дети от прошлых браков — вне рамки этой семьи
+                    if (count($u['members']) === 2 && $this->isStepChildUnit($u['members'], $cu, $parentsMap)) continue;
                     $childXs[] = $cu['x'];
                     $childMaxXs[] = $cu['x'] + $cu['width'];
                     $childMaxYs[] = $cu['y'] + self::CARD_HEIGHT;
                 }
 
+                if (empty($childXs)) continue; // только дети прошлых браков — рамки семьи нет
                 $minAuraX = min(array_merge([$u['x']], $childXs)) - 25;
                 $maxAuraX = max(array_merge([$u['x'] + $u['width']], $childMaxXs)) + 25;
                 $minAuraY = $u['y'] - 20;
@@ -1142,11 +1160,24 @@ class TreeLayoutService
      * и контуры (левый/правый край по поколениям). Соседние ветки-братья сдвигаются так, чтобы в каждом
      * общем ряду поколения между ними был ровно GAP_SIBLING; родитель центрируется над детьми.
      */
-    protected function packUnitSubtree(int $unitId, array $units, array &$claimed): array
+    protected function packUnitSubtree(int $unitId, array $units, array &$claimed, array $parentsMap = [], array $marriageDetails = []): array
     {
         $claimed[$unitId] = true;
         $gen = $units[$unitId]['generation'];
         $w = (float)$units[$unitId]['width'];
+
+        // ALT-108: юнит с несколькими браками — дети каждого брака стоят под своим отцом
+        // (общие дети — под действующей парой), а не одним рядом по центру всего юнита.
+        $multiMembers = count($units[$unitId]['members']) > 2 ? $units[$unitId]['members'] : null;
+        if ($multiMembers === null) {
+            foreach ($units[$unitId]['children_units'] ?? [] as $cuId0) {
+                if ($this->isStepChildUnit($units[$unitId]['members'], $units[$cuId0], $parentsMap)) {
+                    $multiMembers = $units[$unitId]['members']; // есть дети от прошлых браков — раскладываем по месту
+                    break;
+                }
+            }
+        }
+        $unitOffsets = $units[$unitId]['offsets'];
 
         $accLeft = [];
         $accRight = [];
@@ -1156,11 +1187,19 @@ class TreeLayoutService
 
         foreach ($units[$unitId]['children_units'] ?? [] as $cuId) {
             if (isset($claimed[$cuId])) continue;
-            $sub = $this->packUnitSubtree($cuId, $units, $claimed);
+            $sub = $this->packUnitSubtree($cuId, $units, $claimed, $parentsMap, $marriageDetails);
+
+            $desired = null;
+            if ($multiMembers !== null) {
+                $desired = $this->desiredChildX($multiMembers, $unitOffsets, $units[$cuId], $parentsMap, $marriageDetails);
+            }
 
             $shift = 0.0;
+            if ($desired !== null) {
+                $shift = $desired - $sub['offs'][$cuId];
+            }
             if ($prevEnd !== null) {
-                $shift = $prevEnd + self::GAP_SIBLING; // не левее предыдущего брата
+                $shift = max($shift, $prevEnd + self::GAP_SIBLING); // не левее предыдущего брата
                 foreach ($sub['left'] as $g => $l) {
                     if (isset($accRight[$g])) {
                         $shift = max($shift, $accRight[$g] + self::GAP_SIBLING - $l);
@@ -1184,11 +1223,11 @@ class TreeLayoutService
         }
 
         if (empty($childX)) {
-            return [
+            return $this->padMultiMarriageContour([
                 'offs' => [$unitId => 0.0],
                 'left' => [$gen => 0.0],
                 'right' => [$gen => $w],
-            ];
+            ], $multiMembers !== null);
         }
 
         // Центрируем родительскую пару над рядом детей (юниты детей, не их потомки)
@@ -1197,6 +1236,9 @@ class TreeLayoutService
         $cl = $childX[$firstId];
         $cr = $childX[$lastId] + (float)$units[$lastId]['width'];
         $parentX = ($cl + $cr) / 2.0 - $w / 2.0;
+        if ($multiMembers !== null) {
+            $parentX = 0.0; // ALT-108: дети уже расставлены относительно карточек юнита
+        }
 
         $offs = [$unitId => 0.0];
         foreach ($accOffs as $uid => $dx) {
@@ -1212,8 +1254,85 @@ class TreeLayoutService
         }
         $left[$gen] = isset($left[$gen]) ? min($left[$gen], 0.0) : 0.0;
         $right[$gen] = isset($right[$gen]) ? max($right[$gen], $w) : $w;
+        // ALT-108: рамка семьи охватывает родителей и всех потомков по всей высоте — в ряду родителей
+        // соседняя ветка не должна заходить под её края, иначе рамки соседних семей пересекаются.
+        foreach ($left as $g => $l) {
+            if ($g > $gen) $left[$gen] = min($left[$gen], $l);
+        }
+        foreach ($right as $g => $r) {
+            if ($g > $gen) $right[$gen] = max($right[$gen], $r);
+        }
 
-        return ['offs' => $offs, 'left' => $left, 'right' => $right];
+        return $this->padMultiMarriageContour(['offs' => $offs, 'left' => $left, 'right' => $right], $multiMembers !== null);
+    }
+
+    /**
+     * ALT-108: блок с несколькими браками отодвигается от соседей — контур расширяется с обеих сторон,
+     * чтобы рамки его семей не заходили на рамки соседних семей.
+     */
+    protected function padMultiMarriageContour(array $res, bool $multi): array
+    {
+        if (!$multi) return $res;
+        foreach ($res['left'] as $g => $l) $res['left'][$g] = $l - 40.0;
+        foreach ($res['right'] as $g => $r) $res['right'][$g] = $r + 40.0;
+        return $res;
+    }
+
+    /**
+     * ALT-108: ребёнок от прошлого брака: один родитель в юните, второй известен, но в юните его нет.
+     */
+    protected function hasActivePair(array $members, array $marriageDetails): bool
+    {
+        for ($i = 0; $i < count($members) - 1; $i++) {
+            $a = $members[$i];
+            $b = $members[$i + 1];
+            if (self::isActiveMarriage($marriageDetails["{$a}_{$b}"] ?? $marriageDetails["{$b}_{$a}"] ?? null)) return true;
+        }
+        return false;
+    }
+
+    protected function isStepChildUnit(array $members, array $childUnit, array $parentsMap): bool
+    {
+        foreach ($childUnit['members'] as $cMem) {
+            $pf = $parentsMap[$cMem]['father'] ?? null;
+            $pm = $parentsMap[$cMem]['mother'] ?? null;
+            $kf = $pf !== null ? array_search($pf, $members, true) : false;
+            $km = $pm !== null ? array_search($pm, $members, true) : false;
+            if ($kf === false && $km === false) continue;
+            return ($kf === false && $pf !== null) || ($km === false && $pm !== null);
+        }
+        return false;
+    }
+
+    /**
+     * ALT-108: желаемый x юнита ребёнка (относительно x родительского юнита): ребёнок — под своим отцом;
+     * если родители — действующая пара, то под серединой пары. null — если родителей в юните нет.
+     */
+    protected function desiredChildX(array $members, array $offsets, array $childUnit, array $parentsMap, array $marriageDetails): ?float
+    {
+        foreach ($childUnit['members'] as $ci => $cMem) {
+            $pf = $parentsMap[$cMem]['father'] ?? null;
+            $pm = $parentsMap[$cMem]['mother'] ?? null;
+            $kf = $pf !== null ? array_search($pf, $members, true) : false;
+            $km = $pm !== null ? array_search($pm, $members, true) : false;
+            if ($kf === false && $km === false) continue;
+            // ребёнок от прошлого брака, чей второй родитель не в юните: стоит левее пары, вне её рамки
+            if (($kf === false && $pf !== null) || ($km === false && $pm !== null)) {
+                if ($this->hasActivePair($members, $marriageDetails)) {
+                    return $offsets[0] - $childUnit['width'] - 40.0;
+                }
+                return end($offsets) + self::CARD_WIDTH + 40.0; // пара распалась — дети другого брака справа
+            }
+            if ($kf !== false && $km !== false
+                && self::isActiveMarriage($marriageDetails["{$pf}_{$pm}"] ?? $marriageDetails["{$pm}_{$pf}"] ?? null)) {
+                $center = ($offsets[$kf] + $offsets[$km] + self::CARD_WIDTH) / 2.0;
+            } else {
+                $k = $kf !== false ? $kf : $km;
+                $center = $offsets[$k] + self::CARD_WIDTH / 2.0;
+            }
+            return $center - ($childUnit['offsets'][$ci] + self::CARD_WIDTH / 2.0);
+        }
+        return null;
     }
 
     /**

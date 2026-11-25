@@ -156,6 +156,11 @@
         setAvatarBtn(!!data.avatar);
         box.style.display = 'block';
     };
+    // ALT-107: таблица «Что не заполнено» — выбрать человека для загрузки фото без блока #pmeAvBox
+    window.pmeSetTarget = function (personId, csrf) {
+        st.personId = personId;
+        st.csrf = csrf || '';
+    };
     function setAvatarBtn(has) {
         var b = $('pmeAvatarBtn');
         if (b && T.upload) { b.textContent = has ? T.replace : T.upload; }

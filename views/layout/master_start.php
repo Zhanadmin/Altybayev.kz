@@ -103,8 +103,9 @@ if ($canEdit) {
 if ($isAdmin) {
     // ALT-104: запросы на доступ — счётчик ожидающих в боковой панели
     $arPending = \App\Services\AccessRequestService::pendingCount(Database::getConnection());
-    $navItems['access'] = ['href' => '/admin/access-requests', 'icon' => 'i-users', 'label' => match ($lang) { 'ru' => 'Запросы на доступ', 'en' => 'Access requests', 'es' => 'Solicitudes de acceso', default => 'Қолжетімділік сұраныстары' }, 'count' => $arPending > 0 ? (string)$arPending : null, 'group' => 3];
-    $navItems['admin'] = ['href' => '/admin', 'icon' => 'i-settings', 'label' => I18n::t('nav_admin'), 'count' => null, 'group' => 3];
+    $navItems['access'] = ['href' => '/admin/access-requests', 'icon' => 'i-users', 'label' => match ($lang) { 'ru' => 'Запросы на доступ', 'en' => 'Access requests', 'es' => 'Solicitudes de acceso', default => 'Қолжетімділік сұраныстары' }, 'count' => $arPending > 0 ? (string)$arPending : null, 'group' => 3, 'hidden' => true]; // ALT-105: в панели не показываем — ссылка внутри админки (нужен для хлебных крошек)
+    // ALT-105: счётчик новых запросов — значком у пункта «Админ»
+    $navItems['admin'] = ['href' => '/admin', 'icon' => 'i-settings', 'label' => I18n::t('nav_admin'), 'count' => $arPending > 0 ? (string)$arPending : null, 'group' => 3];
 }
 $navGroupLabels = [
     1 => (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Шежире' : 'Шежіре'),
@@ -342,12 +343,14 @@ $dsThemeReady = !empty($dsThemeReady);
 
             <nav class="ds-nav" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Главное меню' : 'Негізгі мәзір' ?>">
                 <?php $prevGroup = 0; foreach ($navItems as $key => $item): ?>
+                    <?php if (!empty($item['hidden'])) continue; ?>
+                    <?php $isActiveNav = $activeNav === $key || ($key === 'admin' && $activeNav === 'access'); ?>
                     <?php if ($item['group'] !== $prevGroup): ?>
                         <?php if ($prevGroup !== 0): ?><div class="ds-divider"></div><?php endif; ?>
                         <div class="ds-nav-label"><?= htmlspecialchars($navGroupLabels[$item['group']]) ?></div>
                         <?php $prevGroup = $item['group']; ?>
                     <?php endif; ?>
-                    <a href="<?= htmlspecialchars($item['href']) ?>" class="<?= $activeNav === $key ? 'active' : '' ?>"<?= $activeNav === $key ? ' aria-current="page"' : '' ?>>
+                    <a href="<?= htmlspecialchars($item['href']) ?>" class="<?= $isActiveNav ? 'active' : '' ?>"<?= $isActiveNav ? ' aria-current="page"' : '' ?>>
                         <svg class="ic" aria-hidden="true"><use href="#<?= htmlspecialchars($item['icon']) ?>"/></svg>
                         <span><?= htmlspecialchars($item['label']) ?></span>
                         <?php if ($item['count'] !== null): ?><span class="count"><?= htmlspecialchars($item['count']) ?></span><?php endif; ?>

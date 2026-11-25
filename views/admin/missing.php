@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use App\Core\I18n;
+use App\Config\Nationalities;
 
 /** @var array $items */
 /** @var array $counts */
@@ -10,44 +10,27 @@ use App\Core\I18n;
 /** @var array $genKeys */
 /** @var string $gapFilter */
 /** @var string $genFilter */
+/** @var array $clanNames */
+/** @var string $csrf */
 
-$lang = I18n::lang();
-// ALT-098: тексты на всех языках сайта (kk, ru, en, es)
-$T = static function (array $t) use ($lang): string {
-    return $t[$lang] ?? $t['ru'];
-};
+// ALT-098: тексты на всех языках сайта (kk, ru, en, es). Общие подписи — в missing_ctx.php (их же берёт строка таблицы).
+$ctx = require __DIR__ . '/missing_ctx.php';
+$lang = $ctx['lang'];
+$T = $ctx['T'];
+$e = $ctx['e'];
+$gapLabels = $ctx['gapLabels'];
+$genLabel = $ctx['genLabel'];
 $title = $T(['kk' => 'Толтырылмаған', 'ru' => 'Что не заполнено', 'en' => 'Missing data', 'es' => 'Datos faltantes']);
 $activeNav = 'missing';
 $dsThemeReady = true;
 
 require __DIR__ . '/../layout/master_start.php';
 
-$gapLabels = [
-    'birth'    => ['kk' => 'Туған күні', 'ru' => 'Дата рождения', 'en' => 'Birth date', 'es' => 'Fecha de nacimiento'],
-    'photo'    => ['kk' => 'Фото', 'ru' => 'Фото', 'en' => 'Photo', 'es' => 'Foto'],
-    'clan'     => ['kk' => 'Ру', 'ru' => 'Ру (род)', 'en' => 'Clan', 'es' => 'Clan'],
-    'father'   => ['kk' => 'Әкесі', 'ru' => 'Отец', 'en' => 'Father', 'es' => 'Padre'],
-    'mother'   => ['kk' => 'Шешесі', 'ru' => 'Мать', 'en' => 'Mother', 'es' => 'Madre'],
-    'gender'   => ['kk' => 'Жынысы', 'ru' => 'Пол', 'en' => 'Gender', 'es' => 'Sexo'],
-    'marriage' => ['kk' => 'Үйлену күні', 'ru' => 'Дата брака', 'en' => 'Marriage date', 'es' => 'Fecha de boda'],
-    'death'    => ['kk' => 'Қайтыс болған күні', 'ru' => 'Дата смерти', 'en' => 'Death date', 'es' => 'Fecha de fallecimiento'],
-    'maiden'   => ['kk' => 'Қыз кезіндегі тегі', 'ru' => 'Девичья фамилия', 'en' => 'Maiden name', 'es' => 'Apellido de soltera'],
-    'contacts' => ['kk' => 'Байланыс', 'ru' => 'Контакты', 'en' => 'Contacts', 'es' => 'Contactos'],
-    'zheti'    => ['kk' => 'Жеті ата', 'ru' => 'Жеті ата (цепочка < 7)', 'en' => 'Seven fathers (chain < 7)', 'es' => 'Siete padres (cadena < 7)'],
-];
-$yearOnly = $T(['kk' => 'тек жылы', 'ru' => 'только год', 'en' => 'year only', 'es' => 'solo el año']);
-$e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-$genLabel = static function (string $k) use ($T): string {
-    if ($k === 'ancestors') {
-        return $T(['kk' => 'Ата-бабалар', 'ru' => 'Предки', 'en' => 'Ancestors', 'es' => 'Antepasados']);
-    }
-    return $T(['kk' => $k . '-ұрпақ', 'ru' => $k . '-е поколение', 'en' => 'Generation ' . $k, 'es' => 'Generación ' . $k]);
-};
 $url = static function (string $gap, string $gen): string {
     $q = array_filter(['gap' => $gap, 'gen' => $gen], static fn($v) => $v !== '');
     return '/admin/missing' . ($q ? '?' . http_build_query($q) : '');
 };
-$editLabel = 'Өзгерту';
+$emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничего не найдено', 'en' => 'Nothing found', 'es' => 'No se encontró nada']);
 ?>
 <style>
 .ms-wrap { display: flex; flex-direction: column; gap: 16px; font-size: var(--fs-lg, 16px); line-height: 1.5; }
@@ -60,15 +43,32 @@ $editLabel = 'Өзгерту';
 .ms-table { width: 100%; border-collapse: collapse; }
 .ms-table th, .ms-table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
 .ms-table th { opacity: .7; white-space: nowrap; }
-.ms-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.ms-chip { padding: 2px 10px; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; background: rgba(128,128,128,.08); }
+.ms-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; background: rgba(128,128,128,.08); }
 .ms-table .fit { width: 1%; white-space: nowrap; }
+/* ALT-107: поля прямо в ячейках */
+.ms-cells { display: flex; flex-wrap: wrap; gap: 10px 14px; }
+.ms-cell { display: flex; flex-direction: column; gap: 3px; min-width: 190px; max-width: 280px; flex: 1 1 190px; }
+.ms-lab { font-size: 13px; opacity: .75; }
+.ms-in { width: 100%; box-sizing: border-box; min-height: 38px; padding: 6px 10px; font: inherit; font-size: 15px; border: 1px solid var(--c-border, #ccc); border-radius: 8px; background: var(--c-surface, transparent); color: inherit; }
+.ms-in:focus { outline: 2px solid var(--c-accent, #2a6df4); outline-offset: 1px; }
+.ms-in.busy { opacity: .6; }
+.ms-in.err { border-color: #c0392b; }
+.ms-msg { font-size: 13px; min-height: 0; }
+.ms-msg.err { color: #c0392b; }
+.ms-msg.ok { color: #1e8449; }
+.ms-find { position: relative; }
+.ms-results { position: absolute; z-index: 20; left: 0; right: 0; top: 100%; margin: 2px 0 0; padding: 4px; list-style: none; max-height: 240px; overflow-y: auto; background: var(--c-surface, #fff); color: inherit; border: 1px solid var(--c-border, #ccc); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.ms-results[hidden] { display: none; }
+.ms-results li { padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 15px; }
+.ms-results li:hover, .ms-results li:focus { background: rgba(128,128,128,.18); outline: none; }
+.ms-results li.none { cursor: default; opacity: .7; }
+.ms-results li small { opacity: .7; margin-left: 6px; }
 </style>
 
 <div class="ds-page-head">
     <div>
         <h1><?= $e($title) ?></h1>
-        <p class="sub"><?= $e($T([
+        <p class="sub" id="ms-sub"><?= $e($T([
             'kk' => 'Толтырылмаған деректері бар адамдар: ' . $totalGaps . ' / ' . $totalAll,
             'ru' => 'Людей с пробелами в данных: ' . $totalGaps . ' из ' . $totalAll,
             'en' => 'People with missing data: ' . $totalGaps . ' of ' . $totalAll,
@@ -77,10 +77,14 @@ $editLabel = 'Өзгерту';
     </div>
 </div>
 
-<div class="ms-wrap">
+<div class="ms-wrap" id="ms-wrap" data-csrf="<?= $e($csrf) ?>" data-gap-filter="<?= $e($gapFilter) ?>" data-gen-filter="<?= $e($genFilter) ?>"
+     data-msg-saved="<?= $e($T(['kk' => 'Сақталды', 'ru' => 'Сохранено', 'en' => 'Saved', 'es' => 'Guardado'])) ?>"
+     data-msg-error="<?= $e($T(['kk' => 'Сақтау мүмкін болмады', 'ru' => 'Не удалось сохранить', 'en' => 'Could not save', 'es' => 'No se pudo guardar'])) ?>"
+     data-msg-nobody="<?= $e($T(['kk' => 'Ешкім табылмады', 'ru' => 'Никого не найдено', 'en' => 'Nobody found', 'es' => 'Nadie encontrado'])) ?>"
+     data-msg-empty="<?= $e($emptyText) ?>">
     <div class="ms-counters" aria-label="<?= $e($T(['kk' => 'Санауыштар', 'ru' => 'Счётчики', 'en' => 'Counters', 'es' => 'Contadores'])) ?>">
-        <a class="ms-counter<?= $gapFilter === '' ? ' active' : '' ?>" href="<?= $e($url('', $genFilter)) ?>">
-            <span><?= $e($T(['kk' => 'Барлығы', 'ru' => 'Все', 'en' => 'All', 'es' => 'Todos'])) ?></span><b><?= (int)$totalGaps ?></b>
+        <a class="ms-counter<?= $gapFilter === '' ? ' active' : '' ?>" href="<?= $e($url('', $genFilter)) ?>" data-gap="">
+            <span><?= $e($T(['kk' => 'Барлығы', 'ru' => 'Все', 'en' => 'All', 'es' => 'Todos'])) ?></span><b id="ms-total"><?= (int)$totalGaps ?></b>
         </a>
         <?php foreach ($gapLabels as $key => $lab): ?>
             <a class="ms-counter<?= $gapFilter === $key ? ' active' : '' ?>" href="<?= $e($url($key, $genFilter)) ?>" data-gap="<?= $e($key) ?>">
@@ -111,10 +115,15 @@ $editLabel = 'Өзгерту';
         <noscript><button class="btn" type="submit">OK</button></noscript>
     </form>
 
-    <?php if (!$items): ?>
-        <p><?= $e($T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничего не найдено', 'en' => 'Nothing found', 'es' => 'No se encontró nada'])) ?></p>
-    <?php else: ?>
-    <div style="overflow-x:auto">
+    <datalist id="ms-clans">
+        <?php foreach ($clanNames as $cn): ?><option value="<?= $e($cn) ?>"><?php endforeach; ?>
+    </datalist>
+    <datalist id="ms-nats">
+        <?php foreach (Nationalities::codes() as $code): ?><option value="<?= $e(Nationalities::label($code, $lang)) ?>"><?php endforeach; ?>
+    </datalist>
+
+    <p id="ms-empty"<?= $items ? ' hidden' : '' ?>><?= $e($emptyText) ?></p>
+    <div style="overflow-x:auto"<?= $items ? '' : ' hidden' ?> id="ms-table-box">
     <table class="ms-table">
         <thead>
             <tr>
@@ -125,36 +134,11 @@ $editLabel = 'Өзгерту';
             </tr>
         </thead>
         <tbody>
-        <?php foreach ($items as $it):
-            $p = $it['p'];
-            $name = trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''));
-        ?>
-            <tr data-person="<?= (int)$it['id'] ?>">
-                <td><a href="/person/<?= (int)$it['id'] ?>"><?= $e($name !== '' ? $name : ('#' . $it['id'])) ?></a></td>
-                <td><?= $e($genLabel($it['gen'])) ?></td>
-                <td>
-                    <div class="ms-chips">
-                    <?php foreach ($it['gaps'] as $g):
-                        $label = $T($gapLabels[$g]);
-                        $d = $it['detail'][$g] ?? '';
-                        if ($g === 'zheti') {
-                            $label = $T($gapLabels['zheti']) . ': ' . (int)$d . '/7';
-                        } elseif ($d === 'year') {
-                            $label .= ' (' . $yearOnly . ')';
-                        }
-                    ?>
-                        <span class="ms-chip" data-gap="<?= $e($g) ?>"><?= $e($label) ?></span>
-                    <?php endforeach; ?>
-                    </div>
-                </td>
-                <td class="fit">
-                    <a class="btn btn-sm" href="/tree?focus=<?= (int)$it['id'] ?>&amp;edit=<?= (int)$it['id'] ?>"><?= $e($editLabel) ?></a>
-                </td>
-            </tr>
-        <?php endforeach; ?>
+        <?php foreach ($items as $it) { require __DIR__ . '/missing_row.php'; } ?>
         </tbody>
     </table>
     </div>
-    <?php endif; ?>
 </div>
+<?php include __DIR__ . '/../layout/person_avatar_edit.php'; // обрезка фото овалом: та же, что в окне «Өңдеу» ?>
+<script src="/assets/js/missing-inline.js?v=1" defer></script>
 <?php require __DIR__ . '/../layout/master_end.php'; ?>

@@ -24,6 +24,12 @@ $adRoleLabels = [
             <p class="sub"><?= htmlspecialchars(I18n::t('admin_subtitle')) ?></p>
         </div>
         <div class="actions">
+            <?php /* ALT-105: «Запросы на доступ» — внутри админки */ $arPendingAd = \App\Services\AccessRequestService::pendingCount(\App\Core\Database::getConnection()); ?>
+            <a href="/admin/access-requests" class="btn">
+                <svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>
+                <span><?= match ($lang) { 'ru' => 'Запросы на доступ', 'en' => 'Access requests', 'es' => 'Solicitudes de acceso', default => 'Қолжетімділік сұраныстары' } ?></span>
+                <?php if ($arPendingAd > 0): ?><span class="count"><?= (int)$arPendingAd ?></span><?php endif; ?>
+            </a>
             <a href="/admin/import" class="btn btn-primary">
                 <svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>
                 <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Импорт GEDCOM из MyHeritage' : 'GEDCOM импорты (MyHeritage)' ?></span>

@@ -214,14 +214,7 @@ window.addEventListener('resize', (function () { var t; return function () { cle
                 <span><?= htmlspecialchars(I18n::t('btn_show_in_tree')) ?></span>
             </a>
             <?php if ($canEdit || !empty($canEditContacts)): /* TASK-032: «своя семья» тоже */ ?>
-                <button type="button" class="btn" onclick="openAddChildModal('M')">
-                    <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
-                    <span><?= htmlspecialchars(I18n::t('btn_add_son')) ?></span>
-                </button>
-                <button type="button" class="btn" onclick="openAddChildModal('F')">
-                    <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>
-                    <span><?= htmlspecialchars(I18n::t('btn_add_daughter')) ?></span>
-                </button>
+                <?php /* ALT-079: кнопки «сын»/«дочь» убраны — одна «Добавить ребёнка» ниже, пол выбирается в форме */ ?>
 <?php
                     // ALT-048: добавить мужа/жену; серая кнопка, пока есть действующий брак
                     $pcRu = ($lang === 'ru' || $lang === 'en' || $lang === 'es');

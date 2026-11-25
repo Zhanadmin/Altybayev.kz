@@ -1021,7 +1021,54 @@ class TreeLayoutService
             }
 
             // Ореол семьи (Aura) вокруг пары и ее детей
-            if (!empty($u['children_units'])) {
+            // ALT-082: в юните с несколькими браками рамка — отдельная для каждой пары (с её общими детьми),
+            // бывшие мужья и дети прошлых браков не попадают в рамку действующей семьи.
+            if (!empty($u['children_units']) && count($u['members']) > 2) {
+                $mem = $u['members'];
+                $pairKids = [];
+                foreach ($u['children_units'] as $cuId) {
+                    $pairIdx = null;
+                    foreach ($units[$cuId]['members'] as $cMem) {
+                        $pf = $parentsMap[$cMem]['father'] ?? null;
+                        $pm = $parentsMap[$cMem]['mother'] ?? null;
+                        $kf = $pf !== null ? array_search($pf, $mem, true) : false;
+                        $km = $pm !== null ? array_search($pm, $mem, true) : false;
+                        if ($kf === false && $km === false) continue;
+                        if ($kf !== false && $km !== false) {
+                            $pairIdx = min($kf, $km);
+                        } else {
+                            $k1 = $kf !== false ? $kf : $km;
+                            $pairIdx = ($k1 < count($mem) - 1) ? $k1 : $k1 - 1;
+                        }
+                        break;
+                    }
+                    if ($pairIdx === null) continue;
+                    $pairKids[$pairIdx][] = $cuId;
+                }
+                foreach ($pairKids as $pIdx => $kids) {
+                    $pa = $u['x'] + $u['offsets'][$pIdx];
+                    $pb = $u['x'] + $u['offsets'][$pIdx + 1] + self::CARD_WIDTH;
+                    $minX = $pa;
+                    $maxX = $pb;
+                    $maxY = $u['y'] + self::CARD_HEIGHT;
+                    foreach ($kids as $cuId) {
+                        $cu = $units[$cuId];
+                        $minX = min($minX, $cu['x']);
+                        $maxX = max($maxX, $cu['x'] + $cu['width']);
+                        $maxY = max($maxY, $cu['y'] + self::CARD_HEIGHT);
+                    }
+                    $auras[] = [
+                        'id' => "aura_{$uId}_{$pIdx}",
+                        'name' => 'Отбасы',
+                        'x' => $minX - 25,
+                        'y' => $u['y'] - 20,
+                        'width' => ($maxX + 25) - ($minX - 25),
+                        'height' => ($maxY + 20) - ($u['y'] - 20),
+                        'is_focal' => in_array($focalId, [$mem[$pIdx], $mem[$pIdx + 1]], true),
+                        'member_ids' => [$mem[$pIdx], $mem[$pIdx + 1]],
+                    ];
+                }
+            } elseif (!empty($u['children_units'])) {
                 $childXs = [];
                 $childMaxXs = [];
                 $childMaxYs = [];
@@ -1049,6 +1096,7 @@ class TreeLayoutService
                     'width' => $maxAuraX - $minAuraX,
                     'height' => $maxAuraY - $minAuraY,
                     'is_focal' => in_array($focalId, $u['members'], true),
+                    'member_ids' => array_values($u['members']),
                 ];
             }
         }

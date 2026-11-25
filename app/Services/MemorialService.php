@@ -221,9 +221,16 @@ class MemorialService
         // Для расчета родства
         $focusPerson = $focusPersonId ? ($this->allPersonsMapCache[$focusPersonId] ?? null) : null;
 
+        $exOnlyIds = $this->getExSpouseOnlyIds();
+
         foreach ($persons as $p) {
             $birthDateStr = $p['birth_date'];
             if (!$birthDateStr) {
+                continue;
+            }
+
+            // ALT-080: бывший супруг без других связей с семьёй — день рождения не показываем
+            if (isset($exOnlyIds[(int)$p['id']])) {
                 continue;
             }
 
@@ -588,6 +595,78 @@ class MemorialService
 
         usort($events, fn($a, $b) => $a['days_until'] <=> $b['days_until']);
         return $events;
+    }
+
+    /**
+     * ALT-080: id людей, связанных с семьёй только через расторгнутый брак
+     * (нет родителей в древе, нет действующего брака, нет детей вне расторгнутых браков).
+     *
+     * @return array<int, true>
+     */
+    public function getExSpouseOnlyIds(): array
+    {
+        $this->loadGlobalPersonsAndMarriages();
+        $pdo = Database::getConnection();
+        $stmt = $pdo->query("SHOW TABLES LIKE 'marriages'");
+        if (!$stmt || $stmt->rowCount() === 0) {
+            return [];
+        }
+        $rows = $pdo->query("SELECT m.* FROM marriages m JOIN persons ph ON ph.id = m.husband_id AND ph.is_deleted = 0 JOIN persons pw ON pw.id = m.wife_id AND pw.is_deleted = 0")->fetchAll(PDO::FETCH_ASSOC);
+        return $this->computeExSpouseOnlyIds($this->allPersonsMapCache, $rows);
+    }
+
+    /**
+     * @param array<int, array> $persons id => строка persons
+     * @param array<int, array> $rows строки marriages
+     * @return array<int, true>
+     */
+    public function computeExSpouseOnlyIds(array $persons, array $rows): array
+    {
+        $exPartners = []; // person_id => [partner_id => true] (расторгнутые браки)
+        $hasLiveLink = []; // person_id => true (действующий/вдовий брак)
+        foreach ($rows as $m) {
+            $h = (int)$m['husband_id'];
+            $w = (int)$m['wife_id'];
+            $status = (string)($m['status'] ?? '');
+            $divorced = $status === 'divorced'
+                || trim((string)($m['divorce_date'] ?? '')) !== ''
+                || ($status !== 'widowed' && trim((string)($m['end_date'] ?? '')) !== '');
+            if ($divorced) {
+                $exPartners[$h][$w] = true;
+                $exPartners[$w][$h] = true;
+            } else {
+                $hasLiveLink[$h] = true;
+                $hasLiveLink[$w] = true;
+            }
+        }
+
+        $result = [];
+        foreach ($exPartners as $pid => $partners) {
+            if (isset($hasLiveLink[$pid])) {
+                continue;
+            }
+            $person = $persons[$pid] ?? null;
+            if (!$person || !empty($person['father_id']) || !empty($person['mother_id'])) {
+                continue; // кровная связь с семьёй (есть родители в древе)
+            }
+            $other = false;
+            foreach ($persons as $c) {
+                $f = (int)($c['father_id'] ?? 0);
+                $mo = (int)($c['mother_id'] ?? 0);
+                if ($f !== $pid && $mo !== $pid) {
+                    continue;
+                }
+                $otherParent = $f === $pid ? $mo : $f;
+                if (!$otherParent || !isset($partners[$otherParent])) {
+                    $other = true; // ребёнок вне расторгнутых браков — есть иная связь
+                    break;
+                }
+            }
+            if (!$other) {
+                $result[$pid] = true;
+            }
+        }
+        return $result;
     }
 
     /** ALT-078: русское склонение числительного (1 год, 2 года, 5 лет) */

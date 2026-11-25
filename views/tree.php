@@ -31,6 +31,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <script src="/assets/js/tooltip.js?v=4" defer></script>
     <script src="/assets/js/kin-hint.js?v=1" defer></script>
     <script src="/assets/js/kk-genitive.js?v=1"></script>
+    <script src="/assets/js/ru-genitive.js?v=1"></script>
     <script src="/assets/js/bgm.js?v=5" defer></script>
     <script src="/assets/js/person-delete.js?v=2" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
@@ -3066,7 +3067,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             box-shadow: var(--shadow-island);
         }
         /* ALT-075: подпись семьи над плашкой пары */
-        .couple-family-label { position: absolute; font-size: 12px; line-height: 16px; letter-spacing: .02em; color: var(--c-text-2, #777); pointer-events: none; white-space: nowrap; font-family: inherit; }
+        /* ALT-082: подпись — плашка с рамкой; перекрывает пунктир ореола, нажимается и подсвечивает рамку семьи */
+        .couple-family-label { position: absolute; z-index: 3; box-sizing: border-box; max-width: 220px; overflow: hidden; text-overflow: ellipsis; padding: 2px 9px; font-size: 13px; line-height: 18px; font-weight: 400; font-style: normal; color: var(--c-text, #2b2b2b); background: var(--c-island, #fbf6ea); border: 1px solid var(--c-accent, #a87b3a); border-radius: 9px; white-space: nowrap; font-family: var(--font-book, 'Lora', serif); cursor: pointer; user-select: none; }
+        .couple-family-label:hover, .couple-family-label.is-active { box-shadow: 0 0 0 2px var(--c-focus, rgba(168,123,58,.3)); }
+        .family-aura.is-highlight { border: 3px dashed var(--c-accent); opacity: 1; }
         /* половины плашки: без собственных фона, рамки и тени; нажимаются отдельно */
         .person-card.in-couple,
         .person-card.in-couple:hover,
@@ -4078,6 +4082,9 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         const viewport = document.getElementById('canvasViewport');
         const world = document.getElementById('treeWorld');
+
+        // ALT-081: шаблоны подписи над семьёй из переводов сайта
+        const FAMILY_LABEL_TPL = <?= json_encode(\App\Core\I18n::getDictionary()['tree_family_label'] ?? ['kk' => '{name} отбасы'], JSON_UNESCAPED_UNICODE) ?>;
 
         // ТІЛДІК АУДАРМАЛАР СӨЗДІГІ (I18N)
         const i18n = {
@@ -5137,6 +5144,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 treeData.layout.auras.forEach(aura => {
                     const auraEl = document.createElement('div');
                     auraEl.className = 'family-aura';
+                    auraEl.dataset.members = (aura.member_ids || []).join(',');
                     auraEl.style.left = `${aura.x}px`;
                     auraEl.style.top = `${aura.y}px`;
                     auraEl.style.width = `${aura.width}px`;
@@ -5170,12 +5178,24 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     const famHusband = (cp.member_ids || [cp.husband_id, cp.wife_id])
                         .map(mid => famNodes.find(n => Number(n.id) === Number(mid)))
                         .find(n => n && n.gender === 'M' && n.first_name);
-                    if (famHusband && typeof window.kkGenitive === 'function') {
+                    if (famHusband && typeof window.kkGenitive === 'function' && typeof window.ruGenitive === 'function') {
+                        // ALT-081: подпись по языку сайта; шаблоны — в переводах (I18n «tree_family_label»)
+                        const famFirst = String(famHusband.first_name).trim().split(/\s+/)[0];
+                        const famName = currentLang === 'ru' ? window.ruGenitive(famFirst)
+                            : ((currentLang === 'en' || currentLang === 'es') ? latinize(famFirst, currentLang)
+                            : window.kkGenitive(famFirst));
+                        const famTpl = FAMILY_LABEL_TPL[currentLang] || FAMILY_LABEL_TPL.kk;
                         const famLbl = document.createElement('div');
                         famLbl.className = 'couple-family-label';
-                        famLbl.textContent = window.kkGenitive(String(famHusband.first_name).trim().split(/\s+/)[0]) + ' отбасы';
+                        famLbl.textContent = famTpl.replace('{name}', famName);
                         famLbl.style.left = `${cp.x + 6}px`;
-                        famLbl.style.top = `${cp.y - 20}px`;
+                        famLbl.style.top = `${cp.y - 24}px`;
+                        const famPair = [cp.husband_id, cp.wife_id].map(Number);
+                        famLbl.dataset.pair = famPair.join(',');
+                        famLbl.addEventListener('mousedown', e => e.stopPropagation());
+                        famLbl.addEventListener('click', e => { e.stopPropagation(); toggleFamilyHighlight(famLbl); });
+                        famLbl.addEventListener('mouseenter', () => setFamilyHighlight(famLbl, true));
+                        famLbl.addEventListener('mouseleave', () => { if (!famLbl.classList.contains('is-active')) setFamilyHighlight(famLbl, false); });
                         container.appendChild(famLbl);
                     }
                 });
@@ -5273,6 +5293,29 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
             renderConnectionsEditing();
         }
+
+        // ALT-082: подсветка рамки семьи по подписи «…отбасы» (наведение — временно, клик — до повторного клика/клика в пустое)
+        function familyAuraOf(lbl) {
+            const pair = (lbl.dataset.pair || '').split(',');
+            return Array.from(document.querySelectorAll('.family-aura')).find(a => {
+                const m = (a.dataset.members || '').split(',');
+                return pair.length === 2 && pair.every(id => m.includes(id));
+            });
+        }
+        function setFamilyHighlight(lbl, on) {
+            const a = familyAuraOf(lbl);
+            if (a) a.classList.toggle('is-highlight', on);
+        }
+        function clearFamilyHighlight() {
+            document.querySelectorAll('.couple-family-label.is-active').forEach(l => l.classList.remove('is-active'));
+            document.querySelectorAll('.family-aura.is-highlight').forEach(a => a.classList.remove('is-highlight'));
+        }
+        function toggleFamilyHighlight(lbl) {
+            const was = lbl.classList.contains('is-active');
+            clearFamilyHighlight();
+            if (!was) { lbl.classList.add('is-active'); setFamilyHighlight(lbl, true); }
+        }
+        document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('.couple-family-label')) clearFamilyHighlight(); });
 
         // БАЙЛАНЫС ЖЕЛІЛЕРІН СЫЗУ (СВЯЗИ ПОКОЛЕНИЙ И БРАКОВ: ОРТОГОНАЛЬДЫ ШИНАЛАР)
         function renderConnectionsEditing() {

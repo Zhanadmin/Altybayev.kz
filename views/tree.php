@@ -5305,14 +5305,28 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 });
 
                 // 2. Родительско-детские ортогональные шины связей (без наложений на карточки)
+                // ALT-072: у каждого разведённого брака свой спокойный цвет линий, действующий брак — коричневый
+                const pcPalette = ['#4f7f8c', '#8a6fa8', '#6f8f4f', '#b0705a', '#4f6fa8', '#a08a3c'];
+                const pcColorByMarriage = {};
+                let pcColorN = 0;
                 (edges.parent_child || []).forEach(pc => {
+                    const pcColor = pc.ended
+                        ? (pcColorByMarriage[pc.marriage_key] || (pcColorByMarriage[pc.marriage_key] = pcPalette[pcColorN++ % pcPalette.length]))
+                        : '#7a5230';
+                    const pcKids = (pc.children || []).map(c => c.child_id).join(',');
+                    const pcTag = (el) => {
+                        el.setAttribute('stroke', pcColor);
+                        el.setAttribute('class', 'pc-line');
+                        el.style.pointerEvents = 'stroke';
+                        el.setAttribute('data-kids', pcKids);
+                    };
                     // Вертикальная линия от родителей вниз к горизонтальной шине
                     const dropLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     dropLine.setAttribute('x1', pc.parent_mid_x);
                     dropLine.setAttribute('y1', pc.parent_bottom_y);
                     dropLine.setAttribute('x2', pc.parent_mid_x);
                     dropLine.setAttribute('y2', pc.bus_y);
-                    dropLine.setAttribute('stroke', '#64748b');
+                    pcTag(dropLine);
                     dropLine.setAttribute('stroke-width', '2.5');
                     svg.appendChild(dropLine);
 
@@ -5322,7 +5336,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     busLine.setAttribute('y1', pc.bus_y);
                     busLine.setAttribute('x2', pc.bus_max_x);
                     busLine.setAttribute('y2', pc.bus_y);
-                    busLine.setAttribute('stroke', '#64748b');
+                    pcTag(busLine);
                     busLine.setAttribute('stroke-width', '2.5');
                     svg.appendChild(busLine);
 
@@ -5333,11 +5347,31 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                         cLine.setAttribute('y1', c.bus_y);
                         cLine.setAttribute('x2', c.x);
                         cLine.setAttribute('y2', c.top_y);
-                        cLine.setAttribute('stroke', '#64748b');
+                        pcTag(cLine);
+                        cLine.setAttribute('data-kids', String(c.child_id));
                         cLine.setAttribute('stroke-width', '2.5');
                         svg.appendChild(cLine);
                     });
                 });
+
+                // ALT-072: наведение на линию или карточку ребёнка подсвечивает обе его линии, остальные приглушает
+                const pcHighlight = (kid) => {
+                    svg.querySelectorAll('line.pc-line').forEach(l => {
+                        const on = kid === null || (l.getAttribute('data-kids') || '').split(',').includes(String(kid));
+                        l.style.opacity = on ? '1' : '0.15';
+                        l.style.strokeWidth = (kid !== null && on) ? '3.5' : '';
+                    });
+                };
+                svg.onmouseover = (ev) => {
+                    const l = ev.target.closest && ev.target.closest('line.pc-line');
+                    if (l) { const ks = (l.getAttribute('data-kids') || '').split(','); if (ks.length === 1) pcHighlight(ks[0]); }
+                };
+                svg.onmouseout = () => pcHighlight(null);
+                container.onmouseover = (ev) => {
+                    const card = ev.target.closest && ev.target.closest('[data-person-id]');
+                    if (card) pcHighlight(card.getAttribute('data-person-id'));
+                };
+                container.onmouseout = () => pcHighlight(null);
             }
         }
 

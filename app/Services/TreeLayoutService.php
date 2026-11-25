@@ -1408,7 +1408,43 @@ class TreeLayoutService
                 'bus_min_x' => $minBusX,
                 'bus_max_x' => $maxBusX,
                 'children' => $childDropPoints,
+                'ended' => (bool)$endedMarriage,
+                'marriage_key' => $spouseId ? (min($id, $spouseId) . '_' . max($id, $spouseId)) : null,
             ];
+            }
+        }
+
+        // ALT-072: каждому разведённому браку — своя дорожка шины (общая для отца и матери ребёнка),
+        // линии разных браков не идут по одному и тому же месту
+        $endedGroups = [];
+        foreach ($parentChildEdges as $i => $pe) {
+            if (empty($pe['ended']) || empty($pe['marriage_key'])) continue;
+            $endedGroups[(int)round($pe['parent_bottom_y'])][$pe['marriage_key']][] = $i;
+        }
+        foreach ($endedGroups as $byKey) {
+            $ranges = [];
+            foreach ($byKey as $key => $idxs) {
+                $lo = PHP_INT_MAX;
+                $hi = -PHP_INT_MAX;
+                foreach ($idxs as $i) {
+                    $lo = min($lo, $parentChildEdges[$i]['bus_min_x']);
+                    $hi = max($hi, $parentChildEdges[$i]['bus_max_x']);
+                }
+                $ranges[] = ['key' => $key, 'lo' => $lo, 'hi' => $hi];
+            }
+            usort($ranges, fn($a, $b) => $a['lo'] <=> $b['lo']);
+            $laneEnd = [];
+            foreach ($ranges as $r) {
+                $lane = 0;
+                while (isset($laneEnd[$lane]) && $laneEnd[$lane] + 6 >= $r['lo']) $lane++;
+                $laneEnd[$lane] = $r['hi'];
+                $newBusY = null;
+                foreach ($byKey[$r['key']] as $i) {
+                    $newBusY = $parentChildEdges[$i]['parent_bottom_y'] + 45 + 8 * ($lane + 1);
+                    $parentChildEdges[$i]['bus_y'] = $newBusY;
+                    foreach ($parentChildEdges[$i]['children'] as &$cd) { $cd['bus_y'] = $newBusY; }
+                    unset($cd);
+                }
             }
         }
 

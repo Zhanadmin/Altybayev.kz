@@ -337,7 +337,6 @@ $dsThemeReady = !empty($dsThemeReady);
                 <span class="ds-tamga"><svg class="ic"><use href="#i-tamga"/></svg></span>
                 <span>
                     <b class="ds-brand-title"><?= htmlspecialchars($siteTitle) ?></b>
-                    <span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Керей · Жагалбайлы' : 'Керей · Жағалбайлы' ?></span>
                 </span>
             </a>
 

@@ -78,8 +78,8 @@ class I18n
     {
         return match (self::lang()) {
             'ru' => 'Родословная',
-            'en' => 'Family Tree',
-            'es' => 'Árbol Genealógico',
+            'en' => 'Family tree',
+            'es' => 'Árbol genealógico',
             default => 'Шежіре',
         };
     }

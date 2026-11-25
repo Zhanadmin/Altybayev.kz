@@ -239,6 +239,16 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
             setTimeout(function () { toast.remove(); }, kind === 'error' ? 7000 : 3500);
         }
 
+        // ALT-071: после перезагрузки страницы показать «Сақталды»
+        (function () {
+            try {
+                if (sessionStorage.getItem('altSavedToast')) {
+                    sessionStorage.removeItem('altSavedToast');
+                    showAppToast('Сақталды / Сохранено', 'success');
+                }
+            } catch (e) {}
+        })();
+
         // TASK-036: редактор истории проживания
         function resAddRow(r) {
             r = r || {};
@@ -513,6 +523,15 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                 formData.append('burial_lng', document.getElementById('editModalBurialLng').value);
             }
 
+            // ALT-071: кнопка «Сақталуда… / Сохраняется…», повторное нажатие заблокировано
+            const saveBtn = e.target && e.target.querySelector ? e.target.querySelector('button[type="submit"]') : null;
+            const saveBtnText = saveBtn ? saveBtn.textContent : '';
+            if (saveBtn) {
+                if (saveBtn.disabled) return;
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Сақталуда… / Сохраняется…';
+            }
+            let reloading = false;
             try {
                 let data;
                 if (window.__pcFullEdit === false) {
@@ -527,8 +546,11 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                 }
                 if (data && (data.status === 'success' || data.success)) {
                     // TASK-022: контакты — тем же нажатием «Сақтау»
-                    if (typeof pmeSave === 'function') { await pmeSave(); } // положение/затемнение обложки
-                    const ct = (typeof pcfSave === 'function') ? await pcfSave() : { ok: true, offerInvite: false };
+                    // ALT-071: обложка и контакты уходят параллельно
+                    const [, ct] = await Promise.all([
+                        (typeof pmeSave === 'function') ? pmeSave() : Promise.resolve(true), // положение/затемнение обложки
+                        (typeof pcfSave === 'function') ? pcfSave() : Promise.resolve({ ok: true, offerInvite: false })
+                    ]);
                     if (!ct.ok) { window.pcfDirty = true; return; } // остаёмся в окне, ошибка уже показана
                     if (ct.offerInvite) {
                         // email сохранён — показываем кнопку «Шақыру жіберу», окно не закрываем
@@ -538,12 +560,17 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                     }
                     window.pcfDirty = false;
                     closeGlobalPersonEditModal();
+                    // ALT-071: уведомление «Сақталды» покажется на обновлённой странице
+                    try { sessionStorage.setItem('altSavedToast', '1'); } catch (e2) {}
+                    reloading = true;
                     window.location.reload();
                 } else {
                     showAppToast('Қате: ' + (data.error || 'Сақтау мүмкін болмады'), 'error');
                 }
             } catch (err) {
                 showAppToast('Сұраныс қатесі: ' + err.message, 'error');
+            } finally {
+                if (saveBtn && !reloading) { saveBtn.disabled = false; saveBtn.textContent = saveBtnText; }
             }
         }
     </script>

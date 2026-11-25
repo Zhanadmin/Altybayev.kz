@@ -6838,6 +6838,14 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             formData.append('death_place', isDeceased ? document.getElementById('editDeathPlace').value.trim() : '');
             formData.append('biography', document.getElementById('editBiography').value.trim());
 
+            // ALT-071: кнопка «Сақталуда… / Сохраняется…» и защита от повторного нажатия
+            const saveBtn = e.target && e.target.querySelector ? e.target.querySelector('button[type="submit"]') : null;
+            const saveBtnText = saveBtn ? saveBtn.textContent : '';
+            if (saveBtn) {
+                if (saveBtn.disabled) return;
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Сақталуда… / Сохраняется…';
+            }
             try {
                 const res = await fetch('/api/person/update', {
                     method: 'POST',
@@ -6846,9 +6854,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    // TASK-022: контакты — тем же нажатием «Сақтау»
-                    if (typeof pmeSave === 'function') { await pmeSave(); } // положение/затемнение обложки
-                    const ct = (typeof pcfSave === 'function') ? await pcfSave() : { ok: true, offerInvite: false };
+                    // TASK-022: контакты — тем же нажатием «Сақтау»; ALT-071: обложка и контакты уходят параллельно
+                    const [, ct] = await Promise.all([
+                        (typeof pmeSave === 'function') ? pmeSave() : Promise.resolve(true), // положение/затемнение обложки
+                        (typeof pcfSave === 'function') ? pcfSave() : Promise.resolve({ ok: true, offerInvite: false })
+                    ]);
                     if (ct.ok && !ct.offerInvite) {
                         closeEditPersonModal();
                     } // иначе окно остаётся: ошибка контактов или кнопка «Шақыру жіберу» после сохранения email
@@ -6858,7 +6868,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     if (newRu && newRu.toLowerCase() !== 'белгісіз' && newRu !== origRu) {
                         await proposeClanPropagation(id, newRu);
                     }
-                    alert((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Данные успешно обновлены и сохранены в истории!' : 'Өзгерістер сәтті сақталды!');
+                    altSavedToast((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Сохранено' : 'Сақталды');
                     if (currentMode === 'editing') {
                         await refreshTreeKeepView(parseInt(id)); // ALT-065: без перезагрузки древа, положение и фокус те же
                     } else {
@@ -6873,7 +6883,19 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 }
             } catch (err) {
                 alert('Сұраныс қатесі: ' + err.message);
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtnText; }
             }
+        }
+
+        // ALT-071: короткое уведомление «Сақталды» (в древе нет общего стека тостов)
+        function altSavedToast(msg) {
+            const t = document.createElement('div');
+            t.setAttribute('role', 'status');
+            t.textContent = '✓ ' + msg;
+            t.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:100000;padding:10px 16px;border-radius:10px;background:var(--surface,#fff);color:var(--text,#1c1b19);border:1px solid var(--border,#d9d2c3);box-shadow:0 6px 24px rgba(0,0,0,.18);font-weight:600;font-size:14px;';
+            document.body.appendChild(t);
+            setTimeout(function () { t.remove(); }, 3000);
         }
 
         async function handleDeleteCurrentPerson() {

@@ -1361,7 +1361,9 @@ class TreeLayoutService
                     }
                     rsort($dists);
                     $rank = array_search(abs($pNode['x'] - $nodes[$spouseId]['x']), $dists);
-                    $busY += 12 * (1 + ($rank === false ? 0 : (int)$rank));
+                    // ALT-072: у ближайшего бывшего брака шина матери на одной высоте с шиной отца (симметрично);
+                    // уровень выше — только для более дальних браков
+                    $busY += 12 * ($rank === false ? 0 : (int)$rank);
                 }
             }
 
@@ -1370,6 +1372,12 @@ class TreeLayoutService
                 $cNode = $nodes[$cId];
                 $cMidX = $cNode['x'] + $cNode['width'] / 2;
                 $cTopY = $cNode['y'];
+                // ALT-072: у разведённых родителей две линии входят в верхний край карточки ребёнка раздельно:
+                // линия левого родителя — левее центра, правого — правее (концы точно на краю карточки)
+                if ($endedMarriage && isset($nodes[$spouseId])) {
+                    $off = min(16, $cNode['width'] / 4);
+                    $cMidX += ($pNode['x'] < $nodes[$spouseId]['x']) ? -$off : $off;
+                }
 
                 $childDropPoints[] = [
                     'child_id' => $cId,

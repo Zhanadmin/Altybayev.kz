@@ -87,9 +87,9 @@ class AuthController
 
                 $updateStmt = $db->prepare("
                     UPDATE users 
-                    SET google_id = ?, name = ?, avatar_url = ?, role = ?, last_login_at = NOW() 
+                    SET google_id = ?, name = COALESCE(NULLIF(name, ''), ?), avatar_url = ?, role = ?, last_login_at = NOW()
                     WHERE id = ?
-                ");
+                "); // ALT-073: имя уже сохранённой учётки при входе через Google не перезаписываем
                 $updateStmt->execute([
                     $googleUser['google_id'],
                     $googleUser['name'],

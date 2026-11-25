@@ -109,7 +109,7 @@ foreach ($it['gaps'] as $g) {
                 <button type="button" class="btn btn-sm ms-btn" data-photo="1"><?= $e($T(['kk' => 'Фото жүктеу', 'ru' => 'Загрузить фото', 'en' => 'Upload photo', 'es' => 'Subir foto'])) ?></button>
                 <input type="file" accept="image/jpeg,image/png,image/webp" hidden data-photo-file="1">
             <?php elseif ($g === 'contacts'): /* контакты вносятся через «Өзгерту»: поле только показывает «нет» и ведёт туда */ ?>
-                <a class="ms-ro" href="/tree?focus=<?= $pid ?>&amp;edit=<?= $pid ?>" title="<?= $e($label . ': ' . $ph['contacts']) ?>">
+                <a class="ms-ro" href="/person/<?= $pid ?>?edit=<?= $pid ?>&amp;return=<?= rawurlencode('/admin/missing#p' . $pid) ?>" title="<?= $e($label . ': ' . $ph['contacts']) ?>">
                     <input class="ms-in" type="text" readonly tabindex="-1" placeholder="<?= $e($ph['contacts']) ?>" aria-label="<?= $e($label) ?>">
                 </a>
             <?php else: /* ру «по отцу» — заполняется после заполнения отца */ ?>
@@ -126,9 +126,8 @@ $td = static function (string $key, string $html) use ($colLab): string {
     return '<td class="ms-c-' . $key . '" data-label="' . htmlspecialchars($colLab[$key] ?? '', ENT_QUOTES, 'UTF-8') . '">' . ($html === '' ? '' : '<div class="ms-stack">' . $html . '</div>') . '</td>';
 };
 ?>
-            <tr data-person="<?= $pid ?>">
+            <tr id="p<?= $pid ?>" data-person="<?= $pid ?>">
                 <td class="ms-c-name"><a href="/person/<?= $pid ?>"><?= $e($name !== '' ? $name : ('#' . $pid)) ?></a></td>
-                <td class="ms-c-gen"><?= $e($genLabel($it['gen'])) ?></td>
                 <?= $td('photo', $cols['photo']) ?>
                 <?= $td('birth', $cols['birth']) ?>
                 <?= $td('nationality', $cols['nationality']) ?>
@@ -140,6 +139,6 @@ $td = static function (string $key, string $html) use ($colLab): string {
                 <?= $td('other', $cols['other']) ?>
                 <?= $td('zheti', $cols['zheti']) ?>
                 <td class="ms-c-edit">
-                    <a class="btn btn-sm ms-btn" href="/tree?focus=<?= $pid ?>&amp;edit=<?= $pid ?>"><?= $e($ctx['editLabel']) ?></a>
+                    <a class="btn btn-sm ms-btn" href="/person/<?= $pid ?>?edit=<?= $pid ?>&amp;return=<?= rawurlencode('/admin/missing#p' . $pid) ?>"><?= $e($ctx['editLabel']) ?></a>
                 </td>
             </tr>

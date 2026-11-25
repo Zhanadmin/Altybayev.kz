@@ -553,6 +553,12 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                 .catch(e => showAppToast('Қате / Ошибка: ' + e.message, 'error'));
         }
 
+        // ALT-112: /person/ID?edit=ID — сразу открыть окно правки (из «Что не заполнено»)
+        document.addEventListener('DOMContentLoaded', function () {
+            var ed = parseInt(new URLSearchParams(window.location.search).get('edit') || '0', 10);
+            if (ed > 0 && /^\/person\/\d+\/?$/.test(window.location.pathname)) { openGlobalPersonEditModal(ed); }
+        });
+
         function closeGlobalPersonEditModal() {
             const modal = document.getElementById('globalPersonEditModal');
             if (modal) modal.style.display = 'none';
@@ -634,7 +640,9 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                     // ALT-071: уведомление «Сақталды» покажется на обновлённой странице
                     try { sessionStorage.setItem('altSavedToast', '1'); } catch (e2) {}
                     reloading = true;
-                    window.location.reload();
+                    // ALT-112: пришли из «Что не заполнено» — вернуться на то же место таблицы
+                    var retUrl = new URLSearchParams(window.location.search).get('return') || '';
+                    if (/^\/(?![\/\\])[^\s\\]*$/.test(retUrl)) { window.location.href = retUrl; } else { window.location.reload(); }
                 } else {
                     showAppToast('Қате: ' + (data.error || 'Сақтау мүмкін болмады'), 'error');
                 }

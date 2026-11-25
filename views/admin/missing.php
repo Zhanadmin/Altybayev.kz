@@ -48,18 +48,17 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
 .ms-table tbody tr:nth-child(even) { background: rgba(128,128,128,.07); }
 .ms-table tbody tr:hover { background: rgba(128,128,128,.14); }
 .ms-chip { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 11px; line-height: 1.15; white-space: normal; background: rgba(128,128,128,.08); }
-.ms-table .ms-c-name { width: 9.5%; }
-.ms-table .ms-c-gen { width: 6%; }
-.ms-table .ms-c-photo { width: 8%; }
-.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 8.5%; }
-.ms-table .ms-c-nationality { width: 8.5%; }
-.ms-table .ms-c-clan { width: 7%; }
-.ms-table .ms-c-marriage { width: 8.5%; }
-.ms-table .ms-c-parents { width: 11%; }
-.ms-table .ms-c-contacts { width: 5.5%; }
-.ms-table .ms-c-other { width: 8%; }
-.ms-table .ms-c-zheti { width: 5.5%; }
-.ms-table .ms-c-edit { width: 5%; text-align: center; }
+.ms-table .ms-c-name { width: 11%; }
+.ms-table .ms-c-photo { width: 8.5%; }
+.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 9%; }
+.ms-table .ms-c-nationality { width: 9%; }
+.ms-table .ms-c-clan { width: 8%; }
+.ms-table .ms-c-marriage { width: 9%; }
+.ms-table .ms-c-parents { width: 12%; }
+.ms-table .ms-c-contacts { width: 6%; }
+.ms-table .ms-c-other { width: 8.5%; }
+.ms-table .ms-c-zheti { width: 6%; }
+.ms-table .ms-c-edit { width: 4%; text-align: center; }
 /* ALT-107: поля прямо в ячейках */
 .ms-stack { display: flex; flex-direction: column; gap: 3px; }
 .ms-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -77,7 +76,6 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
     .ms-table td:empty { display: none; }
     .ms-table td[data-label]:not(:empty)::before { content: attr(data-label); display: block; font-size: 12px; opacity: .7; margin-bottom: 2px; }
     .ms-table .ms-c-name { flex-basis: 100%; font-weight: 600; }
-    .ms-table .ms-c-gen { flex-basis: 100%; opacity: .7; }
     .ms-table .ms-c-edit { flex-basis: 100%; text-align: left; }
     .ms-table .ms-c-edit .ms-btn { width: auto; padding: 0 16px; }
 }
@@ -159,7 +157,6 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
         <thead>
             <tr>
                 <th class="ms-c-name"><?= $e($T(['kk' => 'Адам', 'ru' => 'Человек', 'en' => 'Person', 'es' => 'Persona'])) ?></th>
-                <th class="ms-c-gen"><?= $e($T(['kk' => 'Ұрпақ', 'ru' => 'Поколение', 'en' => 'Generation', 'es' => 'Generación'])) ?></th>
                 <th class="ms-c-photo"><?= $e($T($gapLabels['photo'])) ?></th>
                 <th class="ms-c-birth"><?= $e($T($gapLabels['birth'])) ?></th>
                 <th class="ms-c-nationality"><?= $e($T($gapLabels['nationality'])) ?></th>

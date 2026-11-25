@@ -88,6 +88,7 @@ $navItems = [
     'families' => ['href' => '/families', 'icon' => 'i-family',   'label' => I18n::t('nav_families'), 'count' => (string)\App\Services\PeopleCountService::families(), 'group' => 1],
     'tree'     => ['href' => '/tree',     'icon' => 'i-tree',     'label' => I18n::t('nav_tree'),     'count' => null,  'group' => 1],
     'dates'    => ['href' => '/dates',    'icon' => 'i-calendar', 'label' => I18n::t('nav_dates'),    'count' => null,  'group' => 2],
+    'zheti'    => ['href' => '/tree?zheti=1', 'icon' => 'i-tree', 'label' => 'Жеті ата', 'count' => null, 'group' => 2], // ALT-091: прямой вход, без «Памятных дат»
     'events'   => ['href' => '/events',   'icon' => 'i-camera',   'label' => (($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Мероприятия' : 'Іс-шаралар'), 'count' => null, 'group' => 2], // TASK-018
 ];
 if ($isAdmin) {

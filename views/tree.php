@@ -8059,10 +8059,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 }
             };
             const EXTRA = {
-                kk: { download: 'Картинкамен жүктеу (PNG)', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: '' } },
-                ru: { download: 'Скачать картинкой (PNG)', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: '' } },
-                en: { download: 'Download as image (PNG)', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: '' } },
-                es: { download: 'Descargar como imagen (PNG)', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: '' } }
+                kk: { uran: 'Ұран', pdf: 'PDF жасау', download: 'Картинкамен жүктеу (PNG)', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: '' } },
+                ru: { uran: 'Ұран', pdf: 'Сохранить в PDF', download: 'Скачать картинкой (PNG)', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: '' } },
+                en: { uran: 'Battle cry', pdf: 'Save as PDF', download: 'Download as image (PNG)', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: '' } },
+                es: { uran: 'Grito de guerra', pdf: 'Guardar como PDF', download: 'Descargar como imagen (PNG)', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: '' } }
             };
             const l = T[currentLang] || T.kk;
             Object.assign(l, EXTRA[currentLang] || EXTRA.kk);
@@ -8100,13 +8100,25 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 // табличка: сверху самый дальний предок, внизу сам человек
                 const planks = data.fathers.slice().reverse();
-                const W = 400, PLANK_Y = 250, PLANK_H = 66;
+                const W = 400, PLANK_Y = 266, PLANK_H = 66;
                 const H = PLANK_Y + planks.length * PLANK_H + 150;
                 const self = data.fathers[0].person || {};
                 const clanInfo = data.clan || {};
                 const clanName = (currentLang === 'kk' ? (clanInfo.name || self.clan_ru) : (clanInfo.name_ru || self.clan_ru)) || '';
                 const zhuzLabel = L.zhuz[clanInfo.zhuz] || '';
                 const subName = self.clan_subru || '';
+                // ALT-090: настоящая таңба ру из «Ру таңбалары» (встраиваем data-URI, чтобы работало в PNG/PDF); ұран ру
+                let tamgaData = '';
+                if (clanInfo.tamga_url) {
+                    try {
+                        const tr = await fetch(clanInfo.tamga_url);
+                        if (tr.ok) {
+                            const blob = await tr.blob();
+                            tamgaData = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result || '')); fr.onerror = () => ok(''); fr.readAsDataURL(blob); });
+                        }
+                    } catch (e) { tamgaData = ''; }
+                }
+                const uranText = (clanInfo.uran || '').trim();
                 const ring = Array.from({ length: 28 }, (_, i) => {
                     const a = (i / 28) * Math.PI * 2;
                     return `<path d="M${(200 + Math.cos(a) * 82).toFixed(1)} ${(115 + Math.sin(a) * 82).toFixed(1)} l3 3 l-3 3 l-3 -3 z" fill="#c9a24b" transform="rotate(${(a * 180 / Math.PI + 45).toFixed(0)} ${(200 + Math.cos(a) * 82).toFixed(1)} ${(115 + Math.sin(a) * 82).toFixed(1)})"/>`;
@@ -8139,10 +8151,11 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     <circle cx="200" cy="115" r="92" fill="#3f1510" stroke="#c9a24b" stroke-width="3"/>
                     ${ring}
                     <circle cx="200" cy="115" r="70" fill="#f3e6c8" stroke="#b28a3c" stroke-width="2"/>
-                    <text x="200" y="${zhuzLabel ? 92 : 100}" text-anchor="middle" font-size="13" fill="#6b4a2e">${esc(zhuzLabel)}</text>
-                    <text x="200" y="118" text-anchor="middle" font-size="${fitSize(clanName.toUpperCase(), 26, 11)}" font-weight="700" fill="#3b1a12">${esc(clanName.toUpperCase())}</text>
-                    <path d="M170 136 q15 -16 30 0 q15 16 30 0 M178 142 q22 14 44 0" fill="none" stroke="#b28a3c" stroke-width="2.5" stroke-linecap="round"/>
-                    <text x="200" y="${PLANK_Y - 24}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
+                    <text x="200" y="${zhuzLabel ? 84 : 92}" text-anchor="middle" font-size="12" fill="#6b4a2e">${esc(zhuzLabel)}</text>
+                    <text x="200" y="${tamgaData ? 104 : 120}" text-anchor="middle" font-size="${fitSize(clanName.toUpperCase(), 24, 12)}" font-weight="700" fill="#3b1a12">${esc(clanName.toUpperCase())}</text>
+                    ${tamgaData ? `<image href="${tamgaData}" x="176" y="112" width="48" height="48" preserveAspectRatio="xMidYMid meet"/>` : ''}
+                    ${uranText ? `<text x="200" y="${PLANK_Y - 42}" text-anchor="middle" font-size="${fitSize(uranText, 14, 28)}" font-style="italic" fill="#e8c97a">${esc(L.uran + ': ' + uranText)}</text>` : ''}
+                    <text x="200" y="${PLANK_Y - 18}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
                     ${side(38)}${side(362)}
                     ${plankSvg}
                     <rect x="52" y="${bottomY + 2}" width="296" height="30" rx="4" fill="#3f1510" stroke="#c9a24b" stroke-width="1.5"/>
@@ -8157,6 +8170,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                     ${svg}
                     <div style="text-align:center; margin-top:12px;">
                         <button type="button" class="btn-modal-submit" onclick="downloadZhetiAtaPng()" style="padding:8px 22px; font-size:13px;">⬇ ${esc(L.download)}</button>
+                        <button type="button" class="btn-modal-cancel" onclick="printZhetiAtaPdf()" style="padding:8px 22px; font-size:13px; margin-left:8px;">🖨 ${esc(L.pdf)}</button>
                     </div>`;
             } catch (err) {
                 resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">${esc(L.error)}: ${esc(err.message)}</div>`;
@@ -8191,6 +8205,27 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 }, 'image/png');
             };
             img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+        }
+
+        // ALT-090: табличка в PDF — печать только таблички (в диалоге выбрать «Сохранить как PDF»); таңба встроена в SVG
+        function printZhetiAtaPdf() {
+            const svgEl = document.getElementById('zhetiAtaPlaque');
+            if (!svgEl) return;
+            const clone = svgEl.cloneNode(true);
+            clone.setAttribute('style', 'max-width:420px;display:block;margin:0 auto;');
+            clone.setAttribute('width', '100%');
+            const frame = document.createElement('iframe');
+            frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+            document.body.appendChild(frame);
+            const d = frame.contentWindow.document;
+            d.open();
+            d.write('<!doctype html><html><head><meta charset="utf-8"><title>Жеті ата</title><style>@page{margin:10mm}body{margin:0}svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' + new XMLSerializer().serializeToString(clone) + '</body></html>');
+            d.close();
+            setTimeout(() => {
+                frame.contentWindow.focus();
+                frame.contentWindow.print();
+                setTimeout(() => frame.remove(), 3000);
+            }, 300);
         }
 
         // ALT-089: имя в цепочке открывает карточку человека

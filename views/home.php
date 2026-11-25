@@ -93,7 +93,7 @@ require __DIR__ . '/layout/master_start.php';
             <div class="label"><?= htmlspecialchars(I18n::t('nav_tree')) ?></div>
             <div class="note"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Виды: Өңдеу, Шежіре-Орман' : 'Өңдеу және Шежіре-Орман түрлері' ?></div>
         </a>
-        <a href="/dates" class="stat-leaf hm-link">
+        <a href="/tree?zheti=1" class="stat-leaf hm-link"><?php /* ALT-091: сразу «Жеті ата», без перехода через «Памятные даты» */ ?>
             <svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>
             <div class="value hm-value-text">Жеті ата</div>
             <div class="label"><?= htmlspecialchars(I18n::t('nav_dates')) ?></div>

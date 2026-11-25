@@ -8,6 +8,7 @@ use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
+use App\Services\ClanService;
 use App\Services\ZhetiAtaService;
 
 /**
@@ -77,9 +78,33 @@ class ZhetiAtaController
         if ($name === '') {
             return null;
         }
-        $stmt = Database::getConnection()->prepare('SELECT name, name_ru, zhuz FROM clans WHERE name_ru = ? OR name = ? LIMIT 1');
+        // ALT-090: SELECT * — колонка «uran» может ещё не существовать; регистр не важен
+        $stmt = Database::getConnection()->prepare('SELECT * FROM clans WHERE LOWER(name_ru) = LOWER(?) OR LOWER(name) = LOWER(?) LIMIT 1');
         $stmt->execute([$name, $name]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $row ?: null;
+        if (!$row) {
+            return null;
+        }
+        $uran = trim((string)($row['uran'] ?? ''));
+        if ($uran === '') {
+            $uran = self::uranFromSummary((string)($row['summary'] ?? ''));
+        }
+        return [
+            'name'      => $row['name'],
+            'name_ru'   => $row['name_ru'] ?? null,
+            'zhuz'      => $row['zhuz'] ?? 'other',
+            'tamga_url' => (new ClanService())->urlFor($row['tamga_file'] ?? null), // настоящая таңба из «Ру таңбалары»
+            'uran'      => $uran,
+        ];
+    }
+
+    /** ALT-090: ұран из описания ру («… Ұран: Қалтағай. Источник …»); пусто, если не указан. */
+    public static function uranFromSummary(string $summary): string
+    {
+        if (!preg_match('/Ұран:\s*([^.;\n]+)/u', $summary, $m)) {
+            return '';
+        }
+        $u = trim($m[1]);
+        return preg_match('/^(не указан|жоқ|—|-)/ui', $u) ? '' : $u;
     }
 }

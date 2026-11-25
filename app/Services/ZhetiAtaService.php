@@ -160,6 +160,37 @@ class ZhetiAtaService
     }
 
     /**
+     * ALT-089: сам человек (колено 0) и семь его отцов по отцовской линии (колена 1–7).
+     * Недостающие колена возвращаются с person = null.
+     *
+     * @return array<int, array{level: int, person: ?array}>
+     */
+    public function getSevenFathers(int $personId): array
+    {
+        $chain = $this->getPaternalChain($personId, 8);
+        $result = [];
+        for ($level = 0; $level <= 7; $level++) {
+            $item = $chain[$level] ?? null;
+            $p = $item['person'] ?? null;
+            $result[] = [
+                'level'  => $level,
+                'person' => $p ? [
+                    'id'         => (int)$p['id'],
+                    'first_name' => $p['first_name'] ?? '',
+                    'last_name'  => $p['last_name'] ?? '',
+                    'gender'     => $p['gender'] ?? 'M',
+                    'birth_year' => $p['birth_year'] ?? null,
+                    'death_year' => $p['death_year'] ?? null,
+                    'is_deceased' => (int)($p['is_deceased'] ?? 0),
+                    'clan_ru'    => $p['clan_ru'] ?? '',
+                    'clan_subru' => $p['clan_subru'] ?? '',
+                ] : null,
+            ];
+        }
+        return $result;
+    }
+
+    /**
      * Полная проверка «Жеті ата» между двумя персонами
      *
      * @param int $personAId

@@ -39,10 +39,10 @@ require __DIR__ . '/../layout/master_start.php';
                 <a href="/dates?days=365" class="<?= $daysAhead === 365 ? 'active' : '' ?>">1 <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'год' : 'жыл' ?></a>
             </nav>
             <!-- Быстрая кнопка проверки Жеті ата -->
-            <button type="button" class="btn btn-primary" onclick="openZhetiAtaPageModal()">
+            <a href="/tree?zheti=1" class="btn btn-primary">
                 <svg class="ic" aria-hidden="true"><use href="#i-tamga"/></svg>
-                <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Калькулятор «Жеті ата»' : '«Жеті ата» тексеру' ?>
-            </button>
+                <?= $lang === 'ru' ? 'Жеті ата' : ($lang === 'en' ? 'Zheti ata' : ($lang === 'es' ? 'Zheti ata' : 'Жеті ата')) ?>
+            </a>
         </div>
     </div>
 
@@ -186,49 +186,8 @@ require __DIR__ . '/../layout/master_start.php';
     <?php endif; ?>
 </div>
 
-<!-- Модальное окно Жеті ата — белый остров поверх затемнения -->
-<div id="zhetiAtaModal" class="modal-backdrop" style="display:none;">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="zhetiAtaTitle" style="max-width: 640px;">
-        <div class="modal-head">
-            <h3 id="zhetiAtaTitle"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Проверка традиции «Жеті ата»' : '«Жеті ата» тексеру дәстүрі' ?></h3>
-            <button type="button" class="btn btn-ghost btn-icon" onclick="closeZhetiAtaPageModal()" aria-label="Жабу / Закрыть">
-                <svg class="ic"><use href="#i-x"/></svg>
-            </button>
-        </div>
-        <form onsubmit="handleZhetiAtaCalc(event)">
-            <div class="modal-body">
-                <p class="muted small">
-                    <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Выберите двух людей из шежіре, чтобы проверить наличие общего предка по мужской линии до 7 колен.' : 'Шежіредегі екі адамды таңдап, олардың 7 буын аралығында ортақ атасының бар-жоғын тексеріңіз.' ?>
-                </p>
-                <div class="form-row">
-                    <div class="field">
-                        <label for="zhetiIdA">1-тұлға / 1-я персона (ID)</label>
-                        <input type="number" id="zhetiIdA" class="input" value="<?= (int)($userPersonId ?? 6) ?>" required>
-                    </div>
-                    <div class="field">
-                        <label for="zhetiIdB">2-тұлға / 2-я персона (ID)</label>
-                        <input type="number" id="zhetiIdB" class="input" value="25" required>
-                    </div>
-                </div>
-                <div id="zhetiResultBox" class="alert dt-result" style="display:none;"></div>
-            </div>
-            <div class="modal-foot">
-                <button type="button" class="btn" onclick="closeZhetiAtaPageModal()">Жабу / Закрыть</button>
-                <button type="submit" class="btn btn-primary"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Проверить 7 колен' : '7 буынды тексеру' ?></button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
-    function openZhetiAtaPageModal() {
-        document.getElementById('zhetiAtaModal').style.display = 'flex';
-    }
-
-    function closeZhetiAtaPageModal() {
-        document.getElementById('zhetiAtaModal').style.display = 'none';
-    }
-
+    // ALT-089: «Жеті ата» теперь открывается на странице дерева (/tree?zheti=1)
     function switchDateFilter(filterType, btn) {
         document.querySelectorAll('.date-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -243,42 +202,6 @@ require __DIR__ . '/../layout/master_start.php';
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
-    async function handleZhetiAtaCalc(e) {
-        e.preventDefault();
-        const a = document.getElementById('zhetiIdA').value;
-        const b = document.getElementById('zhetiIdB').value;
-        const box = document.getElementById('zhetiResultBox');
-
-        box.className = 'alert dt-result';
-        box.style.display = 'flex';
-        box.textContent = 'Есептелуде...';
-
-        try {
-            const res = await fetch(`/api/zheti-ata?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
-            const data = await res.json();
-            if (data && data.success) {
-                const z = data.zheti_ata;
-                const isWithin = z.is_within_7_generations;
-                box.className = 'alert dt-result ' + (isWithin ? 'error' : 'dt-ok');
-                box.innerHTML = `
-                    <svg class="ic" aria-hidden="true"><use href="#i-${isWithin ? 'alert' : 'check'}"/></svg>
-                    <div>
-                        <div class="dt-result-title">
-                            ${isWithin ? 'Жеті атаға тола қоймаған (Некеге тыйым салынады)' : 'Жеті атадан асқан (Құда болуға рұқсат)'}
-                        </div>
-                        <div>${dtEsc(z.description_kk || '')}</div>
-                        ${z.common_ancestor ? `<div class="small">Ортақ баба: <strong>${dtEsc(z.common_ancestor.first_name)} ${dtEsc(z.common_ancestor.last_name || '')}</strong></div>` : ''}
-                    </div>
-                `;
-            } else {
-                box.className = 'alert dt-result error';
-                box.textContent = 'Қате: ' + ((data && data.error) || 'Есептеу мүмкін болмады');
-            }
-        } catch (err) {
-            box.className = 'alert dt-result error';
-            box.textContent = 'Сұраныс қатесі: ' + err.message;
-        }
-    }
 </script>
 
 <?php

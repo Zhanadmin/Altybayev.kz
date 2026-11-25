@@ -62,9 +62,6 @@ require __DIR__ . '/layout/master_start.php';
                 ? 'Добро пожаловать в закрытую систему родословной. Здесь бережно сохраняется преемственность поколений, история семьи, памятные даты и воспоминания.'
                 : 'Әулет шежіресінің жабық отбасылық порталына қош келдіңіз. Мұнда ата-бабалар тарихы, ұрпақтар сабақтастығы, естеліктер мен маңызды күндер сақталады.' ?>
         </p>
-        <?php if ($youAreText !== ''): ?>
-            <span class="badge badge-you hm-you"><?= htmlspecialchars($youAreText) ?></span>
-        <?php endif; ?>
         <hr class="oyu-rule">
         <div class="actions">
             <a href="/persons" class="btn">

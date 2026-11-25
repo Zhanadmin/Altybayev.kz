@@ -2932,7 +2932,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             border-color: var(--c-border-strong);
             padding-bottom: 16px;
         }
-        .brand-title { font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: normal; letter-spacing: 0; }
+        .brand-title, .brand-title span { font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: normal !important; letter-spacing: 0; } /* ALT-087: заголовок «Шежіре» — прямой, жирный */
         header.tree-nav .mode-btn.active, header.tree-nav .scope-btn.active, header.tree-nav .lang-btn.active {
             background: var(--c-island);
             color: var(--c-accent-text);
@@ -3914,41 +3914,26 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         <div class="modal-card" style="width:780px; max-width:95vw;">
             <div class="modal-header">
                 <div>
-                    <h3>📜 Қазақтың «Жеті ата» қағидасын тексеру</h3>
-                    <div style="font-size:12px; color:#94a3b8;">Екі адам арасында әкелер желісі бойынша 7 буынды есептеу</div>
+                    <h3 id="zhetiAtaTitle">📜 Жеті ата</h3>
+                    <div id="zhetiAtaSubtitle" style="font-size:12px; color:#94a3b8;"></div>
                 </div>
                 <button class="close-panel-btn" onclick="closeZhetiAtaTreeModal()">✕</button>
             </div>
             <div class="modal-body" style="max-height:75vh;">
-                <div style="background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#cbd5e1; line-height:1.5;">
-                    Қазақ халқының салты бойынша бір атадан тараған жеті атаға дейінгі ұрпақтар бір-бірімен қыз алысып, үйленуіне тыйым салынған. 7 буыннан кейін ғана ақсақалдар батасымен құда болуға рұқсат беріледі.
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:16px;">
-                    <div class="form-group">
-                        <label>1-ші адам (А тұлғасы):</label>
+                <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+                    <div class="form-group" style="flex:1; min-width:220px; margin:0;">
+                        <label id="zhetiAtaPersonLabel" for="zhetiAtaPersonA"></label>
                         <select class="form-select" id="zhetiAtaPersonA">
-                            <option value="">Жүктелуде...</option>
+                            <option value=""></option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>2-ші адам (Б тұлғасы):</label>
-                        <select class="form-select" id="zhetiAtaPersonB">
-                            <option value="">Жүктелуде...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style="text-align:center; margin-bottom:18px;">
-                    <button type="button" class="btn-modal-submit" onclick="runTreeZhetiAtaCheck()" style="padding:10px 28px; font-size:14px;">
-                        🔍 Жеті атаны тексеру
-                    </button>
+                    <button type="button" class="btn-modal-submit" id="zhetiAtaRunBtn" onclick="runTreeZhetiAtaCheck()" style="padding:10px 28px; font-size:14px;"></button>
                 </div>
 
                 <div id="zhetiAtaResultBox" style="display:none;"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-modal-cancel" onclick="closeZhetiAtaTreeModal()">Жабу</button>
+                <button type="button" class="btn-modal-cancel" id="zhetiAtaCloseBtn" onclick="closeZhetiAtaTreeModal()"></button>
             </div>
         </div>
     </div>
@@ -8017,42 +8002,75 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         function openZhetiAtaTreeModal(preselectedId = null) {
             if (!treeData || !treeData.persons) return;
 
+            const L = zhetiAtaLabels();
+            document.getElementById('zhetiAtaTitle').textContent = '📜 ' + L.title;
+            document.getElementById('zhetiAtaSubtitle').textContent = L.subtitle;
+            document.getElementById('zhetiAtaPersonLabel').textContent = L.person;
+            document.getElementById('zhetiAtaRunBtn').textContent = '🔍 ' + L.run;
+            document.getElementById('zhetiAtaCloseBtn').textContent = L.close;
+
             const selA = document.getElementById('zhetiAtaPersonA');
-            const selB = document.getElementById('zhetiAtaPersonB');
             selA.innerHTML = '';
-            selB.innerHTML = '';
 
             const sorted = [...treeData.persons].sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
             sorted.forEach(p => {
-                const optA = document.createElement('option');
-                optA.value = p.id;
-                optA.text = `${p.first_name} ${p.last_name || ''}${p.maiden_name ? ' (' + p.maiden_name + ')' : ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
-                if (p.maiden_name) optA.style.fontStyle = 'italic';
-                selA.appendChild(optA);
-
-                const optB = document.createElement('option');
-                optB.value = p.id;
-                optB.text = `${p.first_name} ${p.last_name || ''}${p.maiden_name ? ' (' + p.maiden_name + ')' : ''} (${p.gender === 'M' ? 'Ер' : 'Әйел'}, ${p.birth_year || '—'})`;
-                if (p.maiden_name) optB.style.fontStyle = 'italic';
-                selB.appendChild(optB);
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.text = `${p.first_name} ${p.last_name || ''}${p.maiden_name ? ' (' + p.maiden_name + ')' : ''} (${p.birth_year || '—'})`;
+                selA.appendChild(opt);
             });
 
-            if (preselectedId) {
-                selA.value = preselectedId.toString();
-            } else if (selectedPersonId) {
-                selA.value = selectedPersonId.toString();
-            } else {
-                selA.value = "6"; // Жандос
-            }
-
-            // Второго человека выбираем отличающегося
-            const diffPerson = sorted.find(x => x.id !== parseInt(selA.value, 10));
-            if (diffPerson) {
-                selB.value = diffPerson.id.toString();
+            // По умолчанию — выбранный в дереве, иначе тот, кто вошёл
+            const defId = preselectedId || selectedPersonId || userPersonId;
+            if (defId && sorted.some(p => p.id === parseInt(defId, 10))) {
+                selA.value = String(defId);
             }
 
             document.getElementById('zhetiAtaResultBox').style.display = 'none';
             document.getElementById('zhetiAtaModal').classList.add('active');
+        }
+
+        // ALT-089: подписи окна «Жеті ата» на всех языках сайта
+        function zhetiAtaLabels() {
+            const T = {
+                kk: {
+                    title: 'Жеті ата', subtitle: 'Адамның әке желісі бойынша жеті атасы', person: 'Адам:', run: 'Жеті ата', close: 'Жабу',
+                    unknown: 'белгісіз', clan: 'Ру', loading: 'Жүктелуде...', error: 'Қате',
+                    known: (n) => `Жеті атадан белгілісі: ${n}`,
+                    levels: ['Өзі', 'Әке', 'Ата', 'Арғы ата', 'Баба', 'Түп ата', 'Дүние ата', 'Қаймана ата']
+                },
+                ru: {
+                    title: 'Жеті ата', subtitle: 'Семь отцов человека по отцовской линии', person: 'Человек:', run: 'Жеті ата', close: 'Закрыть',
+                    unknown: 'белгісіз', clan: 'Ру', loading: 'Загрузка...', error: 'Ошибка',
+                    known: (n) => `Известно предков: ${n} из 7`,
+                    levels: ['Он сам', 'Отец (әке)', 'Дед (ата)', 'Прадед (арғы ата)', 'Прапрадед (баба)', '5-е колено (түп ата)', '6-е колено (дүние ата)', '7-е колено (қаймана ата)']
+                },
+                en: {
+                    title: 'Zheti ata', subtitle: 'A person’s seven fathers along the paternal line', person: 'Person:', run: 'Zheti ata', close: 'Close',
+                    unknown: 'белгісіз', clan: 'Clan', loading: 'Loading...', error: 'Error',
+                    known: (n) => `Known ancestors: ${n} of 7`,
+                    levels: ['Himself', 'Father (əke)', 'Grandfather (ata)', 'Great-grandfather (argı ata)', '4th generation (baba)', '5th generation (tüp ata)', '6th generation (dünie ata)', '7th generation (qaymana ata)']
+                },
+                es: {
+                    title: 'Zheti ata', subtitle: 'Los siete padres de una persona por línea paterna', person: 'Persona:', run: 'Zheti ata', close: 'Cerrar',
+                    unknown: 'белгісіз', clan: 'Clan', loading: 'Cargando...', error: 'Error',
+                    known: (n) => `Antepasados conocidos: ${n} de 7`,
+                    levels: ['Él mismo', 'Padre (əke)', 'Abuelo (ata)', 'Bisabuelo (argı ata)', '4.ª generación (baba)', '5.ª generación (tüp ata)', '6.ª generación (dünie ata)', '7.ª generación (qaymana ata)']
+                }
+            };
+            const EXTRA = {
+                kk: { download: 'Картинкамен жүктеу (PNG)', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: '' } },
+                ru: { download: 'Скачать картинкой (PNG)', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: '' } },
+                en: { download: 'Download as image (PNG)', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: '' } },
+                es: { download: 'Descargar como imagen (PNG)', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: '' } }
+            };
+            const l = T[currentLang] || T.kk;
+            Object.assign(l, EXTRA[currentLang] || EXTRA.kk);
+            // «белгісіз» — слово из задачи; на ru/en/es подпись понятна из контекста
+            if (currentLang === 'ru') l.unknown = 'неизвестен (белгісіз)';
+            if (currentLang === 'en') l.unknown = 'unknown (белгісіз)';
+            if (currentLang === 'es') l.unknown = 'desconocido (белгісіз)';
+            return l;
         }
 
         function closeZhetiAtaTreeModal() {
@@ -8060,70 +8078,134 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         }
 
         async function runTreeZhetiAtaCheck() {
-            const a = document.getElementById('zhetiAtaPersonA').value;
-            const b = document.getElementById('zhetiAtaPersonB').value;
+            const id = document.getElementById('zhetiAtaPersonA').value;
             const resBox = document.getElementById('zhetiAtaResultBox');
+            const L = zhetiAtaLabels();
+            const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            if (!id) return;
             resBox.style.display = 'block';
-            resBox.innerHTML = '<div style="text-align:center; padding:16px; color:#94a3b8;">Есептелуде...</div>';
+            resBox.innerHTML = `<div style="text-align:center; padding:16px; color:#94a3b8;">${esc(L.loading)}</div>`;
 
             try {
-                const res = await fetch(`/api/zheti-ata?a=${a}&b=${b}`);
+                const res = await fetch(`/api/zheti-ata/seven?id=${encodeURIComponent(id)}`);
                 const data = await res.json();
-                if (!data.success) {
-                    resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">${data.error || 'Қате орын алды'}</div>`;
+                if (!data.success || !Array.isArray(data.fathers)) {
+                    resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">${esc(data.error || L.error)}</div>`;
                     return;
                 }
 
-                const pat = data.paternal;
-                const isWithin = pat.is_within_7_generations;
-                const statusColor = isWithin ? '#ef4444' : (pat.verdict_code === 'exceeds_7' ? '#10b981' : '#64748b');
-                const bgColor = isWithin ? 'rgba(239,68,68,0.1)' : (pat.verdict_code === 'exceeds_7' ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)');
+                // колено 0 — сам человек, 1–7 — его отцы
+                let known = 0;
+                data.fathers.forEach((f) => { if (f.person && f.level > 0) known++; });
 
-                let html = `
-                    <div style="background:${bgColor}; border:2px solid ${statusColor}; border-radius:10px; padding:16px; margin-bottom:14px;">
-                        <div style="font-size:16px; font-weight:700; color:${statusColor}; margin-bottom:6px;">
-                            ${pat.title_kk}
-                        </div>
-                        <div style="font-size:13.5px; line-height:1.6; color:#f8fafc;">
-                            ${pat.desc_kk}
-                        </div>
-                    </div>
-                `;
+                // табличка: сверху самый дальний предок, внизу сам человек
+                const planks = data.fathers.slice().reverse();
+                const W = 400, PLANK_Y = 250, PLANK_H = 66;
+                const H = PLANK_Y + planks.length * PLANK_H + 150;
+                const self = data.fathers[0].person || {};
+                const clanInfo = data.clan || {};
+                const clanName = (currentLang === 'kk' ? (clanInfo.name || self.clan_ru) : (clanInfo.name_ru || self.clan_ru)) || '';
+                const zhuzLabel = L.zhuz[clanInfo.zhuz] || '';
+                const subName = self.clan_subru || '';
+                const ring = Array.from({ length: 28 }, (_, i) => {
+                    const a = (i / 28) * Math.PI * 2;
+                    return `<path d="M${(200 + Math.cos(a) * 82).toFixed(1)} ${(115 + Math.sin(a) * 82).toFixed(1)} l3 3 l-3 3 l-3 -3 z" fill="#c9a24b" transform="rotate(${(a * 180 / Math.PI + 45).toFixed(0)} ${(200 + Math.cos(a) * 82).toFixed(1)} ${(115 + Math.sin(a) * 82).toFixed(1)})"/>`;
+                }).join('');
+                const side = (x) => Array.from({ length: Math.floor((planks.length * PLANK_H) / 18) }, (_, i) =>
+                    `<path d="M${x} ${PLANK_Y + 6 + i * 18} l4 5 l-4 5 l-4 -5 z" fill="#c9a24b"/>`).join('');
+                const fitSize = (txt, base, maxCh) => (txt.length > maxCh ? Math.max(11, Math.floor(base * maxCh / txt.length)) : base);
+                const plankSvg = planks.map((f, i) => {
+                    const y = PLANK_Y + i * PLANK_H;
+                    const p = f.person;
+                    const title = L.levels[f.level] || '';
+                    let inner;
+                    if (!p) {
+                        inner = `<text x="200" y="${y + 40}" text-anchor="middle" font-size="17" font-style="italic" fill="#9a8466">${esc(L.unknown)}</text>`;
+                    } else {
+                        const full = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+                        const years = (p.birth_year || p.death_year)
+                            ? `${p.birth_year || '…'}–${(p.is_deceased || p.death_year) ? (p.death_year || '…') : ''}`
+                            : '';
+                        inner = `<text class="za-name" x="200" y="${y + 38}" text-anchor="middle" font-size="${fitSize(full, 20, 22)}" font-weight="700" fill="#3b1a12" style="cursor:pointer" onclick="openZhetiAtaPerson(${parseInt(p.id, 10)})">${esc(full)}</text>`
+                            + (years ? `<text x="200" y="${y + 55}" text-anchor="middle" font-size="12" fill="#6b4a2e">${esc(years)}</text>` : '');
+                    }
+                    return `<rect x="52" y="${y}" width="296" height="${PLANK_H - 8}" rx="5" fill="${p ? '#f3e6c8' : '#e4d6b6'}" stroke="#b28a3c" stroke-width="1.5"/>`
+                        + `<text x="200" y="${y + 15}" text-anchor="middle" font-size="10" fill="#8a6a40">${esc(title)}</text>` + inner;
+                }).join('');
+                const bottomY = PLANK_Y + planks.length * PLANK_H;
+                const svg = `<svg id="zhetiAtaPlaque" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px; display:block; margin:0 auto;" font-family="Georgia, 'Times New Roman', serif">
+                    <rect x="20" y="0" width="360" height="${bottomY + 70}" rx="14" fill="#5b2018" stroke="#2f0e0a" stroke-width="3"/>
+                    <rect x="30" y="10" width="340" height="${bottomY + 50}" rx="10" fill="none" stroke="#c9a24b" stroke-width="1.5"/>
+                    <circle cx="200" cy="115" r="92" fill="#3f1510" stroke="#c9a24b" stroke-width="3"/>
+                    ${ring}
+                    <circle cx="200" cy="115" r="70" fill="#f3e6c8" stroke="#b28a3c" stroke-width="2"/>
+                    <text x="200" y="${zhuzLabel ? 92 : 100}" text-anchor="middle" font-size="13" fill="#6b4a2e">${esc(zhuzLabel)}</text>
+                    <text x="200" y="118" text-anchor="middle" font-size="${fitSize(clanName.toUpperCase(), 26, 11)}" font-weight="700" fill="#3b1a12">${esc(clanName.toUpperCase())}</text>
+                    <path d="M170 136 q15 -16 30 0 q15 16 30 0 M178 142 q22 14 44 0" fill="none" stroke="#b28a3c" stroke-width="2.5" stroke-linecap="round"/>
+                    <text x="200" y="${PLANK_Y - 24}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
+                    ${side(38)}${side(362)}
+                    ${plankSvg}
+                    <rect x="52" y="${bottomY + 2}" width="296" height="30" rx="4" fill="#3f1510" stroke="#c9a24b" stroke-width="1.5"/>
+                    <path d="M170 ${bottomY + 28} v-8 a30 14 0 0 1 60 0 v8 z M193 ${bottomY + 28} v-9 h14 v9" fill="#f3e6c8" stroke="#c9a24b" stroke-width="1"/>
+                    <path d="M62 ${bottomY + 17} h92 M246 ${bottomY + 17} h92" stroke="#c9a24b" stroke-width="2" stroke-dasharray="4 4"/>
+                    <path d="M170 ${bottomY + 70} v40 M230 ${bottomY + 70} v40" stroke="#c9a24b" stroke-width="2.5"/>
+                    <path d="M160 ${bottomY + 110} h20 l-3 34 h-14 z M220 ${bottomY + 110} h20 l-3 34 h-14 z" fill="#8a2b22" stroke="#c9a24b" stroke-width="1.5"/>
+                </svg>`;
 
-                if (pat.has_common_ancestor && pat.path_a && pat.path_b) {
-                    html += `
-                        <div style="background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:14px; margin-bottom:12px;">
-                            <div style="font-weight:700; font-size:13px; color:#fef08a; margin-bottom:10px;">
-                                🌿 Ортақ атаға дейінгі туыстық желісі (Әкелер желісі):
-                            </div>
-                            <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
-                                <strong>${data.person_a.first_name} жағынан (${pat.gen_distance_a}-буын):</strong><br>
-                                ${pat.path_a.map(x => `${x.title_kk}: <strong>${x.person.first_name} ${x.person.last_name || ''}</strong>`).join(' ➔ ')}
-                            </div>
-                            <div style="font-size:13px; color:#cbd5e1; line-height:1.6; margin-top:8px;">
-                                <strong>${data.person_b.first_name} жағынан (${pat.gen_distance_b}-буын):</strong><br>
-                                ${pat.path_b.map(x => `${x.title_kk}: <strong>${x.person.first_name} ${x.person.last_name || ''}</strong>`).join(' ➔ ')}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                if (data.all_lines && data.all_lines.has_common_ancestor && data.all_lines.is_maternal) {
-                    html += `
-                        <div style="background:rgba(255,255,255,0.02); border:1px dashed #64748b; border-radius:8px; padding:10px 14px; font-size:12px; color:#94a3b8;">
-                            ℹ️ <strong>Справочно:</strong> ${data.all_lines.summary_kk}
-                        </div>
-                    `;
-                }
-
-                resBox.innerHTML = html;
+                resBox.innerHTML = `
+                    <div style="font-size:13px; color:#cbd5e1; margin-bottom:10px;">${esc(L.known(known))}</div>
+                    ${svg}
+                    <div style="text-align:center; margin-top:12px;">
+                        <button type="button" class="btn-modal-submit" onclick="downloadZhetiAtaPng()" style="padding:8px 22px; font-size:13px;">⬇ ${esc(L.download)}</button>
+                    </div>`;
             } catch (err) {
-                resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">Қате: ${err.message}</div>`;
+                resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">${esc(L.error)}: ${esc(err.message)}</div>`;
             }
         }
 
+        // ALT-089: скачать табличку картинкой (PNG), рисуется из того же SVG
+        function downloadZhetiAtaPng() {
+            const svgEl = document.getElementById('zhetiAtaPlaque');
+            if (!svgEl) return;
+            const vb = svgEl.viewBox.baseVal;
+            const clone = svgEl.cloneNode(true);
+            clone.setAttribute('width', vb.width * 2);
+            clone.setAttribute('height', vb.height * 2);
+            clone.removeAttribute('style');
+            const xml = new XMLSerializer().serializeToString(clone);
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = vb.width * 2;
+                canvas.height = vb.height * 2;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    if (!blob) return;
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'zheti-ata.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+                }, 'image/png');
+            };
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+        }
+
+        // ALT-089: имя в цепочке открывает карточку человека
+        function openZhetiAtaPerson(personId) {
+            closeZhetiAtaTreeModal();
+            selectPerson(personId);
+        }
+
         // БАСТАУ
-        window.addEventListener('DOMContentLoaded', initTree);
+        window.addEventListener('DOMContentLoaded', () => {
+            // ALT-089: /tree?zheti=1 (кнопка со страницы дат) сразу открывает окно «Жеті ата»
+            Promise.resolve(initTree()).then(() => {
+                if (urlParams.get('zheti')) openZhetiAtaTreeModal();
+            });
+        });
     </script>
     <script>
         /* TASK-008: переключатель темы — тот же выбор (localStorage + cookie), что на остальных страницах */

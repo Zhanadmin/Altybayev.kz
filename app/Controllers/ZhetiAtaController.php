@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\ZhetiAtaService;
@@ -52,11 +53,33 @@ class ZhetiAtaController
             $personId = (int)($user['person_id'] ?? 6); // По умолчанию Жандос (ID 6)
         }
 
+        if ($this->service->getPerson($personId) === null) {
+            Response::error('Тұлға табылмады / Персона не найдена.', 404);
+            return;
+        }
+
         $chain = $this->service->getSevenAncestors($personId);
         Response::json([
             'success'   => true,
             'person_id' => $personId,
             'ancestors' => $chain,
+            'fathers'   => $this->service->getSevenFathers($personId), // ALT-089
+            'clan'      => $this->lookupClan((string)($this->service->getPerson($personId)['clan_ru'] ?? '')),
         ]);
+    }
+
+    /**
+     * ALT-089: ру и жүз для таблички (по названию ру из карточки человека)
+     */
+    protected function lookupClan(string $name): ?array
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+        $stmt = Database::getConnection()->prepare('SELECT name, name_ru, zhuz FROM clans WHERE name_ru = ? OR name = ? LIMIT 1');
+        $stmt->execute([$name, $name]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ?: null;
     }
 }

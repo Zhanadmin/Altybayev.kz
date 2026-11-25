@@ -149,7 +149,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <script src="/assets/js/bgm.js?v=6" defer></script>
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
     <script src="/assets/js/app-dialog.js?v=1"></script>
-    <link rel="stylesheet" href="/assets/css/book.css?v=14">
+    <link rel="stylesheet" href="/assets/css/book.css?v=15">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
@@ -178,8 +178,12 @@ $dsThemeReady = !empty($dsThemeReady);
         .ds-sidebar-tools #bgmToggle { background: transparent !important; border-color: transparent !important; color: var(--c-text-2) !important; }
         .ds-sidebar-tools #bgmToggle:hover { background: var(--c-hover) !important; color: var(--c-text) !important; }
         .ds-sidebar-tools #bgmToggle[aria-pressed="true"] { color: var(--c-accent) !important; }
-        .ds-sidebar-tools .user-chip b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ds-sidebar-tools .user-chip .badge { margin-left: auto; flex: 0 0 auto; }
+        /* ALT-086 (замечание 2): имя и роль — в две строки, без наложения */
+        .ds-sidebar-tools .user-chip .avatar { flex: 0 0 auto; }
+        .ds-sidebar-tools .user-chip .user-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.25; }
+        .ds-sidebar-tools .user-chip b { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ds-sidebar-tools .user-chip .user-role { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--c-text-2); }
+        .ds-sidebar-tools .user-chip .user-role.is-admin { color: var(--c-accent); }
         .ds-tools-row { display: flex; align-items: center; gap: 2px; padding: 0; }
         .ds-tools-row #bgmToggle { margin: 0 !important; }
         .ds-tools-logout { margin-left: auto; }
@@ -342,8 +346,10 @@ $dsThemeReady = !empty($dsThemeReady);
                             <?= htmlspecialchars($userInitial) ?>
                         <?php endif; ?>
                     </span>
-                    <b><?= htmlspecialchars((string)($user['name'] ?? 'Туысқан')) ?></b>
-                    <span class="badge <?= $userRole === 'admin' ? 'badge-accent' : '' ?>"><?= htmlspecialchars($roleBadgeText) ?></span>
+                    <span class="user-text">
+                        <b><?= htmlspecialchars((string)($user['name'] ?? 'Туысқан')) ?></b>
+                        <span class="user-role <?= $userRole === 'admin' ? 'is-admin' : '' ?>"><?= htmlspecialchars($roleBadgeText) ?></span>
+                    </span>
                 </div>
 
                 <!-- ALT-007: переключатель языка ҚАЗ / РУС / ENG / ESP -->
@@ -388,7 +394,6 @@ $dsThemeReady = !empty($dsThemeReady);
                 <button type="button" class="btn btn-ghost btn-icon mobile-only" onclick="toggleMobileSidebar()" aria-label="<?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Меню' : 'Мәзір' ?>">
                     <svg class="ic"><use href="#i-menu"/></svg>
                 </button>
-                <div class="ds-you-are desktop-only"><?= htmlspecialchars($youAreText) ?></div>
                 <div class="spacer"></div>
                 <?php /* ALT-086: язык, музыка, тема, пользователь и выход перенесены в боковую панель (#sidebarTools) */ ?>
             </header>

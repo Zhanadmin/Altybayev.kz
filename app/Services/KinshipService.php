@@ -1727,8 +1727,13 @@ class KinshipService
                         // её родня — чужой нағашы жұрт, не наша сторона.
                         $curMotherId = (int)($personsById[$cur]['mother_id'] ?? 0);
                         foreach ($parentsOf[$cur] ?? [] as $x) $next[] = [$x, $x === $curMotherId ? 'blood_noup' : 'blood'];
-                        foreach ($childrenOf[$cur] ?? [] as $x) $next[] = [$x, 'blood'];
-                        foreach ($spousesOf[$cur] ?? [] as $x) $next[] = [$x, 'inlaw'];
+                        // ALT-074: у самого супруга(и) его дети от других браков (пасынки) и его другие супруги
+                        // (бывшие мужья/жёны) — не жұрт: не обходим. Қайын жұрты — только кровная родня супруга(и).
+                        $isSpouseSeed = ($group === 'spouse' && in_array($cur, $ownSeeds, true));
+                        if (!$isSpouseSeed) {
+                            foreach ($childrenOf[$cur] ?? [] as $x) $next[] = [$x, 'blood'];
+                            foreach ($spousesOf[$cur] ?? [] as $x) $next[] = [$x, 'inlaw'];
+                        }
                         break;
                     case 'blood_noup':
                         // Мать как жена отца: её родители — Нағашы; её дети от другого брака не ведут к чужому отцу

@@ -2927,7 +2927,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
             border-color: var(--c-border-strong);
             padding-bottom: 16px;
         }
-        .brand-title { font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: italic; letter-spacing: 0; }
+        .brand-title { font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: normal; letter-spacing: 0; }
         header.tree-nav .mode-btn.active, header.tree-nav .scope-btn.active, header.tree-nav .lang-btn.active {
             background: var(--c-island);
             color: var(--c-accent-text);
@@ -3095,7 +3095,7 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
         /* боковая панель и окна — листы книги */
         .side-name { font-family: var(--font-book); font-size: 23px; letter-spacing: 0; }
-        .side-sub-title { font-family: var(--font-book); font-style: italic; font-size: 14px; text-transform: none; letter-spacing: 0; }
+        .side-sub-title { font-family: var(--font-book); font-style: normal; font-size: 14px; text-transform: none; letter-spacing: 0; }
         aside.side-profile-panel {
             background:
                 var(--oyu-tl) left 6px top 6px / 22px 22px no-repeat,

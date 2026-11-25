@@ -117,7 +117,7 @@
 .al-empty svg { width: 140px; height: 90px; color: var(--c-accent); }
 .al-note { font-size: var(--fs-xs); color: var(--c-text-3); }
 .al-section-title { display: flex; align-items: center; gap: var(--sp-2); margin: var(--sp-5, 24px) 0 var(--sp-3); }
-.al-section-title h2 { font-family: var(--font-script, 'Lora', Georgia, serif); font-size: 1.3rem; font-weight: 700; font-style: italic; }
+.al-section-title h2 { font-family: var(--font-script, 'Lora', Georgia, serif); font-size: 1.3rem; font-weight: 700; font-style: normal; }
 .al-section-title .line { flex: 1; height: 1px; background: var(--c-border); }
 .al-fam-btn { margin-left: auto; }
 

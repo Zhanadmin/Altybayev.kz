@@ -57,7 +57,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         .wl { max-width: 980px; margin: 0 auto; }
         .wl-hero { text-align: center; padding: var(--sp-8) var(--sp-4) var(--sp-6); }
         .wl-hero .au-mark { margin-bottom: var(--sp-5); }
-        .wl-hero h1 { font-family: var(--font-script); font-weight: 700; font-style: italic; font-size: clamp(28px, 6vw, 44px); line-height: 1.3; letter-spacing: 0; }
+        .wl-hero h1 { font-family: var(--font-script); font-weight: 700; font-style: normal; font-size: clamp(28px, 6vw, 44px); line-height: 1.3; letter-spacing: 0; }
         .wl-lead { max-width: 640px; margin: var(--sp-4) auto 0; font-size: 17px; line-height: 1.65; color: var(--c-text-2); }
         .wl-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 760px; margin: var(--sp-5) auto 0; }
         .wl-chip { padding: 7px 14px; border-radius: 999px; border: 1px solid transparent; background: var(--c-accent-soft); color: var(--c-accent-text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 36px; }
@@ -74,17 +74,17 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         .wl-mx { position: absolute; top: 8px; right: 8px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 28px; line-height: 1; cursor: pointer; }
         .wl-mprev { background: var(--c-island-2); border: 1px solid var(--c-border); border-radius: var(--r-lg); padding: var(--sp-4); margin: var(--sp-4) 0; }
         .wl-mprev svg { width: 100%; height: auto; display: block; }
-        .wl-mbox h3 { font-family: var(--font-script); font-weight: 700; font-style: italic; font-size: 21px; margin: 0 40px 0 0; }
+        .wl-mbox h3 { font-family: var(--font-script); font-weight: 700; font-style: normal; font-size: 21px; margin: 0 40px 0 0; }
         .wl-mbox p { line-height: 1.6; color: var(--c-text-2); margin: 0 0 var(--sp-3); }
         .wl-hero .alert { max-width: 460px; margin: var(--sp-5) auto 0; text-align: left; }
-        .wl h2 { font-family: var(--font-script); font-weight: 700; font-style: italic; text-align: center; font-size: clamp(21px, 4.5vw, 28px); margin: var(--sp-8) 0 var(--sp-2); }
+        .wl h2 { font-family: var(--font-script); font-weight: 700; font-style: normal; text-align: center; font-size: clamp(21px, 4.5vw, 28px); margin: var(--sp-8) 0 var(--sp-2); }
         .wl-h2-sub { text-align: center; color: var(--c-text-2); margin-bottom: var(--sp-6); }
         .wl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-4); }
         .wl-card { padding: 0; overflow: hidden; border-radius: var(--r-lg); display: flex; flex-direction: column; }
         .wl-prev { background: var(--c-island-2); border-bottom: 1px solid var(--c-border); padding: var(--sp-3); height: 172px; display: grid; place-items: center; }
         .wl-prev svg { width: 100%; height: 100%; display: block; }
         .wl-txt { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
-        .wl-txt h3 { font-family: var(--font-script); font-weight: 700; font-style: italic; font-size: 17px; margin-bottom: 6px; }
+        .wl-txt h3 { font-family: var(--font-script); font-weight: 700; font-style: normal; font-size: 17px; margin-bottom: 6px; }
         .wl-txt p { font-size: 15px; line-height: 1.55; color: var(--c-text-2); margin: 0; }
         .wl-demo { text-align: center; font-size: 13px; color: var(--c-text-3); margin-top: var(--sp-3); }
         .wl-enter { margin: var(--sp-8) auto 0; }
@@ -128,7 +128,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
         .wl-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 800; height: 56px; padding: 0 var(--sp-4); display: flex; align-items: center; justify-content: space-between; gap: 12px;
             background: color-mix(in srgb, var(--c-island, #fff) 78%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--c-border); }
         .wl-bar .au-top { position: static; flex: 0 0 auto; }
-        .wl-brand { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: italic; color: var(--c-text); text-decoration: none; }
+        .wl-brand { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--font-script); font-size: 18px; font-weight: 700; font-style: normal; color: var(--c-text); text-decoration: none; }
         .wl-brand .ic { width: 22px; height: 22px; flex: 0 0 auto; color: var(--c-accent-text); }
         .wl-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .wl-body { padding-top: 56px; scroll-padding-top: 64px; }

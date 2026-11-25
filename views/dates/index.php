@@ -151,6 +151,14 @@ require __DIR__ . '/../layout/master_start.php';
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <?php
+                            // ALT-099: возраст / годы со дня свадьбы — крупно справа; нет года — не показываем
+                            $dtBig = $type === 'birthday' ? (int)($ev['age_turning'] ?? 0) : ($type === 'wedding' ? (int)($ev['years_married'] ?? 0) : 0);
+                            $dtRu = ($lang === 'ru' || $lang === 'en' || $lang === 'es');
+                        ?>
+                        <?php if ($dtBig > 0): ?>
+                            <div class="age-big"><b><?= $dtBig ?></b><span><?= $type === 'wedding' ? ($dtRu ? 'лет вместе' : 'жыл бірге') : ($dtRu ? 'лет' : 'жас') ?></span></div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Нижняя полоска: Дата и Родство пользователю -->

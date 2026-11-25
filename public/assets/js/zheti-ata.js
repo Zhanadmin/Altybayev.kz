@@ -47,6 +47,109 @@
 
     const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+    /* ALT-101: герб-звезда ру. Всё SVG (без фото). o: {pre, zhuz, clan, uran, tamga (data-URI или '')}.
+       Возвращает содержимое в системе координат 260×260 (центр 130,130). */
+    function coatInner(o) {
+        const C = 130, G = '#c9a24b', GL = '#e8c97a';
+        const polar = (a, r) => [C + Math.cos(a * Math.PI / 180) * r, C + Math.sin(a * Math.PI / 180) * r];
+        const sq = (off) => [0, 1, 2, 3].map((k) => polar(off + k * 90, 124).map((v) => v.toFixed(1)).join(',')).join(' ');
+        const fit = (txt, base, maxLen) => Math.max(8, Math.min(base, maxLen / (Math.max(1, txt.length) * 0.78)));
+        const top = [o.zhuz, o.clan].filter(Boolean).join(' • ').toUpperCase();
+        const bottom = String(o.uran || '').toUpperCase();
+        const spear = (a) => {
+            const p1 = polar(a, 100), p2 = polar(a, 170);
+            return `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${G}" stroke-width="3" stroke-linecap="round"/>`
+                + `<path transform="translate(${p2[0].toFixed(1)} ${p2[1].toFixed(1)}) rotate(${a + 90})" d="M0 -14 L5 0 L0 8 L-5 0 z" fill="${G}" stroke="#2f0e0a" stroke-width="1"/>`;
+        };
+        const tips = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => {
+            const p = polar(a, 118);
+            return `<path transform="translate(${p[0].toFixed(1)} ${p[1].toFixed(1)}) rotate(${a + 45})" d="M0 -4 L4 0 L0 4 L-4 0 z" fill="${G}"/>`;
+        }).join('');
+        const tA = o.pre + 'T', bA = o.pre + 'B';
+        return `<defs>
+                <path id="${tA}" d="M ${C - 60} ${C} A 60 60 0 0 1 ${C + 60} ${C}"/>
+                <path id="${bA}" d="M ${C - 80} ${C} A 80 80 0 0 0 ${C + 80} ${C}"/>
+            </defs>
+            ${spear(-45)}${spear(-135)}${spear(45)}${spear(135)}
+            <polygon points="${sq(45)}" fill="#5b2018" stroke="${G}" stroke-width="2.5" stroke-linejoin="round"/>
+            <polygon points="${sq(0)}" fill="#5b2018" stroke="${G}" stroke-width="2.5" stroke-linejoin="round"/>
+            <polygon points="${sq(45)}" fill="none" stroke="${GL}" stroke-width="0.8" stroke-linejoin="round" transform="translate(130 130) scale(0.95) translate(-130 -130)"/>
+            <polygon points="${sq(0)}" fill="none" stroke="${GL}" stroke-width="0.8" stroke-linejoin="round" transform="translate(130 130) scale(0.95) translate(-130 -130)"/>
+            ${tips}
+            <circle cx="${C}" cy="${C}" r="88" fill="#3f1510" stroke="${G}" stroke-width="2.5"/>
+            <circle cx="${C}" cy="${C}" r="54" fill="#f3e6c8" stroke="#b28a3c" stroke-width="2"/>
+            ${top ? `<text font-size="${fit(top, 14, 150).toFixed(1)}" font-weight="700" letter-spacing="1" fill="${GL}" text-anchor="middle"><textPath href="#${tA}" startOffset="50%">${esc(top)}</textPath></text>` : ''}
+            ${bottom ? `<text font-size="${fit(bottom, 15, 190).toFixed(1)}" font-weight="700" letter-spacing="1.5" fill="${GL}" text-anchor="middle"><textPath href="#${bA}" startOffset="50%">${esc(bottom)}</textPath></text>` : ''}
+            ${o.tamga ? `<image href="${o.tamga}" x="${C - 31}" y="${C - 31}" width="62" height="62" preserveAspectRatio="xMidYMid meet"/>` : ''}
+            <path d="M${C - 46} ${C} l4 -5 l4 5 l-4 5 z M${C + 38} ${C} l4 -5 l4 5 l-4 5 z" fill="#b28a3c"/>
+            <path d="M${C - 46} ${C - 14} v-6 M${C - 46} ${C + 14} v6 M${C + 46} ${C - 14} v-6 M${C + 46} ${C + 14} v6" stroke="#b28a3c" stroke-width="1.5" stroke-linecap="round"/>`;
+    }
+
+    function coatSvgFull(o, id) {
+        return `<svg id="${id}" xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 340 340" width="100%" style="max-width:420px; display:block; margin:0 auto;" font-family="Georgia, 'Times New Roman', serif">${coatInner(o)}</svg>`;
+    }
+
+    async function tamgaDataUri(url) {
+        if (!url) return '';
+        try {
+            const tr = await fetch(url);
+            if (!tr.ok) return '';
+            const blob = await tr.blob();
+            return await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result || '')); fr.onerror = () => ok(''); fr.readAsDataURL(blob); });
+        } catch (e) { return ''; }
+    }
+
+    /* Окно с гербом ру крупно: по названию ру (клик в «Ру таңбалары» и в карточке человека). */
+    async function openClan(name, currentLang) {
+        const L = labels(currentLang || document.documentElement.lang || 'kk');
+        name = String(name || '').trim();
+        if (!name) return;
+        let data = null;
+        try {
+            const r = await fetch('/api/zheti-ata/clan?name=' + encodeURIComponent(name));
+            const j = await r.json();
+            if (j && j.success) data = j.clan;
+        } catch (e) { data = null; }
+        const old = document.getElementById('zaCoatOverlay');
+        if (old) old.remove();
+        const ov = document.createElement('div');
+        ov.id = 'zaCoatOverlay';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto;';
+        const box = document.createElement('div');
+        box.style.cssText = 'background:#2a0e0a;border:2px solid #c9a24b;border-radius:12px;padding:12px;width:min(480px,96vw);max-height:96vh;overflow:auto;text-align:center;';
+        if (!data) {
+            box.innerHTML = `<div style="color:#f3e6c8;padding:20px;">${esc(name)}</div>`;
+        } else {
+            const clanName = (currentLang === 'kk' ? (data.name || data.name_ru) : (data.name_ru || data.name)) || name;
+            const tamga = await tamgaDataUri(data.tamga_url);
+            window.zhetiAtaFileName = 'Ру — ' + clanName;
+            box.innerHTML = coatSvgFull({ pre: 'zaCoat', zhuz: L.zhuz[data.zhuz] || '', clan: clanName, uran: data.uran || '', tamga }, 'zhetiAtaCoat')
+                + `<div style="margin-top:10px;"><button type="button" class="btn btn-primary" data-act="png">⬇ PNG</button> <button type="button" class="btn" data-act="pdf">📄 PDF</button></div>`;
+        }
+        const x = document.createElement('button');
+        x.type = 'button'; x.className = 'btn'; x.textContent = '✕ ' + L.close; x.style.marginTop = '8px';
+        box.appendChild(x);
+        ov.appendChild(box);
+        document.body.appendChild(ov);
+        ov.addEventListener('click', (ev) => {
+            if (ev.target === ov || ev.target === x) { ov.remove(); return; }
+            const b = ev.target.closest ? ev.target.closest('[data-act]') : null;
+            if (!b) return;
+            if (b.getAttribute('data-act') === 'png') downloadPng('zhetiAtaCoat'); else printPdf('zhetiAtaCoat');
+        });
+    }
+
+    // клик по любому элементу с data-clan-coat="<название ру>" открывает герб
+    document.addEventListener('click', (ev) => {
+        const t = ev.target.closest ? ev.target.closest('[data-clan-coat]') : null;
+        if (!t) return;
+        const n = t.getAttribute('data-clan-coat');
+        if (!n) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        openClan(n, document.documentElement.getAttribute('data-lang') || window.__zaLang || 'kk');
+    }, true);
+
     /* Рисует табличку в box для человека personId. onPerson(id) — клик по имени в цепочке (необязательно). */
     async function render(resBox, id, currentLang, onPerson, opts) {
         const L = labels(currentLang);
@@ -64,7 +167,7 @@
 
             // колено 0 — сам человек, 1–7 — его отцы
             const planks = data.fathers.slice().reverse();
-            const W = 400, PLANK_Y = 266, PLANK_H = 66;
+            const W = 400, PLANK_Y = 300, PLANK_H = 66;
             const H = PLANK_Y + planks.length * PLANK_H + 150;
             const self = data.fathers[0].person || {};
             const clanInfo = data.clan || {};
@@ -72,21 +175,10 @@
             const zhuzLabel = L.zhuz[clanInfo.zhuz] || '';
             const subName = self.clan_subru || '';
             // таңба ру встраиваем data-URI, чтобы работало в PNG/PDF
-            let tamgaData = '';
-            if (clanInfo.tamga_url) {
-                try {
-                    const tr = await fetch(clanInfo.tamga_url);
-                    if (tr.ok) {
-                        const blob = await tr.blob();
-                        tamgaData = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result || '')); fr.onerror = () => ok(''); fr.readAsDataURL(blob); });
-                    }
-                } catch (e) { tamgaData = ''; }
-            }
+            const tamgaData = await tamgaDataUri(clanInfo.tamga_url);
             const uranText = (clanInfo.uran || '').trim();
-            const ring = Array.from({ length: 28 }, (_, i) => {
-                const a = (i / 28) * Math.PI * 2;
-                return `<path d="M${(200 + Math.cos(a) * 82).toFixed(1)} ${(115 + Math.sin(a) * 82).toFixed(1)} l3 3 l-3 3 l-3 -3 z" fill="#c9a24b" transform="rotate(${(a * 180 / Math.PI + 45).toFixed(0)} ${(200 + Math.cos(a) * 82).toFixed(1)} ${(115 + Math.sin(a) * 82).toFixed(1)})"/>`;
-            }).join('');
+            // ALT-101: герб-звезда вместо круглого медальона
+            const coat = coatInner({ pre: 'zaPl', zhuz: zhuzLabel, clan: clanName, uran: uranText, tamga: tamgaData });
             const side = (x) => Array.from({ length: Math.floor((planks.length * PLANK_H) / 18) }, (_, i) =>
                 `<path d="M${x} ${PLANK_Y + 6 + i * 18} l4 5 l-4 5 l-4 -5 z" fill="#c9a24b"/>`).join('');
             const fitSize = (txt, base, maxCh) => (txt.length > maxCh ? Math.max(11, Math.floor(base * maxCh / txt.length)) : base);
@@ -114,14 +206,8 @@
             const svg = `<svg id="zhetiAtaPlaque" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px; display:block; margin:0 auto;" font-family="Georgia, 'Times New Roman', serif">
                 <rect x="20" y="0" width="360" height="${bottomY + 70}" rx="14" fill="#5b2018" stroke="#2f0e0a" stroke-width="3"/>
                 <rect x="30" y="10" width="340" height="${bottomY + 50}" rx="10" fill="none" stroke="#c9a24b" stroke-width="1.5"/>
-                <circle cx="200" cy="115" r="92" fill="#3f1510" stroke="#c9a24b" stroke-width="3"/>
-                ${ring}
-                <circle cx="200" cy="115" r="70" fill="#f3e6c8" stroke="#b28a3c" stroke-width="2"/>
-                ${zhuzLabel ? `<text x="200" y="${tamgaData ? 78 : 92}" text-anchor="middle" font-size="11" fill="#6b4a2e">${esc(zhuzLabel)}</text>` : ''}
-                ${tamgaData ? `<image href="${tamgaData}" x="178" y="88" width="44" height="44" preserveAspectRatio="xMidYMid meet"/>` : ''}
-                <text x="200" y="${tamgaData ? 160 : 122}" text-anchor="middle" font-size="${Math.max(10, Math.min(tamgaData ? 18 : 22, Math.floor(92 / (0.72 * Math.max(1, clanName.length)))))}" font-weight="700" font-style="normal" fill="#3b1a12">${esc(clanName.toUpperCase())}</text>
-                ${uranText ? `<text x="200" y="${PLANK_Y - 42}" text-anchor="middle" font-size="${fitSize(uranText, 14, 28)}" font-style="normal" fill="#e8c97a">${esc(L.uran + ': ' + uranText)}</text>` : ''}
-                <text x="200" y="${PLANK_Y - 18}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" font-style="normal" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
+                <g transform="translate(70 12) scale(0.98)">${coat}</g>
+                <text x="200" y="${PLANK_Y - 16}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" font-style="normal" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
                 ${side(38)}${side(362)}
                 ${plankSvg}
                 <rect x="52" y="${bottomY + 2}" width="296" height="30" rx="4" fill="#3f1510" stroke="#c9a24b" stroke-width="1.5"/>
@@ -173,8 +259,8 @@
         }
     }
 
-    function downloadPng() {
-        const svgEl = document.getElementById('zhetiAtaPlaque');
+    function downloadPng(svgId) {
+        const svgEl = document.getElementById(svgId || 'zhetiAtaPlaque');
         if (!svgEl) return;
         const vb = svgEl.viewBox.baseVal;
         const clone = svgEl.cloneNode(true);
@@ -202,8 +288,8 @@
         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
     }
 
-    function printPdf() {
-        const svgEl = document.getElementById('zhetiAtaPlaque');
+    function printPdf(svgId) {
+        const svgEl = document.getElementById(svgId || 'zhetiAtaPlaque');
         if (!svgEl) return;
         const clone = svgEl.cloneNode(true);
         clone.setAttribute('style', 'max-width:420px;display:block;margin:0 auto;');
@@ -222,5 +308,5 @@
         }, 300);
     }
 
-    window.ZhetiAta = { labels, render, downloadPng, printPdf };
+    window.ZhetiAta = { labels, render, downloadPng, printPdf, openClan };
 })();

@@ -15,6 +15,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <?php include __DIR__ . '/partials/clan_tamga.php'; // TASK-030 ?>
+    <script>Object.defineProperty(window, '__zaLang', { get: function () { return typeof currentLang !== 'undefined' ? currentLang : 'kk'; } });</script>
+    <script src="/assets/js/zheti-ata.js?v=<?= (int)@filemtime(__DIR__ . '/../public/assets/js/zheti-ata.js') ?>"></script>
     <title><?= htmlspecialchars(\App\Core\I18n::siteTitle()) ?> — <?= htmlspecialchars(\App\Core\I18n::t('nav_tree')) ?> («Өңдеу» / «Шежіре-Орман»)</title>
     <script>
         /* TASK-008: тема — сохранённый выбор, иначе как в системе */
@@ -6250,7 +6252,10 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
                 panelNameEl.appendChild(document.createTextNode(', ' + parentLine.charAt(0).toLowerCase() + parentLine.slice(1)));
             }
             const clanDisplay = p.clan_ru || ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'не указан' : 'белгісіз');
-            document.getElementById('panelPersonClan').innerHTML = window.clanTamga(p.clan_ru) + uzEsc(clanDisplay);
+            // ALT-101: клик по ру в карточке — герб ру крупно
+            document.getElementById('panelPersonClan').innerHTML = p.clan_ru
+                ? '<span data-clan-coat="' + uzEsc(p.clan_ru) + '" style="cursor:pointer" title="Елтаңба / Герб">' + window.clanTamga(p.clan_ru) + uzEsc(clanDisplay) + '</span>'
+                : window.clanTamga(p.clan_ru) + uzEsc(clanDisplay);
             document.getElementById('panelGender').innerText = p.gender === 'M' ? ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Мужской' : 'Ер азамат') : ((currentLang === 'ru' || currentLang === 'en' || currentLang === 'es') ? 'Женский' : 'Әйел адам');
 
             // Жылдары: живые — только год/дата рождения! Ушедшие — годы жизни

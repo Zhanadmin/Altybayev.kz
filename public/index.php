@@ -127,6 +127,7 @@ $router->get('/api/tree/search', 'App\Controllers\TreeController@apiSearch', ['a
 $router->get('/api/zheti-ata', 'App\Controllers\ZhetiAtaController@check', ['auth']);
 $router->post('/api/zheti-ata', 'App\Controllers\ZhetiAtaController@check', ['auth']);
 $router->get('/api/zheti-ata/seven', 'App\Controllers\ZhetiAtaController@sevenAncestors', ['auth']);
+$router->get('/api/zheti-ata/clan', 'App\Controllers\ZhetiAtaController@clan', ['auth']); // ALT-101
 $router->get('/api/memorial-dates', 'App\Controllers\MemorialController@apiSummary', ['auth']);
 $router->get('/api/memorial-dates/birthdays', 'App\Controllers\MemorialController@apiBirthdays', ['auth']);
 $router->get('/api/memorial-dates/anniversaries', 'App\Controllers\MemorialController@apiAnniversaries', ['auth']);

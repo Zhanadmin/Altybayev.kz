@@ -119,8 +119,8 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                 <tr class="cl-row" data-z="<?= $e($zk) ?>" data-id="<?= (int)$c['id'] ?>"
                     data-search="<?= $e(mb_strtolower($c['name'] . ' ' . ($c['name_ru'] ?? ''))) ?>"
                     data-json="<?= $e(json_encode(['id' => (int)$c['id'], 'name' => $c['name'], 'name_ru' => $c['name_ru'] ?? '', 'zhuz' => $c['zhuz'], 'summary' => $c['summary'] ?? '', 'tamga_url' => $c['tamga_url'] ?? ''], JSON_UNESCAPED_UNICODE)) ?>">
-                    <td class="fit"><div class="cl-tamga"><?php if (!empty($c['tamga_url'])): ?><img src="<?= $e($c['tamga_url']) ?>" alt="" loading="lazy"><?php else: ?><span>—</span><?php endif; ?></div></td>
-                    <td class="fit"><?= $e($c['name']) ?><?= !empty($c['name_ru']) ? ' · ' . $e($c['name_ru']) : '' ?></td>
+                    <td class="fit"><div class="cl-tamga" data-clan-coat="<?= $e($c['name']) ?>" title="<?= $ru ? 'Показать герб' : 'Елтаңбаны көрсету' ?>" style="cursor:pointer"><?php if (!empty($c['tamga_url'])): ?><img src="<?= $e($c['tamga_url']) ?>" alt="" loading="lazy"><?php else: ?><span>—</span><?php endif; ?></div></td>
+                    <td class="fit"><a href="#" data-clan-coat="<?= $e($c['name']) ?>" style="color:inherit;text-decoration:underline dotted"><?= $e($c['name']) ?></a><?= !empty($c['name_ru']) ? ' · ' . $e($c['name_ru']) : '' ?></td>
                     <td class="fit"><?= $e($zhuzLabels[$c['zhuz']] ?? '') ?><?= !empty($c['parent_name']) ? ' → ' . $e($c['parent_name']) : '' ?></td>
                     <td class="cl-sum"><?= $e($c['summary'] ?? '') ?></td>
                     <td class="fit"><?= (int)$c['persons_count'] ?></td>
@@ -181,6 +181,8 @@ $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 </div>
 
 <?php if ($registryReady): ?>
+<script>window.__zaLang = <?= json_encode($lang) ?>;</script>
+<script src="/assets/js/zheti-ata.js?v=<?= (int)@filemtime(__DIR__ . '/../../public/assets/js/zheti-ata.js') ?>"></script>
 <script>
 (function () {
     const CSRF = <?= json_encode($csrf) ?>;

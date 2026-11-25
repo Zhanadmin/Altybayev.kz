@@ -16,7 +16,7 @@ $isRu = ($lang === 'ru' || $lang === 'en' || $lang === 'es');
 require __DIR__ . '/layout/master_start.php';
 ?>
 
-<div class="dt">
+<div class="dt za-page">
     <div class="ds-page-head">
         <div>
             <h1>Жеті ата</h1>
@@ -35,18 +35,35 @@ require __DIR__ . '/layout/master_start.php';
         .za-actions { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
         .za-actions .btn { padding:8px 14px; font-size:13px; width:100%; }
         .za-main { min-width:0; }
+        /* ALT-100: поиск по вводу */
+        .za-combo { position:relative; }
+        .za-combo input { width:100%; min-height:40px; box-sizing:border-box; }
+        .za-list { position:absolute; left:0; right:0; top:100%; z-index:50; max-height:260px; overflow:auto; margin:2px 0 0; padding:4px; list-style:none;
+            background:var(--c-island, #fff); border:1px solid var(--c-border, #ccc); border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.18); }
+        .za-list li { padding:7px 10px; border-radius:6px; cursor:pointer; font-size:14px; }
+        .za-list li.active, .za-list li:hover { background:var(--c-accent-soft, #e8eefc); }
+        .za-list li.za-empty { cursor:default; opacity:.7; }
         @media (min-width: 900px) {
             .za-layout { flex-direction:row; align-items:flex-start; }
             .za-side { flex:0 0 280px; width:280px; position:sticky; top:16px; }
             .za-main { flex:1 1 auto; display:flex; justify-content:center; }
             .za-main #zaResult { width:100%; }
+            /* ALT-100: табличка целиком в окне без прокрутки (только экран, PDF/PNG не затронуты) */
+            .dt.za-page { gap:8px; }
+            .dt.za-page .ds-page-head h1 { font-size:22px; }
+            .dt.za-page .ds-page-head .sub { margin-top:0; font-size:13px; }
+            .za-main #zaResult svg#zhetiAtaPlaque { width:auto !important; max-width:100% !important; height:calc(100vh - 150px); min-height:480px; }
         }
     </style>
 
     <div class="za-layout">
         <div class="island za-side">
             <label id="zaPersonLabel" for="zaPerson" style="display:block; margin-bottom:4px;"></label>
-            <select id="zaPerson" class="form-select">
+            <div class="za-combo">
+                <input type="text" id="zaSearch" class="form-input" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="zaList" placeholder="<?= $isRu ? 'Начните вводить имя…' : 'Атын жазыңыз…' ?>">
+                <ul class="za-list" id="zaList" role="listbox" hidden></ul>
+            </div>
+            <select id="zaPerson" class="form-select" style="display:none;" tabindex="-1" aria-hidden="true">
                 <?php foreach ($persons as $p):
                     $label = trim((string)$p['first_name'] . ' ' . (string)($p['last_name'] ?? ''))
                         . (!empty($p['maiden_name']) ? ' (' . $p['maiden_name'] . ')' : '')
@@ -80,12 +97,60 @@ require __DIR__ . '/layout/master_start.php';
     function show(id) {
         if (!id) return;
         sel.value = String(id);
+        syncInput();
         history.replaceState(null, '', '/zheti-ata?id=' + encodeURIComponent(id));
         ZhetiAta.render(box, id, lang, show, {
             actionsBox: document.getElementById('zaActions'),
             infoBox: document.getElementById('zaInfo')
         });
     }
+    // ALT-100: поиск по вводу (без учёта регистра, казахские буквы)
+    const inp = document.getElementById('zaSearch');
+    const list = document.getElementById('zaList');
+    inp.setAttribute('aria-labelledby', 'zaPersonLabel');
+    document.getElementById('zaPersonLabel').setAttribute('for', 'zaSearch');
+    const items = Array.from(sel.options).map(o => ({ id: o.value, label: o.textContent, key: fold(o.textContent) }));
+    function fold(s) { return String(s).toLocaleLowerCase('kk').replace(/ё/g, 'е'); }
+    let cur = [], act = -1;
+    function openList(v) {
+        const q = fold(v).trim();
+        const words = q ? q.split(/\s+/) : [];
+        cur = items.filter(it => words.every(w => it.key.includes(w))).slice(0, 50);
+        act = cur.length ? 0 : -1;
+        list.innerHTML = cur.length
+            ? cur.map((it, i) => '<li role="option" data-i="' + i + '"' + (i === 0 ? ' class="active"' : '') + '></li>').join('')
+            : '<li class="za-empty">—</li>';
+        cur.forEach((it, i) => { list.children[i].textContent = it.label; });
+        list.hidden = false; inp.setAttribute('aria-expanded', 'true');
+    }
+    function closeList() { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); }
+    function pick(i) {
+        const it = cur[i]; if (!it) return;
+        inp.value = it.label; closeList(); show(it.id);
+    }
+    function mark(n) {
+        if (!cur.length) return;
+        act = (n + cur.length) % cur.length;
+        Array.from(list.children).forEach((li, i) => li.classList.toggle('active', i === act));
+        list.children[act].scrollIntoView({ block: 'nearest' });
+    }
+    inp.addEventListener('input', () => openList(inp.value));
+    inp.addEventListener('focus', () => { inp.select(); openList(''); });
+    inp.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (list.hidden) openList(inp.value); else mark(act + 1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); mark(act - 1); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (!list.hidden && act >= 0) pick(act); else show(sel.value); }
+        else if (e.key === 'Escape') closeList();
+    });
+    list.addEventListener('mousedown', (e) => {
+        const li = e.target.closest('li[data-i]');
+        if (li) { e.preventDefault(); pick(parseInt(li.getAttribute('data-i'), 10)); }
+    });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.za-combo')) closeList(); });
+    function syncInput() { const o = sel.options[sel.selectedIndex]; if (o) inp.value = o.textContent; }
+    sel.addEventListener('change', syncInput);
+    syncInput();
+
     btn.addEventListener('click', () => show(sel.value));
     sel.addEventListener('change', () => show(sel.value));
     if (sel.value) show(sel.value);

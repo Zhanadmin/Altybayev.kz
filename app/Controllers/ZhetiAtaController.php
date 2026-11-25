@@ -96,6 +96,19 @@ class ZhetiAtaController
     }
 
     /**
+     * ALT-101: данные ру для герба — GET /api/zheti-ata/clan?name=НАЗВАНИЕ
+     */
+    public function clan(Request $request): void
+    {
+        $clan = $this->lookupClan((string)$request->get('name', ''));
+        if ($clan === null) {
+            Response::error('Ру табылмады / Ру не найден.', 404);
+            return;
+        }
+        Response::json(['success' => true, 'clan' => $clan]);
+    }
+
+    /**
      * ALT-089: ру и жүз для таблички (по названию ру из карточки человека)
      */
     protected function lookupClan(string $name): ?array

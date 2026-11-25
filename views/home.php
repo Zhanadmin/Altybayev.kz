@@ -134,12 +134,12 @@ require __DIR__ . '/layout/master_start.php';
                                     <div class="name" title="<?= htmlspecialchars($pName) ?>"><?= htmlspecialchars($pName) ?></div>
                                     <div class="meta">
                                         <?= htmlspecialchars((string)((($lang === 'ru' || $lang === 'en' || $lang === 'es') ? ($b['formatted_date_ru'] ?? null) : null) ?? $b['formatted_date_kk'] ?? $b['birth_date'])) ?>
-                                        <?php if (!empty($b['age_turning'])): ?>
-                                            · <?= (int)$b['age_turning'] ?> <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'лет' : 'жас' ?>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </a>
+                            <?php if (!empty($b['age_turning'])): ?>
+                                <div class="age-big" title="<?= (int)$b['age_turning'] ?> <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'лет исполняется' : 'жасқа толады' ?>"><b><?= (int)$b['age_turning'] ?></b><span><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'лет' : 'жас' ?></span></div>
+                            <?php endif; ?>
                             <div class="right">
                                 <?php if ($isToday): ?>
                                     <span class="badge badge-accent"><?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сегодня' : 'Бүгін' ?></span>

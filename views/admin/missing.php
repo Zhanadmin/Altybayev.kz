@@ -40,16 +40,39 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
 .ms-counter.active { background: var(--c-accent, #2a6df4); color: #fff; border-color: transparent; }
 .ms-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ms-filters select { height: 42px; font: inherit; }
-.ms-table { width: 100%; border-collapse: collapse; }
-.ms-table th, .ms-table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
-.ms-table th { opacity: .7; white-space: nowrap; }
-.ms-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; background: rgba(128,128,128,.08); }
-.ms-table .fit { width: 1%; white-space: nowrap; }
+/* ALT-109: ровные колонки по видам данных */
+.ms-table { width: 100%; min-width: 1380px; border-collapse: collapse; table-layout: fixed; }
+.ms-table th, .ms-table td { padding: 12px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--c-border, #e3e3e3); font-weight: 400; }
+.ms-table th { opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-table tbody tr:hover { background: rgba(128,128,128,.05); }
+.ms-chip { display: inline-flex; align-items: center; height: 38px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--c-border, #ccc); font-size: 14px; white-space: nowrap; background: rgba(128,128,128,.08); }
+.ms-table .ms-c-name, .ms-table .ms-c-gen, .ms-table .ms-c-edit { vertical-align: middle; }
+.ms-table .ms-c-name { width: 17%; overflow-wrap: anywhere; }
+.ms-table .ms-c-gen { width: 8%; }
+.ms-table .ms-c-photo, .ms-table .ms-c-zheti { width: 9%; }
+.ms-table .ms-c-birth, .ms-table .ms-c-death { width: 9%; min-width: 120px; }
+.ms-table .ms-c-nationality, .ms-table .ms-c-clan { width: 10%; }
+.ms-table .ms-c-marriage { width: 13%; }
+.ms-table .ms-c-other { width: 12%; }
+.ms-table .ms-c-edit { width: 8%; text-align: center; }
 /* ALT-107: поля прямо в ячейках */
-.ms-cells { display: flex; flex-wrap: wrap; gap: 10px 14px; }
-.ms-cell { display: flex; flex-direction: column; gap: 3px; min-width: 190px; max-width: 280px; flex: 1 1 190px; }
-.ms-lab { font-size: 13px; opacity: .75; }
-.ms-in { width: 100%; box-sizing: border-box; min-height: 38px; padding: 6px 10px; font: inherit; font-size: 15px; border: 1px solid var(--c-border, #ccc); border-radius: 8px; background: var(--c-surface, transparent); color: inherit; }
+.ms-stack { display: flex; flex-direction: column; gap: 8px; }
+.ms-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ms-lab { display: block; font-size: 13px; line-height: 18px; height: 18px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; height: 38px; white-space: nowrap; }
+.ms-in { width: 100%; box-sizing: border-box; height: 38px; min-height: 38px; padding: 6px 10px; font: inherit; font-size: 15px; border: 1px solid var(--c-border, #ccc); border-radius: 8px; background: var(--c-surface, transparent); color: inherit; text-overflow: ellipsis; }
+@media (max-width: 900px) {
+    .ms-table { min-width: 0; display: block; }
+    .ms-table thead { display: none; }
+    .ms-table tbody { display: flex; flex-direction: column; gap: 12px; }
+    .ms-table tbody tr { display: flex; flex-wrap: wrap; gap: 10px 14px; padding: 12px; border: 1px solid var(--c-border, #e3e3e3); border-radius: 10px; }
+    .ms-table td { display: block; border: 0; padding: 0; width: auto; min-width: 0; flex: 1 1 160px; }
+    .ms-table td:empty { display: none; }
+    .ms-table .ms-c-name { flex-basis: 100%; font-weight: 600; }
+    .ms-table .ms-c-gen { flex-basis: 100%; opacity: .7; }
+    .ms-table .ms-c-edit { flex-basis: 100%; text-align: left; }
+    .ms-table .ms-c-edit .ms-btn { width: auto; padding: 0 16px; }
+}
 .ms-in:focus { outline: 2px solid var(--c-accent, #2a6df4); outline-offset: 1px; }
 .ms-in.busy { opacity: .6; }
 .ms-in.err { border-color: #c0392b; }
@@ -127,10 +150,17 @@ $emptyText = $T(['kk' => 'Ештеңе табылмады', 'ru' => 'Ничег�
     <table class="ms-table">
         <thead>
             <tr>
-                <th><?= $e($T(['kk' => 'Адам', 'ru' => 'Человек', 'en' => 'Person', 'es' => 'Persona'])) ?></th>
-                <th><?= $e($T(['kk' => 'Ұрпақ', 'ru' => 'Поколение', 'en' => 'Generation', 'es' => 'Generación'])) ?></th>
-                <th><?= $e($T(['kk' => 'Толтырылмаған өрістер', 'ru' => 'Что не заполнено', 'en' => 'Missing fields', 'es' => 'Campos vacíos'])) ?></th>
-                <th class="fit"></th>
+                <th class="ms-c-name"><?= $e($T(['kk' => 'Адам', 'ru' => 'Человек', 'en' => 'Person', 'es' => 'Persona'])) ?></th>
+                <th class="ms-c-gen"><?= $e($T(['kk' => 'Ұрпақ', 'ru' => 'Поколение', 'en' => 'Generation', 'es' => 'Generación'])) ?></th>
+                <th class="ms-c-photo"><?= $e($T($gapLabels['photo'])) ?></th>
+                <th class="ms-c-birth"><?= $e($T(['kk' => 'Туған күні', 'ru' => 'Дата рожд.', 'en' => 'Birth', 'es' => 'Nacimiento'])) ?></th>
+                <th class="ms-c-nationality"><?= $e($T($gapLabels['nationality'])) ?></th>
+                <th class="ms-c-clan"><?= $e($T(['kk' => 'Ру', 'ru' => 'Ру', 'en' => 'Clan', 'es' => 'Clan'])) ?></th>
+                <th class="ms-c-marriage"><?= $e($T($gapLabels['marriage'])) ?></th>
+                <th class="ms-c-death"><?= $e($T(['kk' => 'Қайтыс болған', 'ru' => 'Дата смерти', 'en' => 'Death', 'es' => 'Muerte'])) ?></th>
+                <th class="ms-c-other"><?= $e($T(['kk' => 'Басқа', 'ru' => 'Другое', 'en' => 'Other', 'es' => 'Otros'])) ?></th>
+                <th class="ms-c-zheti"><?= $e($T(['kk' => 'Жеті ата', 'ru' => 'Жеті ата', 'en' => 'Seven fathers', 'es' => 'Siete padres'])) ?></th>
+                <th class="ms-c-edit"></th>
             </tr>
         </thead>
         <tbody>

@@ -138,7 +138,8 @@ class MissingDataController
                 $state = 'year';
             }
             if ($state !== null) {
-                foreach ([[$h, $w], [$w, $h]] as [$pid, $other]) {
+                // ALT-109: брак показываем один раз — у мужа (husband_id), у жены не дублируем
+                foreach ([[$h, $w]] as [$pid, $other]) {
                     if (($marriageGaps[$pid] ?? '') !== 'none') {
                         $marriageGaps[$pid] = $state;
                     }

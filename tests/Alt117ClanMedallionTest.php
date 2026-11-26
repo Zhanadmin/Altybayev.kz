@@ -2,9 +2,10 @@
 declare(strict_types=1);
 
 /**
- * ALT-117: единый компонент карточек «Ру таңбалары».
+ * ALT-117 (2026-11-26, редакция 2): единая карточка «Ру таңбалары».
  * Проверяет шаблон без записи в БД: данные, экранирование, адаптивность,
- * сохранение полей ALT-116 и режимов читателя/редактора.
+ * сохранение полей ALT-116 и режимов читателя/редактора. Превью — контейнер
+ * под общий JS-рендерер, а не отдельный круглый медальон.
  */
 
 require_once __DIR__ . '/../app/bootstrap.php';
@@ -40,8 +41,10 @@ $base = [
 // 1. Стили и разметка карточки
 $css = clan_tamga_medallion_styles();
 chk(str_contains($css, '.ctm-card'), 'Стили компонента содержат .ctm-card');
+chk(str_contains($css, '.ctm-emblem'), 'Стили содержат квадратный контейнер эмблемы');
 chk(str_contains($css, '@media (max-width: 640px)'), 'Есть мобильная точка перелома');
 chk(!str_contains($css, '-webkit-line-clamp'), 'Описание в карточке не обрезается');
+chk(!str_contains($css, 'ctm-medal'), 'Стили больше не рисуют круглый медальон');
 
 $html = card($base);
 chk(str_contains($html, 'class="cl-card ctm-card"'), 'Карточка использует общий класс');
@@ -54,9 +57,12 @@ chk(str_contains($html, '12 чел.'), 'Число людей выведено')
 chk(str_contains($html, 'class="fit cl-uran"'), 'Класс fit cl-uran сохранён (ALT-116)');
 chk(str_contains($html, 'Ұран'), 'Подпись ұрана выведена');
 chk(str_contains($html, 'is-empty'), 'Пустой ұран показан нейтрально, без выдуманного значения');
-chk(str_contains($html, 'href="/uploads/tamga/clan_verified_dulat.svg"'), 'Исходная таңба подключена');
-chk(str_contains($html, 'preserveAspectRatio="xMidYMid meet"'), 'Пропорции таңба сохраняются');
+chk(str_contains($html, 'data-clan-emblem='), 'Данные переданы единому рендереру');
+chk(str_contains($html, 'tamgaUrl'), 'URL исходной таңба передан в рендерер');
+chk(str_contains($html, '/uploads/tamga/clan_verified_dulat.svg'), 'Исходная таңба подключена');
+chk(str_contains($html, 'ctm-emblem-fallback'), 'До монтирования SVG есть честный fallback');
 chk(str_contains($html, 'data-clan-coat="Дулат"'), 'Сохранён клик по гербу (data-clan-coat)');
+chk(!str_contains($html, '<svg viewBox="0 0 320 320"'), 'Карточка не содержит старый круглый SVG');
 chk(str_contains($html, 'data-act="edit"') && str_contains($html, 'data-act="delete"'), 'Редактору доступны действия');
 
 // 2. Ұран и длинные казахские названия
@@ -99,7 +105,7 @@ $empty['name'] = 'Төре';
 $empty['zhuz'] = 'other';
 $empty['tamga_url'] = '';
 $emptyHtml = card($empty);
-chk(str_contains($emptyHtml, 'ctm-sign-empty'), 'Для рода без таңба — нейтральный плейсхолдер');
+chk(str_contains($emptyHtml, 'ctm-emblem-fallback'), 'Для рода без таңба есть нейтральный fallback');
 chk(!str_contains($emptyHtml, '<image'), 'Плейсхолдер не подменяет таңба картинкой');
 chk(str_contains($emptyHtml, 'Таңба не загружена'), 'Честно указано, что таңба не загружена');
 
@@ -128,6 +134,7 @@ function renderClansPage(array $clans, bool $canEdit): string {
 @Auth::login(['id' => 1, 'email' => 'admin@test.local', 'name' => 'Admin', 'role' => 'admin']);
 $page = renderClansPage([$base, $long, $empty], true);
 chk(substr_count($page, 'class="cl-card ctm-card"') === 3, 'Все 3 рода отрисованы одним компонентом');
+chk(substr_count($page, 'data-clan-emblem=') === 3, 'Все 3 превью используют единый рендерер');
 chk(substr_count($page, 'class="cl-zhuz"') === 3, 'Роды сгруппированы по жузам');
 chk(str_contains($page, 'id="clList"'), 'Галерея имеет контейнер clList');
 chk(str_contains($page, 'id="clEmpty"'), 'Есть сообщение «ничего не найдено»');
@@ -135,6 +142,9 @@ chk(!str_contains($page, 'class="cl-table"'), 'Старая таблица не 
 chk(str_contains($page, 'id="clDlg"'), 'Редактору доступен диалог ALT-116');
 chk(str_contains($page, 'name="uran"'), 'Поле ұрана ALT-116 сохранено');
 chk(str_contains($page, 'data-act="edit"'), 'Кнопка редактирования сохранена');
+chk(str_contains($page, 'id="clPrev"') && str_contains($page, 'cl-prev-emblem'), 'В редакторе есть живое превью эмблемы');
+chk(str_contains($page, 'ClanEmblem.mount('), 'Превью редактора использует общий рендерер');
+chk(str_contains($page, 'clan-emblem.js'), 'Генератор подключён');
 
 @Auth::login(['id' => 2, 'email' => 'viewer@test.local', 'name' => 'Viewer', 'role' => 'viewer']);
 $pageViewer = renderClansPage([$base], false);

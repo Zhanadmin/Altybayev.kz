@@ -52,6 +52,37 @@ if (!function_exists('clan_tamga_map')) {
 }
 $__clanMap = clan_tamga_map();
 $__clanNames = clan_registry_names();
+
+// ALT-117: утверждённый растровый фон эмблемы рода. Владелец присылает файл;
+// пока его нет, JS-рендерер показывает нейтральную каменную подложку, а не
+// нарисованный пейзаж. Путь можно переопределить через window.CLAN_EMBLEM_BG.
+if (!function_exists('clan_emblem_background_url')) {
+    function clan_emblem_background_url(): string
+    {
+        static $url = null;
+        if ($url !== null) {
+            return $url;
+        }
+        $url = '';
+        // ALT-117: утверждённый владельцем реалистичный фон из комплекта бренда.
+        // Он имеет приоритет; слот approved-background.* оставлен для замены.
+        $candidates = [
+            '/assets/brand/altybayev-brand/backgrounds/clan-emblem.png',
+            '/assets/img/clan-emblem/approved-background.jpg',
+            '/assets/img/clan-emblem/approved-background.jpeg',
+            '/assets/img/clan-emblem/approved-background.png',
+            '/assets/img/clan-emblem/approved-background.webp',
+        ];
+        foreach ($candidates as $rel) {
+            if (is_file(__DIR__ . '/../../public' . $rel)) {
+                $url = $rel;
+                break;
+            }
+        }
+        return $url;
+    }
+}
+$__clanEmblemBg = clan_emblem_background_url();
 // ALT-050: призыв выбрать род вместо примера (на всех языках сайта)
 $__clanLang = \App\Core\I18n::lang();
 $__clanPh = [
@@ -76,6 +107,7 @@ $__clanPh = [
 <script>
 window.CLAN_TAMGA = <?= json_encode((object)$__clanMap, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 window.CLAN_NAMES = <?= json_encode($__clanNames, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+window.CLAN_EMBLEM_BG = <?= json_encode($__clanEmblemBg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 window.clanTamga = function (name) {
     var k = String(name || '').trim().toLowerCase();
     var u = k && window.CLAN_TAMGA[k];

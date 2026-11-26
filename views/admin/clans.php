@@ -57,9 +57,6 @@ foreach ($clans as $c0) {
 .cl-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .cl-fbtn.active { background: var(--c-accent, #2a6df4); color: #fff; border-color: transparent; }
 .cl-fn { opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
-.cl-tamga { width: 64px; height: 64px; flex: 0 0 auto; border: 1px solid var(--c-border, #ddd); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(rgba(128,128,128,.12) 0 25%, transparent 0 50%) 0 0 / 8px 8px; overflow: hidden; }
-.cl-tamga img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.cl-tamga span { font-size: 16px; opacity: .55; }
 .cl-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .cl-dlg { border: 1px solid var(--c-border, #ccc); border-radius: 10px; padding: 16px; width: min(560px, 94vw); max-height: 90vh; max-height: 90dvh; overflow: auto; box-sizing: border-box; background: var(--c-surface, #fff); color: inherit; }
 .cl-dlg[open] { position: fixed; top: 0; right: 0; bottom: 0; left: 0; margin: auto; height: fit-content; z-index: 1000; }
@@ -76,6 +73,11 @@ foreach ($clans as $c0) {
 .cl-msg.ok { color: #2e7d32; }
 .cl-toolbar-island { padding: var(--sp-4, 16px); }
 .cl-toolbar-island .cl-filter { margin-bottom: 0; }
+.cl-bg-note { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(201, 168, 106, .45); background: rgba(201, 168, 106, .09); color: var(--c-text-2); font-size: 13.5px; line-height: 1.5; }
+.cl-bg-note strong { color: var(--c-text); }
+.cl-prev-emblem { position: relative; width: 260px; max-width: 100%; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--c-border, #ccc); background: #0d0a06; }
+.cl-prev-emblem .ctm-emblem { position: absolute; inset: 0; }
+.cl-prev-emblem .ctm-emblem svg { display: block; width: 100%; height: 100%; }
 @media (max-width: 560px) { .cl-bar #clSearch { max-width: none !important; width: 100%; margin-left: 0 !important; } .cl-form { grid-template-columns: 1fr; } .cl-toolbar-island { padding: 12px; } }
 </style>
 <style><?= clan_tamga_medallion_styles() ?></style>
@@ -84,9 +86,16 @@ foreach ($clans as $c0) {
     <div class="ds-page-head">
         <div>
             <h1>Ру таңбалары</h1>
-            <p class="sub"><?= $ru ? 'Единая галерея родов: исходная таңба в медальоне, название и ұран из справочника.' : 'Рулардың біртұтас галереясы: медальондағы түпнұсқа таңба, атауы және ұран.' ?></p>
+            <p class="sub"><?= $ru ? 'Единая галерея родов: квадратная эмблема с исходной таңба, названием и ұраном из справочника.' : 'Рулардың біртұтас галереясы: түпнұсқа таңба, атауы және ұраны бар шаршы елтаңба.' ?></p>
         </div>
     </div>
+
+    <?php if (clan_emblem_background_url() === ''): ?>
+    <div class="cl-bg-note">
+        <strong><?= $ru ? 'Утверждённый художественный фон ещё не загружен.' : 'Бекітілген көркем фон әлі жүктелмеген.' ?></strong>
+        <?= $ru ? 'Показан нейтральный каменный макет без пейзажа. Положите утверждённый растр из ChatGPT в public/assets/img/clan-emblem/approved-background.jpg — он включится без перерисовки.' : 'Пейзажсыз бейтарап тас макет көрсетілді. ChatGPT-тен бекітілген растрды public/assets/img/clan-emblem/approved-background.jpg жеріне салыңыз — ол қайта салынбай қосылады.' ?>
+    </div>
+    <?php endif; ?>
 
     <?php if (!$registryReady): ?>
         <div class="island">
@@ -147,7 +156,7 @@ foreach ($clans as $c0) {
             <div class="full">
                 <div style="font-size:var(--fs-lg,16px);margin-bottom:4px"><?= $ru ? 'Знак (таңба)' : 'Таңба' ?></div>
                 <div class="cl-actions">
-                    <div class="cl-tamga" style="width:120px;height:120px" id="clPrev"></div>
+                    <div class="cl-prev-emblem" id="clPrev" role="img" aria-label="<?= $ru ? 'Предпросмотр герба' : 'Елтаңбаны алдын ала қарау' ?>"></div>
                     <label class="btn btn-sm" style="cursor:pointer"><?= $ru ? 'Загрузить' : 'Жүктеу' ?>
                         <input type="file" id="clFile" accept=".svg,.png,image/svg+xml,image/png" hidden></label>
                     <button type="button" class="btn btn-sm" id="clDrawBtn"><?= $ru ? 'Нарисовать' : 'Салу' ?></button>
@@ -197,6 +206,8 @@ foreach ($clans as $c0) {
     const fileInp = document.getElementById('clFile');
     const draw = document.getElementById('clDraw'), cv = document.getElementById('clCanvas'), ctx = cv ? cv.getContext('2d') : null;
     let cur = null; // редактируемый ру или null (новый)
+    let fileUrl = '';
+    let prevToken = 0;
     function say(t, ok) { if (msg) { msg.textContent = t || ''; msg.className = 'cl-msg ' + (ok ? 'ok' : 'err'); } }
     async function post(url, fd) {
         fd.append('csrf_token', CSRF);
@@ -207,15 +218,46 @@ foreach ($clans as $c0) {
     }
     function fdOf(obj) { const f = new FormData(); Object.keys(obj).forEach(k => f.append(k, obj[k])); return f; }
     function reloadSoon() { setTimeout(() => location.reload(), 400); }
-    function showPrev(url) {
+    // ALT-117: живое превью в редакторе — тот же ClanEmblem.buildSvg, что и в
+    // галерее/окне/экспорте. Никакого отдельного круглого медальона.
+    function renderPrev(d, uploadedUrl) {
         if (!prev) return;
-        prev.innerHTML = '';
-        if (url) { const i = document.createElement('img'); i.src = url; i.alt = ''; prev.appendChild(i); }
-        else { const s = document.createElement('span'); s.textContent = '—'; prev.appendChild(s); }
+        const nameKk = (form && form.name ? form.name.value : (d && d.name) || '').trim();
+        const nameRu = (form && form.name_ru ? form.name_ru.value : (d && d.name_ru) || '').trim();
+        const name = RU && nameRu ? nameRu : nameKk;
+        const uran = (form && form.uran ? form.uran.value : (d && d.uran) || '').trim();
+        let zhuzLabel = '';
+        if (form && form.zhuz) {
+            const opt = form.zhuz.options[form.zhuz.selectedIndex];
+            zhuzLabel = opt ? String(opt.textContent || '') : '';
+        }
+        const tamgaUrl = uploadedUrl || (d && d.tamga_url) || '';
+        const token = ++prevToken;
+        const label = (RU ? 'Герб рода ' : 'Ру елтаңбасы: ') + (name || (RU ? 'новый род' : 'жаңа ру'));
+        prev.innerHTML = '<div class="ctm-emblem-fallback"><span>…</span></div>';
+        prev.setAttribute('aria-label', label);
+        const host = document.createElement('div');
+        host.className = 'ctm-emblem';
+        if (!window.ClanEmblem || typeof window.ClanEmblem.mount !== 'function') {
+            if (tamgaUrl) {
+                prev.innerHTML = '<div class="ctm-emblem-fallback"><img src="' + tamgaUrl.replace(/"/g, '&quot;') + '" alt=""></div>';
+            }
+            return;
+        }
+        window.ClanEmblem.mount(host, { name: name, uran: uran, zhuz: zhuzLabel, tamgaUrl: tamgaUrl, ariaLabel: label })
+            .then((svg) => {
+                if (token !== prevToken) return;
+                prev.innerHTML = '<div class="ctm-emblem is-mounted">' + svg + '</div>';
+            })
+            .catch(() => {
+                if (token !== prevToken) return;
+                prev.innerHTML = '<div class="ctm-emblem-fallback"><span>' + (RU ? 'Не удалось построить превью' : 'Алдын ала қарау сәтсіз') + '</span></div>';
+            });
     }
     function openDlg(d) {
         if (!dlg || !form) return;
         cur = d; form.reset(); say('', true); if (draw) draw.classList.remove('open'); if (fileInp) fileInp.value = '';
+        fileUrl = '';
         const fn = document.getElementById('clFileName'); if (fn) fn.textContent = '';
         form.id.value = d ? d.id : 0;
         if (d) {
@@ -229,7 +271,7 @@ foreach ($clans as $c0) {
         document.getElementById('clFormTitle').textContent = d ? (RU ? 'Изменить: ' : 'Өзгерту: ') + d.name : (RU ? 'Новый ру' : 'Жаңа ру');
         const rm = document.getElementById('clRmTamga'); if (rm) rm.style.display = d && d.tamga_url ? '' : 'none';
         const dr = document.getElementById('clDrawBtn'); if (dr) dr.style.display = d ? '' : 'none';
-        showPrev(d ? d.tamga_url : '');
+        renderPrev(d, '');
         dlg.showModal();
     }
     const addBtn = document.getElementById('clAdd');
@@ -249,7 +291,23 @@ foreach ($clans as $c0) {
             const f = fileInp.files[0];
             const fn = document.getElementById('clFileName');
             if (fn) fn.textContent = f ? f.name : '';
-            if (f) showPrev(URL.createObjectURL(f));
+            fileUrl = f ? URL.createObjectURL(f) : '';
+            renderPrev(cur, fileUrl);
+        });
+    }
+
+    // ALT-117: любое изменение названия/жуза/ұрана сразу обновляет превью.
+    if (form) {
+        let previewTimer = 0;
+        const refreshPreview = () => {
+            clearTimeout(previewTimer);
+            previewTimer = setTimeout(() => renderPrev(cur, fileUrl), 120);
+        };
+        ['name', 'name_ru', 'zhuz', 'uran'].forEach((k) => {
+            const el = form.elements.namedItem(k);
+            if (!el) return;
+            el.addEventListener('input', refreshPreview);
+            el.addEventListener('change', refreshPreview);
         });
     }
 

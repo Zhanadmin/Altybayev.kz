@@ -32,10 +32,10 @@
             }
         };
         const EXTRA = {
-            kk: { uran: 'Ұран', pdf: 'PDF жасау', print: 'Басып шығару', download: 'Картинкамен жүктеу (PNG)', png: 'PNG жүктеу', emblemPdf: 'PDF жүктеу', loading: 'Елтаңба дайындалуда…', noSign: 'Таңба жүктелмеген — елтаңба таңбасыз көрсетілді.', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: '' } },
-            ru: { uran: 'Ұран', pdf: 'Сохранить в PDF', print: 'Печать', download: 'Скачать картинкой (PNG)', png: 'Скачать PNG', emblemPdf: 'Скачать PDF', loading: 'Готовим герб…', noSign: 'Таңба не загружена — герб показан без знака.', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: '' } },
-            en: { uran: 'Battle cry', pdf: 'Save as PDF', print: 'Print', download: 'Download as image (PNG)', png: 'Download PNG', emblemPdf: 'Download PDF', loading: 'Preparing the emblem…', noSign: 'The tamga is not loaded — the emblem is shown without it.', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: '' } },
-            es: { uran: 'Grito de guerra', pdf: 'Guardar como PDF', print: 'Imprimir', download: 'Descargar como imagen (PNG)', png: 'Descargar PNG', emblemPdf: 'Descargar PDF', loading: 'Preparando el emblema…', noSign: 'La tamga no está cargada — el emblema se muestra sin ella.', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: '' } }
+            kk: { uran: 'Ұран', pdf: 'PDF жасау', print: 'Басып шығару', download: 'Картинкамен жүктеу (PNG)', png: 'PNG жүктеу', emblemPdf: 'PDF жүктеу', loading: 'Елтаңба дайындалуда…', noSign: 'Таңба жүктелмеген — елтаңба таңбасыз көрсетілді.', noBackground: 'Бекітілген көркем фон әлі жүктелмеген — бейтарап тас макет көрсетілді. Фон файлын жіберіңіз.', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: 'Жүзден тыс' } },
+            ru: { uran: 'Ұран', pdf: 'Сохранить в PDF', print: 'Печать', download: 'Скачать картинкой (PNG)', png: 'Скачать PNG', emblemPdf: 'Скачать PDF', loading: 'Готовим герб…', noSign: 'Таңба не загружена — герб показан без знака.', noBackground: 'Утверждённый художественный фон ещё не загружен — показан нейтральный макет. Пришлите файл фона.', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: 'Вне жузов' } },
+            en: { uran: 'Battle cry', pdf: 'Save as PDF', print: 'Print', download: 'Download as image (PNG)', png: 'Download PNG', emblemPdf: 'Download PDF', loading: 'Preparing the emblem…', noSign: 'The tamga is not loaded — the emblem is shown without it.', noBackground: 'The approved artwork background is not uploaded yet — a neutral layout is shown. Please send the background file.', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: 'Outside the zhuzes' } },
+            es: { uran: 'Grito de guerra', pdf: 'Guardar como PDF', print: 'Imprimir', download: 'Descargar como imagen (PNG)', png: 'Descargar PNG', emblemPdf: 'Descargar PDF', loading: 'Preparando el emblema…', noSign: 'La tamga no está cargada — el emblema se muestra sin ella.', noBackground: 'El fondo artístico aprobado aún no se ha subido — se muestra un diseño neutro. Envíe el archivo del fondo.', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: 'Fuera de los zhuz' } }
         };
         const l = T[currentLang] || T.kk;
         Object.assign(l, EXTRA[currentLang] || EXTRA.kk);
@@ -50,8 +50,7 @@
     /* ALT-101: декоративная миниатюра для таблички «Жеті ата».
        ALT-117: окно data-clan-coat и экспорт герба используют clan-emblem.js,
        а не этот старый герб-звезду. o: {pre, zhuz, clan, uran, tamga (data-URI или '')}.
-       Возвращает содержимое в системе координат 260×260 (центр 130,130). */
-    function coatInner(o) {
+       Возвращает содержимое в системе координат 260×260 (центр 130,130). */    function coatInner(o) {
         const C = 130, G = '#c9a24b', GL = '#e8c97a';
         const polar = (a, r) => [C + Math.cos(a * Math.PI / 180) * r, C + Math.sin(a * Math.PI / 180) * r];
         const sq = (off) => [0, 1, 2, 3].map((k) => polar(off + k * 90, 124).map((v) => v.toFixed(1)).join(',')).join(' ');
@@ -118,7 +117,8 @@
     }
 
     /* Окно с готовым гербом ру: по названию ру (клик в «Ру таңбалары» и в карточке человека).
-       ALT-117: вместо старого бордового герба-звезды — новый единый герб со степью;
+       ALT-117: вместо старого бордового герба-звезды — единый герб на утверждённой
+       растровой подложке (пока файла нет — нейтральный каменный макет);
        PNG и PDF экспортируют ровно эту же композицию. */
     async function openClan(name, currentLang) {
         const lang = currentLang || document.documentElement.lang || 'kk';
@@ -180,7 +180,8 @@
                 png: L.png,
                 pdf: L.emblemPdf,
                 close: L.close,
-                noSign: L.noSign
+                noSign: L.noSign,
+                noBackground: L.noBackground
             }
         });
     }

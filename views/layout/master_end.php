@@ -156,7 +156,7 @@ $__t = static fn(string $kk, string $ru): string => $__ru ? $ru : $kk;
                     </details>
                     <?php $relBtnCls = 'btn btn-sm'; require __DIR__ . '/person_relatives.php'; /* ALT-067 */ ?>
                     <?php require __DIR__ . '/person_contact_fields.php'; ?>
-                    <?php /* ALT-061: удаление — только здесь, в самом низу, неброским блоком; права как в ALT-018 (can_delete с сервера) */ ?>
+                    <?php /* ALT-061: удаление — только здесь, в самом низу, неброским блоком; права — can_delete с сервера (ALT-018/ALT-119) */ ?>
                     <div id="editModalDangerBlock" style="display:none;margin-top:28px;padding-top:14px;border-top:1px dashed var(--c-border);">
                         <div style="font-size:13px;color:var(--c-text-muted,#7a7468);margin-bottom:8px;"><?= $__t('Қауіпті әрекет', 'Опасное действие') ?></div>
                         <button type="button" class="btn btn-ghost btn-danger btn-sm" id="editModalDeleteBtn" onclick="handleGlobalPersonDelete()">

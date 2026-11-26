@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * TASK-032: права обычного родственника (viewer) на карточки и браки.
- * Самодостаточный: SQLite в памяти, без боевой БД.
+ * Самодостаточный: SQLite в памяти, а при его отсутствии — временные таблицы тестовой БД.
  */
 
 require_once __DIR__ . '/../app/Services/PersonAccessService.php';
@@ -16,14 +16,20 @@ if (!class_exists('App\Core\Auth')) {
 use App\Services\PersonAccessService;
 
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    echo "SKIP: pdo_sqlite недоступен\n";
-    exit(0);
+    // На этой машине pdo_sqlite нет. Работаем на тестовой БД проекта во ВРЕМЕННЫХ таблицах:
+    // они живут только в этом соединении и не затрагивают реальные persons/marriages.
+    require_once __DIR__ . '/../app/bootstrap.php';
+    $db = \App\Core\Database::getConnection();
+    $db->exec('DROP TEMPORARY TABLE IF EXISTS `marriages`');
+    $db->exec('DROP TEMPORARY TABLE IF EXISTS `persons`');
+    $db->exec('CREATE TEMPORARY TABLE `persons` (`id` INT PRIMARY KEY, `father_id` INT NULL, `mother_id` INT NULL, `is_deleted` INT DEFAULT 0, `created_by` INT NULL) ENGINE=InnoDB');
+    $db->exec('CREATE TEMPORARY TABLE `marriages` (`id` INT PRIMARY KEY, `husband_id` INT NULL, `wife_id` INT NULL) ENGINE=InnoDB');
+} else {
+    $db = new PDO('sqlite::memory:');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->exec('CREATE TABLE persons (id INTEGER PRIMARY KEY, father_id INT, mother_id INT, is_deleted INT DEFAULT 0, created_by INT)');
+    $db->exec('CREATE TABLE marriages (id INTEGER PRIMARY KEY, husband_id INT, wife_id INT)');
 }
-
-$db = new PDO('sqlite::memory:');
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$db->exec('CREATE TABLE persons (id INTEGER PRIMARY KEY, father_id INT, mother_id INT, is_deleted INT DEFAULT 0, created_by INT)');
-$db->exec('CREATE TABLE marriages (id INTEGER PRIMARY KEY, husband_id INT, wife_id INT)');
 
 // 1 дед, 2 бабушка | 3 отец(я=viewer user 10), 4 жена | 5 сын, 6 дочь | 7 чужой брат отца | 8 добавлен мной
 $db->exec("INSERT INTO persons (id, father_id, mother_id, created_by) VALUES

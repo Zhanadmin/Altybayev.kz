@@ -119,8 +119,9 @@ $hasFilters = !empty($filters['q']) || !empty($filters['clan_id']) || !empty($fi
 <?php
 // Функция вывода строк персон в таблице
 $isAdminRow = !empty($isAdmin);
+$canDeleteAnyRow = !empty($canDeleteAny); // ALT-119: админ/редактор удаляют любую карточку
 $deletableIdsRow = array_map('intval', $deletableIds ?? []);
-$renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit, $isAdminRow, $deletableIdsRow) {
+$renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit, $isAdminRow, $canDeleteAnyRow, $deletableIdsRow) {
     if (empty($items)) {
         return;
     }
@@ -241,7 +242,7 @@ $renderTableRows = function(array $items, int $offset = 0) use ($lang, $canEdit,
 
             <!-- Әрекеттер -->
             <td class="actions">
-                <?php $canDelRow = (!empty($isAdminRow) || in_array((int)$p['id'], $deletableIdsRow, true)); /* ALT-023: меню «⋯» вместо кнопок; удаление — ALT-018 */ ?>
+                <?php $canDelRow = ($canDeleteAnyRow || $isAdminRow || in_array((int)$p['id'], $deletableIdsRow, true)); /* ALT-023: меню «⋯» вместо кнопок; удаление — ALT-018/ALT-119 */ ?>
                 <button type="button" class="btn btn-ghost btn-icon pp-more" aria-haspopup="menu" aria-expanded="false"
                         data-id="<?= (int)$p['id'] ?>" data-edit="<?= $canEdit ? '1' : '0' ?>" data-del="<?= $canDelRow ? '1' : '0' ?>"
                         data-name="<?= htmlspecialchars(trim(($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? ''))) ?>"

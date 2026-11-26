@@ -1079,11 +1079,14 @@ class TreeController
     }
 
     /**
-     * API: Мягкое удаление персоны (ALT-018).
-     * Права: админ или тот, кто добавил человека (persons.created_by). POST + CSRF.
-     * Если есть живые дети — без children_confirmed=1 отвечает 409 со списком детей;
+     * API: Мягкое удаление персоны (ALT-018 / ALT-119).
+     * Права: администратор, редактор или тот, кто добавил человека (persons.created_by).
+     * Карточка, привязанная к аккаунту (users.person_id), удаляется только администратором.
+     * POST + CSRF. Если есть живые дети — без children_confirmed=1 отвечает 409 со списком детей;
      * с подтверждением: дети остаются, связь с удаляемым рвётся (id записываются в журнал для восстановления).
      * Браки не трогаем: загрузчики пропускают браки с удалёнными людьми, при восстановлении всё вернётся.
+     * ALT-119: у приглашения снимаем person_id, а у админа — и users.person_id, чтобы не оставлять
+     * ссылок на удалённую карточку.
      */
     public function apiPersonDelete(Request $request): void
     {
@@ -1116,19 +1119,16 @@ class TreeController
                 return;
             }
             if (!$access->canDeletePerson($id, $user)) {
-                Response::json(['error' => 'Жоюға рұқсат жоқ: тек қосқан адам немесе әкімші / Удалять может только тот, кто добавил человека, или администратор'], 403);
+                $error = $access->isLinkedToUser($id)
+                    ? 'Бұл карточка пайдаланушыға байланған, жоюды әкімші жасайды / Карточка привязана к пользователю — удаляет только администратор'
+                    : 'Жоюға рұқсат жоқ: жоюды редактор, әкімші немесе адамды қосқан пайдаланушы жасай алады / Удалять может редактор, администратор или тот, кто добавил человека';
+                Response::json(['error' => $error], 403);
                 return;
             }
 
-            // карточка, привязанная к аккаунту, — только админ
-            if (!Auth::isAdmin()) {
-                $lk = $db->prepare('SELECT 1 FROM users WHERE person_id = ? LIMIT 1');
-                $lk->execute([$id]);
-                if ($lk->fetchColumn()) {
-                    Response::json(['error' => 'Бұл карточка пайдаланушыға байланған, жоюды әкімші жасайды / Карточка привязана к пользователю — удаляет только администратор'], 403);
-                    return;
-                }
-            }
+            // ALT-119: зависимости, которые нельзя оставлять указывающими на удалённую карточку
+            $linkedUser = $access->isLinkedToUser($id);
+            $linkedInvitation = $access->invitationOfPerson($id);
 
             $children = $access->childrenOf($id);
             if ($children &&(string)$request->post('children_confirmed', '') !== '1') {
@@ -1157,6 +1157,15 @@ class TreeController
             $db->prepare("UPDATE `persons` SET `father_id` = NULL, `updated_at` = NOW() WHERE `father_id` = ? AND `is_deleted` = 0")->execute([$id]);
             $db->prepare("UPDATE `persons` SET `mother_id` = NULL, `updated_at` = NOW() WHERE `mother_id` = ? AND `is_deleted` = 0")->execute([$id]);
             $db->prepare("UPDATE `persons` SET `is_deleted` = 1, `updated_at` = NOW() WHERE `id` = ?")->execute([$id]);
+            // ALT-119: снимаем ссылки на удаляемую карточку, чтобы приглашение/аккаунт не вели в никуда
+            $unlinkedUser = false;
+            if ($linkedUser && Auth::isAdmin()) {
+                $db->prepare("UPDATE `users` SET `person_id` = NULL WHERE `person_id` = ?")->execute([$id]);
+                $unlinkedUser = true;
+            }
+            if ($linkedInvitation) {
+                $db->prepare("UPDATE `invitations` SET `person_id` = NULL WHERE `person_id` = ?")->execute([$id]);
+            }
             // журнал — внутри транзакции: без него восстановить связи с детьми нечем (ошибка откатит удаление)
             $db->prepare(
                 "INSERT INTO `audit_logs` (`user_id`, `user_name`, `user_email`, `action`, `entity_table`, `entity_id`, `summary`, `old_values`, `new_values`, `created_at`)
@@ -1168,7 +1177,12 @@ class TreeController
                 $id,
                 "Тұлға жойылды (soft-delete) / Удалён: {$oldPerson['first_name']} {$oldPerson['last_name']}",
                 json_encode($oldPerson, JSON_UNESCAPED_UNICODE),
-                json_encode(['is_deleted' => 1, 'detached_children' => $detached], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    'is_deleted' => 1,
+                    'detached_children' => $detached,
+                    'unlinked_user' => $unlinkedUser,
+                    'unlinked_invitation' => $linkedInvitation ? (int)$linkedInvitation['id'] : null,
+                ], JSON_UNESCAPED_UNICODE),
             ]);
             $db->commit();
 

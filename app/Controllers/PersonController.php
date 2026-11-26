@@ -308,8 +308,10 @@ class PersonController
             ],
             'canEdit'           => Auth::canEdit(),
             'isAdmin'           => Auth::isAdmin(),
-            // ALT-018: у кого видна кнопка «Удалить» (админ — у всех, остальные — у добавленных ими)
-            'deletableIds'      => (!Auth::isAdmin() && $user)
+            // ALT-119: редактор и админ могут удалять любую карточку; остальные — только добавленные ими
+            'canDeleteAny'      => Auth::isEditor(),
+            // ALT-018/ALT-119: зрителям — только добавленные ими; админ/редактор удаляют любую (canDeleteAny)
+            'deletableIds'      => (!Auth::isEditor() && $user)
                 ? array_map('intval', array_column(array_filter($allPersons, static fn($r) => (int)($r['created_by'] ?? 0) === (int)($user['id'] ?? -1)), 'id'))
                 : [],
             'csrfToken'         => \App\Core\Session::csrfToken(),
@@ -472,7 +474,7 @@ class PersonController
             'auditLogs'    => $auditLogs,
             'canEdit'      => Auth::canEdit(),
             'isAdmin'      => Auth::isAdmin(),
-            'canDelete'    => \App\Services\PersonAccessService::make()->canDeletePerson($id, $user), // ALT-018
+            'canDelete'    => \App\Services\PersonAccessService::make()->canDeletePerson($id, $user), // ALT-018/ALT-119
             'csrfToken'    => \App\Core\Session::csrfToken(),
         ]);
     }

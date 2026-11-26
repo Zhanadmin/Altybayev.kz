@@ -127,7 +127,11 @@ class PersonAccessService
         return in_array($relationType, ['son', 'daughter', 'spouse', 'sibling'], true);
     }
 
-    /** ALT-018: удалять человека может админ и тот, кто его добавил (persons.created_by). Редактор — нет. */
+    /**
+     * ALT-018 / ALT-119: удалять человека может администратор, редактор и тот, кто его добавил
+     * (persons.created_by). Карточка, привязанная к аккаунту (users.person_id), удаляется только
+     * администратором — это защищает учётные записи от потери связанной персоны.
+     */
     public function canDeletePerson(int $personId, ?array $user = null): bool
     {
         $user = $user ?? Auth::user();
@@ -137,7 +141,47 @@ class PersonAccessService
         if (($user['role'] ?? '') === 'admin') {
             return true;
         }
+        if ($this->isLinkedToUser($personId)) {
+            return false;
+        }
+        if (($user['role'] ?? '') === 'editor') {
+            return true;
+        }
         return $this->isCreatedBy($personId, (int)($user['id'] ?? 0));
+    }
+
+    /** ALT-119: карточка привязана к учётной записи — удалять её может только администратор. */
+    public function isLinkedToUser(int $personId): bool
+    {
+        if ($personId <= 0) {
+            return false;
+        }
+        $st = $this->db->prepare('SELECT 1 FROM users WHERE person_id = ? LIMIT 1');
+        $st->execute([$personId]);
+        return $st->fetchColumn() !== false;
+    }
+
+    /**
+     * ALT-119: неотозванное приглашение, привязанное к карточке (если миграция invitations.person_id применена).
+     * При удалении карточки ссылку снимаем, чтобы приглашение не вело на удалённого человека.
+     */
+    public function invitationOfPerson(int $personId): ?array
+    {
+        if ($personId <= 0) {
+            return null;
+        }
+        try {
+            $col = $this->db->query("SHOW COLUMNS FROM `invitations` LIKE 'person_id'");
+            if (!$col || $col->rowCount() === 0) {
+                return null;
+            }
+            $st = $this->db->prepare("SELECT id, email, status FROM `invitations` WHERE `person_id` = ? AND `status` <> 'revoked' LIMIT 1");
+            $st->execute([$personId]);
+            $row = $st->fetch(PDO::FETCH_ASSOC);
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /** ALT-018: живые дети человека (для предупреждения при удалении). */

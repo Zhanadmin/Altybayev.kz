@@ -1,9 +1,25 @@
 /* ALT-018: удаление человека (мягкое). Использование: altDeletePerson(id, name, {lang, csrf, onDone})
-   ALT-061: подтверждение — окно в стиле сайта (вместо системного confirm) */
+   ALT-061: подтверждение — окно в стиле сайта (вместо системного confirm)
+   ALT-119: после успешного удаления показываем понятное сообщение о результате */
 (function () {
     'use strict';
 
     function ru(lang) { return lang === 'ru' || lang === 'en' || lang === 'es'; }
+
+    // Короткое сообщение об успехе: общий тост сайта → тост древа → свой тост
+    function showSuccessToast(text) {
+        try {
+            if (typeof window.showAppToast === 'function') { window.showAppToast(text, 'success'); return; }
+            if (typeof window.altSavedToast === 'function') { window.altSavedToast(text); return; }
+        } catch (e) { /* показываем свой тост */ }
+
+        const t = document.createElement('div');
+        t.setAttribute('role', 'status');
+        t.textContent = '✓ ' + text;
+        t.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:100001;max-width:min(420px,calc(100vw - 32px));padding:10px 16px;border-radius:10px;background:var(--c-surface,#fff);color:var(--c-text,#1c1b19);border:1px solid var(--c-border,#d9d2c3);box-shadow:0 6px 24px rgba(0,0,0,.18);font-weight:600;font-size:14px;line-height:1.4;';
+        document.body.appendChild(t);
+        setTimeout(function () { t.remove(); }, 3500);
+    }
 
     async function post(id, csrf, confirmed) {
         const body = new URLSearchParams({ id: String(id), csrf_token: csrf });
@@ -91,7 +107,11 @@
                 res = await post(id, csrf, true);
             }
             if (res.data && res.data.status === 'success') {
-                if (typeof opts.onDone === 'function') { opts.onDone(); }
+                showSuccessToast(r ? 'Человек удалён' : 'Адам жойылды');
+                if (typeof opts.onDone === 'function') {
+                    // Даём увидеть сообщение до перезагрузки страницы/древа
+                    setTimeout(opts.onDone, 800);
+                }
                 return true;
             }
             window.alert((r ? 'Ошибка: ' : 'Қате: ') + ((res.data && res.data.error) || res.status));

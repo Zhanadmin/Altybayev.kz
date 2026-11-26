@@ -3994,13 +3994,13 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
         // СЕРВЕРДЕН АЛЫНҒАН АҚПАРАТТАР
         let userPersonId = <?= (int)$userPersonId ?>;
         const canEdit = <?= !empty($canEdit) ? 'true' : 'false' ?>;
-        const isAdmin = <?= !empty($isAdmin) ? 'true' : 'false' ?>;
         // TASK-032: свой круг для не-редактора (подсказка интерфейсу; права проверяет сервер)
         const ownCircle = <?= json_encode(array_map('intval', $ownCircle ?? []), JSON_NUMERIC_CHECK) ?>;
         // ALT-018: кого добавил сам пользователь — править и удалять можно; сервер проверяет заново
         const myCreatedIds = <?= json_encode(array_map('intval', $myCreatedIds ?? [])) ?>;
         const personCsrf = <?= json_encode($csrfToken ?? '') ?>;
-        const canDeletePersonUi = (pid) => isAdmin || myCreatedIds.indexOf(parseInt(pid, 10)) !== -1;
+        // ALT-119: редактор (canEdit) и админ удаляют любого; остальные — только добавленных ими
+        const canDeletePersonUi = (pid) => canEdit || myCreatedIds.indexOf(parseInt(pid, 10)) !== -1;
         const canEditPersonUi = (pid) => canEdit || ownCircle.indexOf(parseInt(pid, 10)) !== -1 || myCreatedIds.indexOf(parseInt(pid, 10)) !== -1;
         const urlParams = new URLSearchParams(window.location.search);
         const focusFromUrl = urlParams.get('focus') || urlParams.get('id');
@@ -6835,7 +6835,8 @@ $userEmail = $user['email'] ?? 'zhandos.alt06@gmail.com';
 
                 const btnDel = document.getElementById('btnDeletePerson');
                 if (btnDel) {
-                    const delOk = !!(data.can_delete || canDeletePersonUi(p.id));
+                    // ALT-119: явный ответ сервера (в т.ч. запрет для привязанной карточки) важнее подсказки UI
+                    const delOk = (typeof data.can_delete === 'undefined') ? canDeletePersonUi(p.id) : !!data.can_delete;
                     btnDel.style.display = delOk ? 'inline-flex' : 'none';
                     if (btnDel.parentElement) { btnDel.parentElement.style.display = delOk ? 'block' : 'none'; } // ALT-061: весь блок «Опасное действие»
                 }

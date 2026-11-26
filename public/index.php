@@ -28,6 +28,11 @@ header('Cache-Control: no-store, no-cache, must-revalidate, private');
     if (isset($_GET['noshell'])) {
         return;
     }
+    // ALT-118: гостю оболочка не нужна. Страница входа на "/" внутри iframe ведёт в Google OAuth,
+    // а Google отказывается работать во фрейме и показывает «403. Произошла ошибка» (X-Frame-Options: DENY).
+    if (!\App\Core\Auth::check()) {
+        return;
+    }
     $path = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
     if (preg_match('#^/(api|auth|media|album/media|uploads|assets|login|logout|lang|__test-login|tree/print|admin/import|access-request)(/|$)#', $path)) {
         return;

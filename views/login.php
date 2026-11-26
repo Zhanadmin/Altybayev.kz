@@ -36,6 +36,12 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
     <?php include __DIR__ . '/partials/pwa_head.php'; // ALT-016 ?>
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <script>
+        /* ALT-118: страница входа не должна оставаться во фрейме оболочки — Google OAuth во фрейме отдаёт 403 */
+        if (window.top !== window.self) {
+            try { window.top.location.replace('/login'); } catch (e) {}
+        }
+    </script>
+    <script>
         /* TASK-008: тема — сохранённый выбор, иначе как в системе */
         (function () {
             try {
@@ -213,7 +219,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
             <a href="/lang/en?ref=<?= $langRef ?>" class="<?= $lang === 'en' ? 'active' : '' ?>">ENG</a>
             <a href="/lang/es?ref=<?= $langRef ?>" class="<?= $lang === 'es' ? 'active' : '' ?>">ESP</a>
         </div>
-        <a href="/auth/google" class="btn btn-primary wl-login-top"><?= $T('wl_login') ?></a>
+        <a href="/auth/google" target="_top" class="btn btn-primary wl-login-top"><?= $T('wl_login') ?></a>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" onclick="toggleAuthTheme()"
                 aria-label="<?= $T('wl_theme_label') ?>">
             <svg class="ic ic-sun"><use href="#i-sun"/></svg><svg class="ic ic-moon"><use href="#i-moon"/></svg>
@@ -229,7 +235,7 @@ $fbOwner = $fbContacts['name'] !== '' ? $fbContacts['name'] : I18n::t('fb_owner_
             <p class="wl-lead"><?= $T('wl_hero_tag') ?></p>
 
             <div class="wl-cta">
-                <a href="/auth/google" class="btn btn-primary"><?= $T('wl_login') ?></a>
+                <a href="/auth/google" target="_top" class="btn btn-primary"><?= $T('wl_login') ?></a>
                 <p class="wl-invite"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
                     <strong><?= htmlspecialchars(I18n::t('wl_invite')) ?></strong>
                     <?= htmlspecialchars(I18n::t('wl_invite_google')) ?></p>

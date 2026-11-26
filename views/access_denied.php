@@ -134,7 +134,7 @@ if ($isPending) {
         </div>
 
         <div class="au-actions">
-            <a href="/auth/google" class="btn btn-primary">
+            <a href="/auth/google" target="_top" class="btn btn-primary">
                 <?= ($lang === 'ru' || $lang === 'en' || $lang === 'es') ? 'Сменить аккаунт Google' : 'Басқа Google аккаунтымен кіру' ?>
             </a>
             <a href="/logout" class="btn">

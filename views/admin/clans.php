@@ -183,6 +183,7 @@ foreach ($clans as $c0) {
 
 <?php if ($registryReady): ?>
 <script>window.__zaLang = <?= json_encode($lang) ?>;</script>
+<script src="/assets/js/clan-emblem.js?v=<?= (int)@filemtime(__DIR__ . '/../../public/assets/js/clan-emblem.js') ?>"></script>
 <script src="/assets/js/zheti-ata.js?v=<?= (int)@filemtime(__DIR__ . '/../../public/assets/js/zheti-ata.js') ?>"></script>
 <script>
 (function () {

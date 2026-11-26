@@ -32,10 +32,10 @@
             }
         };
         const EXTRA = {
-            kk: { uran: 'Ұран', pdf: 'PDF жасау', print: 'Басып шығару', download: 'Картинкамен жүктеу (PNG)', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: '' } },
-            ru: { uran: 'Ұран', pdf: 'Сохранить в PDF', print: 'Печать', download: 'Скачать картинкой (PNG)', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: '' } },
-            en: { uran: 'Battle cry', pdf: 'Save as PDF', print: 'Print', download: 'Download as image (PNG)', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: '' } },
-            es: { uran: 'Grito de guerra', pdf: 'Guardar como PDF', print: 'Imprimir', download: 'Descargar como imagen (PNG)', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: '' } }
+            kk: { uran: 'Ұран', pdf: 'PDF жасау', print: 'Басып шығару', download: 'Картинкамен жүктеу (PNG)', png: 'PNG жүктеу', emblemPdf: 'PDF жүктеу', loading: 'Елтаңба дайындалуда…', noSign: 'Таңба жүктелмеген — елтаңба таңбасыз көрсетілді.', zhuz: { senior: 'Ұлы жүз', middle: 'Орта жүз', junior: 'Кіші жүз', other: '' } },
+            ru: { uran: 'Ұран', pdf: 'Сохранить в PDF', print: 'Печать', download: 'Скачать картинкой (PNG)', png: 'Скачать PNG', emblemPdf: 'Скачать PDF', loading: 'Готовим герб…', noSign: 'Таңба не загружена — герб показан без знака.', zhuz: { senior: 'Старший жуз', middle: 'Средний жуз', junior: 'Младший жуз', other: '' } },
+            en: { uran: 'Battle cry', pdf: 'Save as PDF', print: 'Print', download: 'Download as image (PNG)', png: 'Download PNG', emblemPdf: 'Download PDF', loading: 'Preparing the emblem…', noSign: 'The tamga is not loaded — the emblem is shown without it.', zhuz: { senior: 'Senior Zhuz', middle: 'Middle Zhuz', junior: 'Junior Zhuz', other: '' } },
+            es: { uran: 'Grito de guerra', pdf: 'Guardar como PDF', print: 'Imprimir', download: 'Descargar como imagen (PNG)', png: 'Descargar PNG', emblemPdf: 'Descargar PDF', loading: 'Preparando el emblema…', noSign: 'La tamga no está cargada — el emblema se muestra sin ella.', zhuz: { senior: 'Zhuz Mayor', middle: 'Zhuz Medio', junior: 'Zhuz Menor', other: '' } }
         };
         const l = T[currentLang] || T.kk;
         Object.assign(l, EXTRA[currentLang] || EXTRA.kk);
@@ -47,7 +47,9 @@
 
     const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-    /* ALT-101: герб-звезда ру. Всё SVG (без фото). o: {pre, zhuz, clan, uran, tamga (data-URI или '')}.
+    /* ALT-101: декоративная миниатюра для таблички «Жеті ата».
+       ALT-117: окно data-clan-coat и экспорт герба используют clan-emblem.js,
+       а не этот старый герб-звезду. o: {pre, zhuz, clan, uran, tamga (data-URI или '')}.
        Возвращает содержимое в системе координат 260×260 (центр 130,130). */
     function coatInner(o) {
         const C = 130, G = '#c9a24b', GL = '#e8c97a';
@@ -99,43 +101,87 @@
         } catch (e) { return ''; }
     }
 
-    /* Окно с гербом ру крупно: по названию ру (клик в «Ру таңбалары» и в карточке человека). */
+    /* ALT-117: подгружаем единый генератор герба, если он ещё не подключён на странице. */
+    let emblemLibPromise = null;
+    function ensureEmblemLib() {
+        if (window.ClanEmblem) return Promise.resolve(window.ClanEmblem);
+        if (emblemLibPromise) return emblemLibPromise;
+        emblemLibPromise = new Promise((resolve, reject) => {
+            if (typeof document === 'undefined') { reject(new Error('no document')); return; }
+            const s = document.createElement('script');
+            s.src = '/assets/js/clan-emblem.js';
+            s.onload = () => window.ClanEmblem ? resolve(window.ClanEmblem) : reject(new Error('ClanEmblem is not available'));
+            s.onerror = () => reject(new Error('ClanEmblem load failed'));
+            document.head.appendChild(s);
+        });
+        return emblemLibPromise;
+    }
+
+    /* Окно с готовым гербом ру: по названию ру (клик в «Ру таңбалары» и в карточке человека).
+       ALT-117: вместо старого бордового герба-звезды — новый единый герб со степью;
+       PNG и PDF экспортируют ровно эту же композицию. */
     async function openClan(name, currentLang) {
-        const L = labels(currentLang || document.documentElement.lang || 'kk');
+        const lang = currentLang || document.documentElement.lang || 'kk';
+        const L = labels(lang);
         name = String(name || '').trim();
         if (!name) return;
+        const stale = document.getElementById('zaCoatOverlay');
+        if (stale) stale.remove();
         let data = null;
         try {
             const r = await fetch('/api/zheti-ata/clan?name=' + encodeURIComponent(name));
             const j = await r.json();
             if (j && j.success) data = j.clan;
         } catch (e) { data = null; }
-        const old = document.getElementById('zaCoatOverlay');
-        if (old) old.remove();
-        const ov = document.createElement('div');
-        ov.id = 'zaCoatOverlay';
-        ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto;';
-        const box = document.createElement('div');
-        box.style.cssText = 'background:#2a0e0a;border:2px solid #c9a24b;border-radius:12px;padding:12px;width:min(480px,96vw);max-height:96vh;overflow:auto;text-align:center;';
-        if (!data) {
-            box.innerHTML = `<div style="color:#f3e6c8;padding:20px;">${esc(name)}</div>`;
-        } else {
-            const clanName = (currentLang === 'kk' ? (data.name || data.name_ru) : (data.name_ru || data.name)) || name;
-            const tamga = await tamgaDataUri(data.tamga_url);
-            window.zhetiAtaFileName = 'Ру — ' + clanName;
-            box.innerHTML = coatSvgFull({ pre: 'zaCoat', zhuz: L.zhuz[data.zhuz] || '', clan: clanName, uran: data.uran || '', tamga }, 'zhetiAtaCoat')
-                + `<div style="margin-top:10px;"><button type="button" class="btn btn-primary" data-act="png">⬇ PNG</button> <button type="button" class="btn" data-act="pdf">📄 PDF</button></div>`;
+
+        let lib;
+        try {
+            lib = await ensureEmblemLib();
+        } catch (e) {
+            lib = null;
         }
-        const x = document.createElement('button');
-        x.type = 'button'; x.className = 'btn'; x.textContent = '✕ ' + L.close; x.style.marginTop = '8px';
-        box.appendChild(x);
-        ov.appendChild(box);
-        document.body.appendChild(ov);
-        ov.addEventListener('click', (ev) => {
-            if (ev.target === ov || ev.target === x) { ov.remove(); return; }
-            const b = ev.target.closest ? ev.target.closest('[data-act]') : null;
-            if (!b) return;
-            if (b.getAttribute('data-act') === 'png') downloadPng('zhetiAtaCoat'); else printPdf('zhetiAtaCoat');
+        if (!lib) {
+            const ov = document.createElement('div');
+            ov.id = 'zaCoatOverlay';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(10,8,5,.86);display:flex;align-items:center;justify-content:center;padding:12px;';
+            ov.innerHTML = '<div style="max-width:420px;padding:20px;border:1px solid #c9a86a;border-radius:14px;background:#17120c;color:#f3e6c8;text-align:center;font-family:Georgia,serif">'
+                + esc(name) + '<br><br><button type="button" class="btn" data-close="1">' + esc(L.close) + '</button></div>';
+            ov.addEventListener('click', (ev) => {
+                if (ev.target === ov || (ev.target.closest && ev.target.closest('[data-close]'))) ov.remove();
+            });
+            document.body.appendChild(ov);
+            return;
+        }
+
+        if (!data) {
+            const ov = document.createElement('div');
+            ov.id = 'zaCoatOverlay';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(10,8,5,.86);display:flex;align-items:center;justify-content:center;padding:12px;';
+            ov.innerHTML = '<div style="max-width:420px;padding:20px;border:1px solid #c9a86a;border-radius:14px;background:#17120c;color:#f3e6c8;text-align:center;font-family:Georgia,serif">'
+                + esc(name) + '<br><br><button type="button" class="btn" data-close="1">' + esc(L.close) + '</button></div>';
+            ov.addEventListener('click', (ev) => {
+                if (ev.target === ov || (ev.target.closest && ev.target.closest('[data-close]'))) ov.remove();
+            });
+            document.body.appendChild(ov);
+            return;
+        }
+
+        const clanName = (lang === 'kk' ? (data.name || data.name_ru) : (data.name_ru || data.name)) || name;
+        window.zhetiAtaFileName = 'Ру — ' + clanName;
+        await lib.open({
+            zhuz: L.zhuz[data.zhuz] || '',
+            name: clanName,
+            uran: data.uran || '',
+            tamgaUrl: data.tamga_url || '',
+            filename: 'Ру — ' + clanName,
+            ariaLabel: (lang === 'kk' ? 'Елтаңба: ' : 'Герб рода ') + clanName,
+            labels: {
+                loading: L.loading,
+                png: L.png,
+                pdf: L.emblemPdf,
+                close: L.close,
+                noSign: L.noSign
+            }
         });
     }
 

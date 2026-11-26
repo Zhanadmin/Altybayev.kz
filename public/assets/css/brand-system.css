@@ -1,0 +1,294 @@
+/* ALT-120: единая фирменная система для боковой панели и страницы «Жеті ата».
+   Опирается на утверждённый комплект altybayev-brand (ALT-117): тёмный камень,
+   золото, кремовые плашки, шрифт Lora. Функции навигации не меняются. */
+
+:root {
+    --brand-ink: #17120c;
+    --brand-ink-2: #221a10;
+    --brand-ink-3: #2b2116;
+    --brand-gold: #c9a86a;
+    --brand-gold-2: #e6c98f;
+    --brand-gold-3: #a8782e;
+    --brand-cream: #f3e6c8;
+    --brand-cream-2: #f4e3c0;
+    --brand-muted: #b7a17a;
+    --brand-line: rgba(201, 168, 106, .38);
+}
+
+/* ---------- Боковая панель: тёмный камень + золото ---------- */
+body .ds-sidebar {
+    background:
+        radial-gradient(120% 70% at 50% 0%, rgba(201, 168, 106, .16), transparent 58%),
+        linear-gradient(165deg, #241c12 0%, #17120c 46%, #100d09 100%);
+    border: 1px solid var(--brand-line);
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 1px rgba(230, 201, 143, .12), 0 18px 40px -26px rgba(0, 0, 0, .75);
+    padding: 10px;
+}
+body .ds-sidebar .ds-clan-switch {
+    background: linear-gradient(180deg, rgba(255, 248, 230, .07), rgba(255, 248, 230, .025));
+    border: 1px solid rgba(201, 168, 106, .45);
+    box-shadow: inset 0 0 0 1px rgba(230, 201, 143, .10);
+    color: var(--brand-cream);
+}
+body .ds-sidebar .ds-clan-switch b { color: var(--brand-cream); }
+body .ds-sidebar .ds-clan-switch span { color: var(--brand-muted); }
+body .ds-sidebar .ds-tamga {
+    background: radial-gradient(circle at 38% 28%, #f0d79c, #c9973f 62%, #8a5f12);
+    border: 1px solid rgba(255, 244, 207, .65);
+    border-radius: 10px;
+    color: #2a1a0a;
+    box-shadow: inset 0 0 0 3px rgba(23, 18, 12, .38);
+}
+body .ds-sidebar .ds-nav-label { color: var(--brand-muted); }
+body .ds-sidebar .ds-nav a { color: #d8c8a8; }
+body .ds-sidebar .ds-nav a:hover { background: rgba(201, 168, 106, .12); color: #fff6e0; }
+body .ds-sidebar .ds-nav a.active {
+    background: linear-gradient(90deg, rgba(201, 168, 106, .24), rgba(201, 168, 106, .08));
+    border: 1px solid rgba(201, 168, 106, .42);
+    color: #fff6e0;
+    box-shadow: inset 0 0 0 1px rgba(230, 201, 143, .10);
+}
+body .ds-sidebar .ds-nav a.active::before { background: var(--brand-gold); }
+body .ds-sidebar .ds-nav a.active .ic { color: var(--brand-gold-2); }
+body .ds-sidebar .ds-nav .count { color: var(--brand-muted); }
+body .ds-sidebar .ds-divider {
+    background-image: radial-gradient(circle, rgba(201, 168, 106, .55) 1px, transparent 1.6px);
+}
+body .ds-sidebar .user-chip {
+    border: 1px solid rgba(201, 168, 106, .32);
+    background: rgba(255, 248, 230, .04);
+    color: var(--brand-cream);
+}
+body .ds-sidebar .user-chip .avatar {
+    background: radial-gradient(circle at 38% 28%, #f0d79c, #c9973f 64%, #8a5f12);
+    color: #221a0e;
+}
+body .ds-sidebar .ds-sidebar-tools {
+    background: transparent;
+    border-top: 1px solid rgba(201, 168, 106, .22);
+    box-shadow: none;
+}
+@media (max-width: 900px) {
+    body .ds-sidebar .ds-sidebar-tools { background: transparent; }
+}
+body .ds-sidebar .ds-sidebar-tools .seg {
+    background: rgba(0, 0, 0, .28);
+    border: 1px solid rgba(201, 168, 106, .30);
+    box-shadow: none;
+}
+body .ds-sidebar .ds-sidebar-tools .seg button { color: #d8c8a8; background: transparent; }
+body .ds-sidebar .ds-sidebar-tools .seg button.active {
+    background: linear-gradient(180deg, #e6c98f, #c9973f);
+    color: #221a0e;
+    box-shadow: 0 1px 0 rgba(255, 244, 207, .45) inset;
+    text-decoration: none;
+}
+body .ds-sidebar .user-chip b { color: var(--brand-cream); }
+body .ds-sidebar .user-chip .user-role { color: var(--brand-muted); }
+body .ds-sidebar .user-chip .user-role.is-admin { color: var(--brand-gold-2); }
+body .ds-sidebar .seg {
+    background: rgba(0, 0, 0, .25);
+    border: 1px solid rgba(201, 168, 106, .30);
+}
+body .ds-sidebar .seg button { color: #d8c8a8; }
+body .ds-sidebar .seg button:hover { color: #fff6e0; background: rgba(201, 168, 106, .10); }
+body .ds-sidebar .seg .active {
+    background: linear-gradient(180deg, #e6c98f, #c9973f);
+    color: #221a0e;
+    box-shadow: 0 1px 0 rgba(255, 244, 207, .45) inset;
+    text-decoration: none;
+}
+body .ds-sidebar .ds-tools-row > .btn,
+body .ds-sidebar .ds-tools-row #bgmToggle {
+    background: rgba(255, 248, 230, .05);
+    border: 1px solid rgba(201, 168, 106, .38);
+    color: var(--brand-cream);
+}
+body .ds-sidebar .ds-tools-row > .btn:hover { background: rgba(201, 168, 106, .16); color: #fff6e0; }
+body .ds-sidebar .ds-tools-row #bgmToggle.off {
+    background: linear-gradient(180deg, #e6c98f, #c9973f);
+    border-color: transparent;
+    color: #221a0e;
+}
+body .ds-sidebar .ds-sidebar-foot { color: var(--brand-muted); }
+body .ds-sidebar .ds-sidebar-foot .orn-branch { display: none; }
+body .ds-sidebar .ds-sidebar-brandline {
+    display: block;
+    width: 100%;
+    height: 11px;
+    background:
+        linear-gradient(90deg, transparent, rgba(201, 168, 106, .55)) left center / calc(50% - 12px) 1px no-repeat,
+        linear-gradient(270deg, transparent, rgba(201, 168, 106, .55)) right center / calc(50% - 12px) 1px no-repeat;
+    position: relative;
+}
+body .ds-sidebar .ds-sidebar-brandline::after {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    width: 7px; height: 7px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: var(--brand-gold);
+    box-shadow: 0 0 8px rgba(201, 168, 106, .45);
+}
+
+/* ---------- Страница «Жеті ата»: убираем старый ою-узор и бумажные полосы ---------- */
+body.ds-zheti-ui {
+    background:
+        radial-gradient(120% 80% at 50% -10%, #fbf4e3 0%, #f0e7d5 46%, #e9ddc7 100%);
+    background-attachment: fixed;
+}
+body.ds-zheti-ui .ds-main {
+    background: #fffdf8;
+    border-color: #d8bf8c;
+    box-shadow: 0 1px 2px rgba(42, 26, 10, .05), 0 18px 50px -34px rgba(42, 26, 10, .45);
+}
+body.ds-zheti-ui .ds-main::before { border-color: rgba(168, 120, 46, .28); }
+body.ds-zheti-ui .ds-topbar {
+    background-image: none;
+    border-bottom: 1px solid rgba(168, 120, 46, .32);
+}
+body.ds-zheti-ui .ds-crumbs { color: #9a8466; }
+body.ds-zheti-ui .ds-crumbs a:hover { color: #6b4a2e; }
+body.ds-zheti-ui .ds-crumbs .cur { color: #7a5f2c; }
+body.ds-zheti-ui .ds-page-head h1 { color: #2a1a0a; }
+body.ds-zheti-ui .ds-page-head .sub { color: #7a5f2c; }
+body.ds-zheti-ui .ds-page-head > div:first-child::after {
+    content: "";
+    display: block;
+    height: 9px;
+    max-width: 224px;
+    margin-top: 9px;
+    background:
+        linear-gradient(90deg, #a8782e, rgba(168, 120, 46, 0)) left center / calc(50% - 8px) 1px no-repeat,
+        linear-gradient(270deg, #a8782e, rgba(168, 120, 46, 0)) right center / calc(50% - 8px) 1px no-repeat;
+    position: relative;
+}
+body.ds-zheti-ui .ds-page-head > div:first-child::before {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: 2px;
+    width: 6px; height: 6px;
+    transform: translateX(-50%) rotate(45deg);
+    background: #c9a86a;
+}
+body.ds-zheti-ui .ds-page-head > div:first-child { position: relative; }
+body.ds-zheti-ui .btn-primary {
+    background: linear-gradient(180deg, #e6c98f, #c9973f);
+    border-color: #a8782e;
+    color: #221a0e;
+    box-shadow: inset 0 1px 0 rgba(255, 248, 230, .5);
+}
+body.ds-zheti-ui .btn-primary:hover { background: linear-gradient(180deg, #f0d79c, #d8a94e); color: #221a0e; opacity: 1; }
+
+/* ---------- Панель выбора и кнопок: тёмный камень с золотой рамкой ---------- */
+.za-side {
+    background:
+        radial-gradient(120% 70% at 50% 0%, rgba(201, 168, 106, .16), transparent 60%),
+        linear-gradient(165deg, #241c12, #17120c 60%, #100d09);
+    border: 1px solid rgba(201, 168, 106, .55);
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(230, 201, 143, .14), 0 20px 40px -30px #000;
+    color: var(--brand-cream);
+}
+.za-side::before {
+    content: "";
+    display: block;
+    height: 9px;
+    margin: -2px 0 10px;
+    background:
+        linear-gradient(90deg, transparent, #a8782e) left center / calc(50% - 10px) 1px no-repeat,
+        linear-gradient(270deg, transparent, #a8782e) right center / calc(50% - 10px) 1px no-repeat;
+    position: relative;
+}
+.za-side::after {
+    content: none;
+}
+.za-side label, #zaPersonLabel { color: var(--brand-muted) !important; font-size: 12px; letter-spacing: .04em; }
+.za-side .form-input {
+    background: #fbf4e4;
+    border: 1px solid rgba(201, 168, 106, .75);
+    color: #2a1a0a;
+    border-radius: 9px;
+    box-shadow: inset 0 1px 2px rgba(42, 26, 10, .12);
+}
+.za-side .form-input::placeholder { color: #9a8466; }
+.za-side .form-input:focus {
+    outline: none;
+    border-color: #e6c98f;
+    box-shadow: 0 0 0 3px rgba(201, 168, 106, .28);
+}
+.za-side .za-run {
+    background: linear-gradient(180deg, #e6c98f, #c9973f);
+    border: 1px solid #a8782e;
+    color: #221a0e;
+    font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(255, 248, 230, .55);
+}
+.za-side .za-run:hover { background: linear-gradient(180deg, #f0d79c, #d8a94e); color: #221a0e; }
+.za-info-name { color: #fff6e0; }
+.za-info-row { color: var(--brand-muted); }
+.za-info-row b { color: #f3e6c8; }
+.za-actions .btn {
+    background: rgba(255, 248, 230, .05);
+    border: 1px solid rgba(201, 168, 106, .45);
+    color: var(--brand-cream);
+}
+.za-actions .btn:hover { background: rgba(201, 168, 106, .16); color: #fff6e0; }
+.za-actions .btn-primary {
+    background: linear-gradient(180deg, #e6c98f, #c9973f);
+    border-color: #a8782e;
+    color: #221a0e;
+    box-shadow: inset 0 1px 0 rgba(255, 248, 230, .55);
+}
+.za-actions .btn-primary:hover { background: linear-gradient(180deg, #f0d79c, #d8a94e); color: #221a0e; }
+.za-combo .za-list {
+    background: #fbf4e4;
+    border: 1px solid #c9a86a;
+    box-shadow: 0 12px 30px rgba(23, 18, 12, .35);
+}
+.za-list li { color: #3b2a17; }
+.za-list li.active, .za-list li:hover { background: rgba(201, 168, 106, .26); color: #2a1a0a; }
+.za-list li.za-empty { color: #8a6a40; }
+
+/* Карточка «Жеті ата» — фон рисует единый SVG-рендерер, контейнер без рамок. */
+#zaResult { display: flex; justify-content: center; }
+#zaResult > svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 24px 40px rgba(42, 26, 10, .22)); }
+
+@media (max-width: 900px) {
+    body .ds-sidebar { border-radius: 0 18px 18px 0; }
+    body.ds-zheti-ui .ds-content { padding: 16px; }
+    .za-side { border-radius: 14px; }
+}
+
+/* ---------- Тёмная тема страницы «Жеті ата»: тот же камень и золото ---------- */
+[data-theme="dark"] body.ds-zheti-ui {
+    background: radial-gradient(120% 80% at 50% -10%, #2a2117 0%, #1a1510 52%, #120f0b 100%);
+}
+[data-theme="dark"] body.ds-zheti-ui .ds-main {
+    background: #211a12;
+    border-color: rgba(201, 168, 106, .55);
+}
+[data-theme="dark"] body.ds-zheti-ui .ds-main::before { border-color: rgba(230, 201, 143, .20); }
+[data-theme="dark"] body.ds-zheti-ui .ds-topbar { border-bottom-color: rgba(201, 168, 106, .30); }
+[data-theme="dark"] body.ds-zheti-ui .ds-crumbs { color: #b7a17a; }
+[data-theme="dark"] body.ds-zheti-ui .ds-crumbs a:hover { color: #fff6e0; }
+[data-theme="dark"] body.ds-zheti-ui .ds-crumbs .cur { color: #d8c8a8; }
+[data-theme="dark"] body.ds-zheti-ui .ds-page-head h1 { color: #f3e6c8; }
+[data-theme="dark"] body.ds-zheti-ui .ds-page-head .sub { color: #b7a17a; }
+[data-theme="dark"] body.ds-zheti-ui .ds-page-head > div:first-child::after {
+    background:
+        linear-gradient(90deg, #c9a86a, rgba(201, 168, 106, 0)) left center / calc(50% - 8px) 1px no-repeat,
+        linear-gradient(270deg, #c9a86a, rgba(201, 168, 106, 0)) right center / calc(50% - 8px) 1px no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body.ds-zheti-ui {
+        background: radial-gradient(120% 80% at 50% -10%, #2a2117 0%, #1a1510 52%, #120f0b 100%);
+    }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-main { background: #211a12; border-color: rgba(201, 168, 106, .55); }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-main::before { border-color: rgba(230, 201, 143, .20); }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-topbar { border-bottom-color: rgba(201, 168, 106, .30); }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-crumbs { color: #b7a17a; }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-crumbs .cur { color: #d8c8a8; }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-page-head h1 { color: #f3e6c8; }
+    :root:not([data-theme="light"]) body.ds-zheti-ui .ds-page-head .sub { color: #b7a17a; }
+}

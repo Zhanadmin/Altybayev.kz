@@ -25,34 +25,37 @@ require __DIR__ . '/layout/master_start.php';
     </div>
 
     <style>
-        .za-layout { display:flex; flex-direction:column; gap:16px; }
-        .za-side { padding:16px; }
+        /* ALT-120: страница и карточка в утверждённом стиле ALT-117 (тёмный камень, золото, кремовые плашки). */
+        .za-layout { display:flex; flex-direction:column; gap:18px; }
+        .za-side { padding:18px; position:relative; }
         .za-side .form-select { width:100%; min-height:40px; }
         .za-side .za-run { margin-top:10px; min-height:40px; width:100%; }
         .za-info { margin-top:14px; }
         .za-info-name { font-weight:700; font-size:16px; margin-bottom:4px; }
-        .za-info-row { font-size:14px; opacity:.85; margin-top:2px; }
+        .za-info-row { font-size:14px; opacity:.9; margin-top:2px; }
         .za-actions { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
-        .za-actions .btn { padding:8px 14px; font-size:13px; width:100%; }
+        .za-actions .btn { padding:9px 14px; font-size:13px; width:100%; }
         .za-main { min-width:0; }
         /* ALT-100: поиск по вводу */
         .za-combo { position:relative; }
         .za-combo input { width:100%; min-height:40px; box-sizing:border-box; }
         .za-list { position:absolute; left:0; right:0; top:100%; z-index:50; max-height:260px; overflow:auto; margin:2px 0 0; padding:4px; list-style:none;
-            background:var(--c-island, #fff); border:1px solid var(--c-border, #ccc); border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.18); }
+            border-radius:10px; }
         .za-list li { padding:7px 10px; border-radius:6px; cursor:pointer; font-size:14px; }
-        .za-list li.active, .za-list li:hover { background:var(--c-accent-soft, #e8eefc); }
         .za-list li.za-empty { cursor:default; opacity:.7; }
         @media (min-width: 900px) {
             .za-layout { flex-direction:row; align-items:flex-start; }
-            .za-side { flex:0 0 280px; width:280px; position:sticky; top:16px; }
+            .za-side { flex:0 0 290px; width:290px; position:sticky; top:16px; }
             .za-main { flex:1 1 auto; display:flex; justify-content:center; }
             .za-main #zaResult { width:100%; }
-            /* ALT-100: табличка целиком в окне без прокрутки (только экран, PDF/PNG не затронуты) */
+            /* ALT-120: карточка целиком в окне без прокрутки (экран; экспорт не затронут) */
             .dt.za-page { gap:8px; }
-            .dt.za-page .ds-page-head h1 { font-size:22px; }
-            .dt.za-page .ds-page-head .sub { margin-top:0; font-size:13px; }
-            .za-main #zaResult svg#zhetiAtaPlaque { width:auto !important; max-width:100% !important; height:calc(100vh - 150px); min-height:480px; }
+            .dt.za-page .ds-page-head h1 { font-size:24px; }
+            .dt.za-page .ds-page-head .sub { margin-top:0; font-size:14px; }
+            .za-main #zaResult svg#zhetiAtaPlaque { width:auto !important; max-width:100% !important; height:calc(100vh - 235px); min-height:520px; }
+        }
+        @media (max-width: 899px) {
+            .za-main #zaResult svg#zhetiAtaPlaque { width:100% !important; height:auto !important; min-height:0; }
         }
     </style>
 
@@ -81,6 +84,7 @@ require __DIR__ . '/layout/master_start.php';
     </div>
 </div>
 
+<script src="/assets/js/clan-emblem.js?v=<?= (int)@filemtime(__DIR__ . '/../public/assets/js/clan-emblem.js') ?>"></script>
 <script src="/assets/js/zheti-ata.js?v=<?= (int)@filemtime(__DIR__ . '/../public/assets/js/zheti-ata.js') ?>"></script>
 <script>
 (function () {

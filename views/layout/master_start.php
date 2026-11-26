@@ -130,6 +130,16 @@ $userInitial = mb_substr((string)($user['name'] ?? 'Ш'), 0, 1);
 // TASK-008: страница, уже переведённая на цвета дизайн-системы, ставит $dsThemeReady = true.
 // Пока страница со старыми встроенными цветами — только светлая тема (иначе тёмный текст на тёмном фоне).
 $dsThemeReady = !empty($dsThemeReady);
+
+// ALT-120: страница «Жеті ата» получает фирменное окружение (утверждённый стиль ALT-117),
+// не затрагивая старые встроенные стили остальных разделов.
+$bodyClasses = [];
+if (in_array($activeNav, ['admin', 'history', 'clans'], true)) {
+    $bodyClasses[] = 'ds-admin-ui';
+}
+if ($activeNav === 'zheti') {
+    $bodyClasses[] = 'ds-zheti-ui';
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($lang) ?>"<?= $dsThemeReady ? '' : ' data-theme="light" data-theme-locked="1"' ?>>
@@ -161,6 +171,7 @@ $dsThemeReady = !empty($dsThemeReady);
     <link rel="stylesheet" href="/assets/css/app-dialog.css?v=1">
     <script src="/assets/js/app-dialog.js?v=1"></script>
     <link rel="stylesheet" href="/assets/css/book.css?v=15">
+    <link rel="stylesheet" href="/assets/css/brand-system.css?v=1">
     <?php include __DIR__ . '/../partials/pwa_head.php'; // ALT-016 ?>
     <style>
         /* Каркас страниц: клан — информационный блок (переключение рода пока не предусмотрено) */
@@ -260,7 +271,7 @@ $dsThemeReady = !empty($dsThemeReady);
     </style>
     <?php include __DIR__ . '/../partials/clan_tamga.php'; // TASK-030 ?>
 </head>
-<body<?= in_array($activeNav, ['admin', 'history', 'clans'], true) ? ' class="ds-admin-ui"' : '' ?>>
+<body<?= $bodyClasses ? ' class="' . htmlspecialchars(implode(' ', $bodyClasses)) . '"' : '' ?>>
 
     <!-- Линейные иконки (SVG-спрайт) -->
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -443,7 +454,8 @@ $dsThemeReady = !empty($dsThemeReady);
             </div>
 
             <div class="ds-sidebar-foot">
-                <svg class="orn orn-branch" aria-hidden="true" focusable="false"><use href="#o-branch"/></svg>
+                <?php /* ALT-120: старую ветвь ою-өрнек заменила сдержанная золотая линия с ромбом */ ?>
+                <span class="ds-sidebar-brandline" aria-hidden="true"></span>
                 <span>altybayev.kz · 2026</span>
                 <?php $__ver = \App\Core\Version::info(); if ($__ver): ?>
                 <?php /* ALT-044: версия из git; время, затем дата */ ?>

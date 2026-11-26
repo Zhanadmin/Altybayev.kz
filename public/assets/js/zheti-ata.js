@@ -1,6 +1,7 @@
 /* ALT-092: общий код «Жеті ата» — табличка, PNG, PDF.
-   Используется страницей /zheti-ata и окном в шежіре (views/tree.php).
-   API: ZhetiAta.labels(lang), ZhetiAta.render(box, personId, lang, onPerson), ZhetiAta.downloadPng(), ZhetiAta.printPdf() */
+   ALT-120: карточка полностью переведена на утверждённый стиль ALT-117:
+   тёмный камень, золотая рамка, кремовые плашки, герб рода из ClanEmblem.
+   API: ZhetiAta.labels(lang), ZhetiAta.render(box, personId, lang, onPerson), ZhetiAta.downloadPng(), ZhetiAta.downloadPdf(), ZhetiAta.printPdf() */
 (function () {
     'use strict';
 
@@ -45,49 +46,147 @@
         return l;
     }
 
-    const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;'
+    }[c]));
 
-    /* ALT-101: декоративная миниатюра для таблички «Жеті ата».
-       ALT-117: окно data-clan-coat и экспорт герба используют clan-emblem.js,
-       а не этот старый герб-звезду. o: {pre, zhuz, clan, uran, tamga (data-URI или '')}.
-       Возвращает содержимое в системе координат 260×260 (центр 130,130). */    function coatInner(o) {
-        const C = 130, G = '#c9a24b', GL = '#e8c97a';
-        const polar = (a, r) => [C + Math.cos(a * Math.PI / 180) * r, C + Math.sin(a * Math.PI / 180) * r];
-        const sq = (off) => [0, 1, 2, 3].map((k) => polar(off + k * 90, 124).map((v) => v.toFixed(1)).join(',')).join(' ');
-        const fit = (txt, base, maxLen) => Math.max(8, Math.min(base, maxLen / (Math.max(1, txt.length) * 0.78)));
-        const top = [o.zhuz, o.clan].filter(Boolean).join(' • ').toUpperCase();
-        const bottom = String(o.uran || '').toUpperCase();
-        const spear = (a) => {
-            const p1 = polar(a, 100), p2 = polar(a, 170);
-            return `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${G}" stroke-width="3" stroke-linecap="round"/>`
-                + `<path transform="translate(${p2[0].toFixed(1)} ${p2[1].toFixed(1)}) rotate(${a + 90})" d="M0 -14 L5 0 L0 8 L-5 0 z" fill="${G}" stroke="#2f0e0a" stroke-width="1"/>`;
-        };
-        const tips = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => {
-            const p = polar(a, 118);
-            return `<path transform="translate(${p[0].toFixed(1)} ${p[1].toFixed(1)}) rotate(${a + 45})" d="M0 -4 L4 0 L0 4 L-4 0 z" fill="${G}"/>`;
-        }).join('');
-        const tA = o.pre + 'T', bA = o.pre + 'B';
-        return `<defs>
-                <path id="${tA}" d="M ${C - 60} ${C} A 60 60 0 0 1 ${C + 60} ${C}"/>
-                <path id="${bA}" d="M ${C - 80} ${C} A 80 80 0 0 0 ${C + 80} ${C}"/>
-            </defs>
-            ${spear(-45)}${spear(-135)}${spear(45)}${spear(135)}
-            <polygon points="${sq(45)}" fill="#5b2018" stroke="${G}" stroke-width="2.5" stroke-linejoin="round"/>
-            <polygon points="${sq(0)}" fill="#5b2018" stroke="${G}" stroke-width="2.5" stroke-linejoin="round"/>
-            <polygon points="${sq(45)}" fill="none" stroke="${GL}" stroke-width="0.8" stroke-linejoin="round" transform="translate(130 130) scale(0.95) translate(-130 -130)"/>
-            <polygon points="${sq(0)}" fill="none" stroke="${GL}" stroke-width="0.8" stroke-linejoin="round" transform="translate(130 130) scale(0.95) translate(-130 -130)"/>
-            ${tips}
-            <circle cx="${C}" cy="${C}" r="88" fill="#3f1510" stroke="${G}" stroke-width="2.5"/>
-            <circle cx="${C}" cy="${C}" r="54" fill="#f3e6c8" stroke="#b28a3c" stroke-width="2"/>
-            ${top ? `<text font-size="${fit(top, 14, 150).toFixed(1)}" font-weight="700" letter-spacing="1" fill="${GL}" text-anchor="middle"><textPath href="#${tA}" startOffset="50%">${esc(top)}</textPath></text>` : ''}
-            ${bottom ? `<text font-size="${fit(bottom, 15, 190).toFixed(1)}" font-weight="700" letter-spacing="1.5" fill="${GL}" text-anchor="middle"><textPath href="#${bA}" startOffset="50%">${esc(bottom)}</textPath></text>` : ''}
-            ${o.tamga ? `<image href="${o.tamga}" x="${C - 31}" y="${C - 31}" width="62" height="62" preserveAspectRatio="xMidYMid meet"/>` : ''}
-            <path d="M${C - 46} ${C} l4 -5 l4 5 l-4 5 z M${C + 38} ${C} l4 -5 l4 5 l-4 5 z" fill="#b28a3c"/>
-            <path d="M${C - 46} ${C - 14} v-6 M${C - 46} ${C + 14} v6 M${C + 46} ${C - 14} v-6 M${C + 46} ${C + 14} v6" stroke="#b28a3c" stroke-width="1.5" stroke-linecap="round"/>`;
+    const CARD_W = 720;
+    const INK = '#17120c';
+    const GOLD = '#c9a86a';
+    const GOLD_LIGHT = '#e6c98f';
+    const GOLD_DARK = '#a8782e';
+    const CREAM = '#f3e6c8';
+    const CREAM_PLAQUE = '#f4e3c0';
+    const PLAQUE_INK = '#2a1a0a';
+
+    function bevelPoints(x, y, w, h, b) {
+        return [x + b, y, x + w - b, y, x + w, y + b, x + w, y + h - b,
+            x + w - b, y + h, x + b, y + h, x, y + h - b, x, y + b]
+            .join(' ');
     }
 
-    function coatSvgFull(o, id) {
-        return `<svg id="${id}" xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 340 340" width="100%" style="max-width:420px; display:block; margin:0 auto;" font-family="Georgia, 'Times New Roman', serif">${coatInner(o)}</svg>`;
+    function yearOnly(v) {
+        const m = String(v == null ? '' : v).match(/\d{4}/);
+        return m ? m[0] : '';
+    }
+
+    function lifeYears(p) {
+        if (!p) return '';
+        const by = yearOnly(p.birth_year), dy = yearOnly(p.death_year);
+        if (!by && !dy) return '';
+        return `${by || '…'}–${(p.is_deceased || dy) ? (dy || '…') : ''}`;
+    }
+
+    function fitSize(text, base, max, min) {
+        const len = Array.from(String(text || '')).length;
+        return Math.max(min, Math.min(base, Math.floor(max / (Math.max(1, len) * 0.58))));
+    }
+
+    function diamond(cx, cy, r, fill) {
+        return `<path d="M${cx} ${cy - r} L${cx + r} ${cy} L${cx} ${cy + r} L${cx - r} ${cy} Z" fill="${fill}"/>`;
+    }
+
+    /* Единый SVG вертикальной карточки: экран, PNG, PDF и печать используют один и тот же разметочный код.
+       o: { rows, levels, unknown, personName, personYears, subtitle, emblemInner, fontData, ariaLabel } */
+    function buildPlaque(o) {
+        const opts = o || {};
+        const rows = Array.isArray(opts.rows) ? opts.rows : [];
+        const levels = Array.isArray(opts.levels) ? opts.levels : [];
+        const ROW_TOP = 736;
+        const ROW_H = 84;
+        const ROW_GAP = 8;
+        const STEP = ROW_H + ROW_GAP;
+        const rowsBottom = ROW_TOP + rows.length * STEP - ROW_GAP;
+        const footerY = rowsBottom + 44;
+        const H = footerY + 72;
+        const fontData = String(opts.fontData || '');
+        const fontFamily = fontData
+            ? "ALT120Card, Lora, Georgia, 'Times New Roman', serif"
+            : "Lora, Georgia, 'Times New Roman', serif";
+        const fontCss = fontData
+            ? '<style type="text/css"><![CDATA[@font-face{font-family:\'ALT120Card\';src:url(data:font/ttf;base64,'
+                + fontData + ') format(\'truetype\');font-weight:400 700;font-style:normal;}]]></style>'
+            : '';
+        const emblem = String(opts.emblemInner || '').trim();
+        const neutral = !emblem;
+
+        let rowSvg = '';
+        rows.forEach((row, i) => {
+            const y = ROW_TOP + i * STEP;
+            const p = row && row.person ? row.person : null;
+            const isSelf = Number(row && row.level) === 0;
+            const label = String(levels[Number(row && row.level)] || '').toUpperCase();
+            const fill = isSelf ? '#f8ecd4' : CREAM_PLAQUE;
+            const name = p ? String(p.first_name || '').trim() : '';
+            const years = lifeYears(p);
+            const nameSize = fitSize(name, 30, 520, 15);
+            rowSvg += `<polygon points="${bevelPoints(62, y, 596, ROW_H, 14)}" fill="${fill}" stroke="${GOLD_DARK}" stroke-width="2.6" stroke-linejoin="round"/>`
+                + `<polygon points="${bevelPoints(69, y + 7, 582, ROW_H - 14, 10)}" fill="none" stroke="${GOLD_LIGHT}" stroke-width="1.1" opacity=".9" stroke-linejoin="round"/>`
+                + diamond(46, y + ROW_H / 2, 5, GOLD)
+                + diamond(674, y + ROW_H / 2, 5, GOLD)
+                + (label ? `<text x="360" y="${y + 21}" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="12.5" font-weight="700" letter-spacing="2.6" fill="${GOLD_DARK}">${esc(label)}</text>` : '')
+                + (p
+                    ? `<text class="za-name" data-person-id="${parseInt(p.id, 10)}" x="360" y="${y + 51}" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="${nameSize}" font-weight="700" fill="${PLAQUE_INK}"${opts.onPerson ? ' style="cursor:pointer"' : ''}>${esc(name)}</text>`
+                        + (years ? `<text x="360" y="${y + 71}" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="16" fill="#6b4a2e">${esc(years)}</text>` : '')
+                    : `<text x="360" y="${y + 53}" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="22" font-style="italic" fill="#8a6a40">${esc(opts.unknown || 'белгісіз')}</text>`);
+        });
+
+        const personLine = [opts.personName, opts.personYears].filter(Boolean).join(' · ');
+        const subtitle = String(opts.subtitle || '').trim().toUpperCase();
+
+        return `<svg id="zhetiAtaPlaque" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CARD_W} ${H}" width="100%" style="max-width:${CARD_W}px; display:block; margin:0 auto;" font-family="${esc(fontFamily)}" role="img" aria-label="${esc(opts.ariaLabel || 'Жеті ата')}" data-za-style="alt117-v1">
+            <defs>
+                ${fontCss}
+                <linearGradient id="zaCardGold" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#f0d79c"/><stop offset=".5" stop-color="#c9973f"/><stop offset="1" stop-color="#8a5f12"/>
+                </linearGradient>
+                <linearGradient id="zaCardStone" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#2b261f"/><stop offset=".34" stop-color="#191612"/>
+                    <stop offset=".68" stop-color="#232019"/><stop offset="1" stop-color="#100e0b"/>
+                </linearGradient>
+                <radialGradient id="zaCardGlow" cx="50%" cy="41%" r="64%">
+                    <stop offset="0" stop-color="#6d5940" stop-opacity=".44"/>
+                    <stop offset=".44" stop-color="#3a3026" stop-opacity=".22"/>
+                    <stop offset="1" stop-color="#0b0907" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="zaCardVignette" cx="50%" cy="50%" r="72%">
+                    <stop offset="0" stop-color="#000" stop-opacity="0"/>
+                    <stop offset=".72" stop-color="#000" stop-opacity="0"/>
+                    <stop offset="1" stop-color="#000" stop-opacity=".5"/>
+                </radialGradient>
+                <pattern id="zaCardGrain" width="26" height="26" patternUnits="userSpaceOnUse">
+                    <circle cx="3" cy="5" r=".8" fill="#e9d6ad" opacity=".10"/>
+                    <circle cx="17" cy="9" r=".6" fill="#fff6dd" opacity=".07"/>
+                    <circle cx="9" cy="21" r=".7" fill="#b9975a" opacity=".09"/>
+                    <circle cx="23" cy="19" r=".5" fill="#fff1cf" opacity=".06"/>
+                </pattern>
+                <clipPath id="zaCardClip"><rect x="0" y="0" width="${CARD_W}" height="${H}" rx="28"/></clipPath>
+            </defs>
+            <g clip-path="url(#zaCardClip)">
+                <rect x="0" y="0" width="${CARD_W}" height="${H}" fill="url(#zaCardStone)"/>
+                <rect x="0" y="0" width="${CARD_W}" height="${H}" fill="url(#zaCardGlow)"/>
+                <rect x="0" y="0" width="${CARD_W}" height="${H}" fill="url(#zaCardGrain)" opacity=".55"/>
+                <rect x="0" y="0" width="${CARD_W}" height="${H}" fill="url(#zaCardVignette)"/>
+            </g>
+            <rect x="7" y="7" width="${CARD_W - 14}" height="${H - 14}" rx="26" fill="none" stroke="url(#zaCardGold)" stroke-width="4"/>
+            <rect x="21" y="21" width="${CARD_W - 42}" height="${H - 42}" rx="18" fill="none" stroke="${GOLD_LIGHT}" stroke-width="1.2" opacity=".82"/>
+            ${emblem
+                ? `<ellipse cx="360" cy="316" rx="286" ry="270" fill="url(#zaCardGlow)" opacity=".55"/>
+                   <g transform="translate(100 56) scale(${(520 / 1024).toFixed(7)})">${emblem}</g>`
+                : `<rect x="130" y="80" width="460" height="460" rx="24" fill="#211a12" stroke="${GOLD}" stroke-width="2.5"/>
+                   <rect x="146" y="96" width="428" height="428" rx="18" fill="none" stroke="${GOLD_LIGHT}" stroke-width="1.2" opacity=".55"/>
+                   <circle cx="360" cy="310" r="86" fill="none" stroke="${CREAM}" stroke-width="1.6" stroke-dasharray="3 8" opacity=".7"/>
+                   <path d="M360 266 l10 34 l34 10 l-34 10 l-10 34 l-10 -34 l-34 -10 l34 -10 Z" fill="${GOLD}" opacity=".85"/>`}
+            ${diamond(360, 616, 7, GOLD)}
+            <text x="360" y="654" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="34" font-weight="700" letter-spacing="8" fill="url(#zaCardGold)">ЖЕТІ АТА</text>
+            ${personLine ? `<text x="360" y="690" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="22" font-weight="700" fill="${CREAM}">${esc(personLine)}</text>` : ''}
+            ${subtitle ? `<text x="360" y="714" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="13" font-weight="700" letter-spacing="3" fill="#b7a17a">${esc(subtitle)}</text>` : ''}
+            <path d="M150 723 H300 M420 723 H570" stroke="${GOLD_DARK}" stroke-width="1.2" opacity=".7"/>
+            ${rowSvg}
+            <path d="M82 ${footerY} H322 M398 ${footerY} H638" stroke="${GOLD_DARK}" stroke-width="1.3" opacity=".8"/>
+            ${diamond(360, footerY, 6, GOLD)}
+            <text x="360" y="${footerY + 38}" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="12.5" font-weight="700" letter-spacing="4" fill="#a8782e">ALTYBAYEV.KZ</text>
+        </svg>`;
     }
 
     async function tamgaDataUri(url) {
@@ -118,8 +217,7 @@
 
     /* Окно с готовым гербом ру: по названию ру (клик в «Ру таңбалары» и в карточке человека).
        ALT-117: вместо старого бордового герба-звезды — единый герб на утверждённой
-       растровой подложке (пока файла нет — нейтральный каменный макет);
-       PNG и PDF экспортируют ровно эту же композицию. */
+       растровой подложке; PNG и PDF экспортируют ровно эту же композицию. */
     async function openClan(name, currentLang) {
         const lang = currentLang || document.documentElement.lang || 'kk';
         const L = labels(lang);
@@ -187,22 +285,24 @@
     }
 
     // клик по любому элементу с data-clan-coat="<название ру>" открывает герб
-    document.addEventListener('click', (ev) => {
-        const t = ev.target.closest ? ev.target.closest('[data-clan-coat]') : null;
-        if (!t) return;
-        const n = t.getAttribute('data-clan-coat');
-        if (!n) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        openClan(n, document.documentElement.getAttribute('data-lang') || window.__zaLang || 'kk');
-    }, true);
+    if (typeof document !== 'undefined') {
+        document.addEventListener('click', (ev) => {
+            const t = ev.target.closest ? ev.target.closest('[data-clan-coat]') : null;
+            if (!t) return;
+            const n = t.getAttribute('data-clan-coat');
+            if (!n) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            openClan(n, document.documentElement.getAttribute('data-lang') || window.__zaLang || 'kk');
+        }, true);
+    }
 
     /* Рисует табличку в box для человека personId. onPerson(id) — клик по имени в цепочке (необязательно). */
     async function render(resBox, id, currentLang, onPerson, opts) {
         const L = labels(currentLang);
         if (!id) return;
         resBox.style.display = 'block';
-        resBox.innerHTML = `<div style="text-align:center; padding:16px; color:#94a3b8;">${esc(L.loading)}</div>`;
+        resBox.innerHTML = `<div style="text-align:center; padding:16px; color:#b7a17a;">${esc(L.loading)}</div>`;
 
         try {
             const res = await fetch(`/api/zheti-ata/seven?id=${encodeURIComponent(id)}`);
@@ -214,61 +314,65 @@
 
             // колено 0 — сам человек, 1–7 — его отцы
             const planks = data.fathers.slice().reverse();
-            const W = 400, PLANK_Y = 300, PLANK_H = 66;
-            const H = PLANK_Y + planks.length * PLANK_H + 150;
             const self = data.fathers[0].person || {};
             const clanInfo = data.clan || {};
             const clanName = (currentLang === 'kk' ? (clanInfo.name || self.clan_ru) : (clanInfo.name_ru || self.clan_ru)) || '';
             const zhuzLabel = L.zhuz[clanInfo.zhuz] || '';
             const subName = self.clan_subru || '';
-            // таңба ру встраиваем data-URI, чтобы работало в PNG/PDF
-            const tamgaData = await tamgaDataUri(clanInfo.tamga_url);
             const uranText = (clanInfo.uran || '').trim();
-            // ALT-101: герб-звезда вместо круглого медальона
-            const coat = coatInner({ pre: 'zaPl', zhuz: zhuzLabel, clan: clanName, uran: uranText, tamga: tamgaData });
-            const side = (x) => Array.from({ length: Math.floor((planks.length * PLANK_H) / 18) }, (_, i) =>
-                `<path d="M${x} ${PLANK_Y + 6 + i * 18} l4 5 l-4 5 l-4 -5 z" fill="#c9a24b"/>`).join('');
-            const fitSize = (txt, base, maxCh) => (txt.length > maxCh ? Math.max(11, Math.floor(base * maxCh / txt.length)) : base);
-            const plankSvg = planks.map((f, i) => {
-                const y = PLANK_Y + i * PLANK_H;
-                const p = f.person;
-                const title = L.levels[f.level] || '';
-                let inner;
-                if (!p) {
-                    inner = `<text x="200" y="${y + 40}" text-anchor="middle" font-size="17" font-style="italic" fill="#9a8466">${esc(L.unknown)}</text>`;
-                } else {
-                    const full = `${p.first_name || ''}`.trim();
-                    const yOnly = (v) => { const m = String(v == null ? '' : v).match(/\d{4}/); return m ? m[0] : ''; };
-                    const by = yOnly(p.birth_year), dy = yOnly(p.death_year);
-                    const years = (by || dy)
-                        ? `${by || '…'}–${(p.is_deceased || dy) ? (dy || '…') : ''}`
-                        : '';
-                    inner = `<text class="za-name" data-person-id="${parseInt(p.id, 10)}" x="200" y="${y + 38}" text-anchor="middle" font-size="${fitSize(full, 20, 22)}" font-weight="700" fill="#3b1a12"${onPerson ? ' style="cursor:pointer"' : ''}>${esc(full)}</text>`
-                        + (years ? `<text x="200" y="${y + 55}" text-anchor="middle" font-size="12" fill="#6b4a2e">${esc(years)}</text>` : '');
+            const personName = `${self.first_name || ''} ${self.last_name || ''}`.trim();
+            const personYears = lifeYears(self);
+
+            let lib = null;
+            try { lib = await ensureEmblemLib(); } catch (e) { lib = null; }
+
+            let emblemInner = '';
+            let fontData = '';
+            if (lib) {
+                let tamga = { data: '', isRaster: false };
+                try { tamga = await lib.loadTamga(clanInfo.tamga_url || ''); } catch (e) { tamga = { data: '', isRaster: false }; }
+                const [fonts, bg] = await Promise.all([
+                    lib.ensureFont().catch(() => ''),
+                    lib.loadBackground().catch(() => ({ data: '', href: '' }))
+                ]);
+                fontData = fonts || '';
+                if (clanName || tamga.data) {
+                    try {
+                        const full = lib.buildSvg({
+                            zhuz: zhuzLabel,
+                            name: clanName,
+                            uran: uranText,
+                            tamga: tamga.data,
+                            tamgaIsRaster: !!tamga.isRaster,
+                            background: bg && bg.data ? bg.data : '',
+                            fontData: fontData,
+                            ariaLabel: `Герб рода ${clanName || ''}`.trim()
+                        });
+                        emblemInner = String(full || '')
+                            .replace(/^<svg[^>]*>/, '')
+                            .replace(/<\/svg>\s*$/, '');
+                    } catch (e) { emblemInner = ''; }
                 }
-                return `<rect x="52" y="${y}" width="296" height="${PLANK_H - 8}" rx="5" fill="${p ? '#f3e6c8' : '#e4d6b6'}" stroke="#b28a3c" stroke-width="1.5"/>`
-                    + `<text x="200" y="${y + 15}" text-anchor="middle" font-size="10" fill="#8a6a40">${esc(title)}</text>` + inner;
-            }).join('');
-            const bottomY = PLANK_Y + planks.length * PLANK_H;
-            const svg = `<svg id="zhetiAtaPlaque" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px; display:block; margin:0 auto;" font-family="Georgia, 'Times New Roman', serif">
-                <rect x="20" y="0" width="360" height="${bottomY + 70}" rx="14" fill="#5b2018" stroke="#2f0e0a" stroke-width="3"/>
-                <rect x="30" y="10" width="340" height="${bottomY + 50}" rx="10" fill="none" stroke="#c9a24b" stroke-width="1.5"/>
-                <g transform="translate(70 12) scale(0.98)">${coat}</g>
-                <text x="200" y="${PLANK_Y - 16}" text-anchor="middle" font-size="${fitSize(subName.toUpperCase(), 22, 18)}" font-weight="700" font-style="normal" letter-spacing="2" fill="#f3e6c8">${esc(subName.toUpperCase() || L.title.toUpperCase())}</text>
-                ${side(38)}${side(362)}
-                ${plankSvg}
-                <rect x="52" y="${bottomY + 2}" width="296" height="30" rx="4" fill="#3f1510" stroke="#c9a24b" stroke-width="1.5"/>
-                <path d="M170 ${bottomY + 28} v-8 a30 14 0 0 1 60 0 v8 z M193 ${bottomY + 28} v-9 h14 v9" fill="#f3e6c8" stroke="#c9a24b" stroke-width="1"/>
-                <path d="M62 ${bottomY + 17} h92 M246 ${bottomY + 17} h92" stroke="#c9a24b" stroke-width="2" stroke-dasharray="4 4"/>
-                <path d="M170 ${bottomY + 70} v40 M230 ${bottomY + 70} v40" stroke="#c9a24b" stroke-width="2.5"/>
-                <path d="M160 ${bottomY + 110} h20 l-3 34 h-14 z M220 ${bottomY + 110} h20 l-3 34 h-14 z" fill="#8a2b22" stroke="#c9a24b" stroke-width="1.5"/>
-            </svg>`;
+            }
+
+            const svg = buildPlaque({
+                rows: planks,
+                levels: L.levels,
+                unknown: L.unknown,
+                personName: personName,
+                personYears: personYears,
+                subtitle: subName,
+                emblemInner: emblemInner,
+                fontData: fontData,
+                onPerson: !!onPerson,
+                ariaLabel: `Жеті ата — ${personName}`.trim()
+            });
 
             window.zhetiAtaFileName = 'Жеті ата — ' + (String(self.first_name || '').trim() || 'person');
             const btnsHtml = `
-                    <button type="button" class="btn-modal-submit btn btn-primary" data-za-act="png">⬇ ${esc(L.download)}</button>
-                    <button type="button" class="btn-modal-cancel btn" data-za-act="pdf">📄 ${esc(L.pdf)}</button>
-                    <button type="button" class="btn-modal-cancel btn" data-za-act="print">🖨 ${esc(L.print)}</button>`;
+                    <button type="button" class="btn btn-primary" data-za-act="png">⬇ ${esc(L.download)}</button>
+                    <button type="button" class="btn" data-za-act="pdf">📄 ${esc(L.pdf)}</button>
+                    <button type="button" class="btn" data-za-act="print">🖨 ${esc(L.print)}</button>`;
             const ext = opts || {};
             if (ext.actionsBox) {
                 // кнопки и сведения о человеке — в боковой панели, справа только табличка
@@ -277,10 +381,13 @@
                 ext.actionsBox.onclick = (ev) => {
                     const b = ev.target.closest ? ev.target.closest('[data-za-act]') : null;
                     if (!b) return;
-                    if (b.getAttribute('data-za-act') === 'png') downloadPng(); else printPdf();
+                    const act = b.getAttribute('data-za-act');
+                    if (act === 'png') downloadPng();
+                    else if (act === 'pdf') downloadPdf();
+                    else printPdf();
                 };
                 if (ext.infoBox) {
-                    const nm = esc(`${self.first_name || ''} ${self.last_name || ''}`.trim());
+                    const nm = esc(personName);
                     ext.infoBox.innerHTML = `<div class="za-info-name">${nm}</div>`
                         + (clanName ? `<div class="za-info-row">${esc(L.clan)}: <b>${esc(clanName)}</b></div>` : '')
                         + (zhuzLabel ? `<div class="za-info-row">${esc(zhuzLabel)}</div>` : '');
@@ -299,54 +406,135 @@
                 }
                 const act = t.getAttribute('data-za-act');
                 if (act === 'png') downloadPng();
-                else printPdf(); // «PDF» и «Печать» — один диалог печати (в нём можно выбрать «Сохранить как PDF»)
+                else if (act === 'pdf') downloadPdf();
+                else printPdf();
             };
         } catch (err) {
             resBox.innerHTML = `<div style="color:#ef4444; padding:10px;">${esc(L.error)}: ${esc(err.message)}</div>`;
         }
     }
 
-    function downloadPng(svgId) {
-        const svgEl = document.getElementById(svgId || 'zhetiAtaPlaque');
-        if (!svgEl) return;
+    function cloneForExport(svgEl, scale) {
         const vb = svgEl.viewBox.baseVal;
         const clone = svgEl.cloneNode(true);
-        clone.setAttribute('width', vb.width * 2);
-        clone.setAttribute('height', vb.height * 2);
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        clone.setAttribute('width', Math.round(vb.width * scale));
+        clone.setAttribute('height', Math.round(vb.height * scale));
         clone.removeAttribute('style');
-        const xml = new XMLSerializer().serializeToString(clone);
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = vb.width * 2;
-            canvas.height = vb.height * 2;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-                if (!blob) return;
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = (window.zhetiAtaFileName || 'Жеті ата') + '.png';
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-            }, 'image/png');
+        clone.removeAttribute('class');
+        return { clone, width: vb.width, height: vb.height };
+    }
+
+    function svgToCanvas(svgEl, scale) {
+        const parts = cloneForExport(svgEl, scale || 2);
+        const xml = new XMLSerializer().serializeToString(parts.clone);
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(parts.width * (scale || 2));
+                canvas.height = Math.round(parts.height * (scale || 2));
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { reject(new Error('Canvas 2D недоступен')); return; }
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas);
+            };
+            img.onerror = () => reject(new Error('Не удалось отрисовать карточку'));
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+        });
+    }
+
+    async function downloadPng(svgId) {
+        const svgEl = document.getElementById(svgId || 'zhetiAtaPlaque');
+        if (!svgEl) return;
+        const canvas = await svgToCanvas(svgEl, 2);
+        const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/png'));
+        if (!blob) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (window.zhetiAtaFileName || 'Жеті ата') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+    }
+
+    /* Настоящий PDF (не диалог печати): A4 portrait, встроенный JPEG всей карточки. */
+    function buildPdfBytes(jpegBytes, imgW, imgH, pageW, pageH) {
+        const enc = new TextEncoder();
+        const chunks = [];
+        let offset = 0;
+        const offsets = [];
+        const add = (u8) => { chunks.push(u8); offset += u8.length; };
+        const addStr = (s) => add(enc.encode(s));
+        addStr('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+        const obj = (n, body, stream) => {
+            offsets[n] = offset;
+            addStr(n + ' 0 obj\n' + body + '\n');
+            if (stream) {
+                addStr('stream\n');
+                add(stream);
+                addStr('\nendstream\n');
+            }
+            addStr('endobj\n');
         };
-        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+        const margin = 18;
+        const s = Math.min((pageW - margin * 2) / imgW, (pageH - margin * 2) / imgH);
+        const w = Math.round(imgW * s * 100) / 100;
+        const h = Math.round(imgH * s * 100) / 100;
+        const x = Math.round((pageW - w) / 2 * 100) / 100;
+        const y = Math.round((pageH - h) / 2 * 100) / 100;
+        obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+        obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+        obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pageW + ' ' + pageH + ']'
+            + ' /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+        obj(4, '<< /Type /XObject /Subtype /Image /Width ' + imgW + ' /Height ' + imgH
+            + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpegBytes.length + ' >>', jpegBytes);
+        const content = 'q\n' + w + ' 0 0 ' + h + ' ' + x + ' ' + y + ' cm\n/Im0 Do\nQ\n';
+        const contentBytes = enc.encode(content);
+        obj(5, '<< /Length ' + contentBytes.length + ' >>', contentBytes);
+        const xref = offset;
+        addStr('xref\n0 6\n0000000000 65535 f \n');
+        for (let i = 1; i <= 5; i++) addStr(String(offsets[i]).padStart(10, '0') + ' 00000 n \n');
+        addStr('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+        const total = chunks.reduce((a, c) => a + c.length, 0);
+        const out = new Uint8Array(total);
+        let p = 0;
+        chunks.forEach((c) => { out.set(c, p); p += c.length; });
+        return out;
+    }
+
+    async function downloadPdf(svgId) {
+        const svgEl = document.getElementById(svgId || 'zhetiAtaPlaque');
+        if (!svgEl) return;
+        const canvas = await svgToCanvas(svgEl, 2);
+        const jpegBlob = await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.95));
+        if (!jpegBlob) return;
+        const bytes = buildPdfBytes(new Uint8Array(await jpegBlob.arrayBuffer()), canvas.width, canvas.height, 595, 842);
+        const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (window.zhetiAtaFileName || 'Жеті ата') + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
     }
 
     function printPdf(svgId) {
         const svgEl = document.getElementById(svgId || 'zhetiAtaPlaque');
         if (!svgEl) return;
         const clone = svgEl.cloneNode(true);
-        clone.setAttribute('style', 'max-width:420px;display:block;margin:0 auto;');
-        clone.setAttribute('width', '100%');
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        clone.setAttribute('style', 'width:auto;height:auto;max-width:100%;max-height:277mm;display:block;margin:0 auto;');
         const frame = document.createElement('iframe');
         frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
         document.body.appendChild(frame);
         const d = frame.contentWindow.document;
         d.open();
-        d.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (window.zhetiAtaFileName || 'Жеті ата').replace(/[<&]/g, '') + '</title><style>@page{margin:10mm}body{margin:0}svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' + new XMLSerializer().serializeToString(clone) + '</body></html>');
+        d.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (window.zhetiAtaFileName || 'Жеті ата').replace(/[<&]/g, '') + '</title><style>@page{size:A4 portrait;margin:8mm}html,body{height:100%}body{margin:0;display:flex;align-items:center;justify-content:center;background:#fff}svg{width:auto;height:auto;max-width:100%;max-height:277mm;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' + new XMLSerializer().serializeToString(clone) + '</body></html>');
         d.close();
         setTimeout(() => {
             frame.contentWindow.focus();
@@ -355,5 +543,7 @@
         }, 300);
     }
 
-    window.ZhetiAta = { labels, render, downloadPng, printPdf, openClan };
+    const API = { labels, render, buildPlaque, downloadPng, downloadPdf, printPdf, openClan, _buildPdfBytes: buildPdfBytes };
+    if (typeof window !== 'undefined') window.ZhetiAta = API;
+    if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })();
